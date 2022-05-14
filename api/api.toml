@@ -1,0 +1,30 @@
+[meta]
+FORMAT_VERSION = "0.1.0"
+
+HTML_TOP = """
+<!DOCTYPE html>
+<html lang='en'>
+  <head>
+    <meta charset='utf-8'>
+    <title>Title from api.toml</title>
+    <link rel='stylesheet' href='public/css/style.css'>
+    <script src='public/js/script.js'></script>
+  </head>
+  <body>
+    <div><img src='public/media/logo.png'
+              alt='Logo'
+              height='64'/></div>
+    <h1>Heading in api.toml</h1>
+    <p>Text introducing the collected documentation</p>
+"""
+
+HTML_BOTTOM = """
+  <h1>Heading at the bottom</h1>
+  <p>Text at the bottom. Maybe a copyright notice or link.</p>
+  </body>
+</html>
+"""
+
+HEADING_ROUTES = "Routes"
+HEADING_PARAMETERS = "Parameters"
+HEADING_DESCRIPTION = "Description"
