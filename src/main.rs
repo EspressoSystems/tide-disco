@@ -1,21 +1,35 @@
+use crate::HealthStatus::*;
+use routefinder::Router;
+use std::env;
+use std::path::PathBuf;
+use std::string::ToString;
+use std::sync::{Arc, RwLock};
 use tide::prelude::*;
 use tide::{
     http::{mime, StatusCode},
     Request, Response,
 };
-
-use routefinder::Router;
-use std::env;
-use std::path::PathBuf;
 use tide_disco::load_messages;
 
-#[derive(Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, strum_macros::Display)]
+pub enum HealthStatus {
+    Starting,
+    Available,
+    Stopping,
+}
+
+#[derive(Clone, Debug, Deserialize)]
+struct WebState {
+    health_status: Arc<RwLock<HealthStatus>>,
+}
+
+#[derive(Clone, Debug, Deserialize)]
 struct Animal {
     name: String,
     legs: u16,
 }
 
-async fn order_shoes(mut req: Request<()>) -> tide::Result {
+async fn order_shoes(mut req: Request<WebState>) -> tide::Result {
     let Animal { name, legs } = req.body_json().await?;
     Ok(format!("Hello, {}! I've put in an order for {} shoes", name, legs).into())
 }
@@ -31,7 +45,7 @@ const MINIMAL_HTML: &str = "<!doctype html>
   </body>
 </html>";
 
-async fn disco_web_handler(_req: Request<()>) -> tide::Result {
+async fn disco_web_handler(_req: Request<WebState>) -> tide::Result {
     Ok(Response::builder(StatusCode::Ok)
         .body(MINIMAL_HTML)
         .content_type(mime::HTML)
@@ -44,20 +58,15 @@ async fn disco_web_handler(_req: Request<()>) -> tide::Result {
 /// When the server is running but unable to process requests
 /// normally, a response with status 503 and payload {"status":
 /// "unavailable"} should be added.
-async fn healthcheck(_req: tide::Request<()>) -> Result<tide::Response, tide::Error> {
+async fn healthcheck(req: tide::Request<WebState>) -> Result<tide::Response, tide::Error> {
+    let status = req.state().health_status.read().unwrap()/*.await*/;
     Ok(tide::Response::builder(StatusCode::Ok)
         .content_type(mime::JSON)
-        .body(tide::prelude::json!({"status": "available"}))
+        .body(tide::prelude::json!({"status": status.to_string() }))
         .build())
 }
 
-#[async_std::main]
-async fn main() -> tide::Result<()> {
-    let cwd = env::current_dir().unwrap();
-    let api_path = [cwd, "api/api.toml".into()].iter().collect::<PathBuf>();
-    let api = load_messages(&api_path);
-    println!("{}", api["meta"]["FORMAT_VERSION"]);
-
+fn exercise_router() {
     let mut router = Router::new();
     router.add("/*", 1).unwrap();
     router.add("/hello", 2).unwrap();
@@ -77,13 +86,38 @@ async fn main() -> tide::Result<()> {
     );
     assert_eq!(router.matches("/hello").len(), 3);
     assert_eq!(router.matches("/").len(), 1);
+}
+
+#[async_std::main]
+async fn main() -> tide::Result<()> {
+    exercise_router();
+
+    let cwd = env::current_dir().unwrap();
+    let api_path = [cwd, "api/api.toml".into()].iter().collect::<PathBuf>();
+    let api = load_messages(&api_path);
+    println!("{}", api["meta"]["FORMAT_VERSION"]);
 
     tide::log::start();
-    let mut web = tide::new();
-    web.with(tide::log::LogMiddleware::new());
-    web.at("/orders/shoes").post(order_shoes);
-    web.at("/help").get(disco_web_handler);
-    web.at("/heathcheck").get(healthcheck);
-    web.listen("127.0.0.1:8080").await?;
+    let web_state = WebState {
+        health_status: Arc::new(RwLock::new(Available)),
+    };
+    let mut web_server = tide::with_state(web_state.clone());
+    web_server.with(tide::log::LogMiddleware::new());
+
+    web_server.at("/orders/shoes").post(order_shoes);
+    web_server.at("/help").get(disco_web_handler);
+    web_server.at("/healthcheck").get(healthcheck);
+
+    println!("{}", *web_server.state().health_status.read().unwrap());
+    let base_url: &str = "127.0.0.1:8080";
+    web_server.listen(base_url).await?;
     Ok(())
 }
+
+// TODO Show how to modify WebState
+// TODO Add signal handler for orderly shutdown on ^C, etc.
+// TODO Take base_url from an environment variable
+// TODO Take api.toml path from an environment variable
+// TODO Command line arguments
+// TODO CSS
+// TODO Web form
