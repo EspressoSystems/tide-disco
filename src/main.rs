@@ -2,9 +2,8 @@ use async_std::sync::{Arc, RwLock};
 use async_std::task::spawn;
 use async_std::task::JoinHandle;
 use routefinder::Router;
-use signal::process_signals;
+use signal::InterruptHandler;
 use signal_hook::consts::{SIGINT, SIGTERM};
-use signal_hook_async_std::Signals;
 use std::env;
 use std::path::PathBuf;
 use tide::prelude::*;
@@ -17,11 +16,6 @@ use tide::{
 use tide_disco::HealthStatus::*;
 use tide_disco::{load_messages, ServerState};
 mod signal;
-
-//#[derive(Clone)]
-//struct WebState {
-//    health_status: Arc<RwLock<HealthStatus>>,
-//}
 
 type AppState = u8;
 
@@ -115,9 +109,9 @@ pub async fn init_web_server(
 
 #[async_std::main]
 async fn main() -> tide::Result<()> {
-    let signals = Signals::new(&[SIGINT, SIGTERM]).expect("Failed to create signals.");
-    let signals_handle = signals.handle();
-    let signals_task = async_std::task::spawn(process_signals(signals));
+    tide::log::start();
+
+    let interrupt_handler = InterruptHandler::new(&[SIGINT, SIGTERM]);
 
     exercise_router();
 
@@ -126,19 +120,16 @@ async fn main() -> tide::Result<()> {
     let cwd = env::current_dir().unwrap();
     let api_path = [cwd, "api/api.toml".into()].iter().collect::<PathBuf>();
     let api = load_messages(&api_path);
-    println!("{}", api["meta"]["FORMAT_VERSION"]);
-
-    tide::log::start();
+    println!("API version: {}", api["meta"]["FORMAT_VERSION"]);
 
     let web_state = AppServerState {
         health_status: Arc::new(RwLock::new(Starting)),
         app_state: 0,
     };
-    //    let mut web_server = tide::with_state(web_state.clone());
 
-    // // Demonstrate that we can read and write the web server state.
-    // println!("{}", *web_server.state().health_status.read().await);
-    // *web_server.state().health_status.write().await = Available;
+    // Demonstrate that we can read and write the web server state.
+    println!("{}", *web_state.health_status.read().await);
+    *web_state.health_status.write().await = Available;
 
     // TODO Take base_url from an environment variable
     let base_url: &str = "127.0.0.1:8080";
@@ -150,8 +141,7 @@ async fn main() -> tide::Result<()> {
         })
         .await?;
 
-    signals_handle.close();
-    signals_task.await;
+    interrupt_handler.finalize().await;
 
     Ok(())
 }
