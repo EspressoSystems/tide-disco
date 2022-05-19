@@ -1,6 +1,21 @@
+use async_std::sync::{Arc, RwLock};
+use serde::Deserialize;
 use std::fs::read_to_string;
 use std::path::Path;
 use toml;
+
+#[derive(Clone, Debug, Deserialize, strum_macros::Display)]
+pub enum HealthStatus {
+    Starting,
+    Available,
+    Stopping,
+}
+
+#[derive(Clone)]
+pub struct ServerState<AppState> {
+    pub health_status: Arc<RwLock<HealthStatus>>,
+    pub app_state: AppState,
+}
 
 pub fn check_api(_api: toml::Value) -> Result<(), String> {
     Ok(())
@@ -15,13 +30,4 @@ pub fn load_messages(path: &Path) -> toml::Value {
         panic!("{}", err);
     }
     api
-}
-
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn it_works() {
-        let result = 2 + 2;
-        assert_eq!(result, 4);
-    }
 }

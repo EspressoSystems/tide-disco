@@ -20,6 +20,8 @@ markdown = "0.3"
 routefinder = "0.5.0"
 serde = { version = "1.0", features = ["derive"] }
 shellexpand = "2.0"
+signal-hook = "0.3.13"
+signal-hook-async-std = "0.2.2"
 snafu = { version = "0.7", features = ["backtraces"] }
 structopt = { version = "0.3", features = ["paw"] }
 strum = "0.20"
