@@ -1,46 +1,46 @@
 use async_std::prelude::*;
+use async_trait::async_trait;
 use libc::c_int;
 use signal_hook_async_std::{Handle, Signals};
 use std::borrow::Borrow;
-use std::process;
 
-pub fn report_and_exit(signal: i32) {
-    println!("\nReceived signal {}", signal);
-    process::exit(1);
-}
-
-/// Wait for a signal and exit
-pub async fn process_signals(mut signals: Signals) {
-    while let Some(signal) = signals.next().await {
-        report_and_exit(signal)
-    }
-}
-
-pub struct InterruptHandler {
+pub struct InterruptHandle {
     pub handle: Handle,
     pub task: async_std::task::JoinHandle<()>,
 }
 
-impl InterruptHandler {
-    pub fn new<I, S>(signals: I) -> Self
+#[async_trait]
+pub trait Interrupt {
+    fn new<I, S>(signals: I) -> InterruptHandle
     where
         I: IntoIterator<Item = S>,
         S: Borrow<c_int>,
+        Self: Sized + Send + 'static,
     {
         let signals = Signals::new(signals).expect("Failed to create signals.");
 
-        InterruptHandler {
+        InterruptHandle {
             handle: signals.handle(),
-            task: async_std::task::spawn(process_signals(signals)),
+            task: async_std::task::spawn(Self::process_signals(signals)),
         }
     }
 
-    pub async fn finalize(self: Self) {
+    /// Wait for a signal and exit
+    async fn process_signals(mut signals: Signals) {
+        while let Some(signal) = signals.next().await {
+            Self::signal_action(signal)
+        }
+    }
+
+    fn signal_action(signal: i32);
+
+    async fn finalize(&self) {
         // Stop waiting for an interrupt.
         self.handle.close();
 
         // TODO This is here to mimic the example in the documentation, but
         // it doesn't seem to make any difference whether or not it's here. Why?
+        // https://docs.rs/signal-hook-async-std/latest/signal_hook_async_std/
         self.task.await;
     }
 }
