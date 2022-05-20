@@ -2,11 +2,10 @@ use async_std::sync::{Arc, RwLock};
 use async_std::task::spawn;
 use async_std::task::JoinHandle;
 use routefinder::Router;
-use signal::{Interrupt, InterruptHandle};
+use signal::InterruptHandle;
 use signal_hook::consts::{SIGINT, SIGTERM, SIGUSR1};
 use std::env;
 use std::path::PathBuf;
-use std::process;
 use tide::prelude::*;
 use tide::{
     http::headers::HeaderValue,
@@ -110,14 +109,6 @@ pub async fn init_web_server(
     Ok(spawn(web_server.listen(base_url.to_string())))
 }
 
-impl Interrupt for InterruptHandle {
-    fn signal_action(signal: i32) {
-        // TOOD modify web_state based on the signal.
-        println!("\nReceived signal {}", signal);
-        process::exit(1);
-    }
-}
-
 #[async_std::main]
 async fn main() -> tide::Result<()> {
     tide::log::start();
@@ -143,7 +134,7 @@ async fn main() -> tide::Result<()> {
     // TODO Take base_url from an environment variable
     let base_url: &str = "127.0.0.1:8080";
 
-    let interrupt_handler = InterruptHandle::new(&[SIGINT, SIGTERM, SIGUSR1]);
+    let mut interrupt_handler = InterruptHandle::new(&[SIGINT, SIGTERM, SIGUSR1]);
 
     init_web_server(base_url, web_state)
         .await
