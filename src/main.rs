@@ -2,8 +2,8 @@ use async_std::sync::{Arc, RwLock};
 use async_std::task::spawn;
 use async_std::task::JoinHandle;
 use routefinder::Router;
-use signal::InterruptHandler;
-use signal_hook::consts::{SIGINT, SIGTERM};
+use signal::InterruptHandle;
+use signal_hook::consts::{SIGINT, SIGTERM, SIGUSR1};
 use std::env;
 use std::path::PathBuf;
 use tide::prelude::*;
@@ -86,6 +86,8 @@ fn exercise_router() {
     assert_eq!(router.matches("/").len(), 1);
 }
 
+// TODO This belongs in lib.rs or web.rs.
+// TODO The routes should come from api.toml.
 pub async fn init_web_server(
     base_url: &str,
     state: AppServerState,
@@ -111,8 +113,6 @@ pub async fn init_web_server(
 async fn main() -> tide::Result<()> {
     tide::log::start();
 
-    let interrupt_handler = InterruptHandler::new(&[SIGINT, SIGTERM]);
-
     exercise_router();
 
     // Load a TOML file and display something from it.
@@ -133,6 +133,8 @@ async fn main() -> tide::Result<()> {
 
     // TODO Take base_url from an environment variable
     let base_url: &str = "127.0.0.1:8080";
+
+    let mut interrupt_handler = InterruptHandle::new(&[SIGINT, SIGTERM, SIGUSR1]);
 
     init_web_server(base_url, web_state)
         .await

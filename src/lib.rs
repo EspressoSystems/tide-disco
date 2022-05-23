@@ -2,7 +2,6 @@ use async_std::sync::{Arc, RwLock};
 use serde::Deserialize;
 use std::fs::read_to_string;
 use std::path::Path;
-use toml;
 
 #[derive(Clone, Debug, Deserialize, strum_macros::Display)]
 pub enum HealthStatus {
