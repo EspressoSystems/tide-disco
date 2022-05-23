@@ -3,7 +3,6 @@ use async_trait::async_trait;
 use libc::c_int;
 use signal_hook_async_std::{Handle, Signals};
 use std::borrow::Borrow;
-use std::process;
 
 pub struct InterruptHandle {
     pub handle: Handle,
@@ -47,13 +46,5 @@ impl InterruptHandle {
         if let Some(task) = &mut self.task.take() {
             task.await
         }
-    }
-}
-
-impl Interrupt for InterruptHandle {
-    fn signal_action(signal: i32) {
-        // TOOD modify web_state based on the signal.
-        println!("\nReceived signal {}", signal);
-        process::exit(1);
     }
 }

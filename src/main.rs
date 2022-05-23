@@ -1,3 +1,4 @@
+use crate::signal::Interrupt;
 use async_std::sync::{Arc, RwLock};
 use async_std::task::spawn;
 use async_std::task::JoinHandle;
@@ -6,6 +7,7 @@ use signal::InterruptHandle;
 use signal_hook::consts::{SIGINT, SIGTERM, SIGUSR1};
 use std::env;
 use std::path::PathBuf;
+use std::process;
 use tide::prelude::*;
 use tide::{
     http::headers::HeaderValue,
@@ -109,6 +111,14 @@ pub async fn init_web_server(
     Ok(spawn(web_server.listen(base_url.to_string())))
 }
 
+impl Interrupt for InterruptHandle {
+    fn signal_action(signal: i32) {
+        // TOOD modify web_state based on the signal.
+        println!("\nReceived signal {}", signal);
+        process::exit(1);
+    }
+}
+
 #[async_std::main]
 async fn main() -> tide::Result<()> {
     tide::log::start();
@@ -128,7 +138,7 @@ async fn main() -> tide::Result<()> {
     };
 
     // Demonstrate that we can read and write the web server state.
-    println!("{}", *web_state.health_status.read().await);
+    println!("Health Status: {}", *web_state.health_status.read().await);
     *web_state.health_status.write().await = Available;
 
     // TODO Take base_url from an environment variable
