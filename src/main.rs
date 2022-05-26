@@ -2,9 +2,12 @@ use crate::signal::Interrupt;
 use async_std::sync::{Arc, RwLock};
 use async_std::task::spawn;
 use async_std::task::JoinHandle;
+use clap::Parser;
+use config::Config;
 use routefinder::Router;
 use signal::InterruptHandle;
 use signal_hook::consts::{SIGINT, SIGTERM, SIGUSR1};
+use std::collections::HashMap;
 use std::env;
 use std::path::PathBuf;
 use std::process;
@@ -17,9 +20,20 @@ use tide::{
 };
 use tide_disco::HealthStatus::*;
 use tide_disco::{load_messages, ServerState};
+use toml::value::Value;
+use url::Url;
+
 mod signal;
 
-type AppState = u8;
+/// Simple program to greet a person
+#[derive(Parser, Debug)]
+#[clap(author, version, about, long_about = None)]
+struct Args {
+    #[clap(long)]
+    base_url: Option<Url>,
+}
+
+type AppState = Value;
 
 type AppServerState = ServerState<AppState>;
 
@@ -34,20 +48,13 @@ async fn order_shoes(mut req: Request<AppServerState>) -> tide::Result {
     Ok(format!("Hello, {}! I've put in an order for {} shoes", name, legs).into())
 }
 
-const MINIMAL_HTML: &str = "<!doctype html>
-<html lang='en'>
-  <head>
-    <meta charset='utf-8'>
-    <title>Help</title>
-  </head>
-  <body>
-    <p>Help text goes here.</p>
-  </body>
-</html>";
-
-async fn disco_web_handler(_req: Request<AppServerState>) -> tide::Result {
+async fn disco_web_handler(req: Request<AppServerState>) -> tide::Result {
     Ok(Response::builder(StatusCode::Ok)
-        .body(MINIMAL_HTML)
+        .body(
+            req.state().app_state["meta"]["MINIMAL_HTML"]
+                .as_str()
+                .expect("Expected [meta] MINIMAL_HTML to be a string."),
+        )
         .content_type(mime::HTML)
         .build())
 }
@@ -91,7 +98,7 @@ fn exercise_router() {
 // TODO This belongs in lib.rs or web.rs.
 // TODO The routes should come from api.toml.
 pub async fn init_web_server(
-    base_url: &str,
+    base_url: &Url,
     state: AppServerState,
 ) -> std::io::Result<JoinHandle<std::io::Result<()>>> {
     let mut web_server = tide::with_state(state);
@@ -121,6 +128,38 @@ impl Interrupt for InterruptHandle {
 
 #[async_std::main]
 async fn main() -> tide::Result<()> {
+    // In the config-rs crate, environment variable names are
+    // converted to lower case, but keys in files are not, so if we
+    // want environment variables to override file value, we must make
+    // file keys lower case. (I think this is a config-rs bug.)
+    // https://github.com/mehcode/config-rs/issues/340
+    let settings = Config::builder()
+        .set_default("base_url", "http://localhost/default")?
+        .add_source(config::File::with_name("config/app.toml"))
+        .add_source(config::Environment::with_prefix("APP"))
+        .build()
+        .unwrap();
+    if let Ok(base) = settings.get_string("base_url") {
+        println!("Config: {}", base);
+    } else {
+        println!("Config: Not happening");
+    }
+
+    println!(
+        "{:?}",
+        settings
+            .try_deserialize::<HashMap<String, String>>()
+            .unwrap()
+    );
+
+    let args = Args::parse();
+
+    // TODO Take base_url from an environment variable
+    let base_url = args
+        .base_url
+        .unwrap_or_else(|| Url::parse("http://127.0.0.1:8080").unwrap());
+    println!("Base URL: {}", base_url.to_string());
+
     tide::log::start();
 
     exercise_router();
@@ -134,19 +173,16 @@ async fn main() -> tide::Result<()> {
 
     let web_state = AppServerState {
         health_status: Arc::new(RwLock::new(Starting)),
-        app_state: 0,
+        app_state: api,
     };
 
     // Demonstrate that we can read and write the web server state.
     println!("Health Status: {}", *web_state.health_status.read().await);
     *web_state.health_status.write().await = Available;
 
-    // TODO Take base_url from an environment variable
-    let base_url: &str = "127.0.0.1:8080";
-
     let mut interrupt_handler = InterruptHandle::new(&[SIGINT, SIGTERM, SIGUSR1]);
 
-    init_web_server(base_url, web_state)
+    init_web_server(&base_url, web_state)
         .await
         .unwrap_or_else(|err| {
             panic!("Web server exited with an error: {}", err);

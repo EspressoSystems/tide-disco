@@ -8,9 +8,10 @@ repository = "https://github.com/EspressoSystems/tide-disco"
 license-file = "LICENSE"
 
 [dependencies]
-# async-std = { version = "1.9.0", features = ["unstable", "attributes"] }
 async-std = { version = "1.8.0", features = ["attributes"] }
 async-trait = "0.1.51"
+clap = { version = "3.1.18", features = ["derive"] }
+config = "0.13.1"
 futures = "0.3.0"
 futures-util = "0.3.8"
 http = "0.2.7"
@@ -24,7 +25,6 @@ shellexpand = "2.0"
 signal-hook = "0.3.14"
 signal-hook-async-std = "0.2.2"
 snafu = { version = "0.7", features = ["backtraces"] }
-structopt = { version = "0.3", features = ["paw"] }
 strum = "0.20"
 strum_macros = "0.20.1"
 surf = "2.3.2"
@@ -37,3 +37,4 @@ tracing-distributed = "0.4"
 tracing-futures = "0.2"
 tracing-log = "0.1.2"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+url = "2.2.2"
