@@ -1,17 +1,14 @@
 use crate::signal::Interrupt;
 use async_std::sync::{Arc, RwLock};
-use clap::{CommandFactory, Parser};
-use config::{Config, ConfigError};
-use routefinder::Router;
+use clap::Parser;
 use signal::InterruptHandle;
 use signal_hook::consts::{SIGINT, SIGTERM, SIGUSR1};
-use std::collections::HashMap;
-use std::env;
-use std::path::PathBuf;
-use std::process;
+use std::{path::PathBuf, process};
 use tide::{log, log::info};
-use tide_disco::HealthStatus::*;
-use tide_disco::{init_web_server, load_messages, AppServerState};
+use tide_disco::{
+    exercise_router, get_api_path, get_settings, init_web_server, load_api, AppServerState,
+    HealthStatus::*,
+};
 use url::Url;
 
 mod signal;
@@ -25,28 +22,6 @@ struct Args {
     api_toml: Option<PathBuf>,
 }
 
-fn exercise_router() {
-    let mut router = Router::new();
-    router.add("/*", 1).unwrap();
-    router.add("/hello", 2).unwrap();
-    router.add("/:greeting", 3).unwrap();
-    router.add("/hey/:world", 4).unwrap();
-    router.add("/hey/earth", 5).unwrap();
-    router.add("/:greeting/:world/*", 6).unwrap();
-
-    assert_eq!(*router.best_match("/hey/earth").unwrap(), 5);
-    assert_eq!(
-        router
-            .best_match("/hey/mars")
-            .unwrap()
-            .captures()
-            .get("world"),
-        Some("mars")
-    );
-    assert_eq!(router.matches("/hello").len(), 3);
-    assert_eq!(router.matches("/").len(), 1);
-}
-
 impl Interrupt for InterruptHandle {
     fn signal_action(signal: i32) {
         // TOOD modify web_state based on the signal.
@@ -55,56 +30,11 @@ impl Interrupt for InterruptHandle {
     }
 }
 
-///
-fn get_api_path(api_toml: &str) -> PathBuf {
-    [env::current_dir().unwrap(), api_toml.into()]
-        .iter()
-        .collect::<PathBuf>()
-}
-
-/// Convert the command line arguments for the config-rs crate
-fn get_cmd_line_map() -> config::Environment {
-    config::Environment::default().source(Some({
-        let mut cla = HashMap::new();
-        let matches = Args::command().get_matches();
-        for arg in Args::command().get_arguments() {
-            if let Some(value) = matches.value_of(arg.get_id()) {
-                let key = arg.get_id().replace('-', "_");
-                cla.insert(key, value.to_owned());
-            }
-        }
-        cla
-    }))
-}
-
-/// Get the application configuration.
-///
-/// Gets the configuration from
-/// - Defaults in the source
-/// - A configuration file config/app.toml
-/// - Command line arguments
-/// - Environment variables
-/// Last one wins. Additional file sources can be added.
-fn get_settings() -> Result<Config, ConfigError> {
-    // In the config-rs crate, environment variable names are
-    // converted to lower case, but keys in files are not, so if we
-    // want environment variables to override file value, we must make
-    // file keys lower case. This is a config-rs bug. See
-    // https://github.com/mehcode/config-rs/issues/340
-    Config::builder()
-        .set_default("base_url", "http://localhost/default")?
-        .set_default("api_toml", "api/api.toml")?
-        .add_source(config::File::with_name("config/app.toml"))
-        .add_source(get_cmd_line_map())
-        .add_source(config::Environment::with_prefix("APP"))
-        .build()
-}
-
 #[async_std::main]
 async fn main() -> tide::Result<()> {
     log::start();
 
-    let settings = get_settings()?;
+    let settings = get_settings::<Args>()?;
     info!("{:?}", settings);
 
     // Fetch the configuration values before any slow operations.
@@ -114,7 +44,7 @@ async fn main() -> tide::Result<()> {
     exercise_router();
 
     // Load a TOML file and display something from it.
-    let api = load_messages(&get_api_path(api_toml));
+    let api = load_api(&get_api_path(api_toml));
     info!(
         "API version: {}",
         api["meta"]["FORMAT_VERSION"]
@@ -131,6 +61,7 @@ async fn main() -> tide::Result<()> {
     info!("Health Status: {}", *web_state.health_status.read().await);
     *web_state.health_status.write().await = Available;
 
+    // Activate the handler for ^C, etc.
     let mut interrupt_handler = InterruptHandle::new(&[SIGINT, SIGTERM, SIGUSR1]);
     init_web_server(&base_url, web_state)
         .await
