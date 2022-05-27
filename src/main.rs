@@ -2,8 +2,8 @@ use crate::signal::Interrupt;
 use async_std::sync::{Arc, RwLock};
 use async_std::task::spawn;
 use async_std::task::JoinHandle;
-use clap::Parser;
-use config::Config;
+use clap::{CommandFactory, Parser};
+use config::{Config, ConfigError};
 use routefinder::Router;
 use signal::InterruptHandle;
 use signal_hook::consts::{SIGINT, SIGTERM, SIGUSR1};
@@ -25,12 +25,13 @@ use url::Url;
 
 mod signal;
 
-/// Simple program to greet a person
 #[derive(Parser, Debug)]
 #[clap(author, version, about, long_about = None)]
 struct Args {
     #[clap(long)]
     base_url: Option<Url>,
+    #[clap(long)]
+    api_toml: Option<PathBuf>,
 }
 
 type AppState = Value;
@@ -98,9 +99,10 @@ fn exercise_router() {
 // TODO This belongs in lib.rs or web.rs.
 // TODO The routes should come from api.toml.
 pub async fn init_web_server(
-    base_url: &Url,
+    base_url: &str,
     state: AppServerState,
 ) -> std::io::Result<JoinHandle<std::io::Result<()>>> {
+    let base_url = Url::parse(base_url).unwrap();
     let mut web_server = tide::with_state(state);
     web_server.with(
         CorsMiddleware::new()
@@ -126,50 +128,72 @@ impl Interrupt for InterruptHandle {
     }
 }
 
-#[async_std::main]
-async fn main() -> tide::Result<()> {
+///
+fn get_api_path(api_toml: &str) -> PathBuf {
+    [env::current_dir().unwrap(), api_toml.into()]
+        .iter()
+        .collect::<PathBuf>()
+}
+
+/// Convert the command line arguments for the config-rs crate
+fn get_cmd_line_map() -> config::Environment {
+    config::Environment::default().source(Some({
+        let mut cla = HashMap::new();
+        let matches = Args::command().get_matches();
+        for arg in Args::command().get_arguments() {
+            if let Some(value) = matches.value_of(arg.get_id()) {
+                let key = arg.get_id().replace('-', "_");
+                cla.insert(key, value.to_owned());
+            }
+        }
+        cla
+    }))
+}
+
+/// Get the application configuration.
+///
+/// Gets the configuration from
+/// - Defaults in the source
+/// - A configuration file config/app.toml
+/// - Command line arguments
+/// - Environment variables
+/// Last one wins. Additional file sources can be added.
+fn get_settings() -> Result<Config, ConfigError> {
     // In the config-rs crate, environment variable names are
     // converted to lower case, but keys in files are not, so if we
     // want environment variables to override file value, we must make
-    // file keys lower case. (I think this is a config-rs bug.)
+    // file keys lower case. This is a config-rs bug. See
     // https://github.com/mehcode/config-rs/issues/340
-    let settings = Config::builder()
+    Config::builder()
         .set_default("base_url", "http://localhost/default")?
+        .set_default("api_toml", "api/api.toml")?
         .add_source(config::File::with_name("config/app.toml"))
+        .add_source(get_cmd_line_map())
         .add_source(config::Environment::with_prefix("APP"))
         .build()
-        .unwrap();
-    if let Ok(base) = settings.get_string("base_url") {
-        println!("Config: {}", base);
-    } else {
-        println!("Config: Not happening");
-    }
+}
 
-    println!(
-        "{:?}",
-        settings
-            .try_deserialize::<HashMap<String, String>>()
-            .unwrap()
-    );
-
-    let args = Args::parse();
-
-    // TODO Take base_url from an environment variable
-    let base_url = args
-        .base_url
-        .unwrap_or_else(|| Url::parse("http://127.0.0.1:8080").unwrap());
-    println!("Base URL: {}", base_url.to_string());
-
+#[async_std::main]
+async fn main() -> tide::Result<()> {
     tide::log::start();
+
+    let settings = get_settings()?;
+    tide::log::info!("{:?}", settings);
+
+    // Fetch the configuration values before any slow operations.
+    let api_toml = &settings.get_string("api_toml")?;
+    let base_url = &settings.get_string("base_url")?;
 
     exercise_router();
 
     // Load a TOML file and display something from it.
-    // TODO Take api.toml path from an environment variable
-    let cwd = env::current_dir().unwrap();
-    let api_path = [cwd, "api/api.toml".into()].iter().collect::<PathBuf>();
-    let api = load_messages(&api_path);
-    println!("API version: {}", api["meta"]["FORMAT_VERSION"]);
+    let api = load_messages(&get_api_path(api_toml));
+    tide::log::info!(
+        "API version: {}",
+        api["meta"]["FORMAT_VERSION"]
+            .as_str()
+            .expect("Expecting string.")
+    );
 
     let web_state = AppServerState {
         health_status: Arc::new(RwLock::new(Starting)),
@@ -177,11 +201,10 @@ async fn main() -> tide::Result<()> {
     };
 
     // Demonstrate that we can read and write the web server state.
-    println!("Health Status: {}", *web_state.health_status.read().await);
+    tide::log::info!("Health Status: {}", *web_state.health_status.read().await);
     *web_state.health_status.write().await = Available;
 
     let mut interrupt_handler = InterruptHandle::new(&[SIGINT, SIGTERM, SIGUSR1]);
-
     init_web_server(&base_url, web_state)
         .await
         .unwrap_or_else(|err| {
@@ -194,7 +217,9 @@ async fn main() -> tide::Result<()> {
     Ok(())
 }
 
-// TODO Add signal handler for orderly shutdown on ^C, etc.
-// TODO Command line arguments
 // TODO CSS
+// TODO add favicon.ico
 // TODO Web form
+// TODO keys for set_default have no typo checking.
+// TODO include timestamp in logs
+// TODO make tide logs one line each

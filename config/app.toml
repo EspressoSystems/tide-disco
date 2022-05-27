@@ -1,0 +1,6 @@
+# Note: It is only possible to override keys that are lower case.
+# This is a bug in the config crate.
+# See https://github.com/mehcode/config-rs/issues/340
+
+base_url="http://localhost:9000/file"
+api_toml="api/api.toml"
