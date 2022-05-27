@@ -1,7 +1,5 @@
 use crate::signal::Interrupt;
 use async_std::sync::{Arc, RwLock};
-use async_std::task::spawn;
-use async_std::task::JoinHandle;
 use clap::{CommandFactory, Parser};
 use config::{Config, ConfigError};
 use routefinder::Router;
@@ -11,16 +9,9 @@ use std::collections::HashMap;
 use std::env;
 use std::path::PathBuf;
 use std::process;
-use tide::prelude::*;
-use tide::{
-    http::headers::HeaderValue,
-    http::mime,
-    security::{CorsMiddleware, Origin},
-    Request, Response, StatusCode,
-};
+use tide::{log, log::info};
 use tide_disco::HealthStatus::*;
-use tide_disco::{load_messages, ServerState};
-use toml::value::Value;
+use tide_disco::{init_web_server, load_messages, AppServerState};
 use url::Url;
 
 mod signal;
@@ -32,46 +23,6 @@ struct Args {
     base_url: Option<Url>,
     #[clap(long)]
     api_toml: Option<PathBuf>,
-}
-
-type AppState = Value;
-
-type AppServerState = ServerState<AppState>;
-
-#[derive(Clone, Debug, Deserialize)]
-struct Animal {
-    name: String,
-    legs: u16,
-}
-
-async fn order_shoes(mut req: Request<AppServerState>) -> tide::Result {
-    let Animal { name, legs } = req.body_json().await?;
-    Ok(format!("Hello, {}! I've put in an order for {} shoes", name, legs).into())
-}
-
-async fn disco_web_handler(req: Request<AppServerState>) -> tide::Result {
-    Ok(Response::builder(StatusCode::Ok)
-        .body(
-            req.state().app_state["meta"]["MINIMAL_HTML"]
-                .as_str()
-                .expect("Expected [meta] MINIMAL_HTML to be a string."),
-        )
-        .content_type(mime::HTML)
-        .build())
-}
-
-/// Return a JSON expression with status 200 indicating the server
-/// is up and running. The JSON expression is simply,
-///    {"status": "available"}
-/// When the server is running but unable to process requests
-/// normally, a response with status 503 and payload {"status":
-/// "unavailable"} should be added.
-async fn healthcheck(req: tide::Request<AppServerState>) -> Result<tide::Response, tide::Error> {
-    let status = req.state().health_status.read().await;
-    Ok(tide::Response::builder(StatusCode::Ok)
-        .content_type(mime::JSON)
-        .body(tide::prelude::json!({"status": status.to_string() }))
-        .build())
 }
 
 fn exercise_router() {
@@ -94,30 +45,6 @@ fn exercise_router() {
     );
     assert_eq!(router.matches("/hello").len(), 3);
     assert_eq!(router.matches("/").len(), 1);
-}
-
-// TODO This belongs in lib.rs or web.rs.
-// TODO The routes should come from api.toml.
-pub async fn init_web_server(
-    base_url: &str,
-    state: AppServerState,
-) -> std::io::Result<JoinHandle<std::io::Result<()>>> {
-    let base_url = Url::parse(base_url).unwrap();
-    let mut web_server = tide::with_state(state);
-    web_server.with(
-        CorsMiddleware::new()
-            .allow_methods("GET, POST".parse::<HeaderValue>().unwrap())
-            .allow_headers("*".parse::<HeaderValue>().unwrap())
-            .allow_origin(Origin::from("*"))
-            .allow_credentials(true),
-    );
-    web_server.with(tide::log::LogMiddleware::new());
-
-    web_server.at("/orders/shoes").post(order_shoes);
-    web_server.at("/help").get(disco_web_handler);
-    web_server.at("/healthcheck").get(healthcheck);
-
-    Ok(spawn(web_server.listen(base_url.to_string())))
 }
 
 impl Interrupt for InterruptHandle {
@@ -175,10 +102,10 @@ fn get_settings() -> Result<Config, ConfigError> {
 
 #[async_std::main]
 async fn main() -> tide::Result<()> {
-    tide::log::start();
+    log::start();
 
     let settings = get_settings()?;
-    tide::log::info!("{:?}", settings);
+    info!("{:?}", settings);
 
     // Fetch the configuration values before any slow operations.
     let api_toml = &settings.get_string("api_toml")?;
@@ -188,7 +115,7 @@ async fn main() -> tide::Result<()> {
 
     // Load a TOML file and display something from it.
     let api = load_messages(&get_api_path(api_toml));
-    tide::log::info!(
+    info!(
         "API version: {}",
         api["meta"]["FORMAT_VERSION"]
             .as_str()
@@ -201,7 +128,7 @@ async fn main() -> tide::Result<()> {
     };
 
     // Demonstrate that we can read and write the web server state.
-    tide::log::info!("Health Status: {}", *web_state.health_status.read().await);
+    info!("Health Status: {}", *web_state.health_status.read().await);
     *web_state.health_status.write().await = Available;
 
     let mut interrupt_handler = InterruptHandle::new(&[SIGINT, SIGTERM, SIGUSR1]);
@@ -217,6 +144,10 @@ async fn main() -> tide::Result<()> {
     Ok(())
 }
 
+// TODO Make the discoverability stuff work
+// - Configure default routes
+// - Populate our own router from api.toml
+// -
 // TODO CSS
 // TODO add favicon.ico
 // TODO Web form
