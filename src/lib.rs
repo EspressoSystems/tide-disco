@@ -14,12 +14,11 @@ use std::{
 use tide::{
     http::headers::HeaderValue,
     http::mime,
-    log,
-    log::info,
     security::{CorsMiddleware, Origin},
     Request, Response, StatusCode,
 };
 use toml::value::Value;
+use tracing::info;
 use url::Url;
 
 #[derive(Clone, Debug, Deserialize, strum_macros::Display)]
@@ -85,7 +84,7 @@ pub async fn order_shoes(mut req: Request<AppServerState>) -> tide::Result {
 //----------------
 
 pub async fn disco_web_handler(req: Request<AppServerState>) -> tide::Result {
-    info!("uri: {}", req.url());
+    info!("url: {}", req.url());
     Ok(Response::builder(StatusCode::Ok)
         .body(
             req.state().app_state["meta"]["MINIMAL_HTML"]
@@ -111,7 +110,6 @@ pub async fn init_web_server(
             .allow_origin(Origin::from("*"))
             .allow_credentials(true),
     );
-    web_server.with(log::LogMiddleware::new());
 
     web_server.at("/orders/shoes").post(order_shoes);
 

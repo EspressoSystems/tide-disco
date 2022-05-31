@@ -19,6 +19,7 @@ itertools = "0.10.3"
 lazy_static = "1.4.0"
 libc = "0.2.126"
 markdown = "0.3"
+parking_lot = "0.12.0"
 routefinder = "0.5.0"
 serde = { version = "1.0", features = ["derive"] }
 shellexpand = "2.0"
@@ -29,12 +30,12 @@ strum = "0.20"
 strum_macros = "0.20.1"
 surf = "2.3.2"
 tagged-base64 = { git = "https://github.com/EspressoSystems/tagged-base64.git", tag = "0.1.0" }
-tide = "0.16.0"
+tide = { version = "0.16.0", default-features = false }
 tide-websockets = "0.4.0"
 toml = "0.5"
-tracing = "0.1.26"
+tracing = "0.1.32"
 tracing-distributed = "0.4"
 tracing-futures = "0.2"
 tracing-log = "0.1.2"
-tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+tracing-subscriber = { version = "0.3.10", features = ["env-filter", "json"] }
 url = "2.2.2"

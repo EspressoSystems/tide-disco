@@ -1,14 +1,15 @@
 use crate::signal::Interrupt;
 use async_std::sync::{Arc, RwLock};
 use clap::Parser;
+use config::ConfigError;
 use signal::InterruptHandle;
 use signal_hook::consts::{SIGINT, SIGTERM, SIGUSR1};
 use std::{path::PathBuf, process};
-use tide::{log, log::info};
 use tide_disco::{
     exercise_router, get_api_path, get_settings, init_web_server, load_api, AppServerState,
     HealthStatus::*,
 };
+use tracing::info;
 use url::Url;
 
 mod signal;
@@ -31,8 +32,12 @@ impl Interrupt for InterruptHandle {
 }
 
 #[async_std::main]
-async fn main() -> tide::Result<()> {
-    log::start();
+async fn main() -> Result<(), ConfigError> {
+    let builder = tracing_subscriber::fmt()
+        .with_env_filter(tracing_subscriber::EnvFilter::from_default_env())
+        .with_filter_reloading();
+    let _ = builder.reload_handle();
+    builder.try_init().unwrap();
 
     let settings = get_settings::<Args>()?;
     info!("{:?}", settings);
@@ -68,7 +73,8 @@ async fn main() -> tide::Result<()> {
         .unwrap_or_else(|err| {
             panic!("Web server exited with an error: {}", err);
         })
-        .await?;
+        .await
+        .unwrap();
 
     interrupt_handler.finalize().await;
 
