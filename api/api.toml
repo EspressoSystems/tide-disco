@@ -9,11 +9,15 @@ HTML_TOP = """
     <title>Title from api.toml</title>
     <link rel='stylesheet' href='public/css/style.css'>
     <script src='public/js/script.js'></script>
+
+    <link rel="icon" type="image/svg+xml"
+     href="public/favicon.svg">
+
   </head>
   <body>
-    <div><img src='public/media/logo.png'
-              alt='Logo'
-              height='64'/></div>
+    <div><img src='public/espressosys_logo.svg'
+              alt='Espresso Systems Logo'
+              /></div>
     <h1>Heading in api.toml</h1>
     <p>Text introducing the collected documentation</p>
 """
@@ -21,6 +25,7 @@ HTML_TOP = """
 HTML_BOTTOM = """
   <h1>Heading at the bottom</h1>
   <p>Text at the bottom. Maybe a copyright notice or link.</p>
+  <p>Copyright © 2022 Espresso Systems. All rights reserved.</p>
   </body>
 </html>
 """

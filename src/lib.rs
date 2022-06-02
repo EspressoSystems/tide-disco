@@ -83,6 +83,93 @@ pub async fn order_shoes(mut req: Request<AppServerState>) -> tide::Result {
 }
 //----------------
 
+/// Compose `api.toml` into HTML.
+///
+/// This function iterates over the routes, adding headers and HTML class attributes to make
+/// a documentation page for the web API.
+///
+/// The results of this could be precomputed and cached.
+pub async fn compose_help(
+    req: tide::Request<AppServerState>,
+) -> Result<tide::Response, tide::Error> {
+    let api = &req.state().app_state;
+    let meta = &api["meta"];
+    let mut help = meta["HTML_TOP"]
+        .as_str()
+        .expect("HTML_TOP must be a string in api.toml")
+        .to_owned();
+    if let Some(api_map) = api["route"].as_table() {
+        api_map.values().for_each(|entry| {
+            let paths = entry["PATH"].as_array().expect("Expecting TOML array.");
+            let first_path = paths[0].as_str().expect("Expecting TOML string.");
+            let first_segment = first_path.split_once('/').unwrap_or((first_path, "")).0;
+            help += &format!(
+                "<a name='{}'><h3 class='entry'>{}</h3></a>\n<h3>{}</h3>",
+                first_segment,
+                first_segment,
+                &meta["HEADING_ROUTES"]
+                    .as_str()
+                    .expect("HEADING_ROUTES must be a string in api.toml")
+            );
+            for path in paths.iter() {
+                help += &format!(
+                    "<p class='path'>{}</p>\n",
+                    path.as_str()
+                        .expect("PATH must be an array of strings in api.toml")
+                );
+            }
+            help += &format!(
+                "<h3>{}</h3>\n<table>\n",
+                &meta["HEADING_PARAMETERS"]
+                    .as_str()
+                    .expect("HEADING_PARAMETERS must be a string in api.toml")
+            );
+            let mut has_parameters = false;
+            for (parameter, ptype) in entry
+                .as_table()
+                .expect("Route definitions must be tables in api.toml")
+                .iter()
+            {
+                if parameter.starts_with(':') {
+                    has_parameters = true;
+                    help += &format!(
+                        "<tr><td class='parameter'>{}</td><td class='type'>{}</td></tr>\n",
+                        parameter.strip_prefix(':').unwrap(),
+                        ptype
+                            .as_str()
+                            .expect("Parameter types must be strings in api.toml")
+                    );
+                }
+            }
+            if !has_parameters {
+                help += "<div class='meta'>None</div>";
+            }
+            help += &format!(
+                "</table>\n<h3>{}</h3>\n{}\n",
+                &meta["HEADING_DESCRIPTION"]
+                    .as_str()
+                    .expect("HEADING_DESCRIPTION must be a string in api.toml"),
+                markdown::to_html(
+                    entry["DOC"]
+                        .as_str()
+                        .expect("DOC must be a string in api.toml")
+                        .trim()
+                )
+            )
+        });
+    }
+    help += &format!(
+        "{}\n",
+        &api["meta"]["HTML_BOTTOM"]
+            .as_str()
+            .expect("HTML_BOTTOM must be a string in api.toml")
+    );
+    Ok(tide::Response::builder(200)
+        .content_type(tide::http::mime::HTML)
+        .body(help)
+        .build())
+}
+
 pub async fn disco_web_handler(req: Request<AppServerState>) -> tide::Result {
     info!("url: {}", req.url());
     Ok(Response::builder(StatusCode::Ok)
@@ -113,10 +200,11 @@ pub async fn init_web_server(
 
     web_server.at("/orders/shoes").post(order_shoes);
 
-    web_server.at("/help").get(disco_web_handler);
+    web_server.at("/help").get(compose_help);
     web_server.at("/healthcheck").get(healthcheck);
     web_server.at("/").all(disco_web_handler);
     web_server.at("/*").all(disco_web_handler);
+    web_server.at("/public").serve_dir("public/media/")?;
 
     Ok(spawn(web_server.listen(base_url.to_string())))
 }

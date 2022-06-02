@@ -33,11 +33,10 @@ impl Interrupt for InterruptHandle {
 
 #[async_std::main]
 async fn main() -> Result<(), ConfigError> {
-    let builder = tracing_subscriber::fmt()
+    tracing_subscriber::fmt()
         .with_env_filter(tracing_subscriber::EnvFilter::from_default_env())
-        .with_filter_reloading();
-    let _ = builder.reload_handle();
-    builder.try_init().unwrap();
+        .try_init()
+        .unwrap();
 
     let settings = get_settings::<Args>()?;
     info!("{:?}", settings);
