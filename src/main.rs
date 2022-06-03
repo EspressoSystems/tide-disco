@@ -49,12 +49,6 @@ async fn main() -> Result<(), ConfigError> {
 
     // Load a TOML file and display something from it.
     let api = load_api(&get_api_path(api_toml));
-    info!(
-        "API version: {}",
-        api["meta"]["FORMAT_VERSION"]
-            .as_str()
-            .expect("Expecting string.")
-    );
 
     let web_state = AppServerState {
         health_status: Arc::new(RwLock::new(Starting)),

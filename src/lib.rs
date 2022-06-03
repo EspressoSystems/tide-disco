@@ -55,8 +55,8 @@ pub fn load_api(path: &Path) -> toml::Value {
 }
 
 /// Return a JSON expression with status 200 indicating the server
-/// is up and running. The JSON expression is simply,
-///    {"status": "available"}
+/// is up and running. The JSON expression is normally
+///    {"status": "Available"}
 /// When the server is running but unable to process requests
 /// normally, a response with status 503 and payload {"status":
 /// "unavailable"} should be added.
@@ -70,23 +70,31 @@ pub async fn healthcheck(
         .build())
 }
 
-//----------------
-#[derive(Clone, Debug, Deserialize)]
-pub struct Animal {
-    pub name: String,
-    pub legs: u16,
+// Get a string from a toml::Value or panic.
+fn vs(v: &Value) -> &str {
+    v.as_str().expect(&format!(
+        "Expecting TOML string, but found type {}: {:?}",
+        v.type_str(),
+        v
+    ))
 }
 
-pub async fn order_shoes(mut req: Request<AppServerState>) -> tide::Result {
-    let Animal { name, legs } = req.body_json().await?;
-    Ok(format!("Hello, {}! I've put in an order for {} shoes", name, legs).into())
+// Get a string from an array toml::Value or panic.
+fn vk(v: &Value, key: &str) -> String {
+    v[key]
+        .as_str()
+        .expect(&format!(
+            "Expecting TOML string for {}, but found type {}",
+            key,
+            v[key].type_str()
+        ))
+        .to_string()
 }
-//----------------
 
 /// Compose `api.toml` into HTML.
 ///
-/// This function iterates over the routes, adding headers and HTML class attributes to make
-/// a documentation page for the web API.
+/// This function iterates over the routes, adding headers and HTML
+/// class attributes to make a documentation page for the web API.
 ///
 /// The results of this could be precomputed and cached.
 pub async fn compose_help(
@@ -94,36 +102,26 @@ pub async fn compose_help(
 ) -> Result<tide::Response, tide::Error> {
     let api = &req.state().app_state;
     let meta = &api["meta"];
-    let mut help = meta["HTML_TOP"]
-        .as_str()
-        .expect("HTML_TOP must be a string in api.toml")
-        .to_owned();
+    let version = vk(meta, "FORMAT_VERSION");
+    let mut help = vk(meta, "HTML_TOP")
+        .to_owned()
+        .replace("{{FORMAT_VERSION}}", &version);
     if let Some(api_map) = api["route"].as_table() {
         api_map.values().for_each(|entry| {
             let paths = entry["PATH"].as_array().expect("Expecting TOML array.");
-            let first_path = paths[0].as_str().expect("Expecting TOML string.");
+            let first_path = vs(&paths[0]);
             let first_segment = first_path.split_once('/').unwrap_or((first_path, "")).0;
-            help += &format!(
-                "<a name='{}'><h3 class='entry'>{}</h3></a>\n<h3>{}</h3>",
-                first_segment,
-                first_segment,
-                &meta["HEADING_ROUTES"]
-                    .as_str()
-                    .expect("HEADING_ROUTES must be a string in api.toml")
-            );
+            help += &vk(meta, "HEADING_ENTRY")
+                .to_owned()
+                .replace("{{NAME}}", &first_segment);
+            help += &vk(meta, "HEADING_ROUTES");
             for path in paths.iter() {
-                help += &format!(
-                    "<p class='path'>{}</p>\n",
-                    path.as_str()
-                        .expect("PATH must be an array of strings in api.toml")
-                );
+                help += &vk(meta, "ROUTE_PATH")
+                    .to_owned()
+                    .replace("{{PATH}}", vs(&path));
             }
-            help += &format!(
-                "<h3>{}</h3>\n<table>\n",
-                &meta["HEADING_PARAMETERS"]
-                    .as_str()
-                    .expect("HEADING_PARAMETERS must be a string in api.toml")
-            );
+            help += &vk(meta, "HEADING_PARAMETERS");
+            help += &vk(meta, "PARAMETER_TABLE_OPEN");
             let mut has_parameters = false;
             for (parameter, ptype) in entry
                 .as_table()
@@ -132,38 +130,22 @@ pub async fn compose_help(
             {
                 if parameter.starts_with(':') {
                     has_parameters = true;
-                    help += &format!(
-                        "<tr><td class='parameter'>{}</td><td class='type'>{}</td></tr>\n",
-                        parameter.strip_prefix(':').unwrap(),
-                        ptype
-                            .as_str()
-                            .expect("Parameter types must be strings in api.toml")
-                    );
+                    let pname = parameter.strip_prefix(':').unwrap();
+                    help += &vk(meta, "PARAMETER_ROW")
+                        .to_owned()
+                        .replace("{{NAME}}", pname)
+                        .replace("{{TYPE}}", vs(&ptype));
                 }
             }
             if !has_parameters {
-                help += "<div class='meta'>None</div>";
+                help += &vk(meta, "PARAMETER_NONE");
             }
-            help += &format!(
-                "</table>\n<h3>{}</h3>\n{}\n",
-                &meta["HEADING_DESCRIPTION"]
-                    .as_str()
-                    .expect("HEADING_DESCRIPTION must be a string in api.toml"),
-                markdown::to_html(
-                    entry["DOC"]
-                        .as_str()
-                        .expect("DOC must be a string in api.toml")
-                        .trim()
-                )
-            )
+            help += &vk(meta, "PARAMETER_TABLE_CLOSE");
+            help += &vk(meta, "HEADING_DESCRIPTION");
+            help += &markdown::to_html(vk(entry, "DOC").trim())
         });
     }
-    help += &format!(
-        "{}\n",
-        &api["meta"]["HTML_BOTTOM"]
-            .as_str()
-            .expect("HTML_BOTTOM must be a string in api.toml")
-    );
+    help += &format!("{}\n", &vk(meta, "HTML_BOTTOM"));
     Ok(tide::Response::builder(200)
         .content_type(tide::http::mime::HTML)
         .body(help)
@@ -173,11 +155,7 @@ pub async fn compose_help(
 pub async fn disco_web_handler(req: Request<AppServerState>) -> tide::Result {
     info!("url: {}", req.url());
     Ok(Response::builder(StatusCode::Ok)
-        .body(
-            req.state().app_state["meta"]["MINIMAL_HTML"]
-                .as_str()
-                .expect("Expected [meta] MINIMAL_HTML to be a string."),
-        )
+        .body(vk(&req.state().app_state["meta"], "MINIMAL_HTML"))
         .content_type(mime::HTML)
         .build())
 }
@@ -197,8 +175,6 @@ pub async fn init_web_server(
             .allow_origin(Origin::from("*"))
             .allow_credentials(true),
     );
-
-    web_server.at("/orders/shoes").post(order_shoes);
 
     web_server.at("/help").get(compose_help);
     web_server.at("/healthcheck").get(healthcheck);

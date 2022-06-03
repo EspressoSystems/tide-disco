@@ -18,7 +18,7 @@ HTML_TOP = """
     <div><img src='public/espressosys_logo.svg'
               alt='Espresso Systems Logo'
               /></div>
-    <h1>Heading in api.toml</h1>
+    <h1>Application API {{FORMAT_VERSION}}</h1>
     <p>Text introducing the collected documentation</p>
 """
 
@@ -30,18 +30,30 @@ HTML_BOTTOM = """
 </html>
 """
 
-HEADING_ROUTES = "Routes"
-HEADING_PARAMETERS = "Parameters"
-HEADING_DESCRIPTION = "Description"
+HEADING_ENTRY = "<a name='{{NAME}}'><h3 class='entry'>{{NAME}}</h3></a>\n"
+HEADING_ROUTES = "<h3>Routes</h3>\n"
+HEADING_PARAMETERS = "<h3>Parameters</h3>\n"
+HEADING_DESCRIPTION = "<h3>Description</h3>\n"
+
+ROUTE_PATH = "<p class='path'>{{PATH}}</p>\n"
+
+PARAMETER_TABLE_OPEN = "<table>\n"
+PARAMETER_TABLE_CLOSE = "</table>\n\n"
+PARAMETER_ROW = "<tr><td class='parameter'>{{NAME}}</td><td class='type'>{{TYPE}}</td></tr>\n"
+PARAMETER_NONE = "<div class='meta'>None</div>"
 
 MINIMAL_HTML = """
 <!doctype html>
 <html lang='en'>
   <head>
     <meta charset='utf-8'>
+    <link rel='stylesheet' href='public/css/style.css'>
     <title>Help</title>
   </head>
   <body>
+    <div><img src='public/espressosys_logo.svg'
+              alt='Espresso Systems Logo'
+              /></div>
     <h1>Help</h1>
     <p>Help text goes here.</p>
   </body>
@@ -57,4 +69,4 @@ DOC = "Provides complete reference documentation if no endpoint is provided or h
 [route.healthcheck]
 PATH = ["healthcheck"]
 METHOD = "GET"
-DOC = "Provides server status as JSON such as ```{status: Available}```"
+DOC = "Provides server status as JSON such as `{status: Available}`"
