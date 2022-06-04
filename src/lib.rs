@@ -32,6 +32,7 @@ pub enum HealthStatus {
 pub struct ServerState<AppState> {
     pub health_status: Arc<RwLock<HealthStatus>>,
     pub app_state: AppState,
+    pub router: Arc<Router<usize>>,
 }
 
 // TODO This one should be defined by the application
@@ -52,6 +53,21 @@ pub fn load_api(path: &Path) -> toml::Value {
         panic!("{}", err);
     }
     api
+}
+
+pub fn configure_router(api: &toml::Value) -> Arc<Router<usize>> {
+    let mut router = Router::new();
+    if let Some(api_map) = api["route"].as_table() {
+        let mut j = 0usize;
+        api_map.values().for_each(|entry| {
+            let paths = entry["PATH"].as_array().expect("Expecting TOML array.");
+            for path in paths {
+                j = j + 1;
+                router.add(path.as_str().unwrap(), j).unwrap();
+            }
+        })
+    }
+    Arc::new(router)
 }
 
 /// Return a JSON expression with status 200 indicating the server
@@ -153,7 +169,22 @@ pub async fn compose_help(
 }
 
 pub async fn disco_web_handler(req: Request<AppServerState>) -> tide::Result {
-    info!("url: {}", req.url());
+    let router = &req.state().router;
+    let url = req.url();
+    let pat = router.best_match(url.path());
+    info!("url: {}, pattern: {:?}", req.url(), pat);
+    // TODO If the pattern is not None, we might have a valid match or
+    // there may be type errors in the captures. Type check the
+    // captures and report any failures. If the types match, dispatch
+    // to the appropriate handler.
+    // TODO Associate a handler with a pattern somehow. (?)
+
+    // TODO if the pattern is None, we don't have an exact
+    // match. Note, no wildcards were added, so now we fuzzy match and
+    // give closest help
+    // - Does the first segment match?
+    // - Is the first segment spelled incorrectly?
+
     Ok(Response::builder(StatusCode::Ok)
         .body(vk(&req.state().app_state["meta"], "MINIMAL_HTML"))
         .content_type(mime::HTML)

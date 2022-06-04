@@ -6,8 +6,8 @@ use signal::InterruptHandle;
 use signal_hook::consts::{SIGINT, SIGTERM, SIGUSR1};
 use std::{path::PathBuf, process};
 use tide_disco::{
-    exercise_router, get_api_path, get_settings, init_web_server, load_api, AppServerState,
-    HealthStatus::*,
+    configure_router, exercise_router, get_api_path, get_settings, init_web_server, load_api,
+    AppServerState, HealthStatus::*,
 };
 use tracing::info;
 use url::Url;
@@ -49,10 +49,12 @@ async fn main() -> Result<(), ConfigError> {
 
     // Load a TOML file and display something from it.
     let api = load_api(&get_api_path(api_toml));
+    let router = configure_router(&api);
 
     let web_state = AppServerState {
         health_status: Arc::new(RwLock::new(Starting)),
         app_state: api,
+        router: router,
     };
 
     // Demonstrate that we can read and write the web server state.

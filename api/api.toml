@@ -7,15 +7,15 @@ HTML_TOP = """
   <head>
     <meta charset='utf-8'>
     <title>Title from api.toml</title>
-    <link rel='stylesheet' href='public/css/style.css'>
-    <script src='public/js/script.js'></script>
+    <link rel='stylesheet' href='/public/css/style.css'>
+    <script src='/public/js/script.js'></script>
 
-    <link rel="icon" type="image/svg+xml"
-     href="public/favicon.svg">
+    <link rel='icon' type='image/svg+xml'
+     href='/public/favicon.svg'>
 
   </head>
   <body>
-    <div><img src='public/espressosys_logo.svg'
+    <div><img src='/public/espressosys_logo.svg'
               alt='Espresso Systems Logo'
               /></div>
     <h1>Application API {{FORMAT_VERSION}}</h1>
@@ -47,11 +47,11 @@ MINIMAL_HTML = """
 <html lang='en'>
   <head>
     <meta charset='utf-8'>
-    <link rel='stylesheet' href='public/css/style.css'>
+    <link rel='stylesheet' href='/public/css/style.css'>
     <title>Help</title>
   </head>
   <body>
-    <div><img src='public/espressosys_logo.svg'
+    <div><img src='/public/espressosys_logo.svg'
               alt='Espresso Systems Logo'
               /></div>
     <h1>Help</h1>
@@ -61,12 +61,12 @@ MINIMAL_HTML = """
 """
 
 [route.help]
-PATH = ["help", "help/:endpoint"]
+PATH = ["/help", "/help/:endpoint"]
 METHOD = "GET"
 ":endpoint" = "Literal"
 DOC = "Provides complete reference documentation if no endpoint is provided or help on a single endpoint"
 
 [route.healthcheck]
-PATH = ["healthcheck"]
+PATH = ["/healthcheck"]
 METHOD = "GET"
 DOC = "Provides server status as JSON such as `{status: Available}`"
