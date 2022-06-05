@@ -28,6 +28,7 @@ table, th, td { border: none; border-collapse: collapse; padding-right: 1em; }
         margin-left: 3em; margin-top: 0; margin-bottom: 0;
         color: black;
         font-style: italic; }
+.meth { color: gray; font-variant: small-caps; }
 .path { font-size: 1.1em; margin-left: 3em; margin-top: 0; margin-bottom: 0; }
 .parameter { font-size: 1.1em;
              margin-top: 0; margin-bottom: 0;

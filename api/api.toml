@@ -30,7 +30,7 @@ HTML_BOTTOM = """
 </html>
 """
 
-HEADING_ENTRY = "<a name='{{NAME}}'><h3 class='entry'>{{NAME}}</h3></a>\n"
+HEADING_ENTRY = "<a name='{{NAME}}'><h3 class='entry'><span class='meth'>{{METHOD}}</span> {{NAME}}</h3></a>\n"
 HEADING_ROUTES = "<h3>Routes</h3>\n"
 HEADING_PARAMETERS = "<h3>Parameters</h3>\n"
 HEADING_DESCRIPTION = "<h3>Description</h3>\n"
@@ -48,14 +48,14 @@ MINIMAL_HTML = """
   <head>
     <meta charset='utf-8'>
     <link rel='stylesheet' href='/public/css/style.css'>
-    <title>Help</title>
+    <title>{{TITLE}}</title>
   </head>
   <body>
     <div><img src='/public/espressosys_logo.svg'
               alt='Espresso Systems Logo'
               /></div>
-    <h1>Help</h1>
-    <p>Help text goes here.</p>
+    <h1>{{TITLE}}</h1>
+    {{BODY}}
   </body>
 </html>
 """

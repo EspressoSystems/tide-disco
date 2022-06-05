@@ -3,6 +3,7 @@ use async_std::task::spawn;
 use async_std::task::JoinHandle;
 use clap::CommandFactory;
 use config::{Config, ConfigError};
+use edit_distance;
 use routefinder::Router;
 use serde::Deserialize;
 use std::fs::read_to_string;
@@ -107,6 +108,61 @@ fn vk(v: &Value, key: &str) -> String {
         .to_string()
 }
 
+// Given a string delimited by slashes, get the first non-empty
+// segment.
+//
+// For example,
+// - get_first_segment("/foo/bar") -> "foo"
+// - get_first_segment("first/second") -> "first"
+fn get_first_segment(s: &str) -> String {
+    let first_path = s.strip_prefix('/').unwrap_or(s);
+    first_path
+        .split_once('/')
+        .unwrap_or((first_path, ""))
+        .0
+        .to_string()
+}
+
+fn document_route(meta: &toml::Value, entry: &toml::Value) -> String {
+    let mut help: String = "".into();
+    let paths = entry["PATH"].as_array().expect("Expecting TOML array.");
+    let first_segment = get_first_segment(vs(&paths[0]));
+    help += &vk(meta, "HEADING_ENTRY")
+        .to_owned()
+        .replace("{{METHOD}}", &vk(entry, "METHOD"))
+        .replace("{{NAME}}", &first_segment);
+    help += &vk(meta, "HEADING_ROUTES");
+    for path in paths.iter() {
+        help += &vk(meta, "ROUTE_PATH")
+            .to_owned()
+            .replace("{{PATH}}", vs(&path));
+    }
+    help += &vk(meta, "HEADING_PARAMETERS");
+    help += &vk(meta, "PARAMETER_TABLE_OPEN");
+    let mut has_parameters = false;
+    for (parameter, ptype) in entry
+        .as_table()
+        .expect("Route definitions must be tables in api.toml")
+        .iter()
+    {
+        if parameter.starts_with(':') {
+            has_parameters = true;
+            let pname = parameter.strip_prefix(':').unwrap();
+            help += &vk(meta, "PARAMETER_ROW")
+                .to_owned()
+                .replace("{{NAME}}", pname)
+                .replace("{{TYPE}}", vs(&ptype));
+        }
+    }
+    if !has_parameters {
+        help += &vk(meta, "PARAMETER_NONE");
+    }
+    help += &vk(meta, "PARAMETER_TABLE_CLOSE");
+    help += &vk(meta, "HEADING_DESCRIPTION");
+    help += &markdown::to_html(vk(entry, "DOC").trim());
+    help
+}
+
 /// Compose `api.toml` into HTML.
 ///
 /// This function iterates over the routes, adding headers and HTML
@@ -124,41 +180,7 @@ pub async fn compose_help(
         .replace("{{FORMAT_VERSION}}", &version);
     if let Some(api_map) = api["route"].as_table() {
         api_map.values().for_each(|entry| {
-            let paths = entry["PATH"].as_array().expect("Expecting TOML array.");
-            let first_path = vs(&paths[0]);
-            let first_segment = first_path.split_once('/').unwrap_or((first_path, "")).0;
-            help += &vk(meta, "HEADING_ENTRY")
-                .to_owned()
-                .replace("{{NAME}}", &first_segment);
-            help += &vk(meta, "HEADING_ROUTES");
-            for path in paths.iter() {
-                help += &vk(meta, "ROUTE_PATH")
-                    .to_owned()
-                    .replace("{{PATH}}", vs(&path));
-            }
-            help += &vk(meta, "HEADING_PARAMETERS");
-            help += &vk(meta, "PARAMETER_TABLE_OPEN");
-            let mut has_parameters = false;
-            for (parameter, ptype) in entry
-                .as_table()
-                .expect("Route definitions must be tables in api.toml")
-                .iter()
-            {
-                if parameter.starts_with(':') {
-                    has_parameters = true;
-                    let pname = parameter.strip_prefix(':').unwrap();
-                    help += &vk(meta, "PARAMETER_ROW")
-                        .to_owned()
-                        .replace("{{NAME}}", pname)
-                        .replace("{{TYPE}}", vs(&ptype));
-                }
-            }
-            if !has_parameters {
-                help += &vk(meta, "PARAMETER_NONE");
-            }
-            help += &vk(meta, "PARAMETER_TABLE_CLOSE");
-            help += &vk(meta, "HEADING_DESCRIPTION");
-            help += &markdown::to_html(vk(entry, "DOC").trim())
+            help += &document_route(meta, entry);
         });
     }
     help += &format!("{}\n", &vk(meta, "HTML_BOTTOM"));
@@ -170,8 +192,9 @@ pub async fn compose_help(
 
 pub async fn disco_web_handler(req: Request<AppServerState>) -> tide::Result {
     let router = &req.state().router;
-    let url = req.url();
-    let pat = router.best_match(url.path());
+    let url = req.url(); // TODO used once
+    let path = url.path();
+    let pat = router.best_match(path);
     info!("url: {}, pattern: {:?}", req.url(), pat);
     // TODO If the pattern is not None, we might have a valid match or
     // there may be type errors in the captures. Type check the
@@ -184,9 +207,44 @@ pub async fn disco_web_handler(req: Request<AppServerState>) -> tide::Result {
     // give closest help
     // - Does the first segment match?
     // - Is the first segment spelled incorrectly?
+    let mut body: String = "Something went wrong.".into();
+    let mut best: String = "".into();
+    let mut distance = usize::MAX;
+    if pat == None {
+        let api = &req.state().app_state;
+        let meta = &api["meta"];
+        let first_segment = get_first_segment(path);
+        if let Some(api_map) = api["route"].as_table() {
+            api_map.keys().for_each(|entry| {
+                let d = edit_distance::edit_distance(&first_segment, entry);
+                if d < distance {
+                    (best, distance) = (entry.into(), d);
+                }
+            });
+            body = if 0 < distance {
+                format!(
+                    "<p>No exact match for /{}. Closet match is /{}.</p>\n{}",
+                    &first_segment,
+                    &best,
+                    document_route(meta, &api["route"][&best])
+                )
+                .into()
+            } else {
+                format!(
+                    "<p>Invalid arguments for /{}.</p>\n{}",
+                    &first_segment,
+                    document_route(meta, &api["route"][&first_segment])
+                )
+            };
+        }
+    }
 
-    Ok(Response::builder(StatusCode::Ok)
-        .body(vk(&req.state().app_state["meta"], "MINIMAL_HTML"))
+    Ok(Response::builder(StatusCode::NotFound)
+        .body(
+            vk(&req.state().app_state["meta"], "MINIMAL_HTML")
+                .replace("{{TITLE}}", "Route not found")
+                .replace("{{BODY}}", &body),
+        )
         .content_type(mime::HTML)
         .build())
 }
