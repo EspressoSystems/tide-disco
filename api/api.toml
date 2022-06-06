@@ -6,26 +6,23 @@ HTML_TOP = """
 <html lang='en'>
   <head>
     <meta charset='utf-8'>
-    <title>Title from api.toml</title>
+    <title>{{NAME}} Reference</title>
     <link rel='stylesheet' href='/public/css/style.css'>
     <script src='/public/js/script.js'></script>
-
     <link rel='icon' type='image/svg+xml'
      href='/public/favicon.svg'>
-
   </head>
   <body>
-    <div><img src='/public/espressosys_logo.svg'
+    <div><a href='https://espressosys.com'><img src='/public/espressosys_logo.svg'
               alt='Espresso Systems Logo'
-              /></div>
-    <h1>Application API {{FORMAT_VERSION}}</h1>
-    <p>Text introducing the collected documentation</p>
+              /></a></div>
+    <h1>{{NAME}} API {{FORMAT_VERSION}} Reference</h1>
+    <p>{{DESCRIPTION}}</p>
 """
 
 HTML_BOTTOM = """
-  <h1>Heading at the bottom</h1>
-  <p>Text at the bottom. Maybe a copyright notice or link.</p>
-  <p>Copyright © 2022 Espresso Systems. All rights reserved.</p>
+    <h1>&nbsp;</h1>
+    <p>Copyright © 2022 Espresso Systems. All rights reserved.</p>
   </body>
 </html>
 """
@@ -35,13 +32,14 @@ HEADING_ROUTES = "<h3>Routes</h3>\n"
 HEADING_PARAMETERS = "<h3>Parameters</h3>\n"
 HEADING_DESCRIPTION = "<h3>Description</h3>\n"
 
-ROUTE_PATH = "<p class='path'>{{PATH}}</p>\n"
+ROUTE_PATH = "<p class='path'><a href='{{PATH}}'>{{PATH}}</a></p>\n"
 
 PARAMETER_TABLE_OPEN = "<table>\n"
 PARAMETER_TABLE_CLOSE = "</table>\n\n"
 PARAMETER_ROW = "<tr><td class='parameter'>{{NAME}}</td><td class='type'>{{TYPE}}</td></tr>\n"
 PARAMETER_NONE = "<div class='meta'>None</div>"
 
+# TODO Maybe refactor to eliminate redundancy with HTML_TOP and HTML_BOTTOM
 MINIMAL_HTML = """
 <!doctype html>
 <html lang='en'>
@@ -49,6 +47,8 @@ MINIMAL_HTML = """
     <meta charset='utf-8'>
     <link rel='stylesheet' href='/public/css/style.css'>
     <title>{{TITLE}}</title>
+    <link rel='icon' type='image/svg+xml'
+     href='/public/favicon.svg'>
   </head>
   <body>
     <div><img src='/public/espressosys_logo.svg'
@@ -56,6 +56,8 @@ MINIMAL_HTML = """
               /></div>
     <h1>{{TITLE}}</h1>
     {{BODY}}
+    <h1>&nbsp;</h1>
+    <p>Copyright © 2022 Espresso Systems. All rights reserved.</p>
   </body>
 </html>
 """
@@ -63,10 +65,15 @@ MINIMAL_HTML = """
 [route.help]
 PATH = ["/help", "/help/:endpoint"]
 METHOD = "GET"
-":endpoint" = "Literal"
+"endpoint" = "Literal"
 DOC = "Provides complete reference documentation if no endpoint is provided or help on a single endpoint"
 
 [route.healthcheck]
 PATH = ["/healthcheck"]
 METHOD = "GET"
 DOC = "Provides server status as JSON such as `{status: Available}`"
+
+[route.version]
+PATH = ["/version"]
+METHOD = "GET"
+DOC = "Reports versions as JSON"

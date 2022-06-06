@@ -6,8 +6,8 @@ use signal::InterruptHandle;
 use signal_hook::consts::{SIGINT, SIGTERM, SIGUSR1};
 use std::{path::PathBuf, process};
 use tide_disco::{
-    configure_router, exercise_router, get_api_path, get_settings, init_web_server, load_api,
-    AppServerState, HealthStatus::*,
+    configure_router, get_api_path, get_settings, init_web_server, load_api, AppServerState,
+    HealthStatus::*,
 };
 use tracing::info;
 use url::Url;
@@ -33,19 +33,21 @@ impl Interrupt for InterruptHandle {
 
 #[async_std::main]
 async fn main() -> Result<(), ConfigError> {
+    // Configure logs with timestamps, no color, and settings from
+    // the RUST_LOG environment variable.
     tracing_subscriber::fmt()
         .with_env_filter(tracing_subscriber::EnvFilter::from_default_env())
+        .with_ansi(false) // Suppresses ANSI color codes
         .try_init()
         .unwrap();
 
+    // Combine settings from multiple sources.
     let settings = get_settings::<Args>()?;
     info!("{:?}", settings);
 
     // Fetch the configuration values before any slow operations.
     let api_toml = &settings.get_string("api_toml")?;
     let base_url = &settings.get_string("base_url")?;
-
-    exercise_router();
 
     // Load a TOML file and display something from it.
     let api = load_api(&get_api_path(api_toml));
@@ -80,9 +82,5 @@ async fn main() -> Result<(), ConfigError> {
 // - Configure default routes
 // - Populate our own router from api.toml
 // -
-// TODO CSS
-// TODO add favicon.ico
 // TODO Web form
 // TODO keys for set_default have no typo checking.
-// TODO include timestamp in logs
-// TODO make tide logs one line each

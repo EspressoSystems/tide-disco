@@ -169,15 +169,19 @@ fn document_route(meta: &toml::Value, entry: &toml::Value) -> String {
 /// class attributes to make a documentation page for the web API.
 ///
 /// The results of this could be precomputed and cached.
-pub async fn compose_help(
+pub async fn compose_reference_documentation(
     req: tide::Request<AppServerState>,
 ) -> Result<tide::Response, tide::Error> {
+    let package_name = env!("CARGO_PKG_NAME");
+    let package_description = env!("CARGO_PKG_DESCRIPTION");
     let api = &req.state().app_state;
     let meta = &api["meta"];
     let version = vk(meta, "FORMAT_VERSION");
     let mut help = vk(meta, "HTML_TOP")
         .to_owned()
-        .replace("{{FORMAT_VERSION}}", &version);
+        .replace("{{NAME}}", &package_name)
+        .replace("{{FORMAT_VERSION}}", &version)
+        .replace("{{DESCRIPTION}}", &package_description);
     if let Some(api_map) = api["route"].as_table() {
         api_map.values().for_each(|entry| {
             help += &document_route(meta, entry);
@@ -194,24 +198,28 @@ pub async fn disco_web_handler(req: Request<AppServerState>) -> tide::Result {
     let router = &req.state().router;
     let url = req.url(); // TODO used once
     let path = url.path();
-    let pat = router.best_match(path);
-    info!("url: {}, pattern: {:?}", req.url(), pat);
+    let route_match = router.best_match(path);
+    info!("url: {}, pattern: {:?}", req.url(), route_match);
     // TODO If the pattern is not None, we might have a valid match or
     // there may be type errors in the captures. Type check the
     // captures and report any failures. If the types match, dispatch
     // to the appropriate handler.
     // TODO Associate a handler with a pattern somehow. (?)
 
-    // TODO if the pattern is None, we don't have an exact
+    // If the pattern is None, we don't have an exact
     // match. Note, no wildcards were added, so now we fuzzy match and
     // give closest help
     // - Does the first segment match?
     // - Is the first segment spelled incorrectly?
-    let mut body: String = "Something went wrong.".into();
+    let mut body: String = "<p>Something went wrong.</p>".into();
     let mut best: String = "".into();
     let mut distance = usize::MAX;
-    if pat == None {
-        let api = &req.state().app_state;
+    let api = &req.state().app_state;
+    if let Some(route_match) = route_match {
+        for c in route_match.captures().iter() {
+            info!("Capture: {} = {}", c.name(), c.value());
+        }
+    } else {
         let meta = &api["meta"];
         let first_segment = get_first_segment(path);
         if let Some(api_map) = api["route"].as_table() {
@@ -249,7 +257,6 @@ pub async fn disco_web_handler(req: Request<AppServerState>) -> tide::Result {
         .build())
 }
 
-// TODO This belongs in lib.rs or web.rs.
 // TODO The routes should come from api.toml.
 pub async fn init_web_server(
     base_url: &str,
@@ -265,7 +272,7 @@ pub async fn init_web_server(
             .allow_credentials(true),
     );
 
-    web_server.at("/help").get(compose_help);
+    web_server.at("/help").get(compose_reference_documentation);
     web_server.at("/healthcheck").get(healthcheck);
     web_server.at("/").all(disco_web_handler);
     web_server.at("/*").all(disco_web_handler);
@@ -317,26 +324,4 @@ pub fn get_settings<Args: CommandFactory>() -> Result<Config, ConfigError> {
         .add_source(get_cmd_line_map::<Args>())
         .add_source(config::Environment::with_prefix("APP"))
         .build()
-}
-
-pub fn exercise_router() {
-    let mut router = Router::new();
-    router.add("/*", 1).unwrap();
-    router.add("/hello", 2).unwrap();
-    router.add("/:greeting", 3).unwrap();
-    router.add("/hey/:world", 4).unwrap();
-    router.add("/hey/earth", 5).unwrap();
-    router.add("/:greeting/:world/*", 6).unwrap();
-
-    assert_eq!(*router.best_match("/hey/earth").unwrap(), 5);
-    assert_eq!(
-        router
-            .best_match("/hey/mars")
-            .unwrap()
-            .captures()
-            .get("world"),
-        Some("mars")
-    );
-    assert_eq!(router.matches("/hello").len(), 3);
-    assert_eq!(router.matches("/").len(), 1);
 }
