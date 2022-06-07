@@ -1,3 +1,4 @@
+use crate::ApiKey::*;
 use async_std::sync::{Arc, RwLock};
 use async_std::task::spawn;
 use async_std::task::JoinHandle;
@@ -13,7 +14,7 @@ use std::{
     env,
     path::{Path, PathBuf},
 };
-use strum_macros::EnumString;
+use strum_macros::{AsRefStr, EnumString};
 use tagged_base64::TaggedBase64;
 use tide::{
     http::headers::HeaderValue,
@@ -25,7 +26,7 @@ use toml::value::Value;
 use tracing::{error, info};
 use url::Url;
 
-#[derive(Clone, Debug, Deserialize, strum_macros::Display)]
+#[derive(AsRefStr, Clone, Debug, Deserialize, strum_macros::Display)]
 pub enum HealthStatus {
     Starting,
     Available,
@@ -44,19 +45,54 @@ pub type AppState = Value;
 
 pub type AppServerState = ServerState<AppState>;
 
+// TODO Would it be better to make these simple constants so usage
+// would not need as_ref()?
+#[allow(non_camel_case_types, dead_code)]
+#[derive(AsRefStr, Debug)]
+enum ApiKey {
+    DOC,
+    FORMAT_VERSION,
+    HEADING_DESCRIPTION,
+    HEADING_ENTRY,
+    HEADING_PARAMETERS,
+    HEADING_ROUTES,
+    HTML_BOTTOM,
+    HTML_TOP,
+    #[strum(serialize = "meta")]
+    META,
+    METHOD,
+    MINIMAL_HTML,
+    PARAMETER_NONE,
+    PARAMETER_ROW,
+    PARAMETER_TABLE_CLOSE,
+    PARAMETER_TABLE_OPEN,
+    PATH,
+    ROUTE_PATH,
+    #[strum(serialize = "route")]
+    ROUTE,
+}
+
+// TODO Maybe: define an enum for replacement tokens like "{{METHOD}}"
+// Advantages:
+// - collects the list in one place
+// - compiler helps with spelling errors
+// Disadvantages:
+// - One more thing to update
+// - Makes the code more indirect
+
+/// Generate errors for missing keys in the route specification api.toml
+// TODO define a key for response content type, e.g. HTML or JSON, etc.
 pub fn check_api(api: toml::Value) -> Result<(), String> {
-    // Every route
-    //    Has a DOC string
-    //    Every pattern (:foo)
-    //        has a type convertable to UrlSegment
-    if let Some(api_map) = api["route"].as_table() {
+    if let Some(api_map) = api[ROUTE.as_ref()].as_table() {
         let methods = vec!["GET", "POST"];
         api_map.values().for_each(|entry| {
-            let paths = entry["PATH"].as_array().expect("Expecting TOML array.");
+            let paths = entry[PATH.as_ref()]
+                .as_array()
+                .expect("Expecting TOML array.");
             let first_segment = get_first_segment(vs(&paths[0]));
 
             // Check the method is GET or PUT.
-            let method = vk(entry, "METHOD");
+            let method = vk(entry, METHOD.as_ref());
             if !methods.contains(&method.as_str()) {
                 error!(
                     "Route: {}: Unsupported method: {}. Expected one of: {:?}",
@@ -65,13 +101,16 @@ pub fn check_api(api: toml::Value) -> Result<(), String> {
             }
 
             // Check for DOC string.
-            if entry.get("DOC").is_none() || entry["DOC"].as_str().is_none() {
+            if entry.get(DOC.as_ref()).is_none() || entry[DOC.as_ref()].as_str().is_none() {
                 error!("Route: {}: Missing DOC string.", &first_segment);
             }
 
-            let paths = entry["PATH"].as_array().expect("Expecting TOML array.");
+            let paths = entry[PATH.as_ref()]
+                .as_array()
+                .expect("Expecting TOML array.");
             for path in paths {
                 path.as_str().unwrap();
+                // TODO each pattern has a type convertable to UrlSegment
             }
         })
     }
@@ -91,13 +130,15 @@ pub fn load_api(path: &Path) -> toml::Value {
 
 pub fn configure_router(api: &toml::Value) -> Arc<Router<usize>> {
     let mut router = Router::new();
-    if let Some(api_map) = api["route"].as_table() {
-        let mut j = 0usize;
+    if let Some(api_map) = api[ROUTE.as_ref()].as_table() {
+        let mut index = 0usize;
         api_map.values().for_each(|entry| {
-            let paths = entry["PATH"].as_array().expect("Expecting TOML array.");
+            let paths = entry[PATH.as_ref()]
+                .as_array()
+                .expect("Expecting TOML array.");
             for path in paths {
-                j = j + 1;
-                router.add(path.as_str().unwrap(), j).unwrap();
+                index = index + 1;
+                router.add(path.as_str().unwrap(), index).unwrap();
             }
         })
     }
@@ -116,7 +157,7 @@ pub async fn healthcheck(
     let status = req.state().health_status.read().await;
     Ok(tide::Response::builder(StatusCode::Ok)
         .content_type(mime::JSON)
-        .body(tide::prelude::json!({"status": status.to_string() }))
+        .body(tide::prelude::json!({"status": status.as_ref() }))
         .build())
 }
 
@@ -156,22 +197,26 @@ fn get_first_segment(s: &str) -> String {
         .to_string()
 }
 
+/// Compose an HTML fragment documenting all the variations on
+/// a single route
 fn document_route(meta: &toml::Value, entry: &toml::Value) -> String {
     let mut help: String = "".into();
-    let paths = entry["PATH"].as_array().expect("Expecting TOML array.");
+    let paths = entry[PATH.as_ref()]
+        .as_array()
+        .expect("Expecting TOML array.");
     let first_segment = get_first_segment(vs(&paths[0]));
-    help += &vk(meta, "HEADING_ENTRY")
+    help += &vk(meta, HEADING_ENTRY.as_ref())
         .to_owned()
-        .replace("{{METHOD}}", &vk(entry, "METHOD"))
+        .replace("{{METHOD}}", &vk(entry, METHOD.as_ref()))
         .replace("{{NAME}}", &first_segment);
-    help += &vk(meta, "HEADING_ROUTES");
+    help += &vk(meta, HEADING_ROUTES.as_ref());
     for path in paths.iter() {
-        help += &vk(meta, "ROUTE_PATH")
+        help += &vk(meta, ROUTE_PATH.as_ref())
             .to_owned()
             .replace("{{PATH}}", vs(&path));
     }
-    help += &vk(meta, "HEADING_PARAMETERS");
-    help += &vk(meta, "PARAMETER_TABLE_OPEN");
+    help += &vk(meta, HEADING_PARAMETERS.as_ref());
+    help += &vk(meta, PARAMETER_TABLE_OPEN.as_ref());
     let mut has_parameters = false;
     for (parameter, ptype) in entry
         .as_table()
@@ -181,18 +226,18 @@ fn document_route(meta: &toml::Value, entry: &toml::Value) -> String {
         if parameter.starts_with(':') {
             has_parameters = true;
             let pname = parameter.strip_prefix(':').unwrap();
-            help += &vk(meta, "PARAMETER_ROW")
+            help += &vk(meta, PARAMETER_ROW.as_ref())
                 .to_owned()
                 .replace("{{NAME}}", pname)
                 .replace("{{TYPE}}", vs(&ptype));
         }
     }
     if !has_parameters {
-        help += &vk(meta, "PARAMETER_NONE");
+        help += &vk(meta, PARAMETER_NONE.as_ref());
     }
-    help += &vk(meta, "PARAMETER_TABLE_CLOSE");
-    help += &vk(meta, "HEADING_DESCRIPTION");
-    help += &markdown::to_html(vk(entry, "DOC").trim());
+    help += &vk(meta, PARAMETER_TABLE_CLOSE.as_ref());
+    help += &vk(meta, HEADING_DESCRIPTION.as_ref());
+    help += &markdown::to_html(vk(entry, DOC.as_ref()).trim());
     help
 }
 
@@ -209,18 +254,18 @@ pub async fn compose_reference_documentation(
     let package_description = env!("CARGO_PKG_DESCRIPTION");
     let api = &req.state().app_state;
     let meta = &api["meta"];
-    let version = vk(meta, "FORMAT_VERSION");
-    let mut help = vk(meta, "HTML_TOP")
+    let version = vk(meta, FORMAT_VERSION.as_ref());
+    let mut help = vk(meta, HTML_TOP.as_ref())
         .to_owned()
         .replace("{{NAME}}", &package_name)
         .replace("{{FORMAT_VERSION}}", &version)
         .replace("{{DESCRIPTION}}", &package_description);
-    if let Some(api_map) = api["route"].as_table() {
+    if let Some(api_map) = api[ROUTE.as_ref()].as_table() {
         api_map.values().for_each(|entry| {
             help += &document_route(meta, entry);
         });
     }
-    help += &format!("{}\n", &vk(meta, "HTML_BOTTOM"));
+    help += &format!("{}\n", &vk(meta, HTML_BOTTOM.as_ref()));
     Ok(tide::Response::builder(200)
         .content_type(tide::http::mime::HTML)
         .body(help)
@@ -283,7 +328,9 @@ pub async fn disco_web_handler(req: Request<AppServerState>) -> tide::Result {
         for c in route_match.captures().iter() {
             info!("Capture: {} = {}", c.name(), c.value());
             // TODO this unwrap will fail if api.toml is incomplete
-            let vtype = api["route"][&first_segment][c.name()].as_str().unwrap();
+            let vtype = api[ROUTE.as_ref()][&first_segment][c.name()]
+                .as_str()
+                .unwrap();
             let stype = UrlSegment::from_str(vtype).unwrap();
             info!("Type: {}", vtype);
             // TODO fails if api.toml is wrong/incomplete.
@@ -302,7 +349,7 @@ pub async fn disco_web_handler(req: Request<AppServerState>) -> tide::Result {
         // - Does the first segment match?
         // - Is the first segment spelled incorrectly?
         let meta = &api["meta"];
-        if let Some(api_map) = api["route"].as_table() {
+        if let Some(api_map) = api[ROUTE.as_ref()].as_table() {
             api_map.keys().for_each(|entry| {
                 let d = edit_distance::edit_distance(&first_segment, entry);
                 if d < distance {
@@ -314,14 +361,14 @@ pub async fn disco_web_handler(req: Request<AppServerState>) -> tide::Result {
                     "<p>No exact match for /{}. Closet match is /{}.</p>\n{}",
                     &first_segment,
                     &best,
-                    document_route(meta, &api["route"][&best])
+                    document_route(meta, &api[ROUTE.as_ref()][&best])
                 )
                 .into()
             } else {
                 format!(
                     "<p>Invalid arguments for /{}.</p>\n{}",
                     &first_segment,
-                    document_route(meta, &api["route"][&first_segment])
+                    document_route(meta, &api[ROUTE.as_ref()][&first_segment])
                 )
             };
         }
@@ -329,7 +376,7 @@ pub async fn disco_web_handler(req: Request<AppServerState>) -> tide::Result {
 
     Ok(Response::builder(StatusCode::NotFound)
         .body(
-            vk(&req.state().app_state["meta"], "MINIMAL_HTML")
+            vk(&req.state().app_state[META.as_ref()], MINIMAL_HTML.as_ref())
                 .replace("{{TITLE}}", "Route not found")
                 .replace("{{BODY}}", &body),
         )
@@ -400,6 +447,7 @@ pub fn get_settings<Args: CommandFactory>() -> Result<Config, ConfigError> {
     Config::builder()
         .set_default("base_url", "http://localhost/default")?
         .set_default("api_toml", "api/api.toml")?
+        .set_default("ansi_color", false)?
         .add_source(config::File::with_name("config/app.toml"))
         .add_source(get_cmd_line_map::<Args>())
         .add_source(config::Environment::with_prefix("APP"))

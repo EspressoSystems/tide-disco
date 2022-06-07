@@ -72,9 +72,9 @@ DOC = "Provides complete reference documentation if no endpoint is provided or h
 [route.healthcheck]
 PATH = ["/healthcheck"]
 METHOD = "GET"
-DOC_ = "Provides server status as JSON such as `{status: Available}`"
+DOC = "Provides server status as JSON such as `{status: Available}`"
 
 [route.version]
 PATH = ["/version"]
-METHOD = "GET_"
+METHOD = "GET"
 DOC = "Reports versions as JSON"
