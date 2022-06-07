@@ -18,9 +18,14 @@ mod signal;
 #[clap(author, version, about, long_about = None)]
 struct Args {
     #[clap(long)]
+    /// Server address
     base_url: Option<Url>,
     #[clap(long)]
+    /// HTTP routes
     api_toml: Option<PathBuf>,
+    /// If true, log in color. Otherwise, no color.
+    #[clap(long)]
+    ansi_color: Option<bool>,
 }
 
 impl Interrupt for InterruptHandle {
@@ -33,16 +38,22 @@ impl Interrupt for InterruptHandle {
 
 #[async_std::main]
 async fn main() -> Result<(), ConfigError> {
+    // Combine settings from multiple sources.
+    let settings = get_settings::<Args>()?;
+
+    // Colorful logs upon request.
+    println!("color: {:?}", settings.get_bool("ansi_color"));
+    let want_color = settings.get_bool("ansi_color").unwrap_or(false);
+    println!("color: {:?}", want_color);
+
     // Configure logs with timestamps, no color, and settings from
     // the RUST_LOG environment variable.
     tracing_subscriber::fmt()
         .with_env_filter(tracing_subscriber::EnvFilter::from_default_env())
-        .with_ansi(false) // Suppresses ANSI color codes
+        .with_ansi(want_color)
         .try_init()
         .unwrap();
 
-    // Combine settings from multiple sources.
-    let settings = get_settings::<Args>()?;
     info!("{:?}", settings);
 
     // Fetch the configuration values before any slow operations.

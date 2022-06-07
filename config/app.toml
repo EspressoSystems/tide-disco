@@ -4,3 +4,4 @@
 
 base_url="http://localhost:9000/file"
 api_toml="api/api.toml"
+ansi_color=true

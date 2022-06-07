@@ -7,11 +7,14 @@ use edit_distance;
 use routefinder::Router;
 use serde::Deserialize;
 use std::fs::read_to_string;
+use std::str::FromStr;
 use std::{
     collections::HashMap,
     env,
     path::{Path, PathBuf},
 };
+use strum_macros::EnumString;
+use tagged_base64::TaggedBase64;
 use tide::{
     http::headers::HeaderValue,
     http::mime,
@@ -19,7 +22,7 @@ use tide::{
     Request, Response, StatusCode,
 };
 use toml::value::Value;
-use tracing::info;
+use tracing::{error, info};
 use url::Url;
 
 #[derive(Clone, Debug, Deserialize, strum_macros::Display)]
@@ -41,7 +44,37 @@ pub type AppState = Value;
 
 pub type AppServerState = ServerState<AppState>;
 
-pub fn check_api(_api: toml::Value) -> Result<(), String> {
+pub fn check_api(api: toml::Value) -> Result<(), String> {
+    // Every route
+    //    Has a DOC string
+    //    Every pattern (:foo)
+    //        has a type convertable to UrlSegment
+    if let Some(api_map) = api["route"].as_table() {
+        let methods = vec!["GET", "POST"];
+        api_map.values().for_each(|entry| {
+            let paths = entry["PATH"].as_array().expect("Expecting TOML array.");
+            let first_segment = get_first_segment(vs(&paths[0]));
+
+            // Check the method is GET or PUT.
+            let method = vk(entry, "METHOD");
+            if !methods.contains(&method.as_str()) {
+                error!(
+                    "Route: {}: Unsupported method: {}. Expected one of: {:?}",
+                    &first_segment, &method, &methods
+                );
+            }
+
+            // Check for DOC string.
+            if entry.get("DOC").is_none() || entry["DOC"].as_str().is_none() {
+                error!("Route: {}: Missing DOC string.", &first_segment);
+            }
+
+            let paths = entry["PATH"].as_array().expect("Expecting TOML array.");
+            for path in paths {
+                path.as_str().unwrap();
+            }
+        })
+    }
     Ok(())
 }
 
@@ -194,34 +227,81 @@ pub async fn compose_reference_documentation(
         .build())
 }
 
+#[derive(Clone, Debug, EnumString)]
+pub enum UrlSegment {
+    Boolean(Option<bool>),
+    Hexadecimal(Option<u128>),
+    Integer(Option<u128>),
+    TaggedBase64(Option<TaggedBase64>),
+    Literal(Option<String>),
+}
+
+impl UrlSegment {
+    pub fn new(value: &str, vtype: UrlSegment) -> UrlSegment {
+        match vtype {
+            UrlSegment::Boolean(_) => UrlSegment::Boolean(value.parse::<bool>().ok()),
+            UrlSegment::Hexadecimal(_) => {
+                UrlSegment::Hexadecimal(u128::from_str_radix(value, 16).ok())
+            }
+            UrlSegment::Integer(_) => UrlSegment::Integer(value.parse().ok()),
+            UrlSegment::TaggedBase64(_) => {
+                UrlSegment::TaggedBase64(TaggedBase64::parse(value).ok())
+            }
+            UrlSegment::Literal(_) => UrlSegment::Literal(Some(value.to_string())),
+        }
+    }
+    pub fn is_bound(self: &Self) -> bool {
+        match self {
+            UrlSegment::Boolean(v) => v.is_some(),
+            UrlSegment::Hexadecimal(v) => v.is_some(),
+            UrlSegment::Integer(v) => v.is_some(),
+            UrlSegment::TaggedBase64(v) => v.is_some(),
+            UrlSegment::Literal(v) => v.is_some(),
+        }
+    }
+}
+
 pub async fn disco_web_handler(req: Request<AppServerState>) -> tide::Result {
     let router = &req.state().router;
-    let url = req.url(); // TODO used once
-    let path = url.path();
+    let path = req.url().path();
     let route_match = router.best_match(path);
+    let first_segment = get_first_segment(path);
     info!("url: {}, pattern: {:?}", req.url(), route_match);
-    // TODO If the pattern is not None, we might have a valid match or
-    // there may be type errors in the captures. Type check the
-    // captures and report any failures. If the types match, dispatch
-    // to the appropriate handler.
     // TODO Associate a handler with a pattern somehow. (?)
 
-    // If the pattern is None, we don't have an exact
-    // match. Note, no wildcards were added, so now we fuzzy match and
-    // give closest help
-    // - Does the first segment match?
-    // - Is the first segment spelled incorrectly?
     let mut body: String = "<p>Something went wrong.</p>".into();
     let mut best: String = "".into();
     let mut distance = usize::MAX;
     let api = &req.state().app_state;
     if let Some(route_match) = route_match {
+        // TODO We might have a valid match or there may be type
+        // errors in the captures. Type check the captures and report
+        // any failures. If the types match, dispatch to the
+        // appropriate handler.
+        let mut bindings = Vec::new();
+        let mut got_error = false;
         for c in route_match.captures().iter() {
             info!("Capture: {} = {}", c.name(), c.value());
+            // TODO this unwrap will fail if api.toml is incomplete
+            let vtype = api["route"][&first_segment][c.name()].as_str().unwrap();
+            let stype = UrlSegment::from_str(vtype).unwrap();
+            info!("Type: {}", vtype);
+            // TODO fails if api.toml is wrong/incomplete.
+            let binding = UrlSegment::new(c.value(), stype);
+            if !&binding.is_bound() {
+                got_error = true;
+            }
+            info!("Type check: {:?}", &binding);
+            bindings.push(binding);
         }
+        info!("Error: {}", got_error);
+        info!("Bindings: {:?}", bindings);
     } else {
+        // No pattern matched. Note, no wildcards were added, so now
+        // we fuzzy match and give closest help
+        // - Does the first segment match?
+        // - Is the first segment spelled incorrectly?
         let meta = &api["meta"];
-        let first_segment = get_first_segment(path);
         if let Some(api_map) = api["route"].as_table() {
             api_map.keys().for_each(|entry| {
                 let d = edit_distance::edit_distance(&first_segment, entry);
