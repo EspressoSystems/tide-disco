@@ -40,14 +40,11 @@ pub struct ServerState<AppState> {
     pub router: Arc<Router<usize>>,
 }
 
-// TODO This one should be defined by the application
 pub type AppState = Value;
 
 pub type AppServerState = ServerState<AppState>;
 
-// TODO Would it be better to make these simple constants so usage
-// would not need as_ref()?
-#[allow(non_camel_case_types, dead_code)]
+#[allow(non_camel_case_types)]
 #[derive(AsRefStr, Debug)]
 enum ApiKey {
     DOC,
@@ -72,16 +69,12 @@ enum ApiKey {
     ROUTE,
 }
 
-// TODO Maybe: define an enum for replacement tokens like "{{METHOD}}"
-// Advantages:
-// - collects the list in one place
-// - compiler helps with spelling errors
-// Disadvantages:
-// - One more thing to update
-// - Makes the code more indirect
-
-/// Generate errors for missing keys in the route specification api.toml
-// TODO define a key for response content type, e.g. HTML or JSON, etc.
+/// Check api.toml for schema compliance errors
+///
+/// Checks
+/// - Unsupported request method
+/// - Missing DOC string
+/// - Route paths missing or not an array
 pub fn check_api(api: toml::Value) -> Result<(), String> {
     if let Some(api_map) = api[ROUTE.as_ref()].as_table() {
         let methods = vec!["GET", "POST"];
@@ -128,6 +121,7 @@ pub fn load_api(path: &Path) -> toml::Value {
     api
 }
 
+/// Add routes from api.toml to the routefinder instance in tide-disco
 pub fn configure_router(api: &toml::Value) -> Arc<Router<usize>> {
     let mut router = Router::new();
     if let Some(api_map) = api[ROUTE.as_ref()].as_table() {
@@ -138,6 +132,7 @@ pub fn configure_router(api: &toml::Value) -> Arc<Router<usize>> {
                 .expect("Expecting TOML array.");
             for path in paths {
                 index = index + 1;
+                // TODO a syntax error in api.toml would panic here
                 router.add(path.as_str().unwrap(), index).unwrap();
             }
         })
@@ -199,7 +194,7 @@ fn get_first_segment(s: &str) -> String {
 
 /// Compose an HTML fragment documenting all the variations on
 /// a single route
-fn document_route(meta: &toml::Value, entry: &toml::Value) -> String {
+pub fn document_route(meta: &toml::Value, entry: &toml::Value) -> String {
     let mut help: String = "".into();
     let paths = entry[PATH.as_ref()]
         .as_array()
