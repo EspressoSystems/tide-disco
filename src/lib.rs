@@ -440,9 +440,13 @@ pub fn get_settings<Args: CommandFactory>() -> Result<Config, ConfigError> {
     // file keys lower case. This is a config-rs bug. See
     // https://github.com/mehcode/config-rs/issues/340
     Config::builder()
-        .set_default("base_url", "http://localhost/default")?
+        .set_default("base_url", "http://localhost:65535")?
+        .set_default("disco_toml", "api/disco.toml")?
+        .set_default("brand_toml", "api/brand.toml")?
         .set_default("api_toml", "api/api.toml")?
         .set_default("ansi_color", false)?
+        .add_source(config::File::with_name("config/default.toml"))
+        .add_source(config::File::with_name("config/org.toml"))
         .add_source(config::File::with_name("config/app.toml"))
         .add_source(get_cmd_line_map::<Args>())
         .add_source(config::Environment::with_prefix("APP"))
