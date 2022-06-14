@@ -65,8 +65,7 @@ MINIMAL_HTML = """
 [route.help]
 PATH = ["/help", "/help/:endpoint"]
 METHOD = "GET"
-#"endpoint" = "Literal"
-"endpoint" = "Integer"
+"endpoint" = "Literal"
 DOC = "Provides complete reference documentation if no endpoint is provided or help on a single endpoint"
 
 [route.healthcheck]

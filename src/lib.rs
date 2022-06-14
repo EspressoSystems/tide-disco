@@ -75,39 +75,61 @@ enum ApiKey {
 /// - Unsupported request method
 /// - Missing DOC string
 /// - Route paths missing or not an array
-pub fn check_api(api: toml::Value) -> Result<(), String> {
+pub fn check_api(api: toml::Value) -> bool {
+    let mut error_count = 0;
     if let Some(api_map) = api[ROUTE.as_ref()].as_table() {
         let methods = vec!["GET", "POST"];
         api_map.values().for_each(|entry| {
-            let paths = entry[PATH.as_ref()]
-                .as_array()
-                .expect("Expecting TOML array.");
-            let first_segment = get_first_segment(vs(&paths[0]));
+            let paths = entry[PATH.as_ref()].as_array();
+            if paths.is_none() {
+                error!("Expecting TOML array for {:?}.", &entry[PATH.as_ref()]);
+                error_count = error_count + 1;
+            } else {
+                let paths = paths.unwrap();
+                let first_segment = get_first_segment(vs(&paths[0]));
 
-            // Check the method is GET or PUT.
-            let method = vk(entry, METHOD.as_ref());
-            if !methods.contains(&method.as_str()) {
-                error!(
-                    "Route: {}: Unsupported method: {}. Expected one of: {:?}",
-                    &first_segment, &method, &methods
-                );
-            }
+                // Check the method is GET or PUT.
+                let method = vk(entry, METHOD.as_ref());
+                if !methods.contains(&method.as_str()) {
+                    error!(
+                        "Route: /{}: Unsupported method: {}. Expected one of: {:?}",
+                        &first_segment, &method, &methods
+                    );
+                    error_count = error_count + 1;
+                }
 
-            // Check for DOC string.
-            if entry.get(DOC.as_ref()).is_none() || entry[DOC.as_ref()].as_str().is_none() {
-                error!("Route: {}: Missing DOC string.", &first_segment);
-            }
+                // Check for DOC string.
+                if entry.get(DOC.as_ref()).is_none() || entry[DOC.as_ref()].as_str().is_none() {
+                    error!("Route: /{}: Missing DOC string.", &first_segment);
+                    error_count = error_count + 1;
+                }
 
-            let paths = entry[PATH.as_ref()]
-                .as_array()
-                .expect("Expecting TOML array.");
-            for path in paths {
-                path.as_str().unwrap();
-                // TODO each pattern has a type convertable to UrlSegment
+                // Every URL segment pattern must have a valid type. For example,
+                // if a segment `:amount` might have type UrlSegment::Integer
+                // indicated by
+                //    "amount" = "Integer"
+                // in the TOML.
+                let paths = entry[PATH.as_ref()]
+                    .as_array()
+                    .expect("Expecting TOML array.");
+                for path in paths {
+                    for segment in path.as_str().unwrap().split('/') {
+                        if segment.starts_with(':') {
+                            let stype = vk(entry, &segment[1..]);
+                            if UrlSegment::from_str(&stype).is_err() {
+                                error!(
+                                    "Route /{}: Unrecognized type {} for pattern {}.",
+                                    &first_segment, stype, segment
+                                );
+                                error_count = error_count + 1;
+                            }
+                        }
+                    }
+                }
             }
         })
     }
-    Ok(())
+    error_count == 0
 }
 
 /// Load the web API or panic
@@ -115,8 +137,8 @@ pub fn load_api(path: &Path) -> toml::Value {
     let messages = read_to_string(&path).unwrap_or_else(|_| panic!("Unable to read {:?}.", &path));
     let api: toml::Value =
         toml::from_str(&messages).unwrap_or_else(|_| panic!("Unable to parse {:?}.", &path));
-    if let Err(err) = check_api(api.clone()) {
-        panic!("{}", err);
+    if !check_api(api.clone()) {
+        panic!("API specification has errors.",);
     }
     api
 }
@@ -167,14 +189,18 @@ fn vs(v: &Value) -> &str {
 
 // Get a string from an array toml::Value or panic.
 fn vk(v: &Value, key: &str) -> String {
-    v[key]
-        .as_str()
-        .expect(&format!(
-            "Expecting TOML string for {}, but found type {}",
-            key,
-            v[key].type_str()
-        ))
-        .to_string()
+    if let Some(vv) = v.get(key) {
+        vv.as_str()
+            .expect(&format!(
+                "Expecting TOML string for {}, but found type {}",
+                key,
+                v[key].type_str()
+            ))
+            .to_string()
+    } else {
+        error!("No value for key {}", key);
+        "<missing>".to_string()
+    }
 }
 
 // Given a string delimited by slashes, get the first non-empty
@@ -220,7 +246,7 @@ pub fn document_route(meta: &toml::Value, entry: &toml::Value) -> String {
     {
         if parameter.starts_with(':') {
             has_parameters = true;
-            let pname = parameter.strip_prefix(':').unwrap();
+            let pname = &parameter[1..];
             help += &vk(meta, PARAMETER_ROW.as_ref())
                 .to_owned()
                 .replace("{{NAME}}", pname)

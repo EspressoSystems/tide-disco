@@ -42,9 +42,7 @@ async fn main() -> Result<(), ConfigError> {
     let settings = get_settings::<Args>()?;
 
     // Colorful logs upon request.
-    println!("color: {:?}", settings.get_bool("ansi_color"));
     let want_color = settings.get_bool("ansi_color").unwrap_or(false);
-    println!("color: {:?}", want_color);
 
     // Configure logs with timestamps, no color, and settings from
     // the RUST_LOG environment variable.
