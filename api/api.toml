@@ -63,9 +63,11 @@ MINIMAL_HTML = """
 """
 
 [route.help]
-PATH = ["/help", "/help/:endpoint"]
+PATH = ["/help", "/help/:endpoint/tag/:tag"]
 METHOD = "GET"
-"endpoint" = "Literal"
+#"endpoint" = "Literal"
+":endpoint" = "Integer"
+":tag" = "TaggedBase64" # E.g. LA~SG9tZbo
 DOC = "Provides complete reference documentation if no endpoint is provided or help on a single endpoint"
 
 [route.healthcheck]

@@ -4,7 +4,7 @@ use async_std::task::spawn;
 use async_std::task::JoinHandle;
 use clap::CommandFactory;
 use config::{Config, ConfigError};
-use edit_distance;
+//use edit_distance;
 use routefinder::Router;
 use serde::Deserialize;
 use std::fs::read_to_string;
@@ -26,6 +26,16 @@ use toml::value::Value;
 use tracing::{error, info};
 use url::Url;
 
+#[derive(AsRefStr, Debug)]
+#[allow(non_camel_case_types)]
+pub enum ConfigKey {
+    base_url,
+    disco_toml,
+    brand_toml,
+    api_toml,
+    ansi_color,
+}
+
 #[derive(AsRefStr, Clone, Debug, Deserialize, strum_macros::Display)]
 pub enum HealthStatus {
     Starting,
@@ -44,7 +54,7 @@ pub type AppState = Value;
 
 pub type AppServerState = ServerState<AppState>;
 
-#[allow(non_camel_case_types)]
+#[allow(non_camel_case_types, clippy::upper_case_acronyms)]
 #[derive(AsRefStr, Debug)]
 enum ApiKey {
     DOC,
@@ -80,12 +90,7 @@ pub fn check_api(api: toml::Value) -> bool {
     if let Some(api_map) = api[ROUTE.as_ref()].as_table() {
         let methods = vec!["GET", "POST"];
         api_map.values().for_each(|entry| {
-            let paths = entry[PATH.as_ref()].as_array();
-            if paths.is_none() {
-                error!("Expecting TOML array for {:?}.", &entry[PATH.as_ref()]);
-                error_count = error_count + 1;
-            } else {
-                let paths = paths.unwrap();
+            if let Some(paths) = entry[PATH.as_ref()].as_array() {
                 let first_segment = get_first_segment(vs(&paths[0]));
 
                 // Check the method is GET or PUT.
@@ -95,37 +100,40 @@ pub fn check_api(api: toml::Value) -> bool {
                         "Route: /{}: Unsupported method: {}. Expected one of: {:?}",
                         &first_segment, &method, &methods
                     );
-                    error_count = error_count + 1;
+                    error_count += 1;
                 }
 
                 // Check for DOC string.
                 if entry.get(DOC.as_ref()).is_none() || entry[DOC.as_ref()].as_str().is_none() {
                     error!("Route: /{}: Missing DOC string.", &first_segment);
-                    error_count = error_count + 1;
+                    error_count += 1;
                 }
 
                 // Every URL segment pattern must have a valid type. For example,
                 // if a segment `:amount` might have type UrlSegment::Integer
                 // indicated by
-                //    "amount" = "Integer"
+                //    ":amount" = "Integer"
                 // in the TOML.
                 let paths = entry[PATH.as_ref()]
                     .as_array()
                     .expect("Expecting TOML array.");
                 for path in paths {
                     for segment in path.as_str().unwrap().split('/') {
-                        if segment.starts_with(':') {
-                            let stype = vk(entry, &segment[1..]);
+                        if let Some(parameter) = segment.strip_prefix(':') {
+                            let stype = vk(entry, segment);
                             if UrlSegment::from_str(&stype).is_err() {
                                 error!(
                                     "Route /{}: Unrecognized type {} for pattern {}.",
-                                    &first_segment, stype, segment
+                                    &first_segment, stype, &parameter
                                 );
-                                error_count = error_count + 1;
+                                error_count += 1;
                             }
                         }
                     }
                 }
+            } else {
+                error!("Expecting TOML array for {:?}.", &entry[PATH.as_ref()]);
+                error_count += 1;
             }
         })
     }
@@ -153,7 +161,7 @@ pub fn configure_router(api: &toml::Value) -> Arc<Router<usize>> {
                 .as_array()
                 .expect("Expecting TOML array.");
             for path in paths {
-                index = index + 1;
+                index += 1;
                 // TODO a syntax error in api.toml would panic here
                 router.add(path.as_str().unwrap(), index).unwrap();
             }
@@ -180,28 +188,39 @@ pub async fn healthcheck(
 
 // Get a string from a toml::Value or panic.
 fn vs(v: &Value) -> &str {
-    v.as_str().expect(&format!(
-        "Expecting TOML string, but found type {}: {:?}",
-        v.type_str(),
-        v
-    ))
+    v.as_str().unwrap_or_else(|| {
+        panic!(
+            "Expecting TOML string, but found type {}: {:?}",
+            v.type_str(),
+            v
+        )
+    })
 }
 
 // Get a string from an array toml::Value or panic.
 fn vk(v: &Value, key: &str) -> String {
     if let Some(vv) = v.get(key) {
         vv.as_str()
-            .expect(&format!(
-                "Expecting TOML string for {}, but found type {}",
-                key,
-                v[key].type_str()
-            ))
+            .unwrap_or_else(|| {
+                panic!(
+                    "Expecting TOML string for {}, but found type {}",
+                    key,
+                    v[key].type_str()
+                )
+            })
             .to_string()
     } else {
         error!("No value for key {}", key);
         "<missing>".to_string()
     }
 }
+/*            .expect(&format!(
+                "Expecting TOML string for {}, but found type {}",
+                key,
+                v[key].type_str()
+            ))
+            .to_string()
+*/
 
 // Given a string delimited by slashes, get the first non-empty
 // segment.
@@ -227,14 +246,11 @@ pub fn document_route(meta: &toml::Value, entry: &toml::Value) -> String {
         .expect("Expecting TOML array.");
     let first_segment = get_first_segment(vs(&paths[0]));
     help += &vk(meta, HEADING_ENTRY.as_ref())
-        .to_owned()
         .replace("{{METHOD}}", &vk(entry, METHOD.as_ref()))
         .replace("{{NAME}}", &first_segment);
     help += &vk(meta, HEADING_ROUTES.as_ref());
     for path in paths.iter() {
-        help += &vk(meta, ROUTE_PATH.as_ref())
-            .to_owned()
-            .replace("{{PATH}}", vs(&path));
+        help += &vk(meta, ROUTE_PATH.as_ref()).replace("{{PATH}}", vs(path));
     }
     help += &vk(meta, HEADING_PARAMETERS.as_ref());
     help += &vk(meta, PARAMETER_TABLE_OPEN.as_ref());
@@ -244,13 +260,13 @@ pub fn document_route(meta: &toml::Value, entry: &toml::Value) -> String {
         .expect("Route definitions must be tables in api.toml")
         .iter()
     {
-        if parameter.starts_with(':') {
+        info!("Parameter: {:?}", &parameter);
+        if let Some(parameter) = parameter.strip_prefix(':') {
             has_parameters = true;
-            let pname = &parameter[1..];
             help += &vk(meta, PARAMETER_ROW.as_ref())
                 .to_owned()
-                .replace("{{NAME}}", pname)
-                .replace("{{TYPE}}", vs(&ptype));
+                .replace("{{NAME}}", parameter)
+                .replace("{{TYPE}}", vs(ptype));
         }
     }
     if !has_parameters {
@@ -277,10 +293,9 @@ pub async fn compose_reference_documentation(
     let meta = &api["meta"];
     let version = vk(meta, FORMAT_VERSION.as_ref());
     let mut help = vk(meta, HTML_TOP.as_ref())
-        .to_owned()
-        .replace("{{NAME}}", &package_name)
+        .replace("{{NAME}}", package_name)
         .replace("{{FORMAT_VERSION}}", &version)
-        .replace("{{DESCRIPTION}}", &package_description);
+        .replace("{{DESCRIPTION}}", package_description);
     if let Some(api_map) = api[ROUTE.as_ref()].as_table() {
         api_map.values().for_each(|entry| {
             help += &document_route(meta, entry);
@@ -316,7 +331,7 @@ impl UrlSegment {
             UrlSegment::Literal(_) => UrlSegment::Literal(Some(value.to_string())),
         }
     }
-    pub fn is_bound(self: &Self) -> bool {
+    pub fn is_bound(&self) -> bool {
         match self {
             UrlSegment::Boolean(v) => v.is_some(),
             UrlSegment::Hexadecimal(v) => v.is_some(),
@@ -327,43 +342,75 @@ impl UrlSegment {
     }
 }
 
+// TODO Associate a handler with a pattern somehow.
+pub async fn disco_dispatch(
+    req: Request<AppServerState>,
+    bindings: HashMap<String, UrlSegment>,
+) -> tide::Result {
+    let title = "Valid response here";
+    let body = &format!("<pre>Bindings: {:?}</pre>", bindings);
+    Ok(Response::builder(StatusCode::Ok)
+        .body(
+            vk(&req.state().app_state[META.as_ref()], MINIMAL_HTML.as_ref())
+                .replace("{{TITLE}}", title)
+                .replace("{{BODY}}", body),
+        )
+        .content_type(mime::HTML)
+        .build())
+}
+
 pub async fn disco_web_handler(req: Request<AppServerState>) -> tide::Result {
     let router = &req.state().router;
     let path = req.url().path();
     let route_match = router.best_match(path);
     let first_segment = get_first_segment(path);
     info!("url: {}, pattern: {:?}", req.url(), route_match);
-    // TODO Associate a handler with a pattern somehow. (?)
 
     let mut body: String = "<p>Something went wrong.</p>".into();
     let mut best: String = "".into();
     let mut distance = usize::MAX;
     let api = &req.state().app_state;
     if let Some(route_match) = route_match {
-        // TODO We might have a valid match or there may be type
-        // errors in the captures. Type check the captures and report
-        // any failures. If the types match, dispatch to the
-        // appropriate handler.
-        let mut bindings = Vec::new();
-        let mut got_error = false;
-        for c in route_match.captures().iter() {
-            info!("Capture: {} = {}", c.name(), c.value());
-            // TODO this unwrap will fail if api.toml is incomplete
-            let vtype = api[ROUTE.as_ref()][&first_segment][c.name()]
-                .as_str()
-                .unwrap();
+        // We might have a valid match or there may be type errors in
+        // the captures. Type check the captures and report any
+        // failures. If the types match, dispatch to the appropriate
+        // handler.
+        let mut bindings = HashMap::<String, UrlSegment>::new();
+        let mut parse_error = false;
+        body = "".into();
+        let meta = &api["meta"];
+        let entry = &api[ROUTE.as_ref()].as_table().unwrap()[&first_segment];
+        for capture in route_match.captures().iter() {
+            let cname = ":".to_owned() + capture.name();
+            // The unwrap is safe thanks to check_api().
+            let vtype = api[ROUTE.as_ref()][&first_segment][cname].as_str().unwrap();
+            // The unwrap is safe thanks to check_api().
             let stype = UrlSegment::from_str(vtype).unwrap();
-            info!("Type: {}", vtype);
-            // TODO fails if api.toml is wrong/incomplete.
-            let binding = UrlSegment::new(c.value(), stype);
+            let binding = UrlSegment::new(capture.value(), stype);
             if !&binding.is_bound() {
-                got_error = true;
+                parse_error = true;
+                body = format!(
+                    "{}\n<p>Expecting {} for {}</p>\n",
+                    body,
+                    vtype,
+                    capture.name(),
+                );
             }
-            info!("Type check: {:?}", &binding);
-            bindings.push(binding);
+            bindings.insert(capture.name().to_string(), binding);
         }
-        info!("Error: {}", got_error);
-        info!("Bindings: {:?}", bindings);
+        if parse_error {
+            let template = vk(&req.state().app_state[META.as_ref()], MINIMAL_HTML.as_ref());
+            let content = format!("{}{}", body, &document_route(meta, entry));
+            let body = template
+                .replace("{{TITLE}}", "Route syntax error")
+                .replace("{{BODY}}", &content);
+            Ok(Response::builder(StatusCode::NotFound)
+                .body(body)
+                .content_type(mime::HTML)
+                .build())
+        } else {
+            disco_dispatch(req, bindings).await
+        }
     } else {
         // No pattern matched. Note, no wildcards were added, so now
         // we fuzzy match and give closest help
@@ -384,7 +431,6 @@ pub async fn disco_web_handler(req: Request<AppServerState>) -> tide::Result {
                     &best,
                     document_route(meta, &api[ROUTE.as_ref()][&best])
                 )
-                .into()
             } else {
                 format!(
                     "<p>Invalid arguments for /{}.</p>\n{}",
@@ -393,16 +439,15 @@ pub async fn disco_web_handler(req: Request<AppServerState>) -> tide::Result {
                 )
             };
         }
+        Ok(Response::builder(StatusCode::NotFound)
+            .body(
+                vk(&req.state().app_state[META.as_ref()], MINIMAL_HTML.as_ref())
+                    .replace("{{TITLE}}", "Route not found")
+                    .replace("{{BODY}}", &body),
+            )
+            .content_type(mime::HTML)
+            .build())
     }
-
-    Ok(Response::builder(StatusCode::NotFound)
-        .body(
-            vk(&req.state().app_state[META.as_ref()], MINIMAL_HTML.as_ref())
-                .replace("{{TITLE}}", "Route not found")
-                .replace("{{BODY}}", &body),
-        )
-        .content_type(mime::HTML)
-        .build())
 }
 
 // TODO The routes should come from api.toml.
@@ -466,11 +511,11 @@ pub fn get_settings<Args: CommandFactory>() -> Result<Config, ConfigError> {
     // file keys lower case. This is a config-rs bug. See
     // https://github.com/mehcode/config-rs/issues/340
     Config::builder()
-        .set_default("base_url", "http://localhost:65535")?
-        .set_default("disco_toml", "api/disco.toml")?
-        .set_default("brand_toml", "api/brand.toml")?
-        .set_default("api_toml", "api/api.toml")?
-        .set_default("ansi_color", false)?
+        .set_default(ConfigKey::base_url.as_ref(), "http://localhost:65535")?
+        .set_default(ConfigKey::disco_toml.as_ref(), "api/disco.toml")?
+        .set_default(ConfigKey::brand_toml.as_ref(), "api/brand.toml")?
+        .set_default(ConfigKey::api_toml.as_ref(), "api/api.toml")?
+        .set_default(ConfigKey::ansi_color.as_ref(), false)?
         .add_source(config::File::with_name("config/default.toml"))
         .add_source(config::File::with_name("config/org.toml"))
         .add_source(config::File::with_name("config/app.toml"))

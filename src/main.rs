@@ -7,7 +7,7 @@ use signal_hook::consts::{SIGINT, SIGTERM, SIGUSR1};
 use std::{path::PathBuf, process};
 use tide_disco::{
     configure_router, get_api_path, get_settings, init_web_server, load_api, AppServerState,
-    HealthStatus::*,
+    ConfigKey, HealthStatus::*,
 };
 use tracing::info;
 use url::Url;
@@ -55,8 +55,8 @@ async fn main() -> Result<(), ConfigError> {
     info!("{:?}", settings);
 
     // Fetch the configuration values before any slow operations.
-    let api_toml = &settings.get_string("api_toml")?;
-    let base_url = &settings.get_string("base_url")?;
+    let api_toml = &settings.get_string(ConfigKey::api_toml.as_ref())?;
+    let base_url = &settings.get_string(ConfigKey::base_url.as_ref())?;
 
     // Load a TOML file and display something from it.
     let api = load_api(&get_api_path(api_toml));
@@ -65,7 +65,7 @@ async fn main() -> Result<(), ConfigError> {
     let web_state = AppServerState {
         health_status: Arc::new(RwLock::new(Starting)),
         app_state: api,
-        router: router,
+        router,
     };
 
     // Demonstrate that we can read and write the web server state.
@@ -74,7 +74,7 @@ async fn main() -> Result<(), ConfigError> {
 
     // Activate the handler for ^C, etc.
     let mut interrupt_handler = InterruptHandle::new(&[SIGINT, SIGTERM, SIGUSR1]);
-    init_web_server(&base_url, web_state)
+    init_web_server(base_url, web_state)
         .await
         .unwrap_or_else(|err| {
             panic!("Web server exited with an error: {}", err);
@@ -86,10 +86,3 @@ async fn main() -> Result<(), ConfigError> {
 
     Ok(())
 }
-
-// TODO Make the discoverability stuff work
-// - Configure default routes
-// - Populate our own router from api.toml
-// -
-// TODO Web form
-// TODO keys for set_default have no typo checking.
