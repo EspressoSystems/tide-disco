@@ -1,0 +1,3 @@
+[route.greeting]
+PATH = ["greeting", "greeting/:name"]
+
