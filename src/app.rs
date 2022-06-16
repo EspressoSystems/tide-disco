@@ -1,13 +1,15 @@
 use crate::{
     api::Api,
-    request::RequestParams,
-    route::{Handler, RouteError},
+    healthcheck::{HealthCheck, HealthStatus},
+    request::{RequestParam, RequestParams},
+    route::{health_check_response, Handler, RouteError},
 };
 use async_std::sync::Arc;
+use serde::{Deserialize, Serialize};
 use snafu::Snafu;
 use std::collections::hash_map::{Entry, HashMap};
 use std::io;
-use tide::http::StatusCode;
+use tide::{http::content::Accept, StatusCode};
 
 pub use tide::listener::{Listener, ToListener};
 
@@ -16,7 +18,7 @@ pub use tide::listener::{Listener, ToListener};
 /// An [App] is a collection of API modules, plus a global `State`. Modules can be registered by
 /// constructing an [Api] for each module and calling [App::register_module]. Once all of the
 /// desired modules are registered, the app can be converted into an asynchronous server task using
-/// [App::server].
+/// [App::serve].
 pub struct App<State, Error> {
     // Map from base URL to module API.
     apis: HashMap<String, Api<State, Error>>,
@@ -59,6 +61,42 @@ impl<State: Clone + Send + Sync + 'static, Error: 'static> App<State, Error> {
 
         Ok(self)
     }
+
+    /// Check the health of each registered module in response to a request.
+    ///
+    /// The response includes a status code for each module, which will be [StatusCode::Ok] if the
+    /// module is healthy. Detailed health status from each module is not included in the response
+    /// (due to type erasure) but can be queried using [module_health](Self::module_health) or by
+    /// hitting the endpoint `GET /:module/healthcheck`.
+    pub async fn health(&self, req: RequestParams<State>) -> AppHealth {
+        let mut modules = HashMap::new();
+        let mut status = HealthStatus::Available;
+        for (name, api) in &self.apis {
+            let health = api.health(req.clone()).await.status();
+            if health != StatusCode::Ok {
+                status = HealthStatus::Unhealthy;
+            }
+            modules.insert(name.clone(), health);
+        }
+        AppHealth { status, modules }
+    }
+
+    /// Check the health of the named module.
+    ///
+    /// The resulting [Response](tide::Response) has a status code which is [StatusCode::Ok] if the
+    /// module is healthy. The response body is constructed from the results of the module's
+    /// registered healthcheck handler. If the module does not have an explicit healthcheck
+    /// handler, the response will be a [HealthStatus].
+    ///
+    /// If there is no module with the given name, returns [None].
+    pub async fn module_health(
+        &self,
+        req: RequestParams<State>,
+        module: &str,
+    ) -> Option<tide::Response> {
+        let api = self.apis.get(module)?;
+        Some(api.health(req).await)
+    }
 }
 
 impl<State: Clone + Send + Sync + 'static, Error: 'static + crate::Error> App<State, Error> {
@@ -67,6 +105,7 @@ impl<State: Clone + Send + Sync + 'static, Error: 'static + crate::Error> App<St
         let state = Arc::new(self);
         let mut server = tide::Server::with_state(state.clone());
         for (prefix, api) in &state.apis {
+            // Register routes for this API.
             for route in api {
                 let name = route.name();
                 let prefix = prefix.clone();
@@ -77,11 +116,7 @@ impl<State: Clone + Send + Sync + 'static, Error: 'static + crate::Error> App<St
                         let prefix = prefix.clone();
                         async move {
                             let route = &req.state().apis[&prefix][&name];
-                            let req =
-                                RequestParams::new(&req, req.state().state.clone(), route.params())
-                                    .map_err(|err| {
-                                        Error::from_request_error(err).into_tide_error()
-                                    })?;
+                            let req = request_params(&req, route.params())?;
                             route
                                 .handle(req)
                                 .await
@@ -94,7 +129,58 @@ impl<State: Clone + Send + Sync + 'static, Error: 'static + crate::Error> App<St
                     },
                 );
             }
+
+            // Register automatic routes for this API: `healthcheck`.
+            let prefix = prefix.clone();
+            server
+                .at(&prefix)
+                .at("healthcheck")
+                .get(move |req: tide::Request<Arc<Self>>| {
+                    let prefix = prefix.clone();
+                    async move {
+                        let api = &req.state().apis[&prefix];
+                        Ok(api.health(request_params(&req, &[])?).await)
+                    }
+                });
         }
+
+        // Register app-level automatic routes: `healthcheck`.
+        server
+            .at("healthcheck")
+            .get(|req: tide::Request<Arc<Self>>| async move {
+                let state = req.state();
+                let req = request_params(&req, &[])?;
+                let mut accept = Accept::from_headers(req.headers())?;
+                let res = state.health(req).await;
+                Ok(health_check_response(&mut accept, res))
+            });
+
         server.listen(listener).await
+    }
+}
+
+fn request_params<State, Error: crate::Error>(
+    req: &tide::Request<Arc<App<State, Error>>>,
+    params: &[RequestParam],
+) -> Result<RequestParams<State>, tide::Error> {
+    RequestParams::new(&req, req.state().state.clone(), params)
+        .map_err(|err| Error::from_request_error(err).into_tide_error())
+}
+
+/// The health status of an application.
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct AppHealth {
+    /// The status of the overall application.
+    ///
+    /// [HealthStatus::Available] if all of the application's modules are healthy, otherwise a
+    /// [HealthStatus] variant with [status](HealthCheck::status) other than 200.
+    pub status: HealthStatus,
+    /// The status of each registered module.
+    pub modules: HashMap<String, StatusCode>,
+}
+
+impl HealthCheck for AppHealth {
+    fn status(&self) -> StatusCode {
+        self.status.status()
     }
 }

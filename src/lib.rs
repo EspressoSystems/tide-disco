@@ -25,11 +25,12 @@ use toml::value::Value;
 use tracing::error;
 use url::Url;
 
-mod api;
-mod app;
-mod error;
-mod request;
-mod route;
+pub mod api;
+pub mod app;
+pub mod error;
+pub mod healthcheck;
+pub mod request;
+pub mod route;
 
 pub use api::Api;
 pub use app::App;

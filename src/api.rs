@@ -1,12 +1,14 @@
 use crate::{
+    healthcheck::{HealthCheck, HealthStatus},
     request::RequestParams,
-    route::{Route, RouteParseError},
+    route::{self, HealthCheckHandler, Route, RouteParseError},
 };
 use futures::Future;
 use serde::Serialize;
 use snafu::{OptionExt, ResultExt, Snafu};
 use std::collections::hash_map::{HashMap, IntoValues, Values};
 use std::ops::Index;
+use tide::http::content::Accept;
 
 /// An error encountered when parsing or constructing an [Api].
 #[derive(Clone, Debug, Snafu)]
@@ -25,6 +27,7 @@ pub enum ApiError {
 /// TOML file and registered as a module of an [App](crate::App).
 pub struct Api<State, Error> {
     routes: HashMap<String, Route<State, Error>>,
+    health_check: Option<HealthCheckHandler<State>>,
 }
 
 impl<'a, State, Error> IntoIterator for &'a Api<State, Error> {
@@ -68,6 +71,7 @@ impl<State, Error> Api<State, Error> {
                     Ok((route.name(), route))
                 })
                 .collect::<Result<_, _>>()?,
+            health_check: None,
         })
     }
 
@@ -97,6 +101,35 @@ impl<State, Error> Api<State, Error> {
         Ok(self)
     }
 
+    /// Set the health check handler for this API.
+    ///
+    /// This overrides the existing handler. If `health_check` has not yet been called, the default
+    /// handler is one which simply returns `Health::default()`.
+    pub async fn health_check<H, F>(
+        &mut self,
+        handler: impl 'static + Send + Sync + Fn(&State) -> F,
+    ) -> &mut Self
+    where
+        State: 'static + Send + Sync,
+        H: HealthCheck,
+        F: 'static + Send + Future<Output = H>,
+    {
+        self.health_check = Some(route::health_check_handler(handler));
+        self
+    }
+
+    /// Check the health status of a server with the given state.
+    pub async fn health(&self, req: RequestParams<State>) -> tide::Response {
+        if let Some(handler) = &self.health_check {
+            handler(req).await
+        } else {
+            // If there is no healthcheck handler registered, just return [HealthStatus::Available]
+            // by default; after all, if this handler is getting hit at all, the service must be up.
+            let mut accept = Accept::from_headers(req.headers()).ok().flatten();
+            route::health_check_response(&mut accept, HealthStatus::Available)
+        }
+    }
+
     /// Create a new [Api] which is just like this one, except has a transformed `Error` type.
     pub fn map_err<Error2>(
         self,
@@ -113,6 +146,7 @@ impl<State, Error> Api<State, Error> {
                 .into_iter()
                 .map(|(name, route)| (name, route.map_err(f.clone())))
                 .collect(),
+            health_check: self.health_check,
         }
     }
 }

@@ -1,15 +1,23 @@
-use crate::request::{RequestParam, RequestParams};
+use crate::{
+    healthcheck::HealthCheck,
+    request::{RequestParam, RequestParams},
+};
 use async_trait::async_trait;
 use futures::Future;
 use serde::Serialize;
 use snafu::Snafu;
+use std::convert::Infallible;
 use std::fmt::{self, Display, Formatter};
 use std::marker::PhantomData;
-use tide::http::{
-    self,
-    content::Accept,
-    mime::{self, Mime},
-    StatusCode,
+use std::pin::Pin;
+use tide::{
+    http::{
+        self,
+        content::Accept,
+        mime::{self, Mime},
+        StatusCode,
+    },
+    Body,
 };
 
 /// An error returned by a route handler.
@@ -268,6 +276,60 @@ where
     }
 }
 
+/// A special kind of route handler representing a health check.
+///
+/// In order to type-erase the implementation of `HealthCheck` that the handler actually returns,
+/// we store the healthcheck handler in a wrapper that converts the `HealthCheck` to a
+/// `tide::Response`. The status code of the response will be the status code of the `HealthCheck`
+/// implementation returned by the underlying handler.
+pub(crate) type HealthCheckHandler<State> = Box<
+    dyn 'static
+        + Send
+        + Sync
+        + Fn(RequestParams<State>) -> Pin<Box<dyn Send + Future<Output = tide::Response>>>,
+>;
+
+pub(crate) fn health_check_response<H: HealthCheck>(
+    accept: &mut Option<Accept>,
+    health: H,
+) -> tide::Response {
+    let status = health.status();
+    let (body, content_type) =
+        response_body::<H, Infallible>(accept, health).unwrap_or_else(|err| {
+            let msg = format!(
+                "health status was {}, but there was an error generating the response: {}",
+                status, err
+            );
+            (msg.into(), mime::PLAIN)
+        });
+    tide::Response::builder(status)
+        .content_type(content_type)
+        .body(body)
+        .build()
+}
+
+/// A type-erasing wrapper for healthcheck handlers.
+///
+/// Given a handler, this function can be used to derive a new, type-erased [HealthCheckHandler]
+/// that takes only [RequestParams] and returns a generic [tide::Response].
+pub(crate) fn health_check_handler<State, H, F>(
+    handler: impl 'static + Send + Sync + Fn(&State) -> F,
+) -> HealthCheckHandler<State>
+where
+    State: 'static + Send + Sync,
+    H: HealthCheck,
+    F: 'static + Send + Future<Output = H>,
+{
+    Box::new(move |req| {
+        let mut accept = Accept::from_headers(req.headers()).ok().flatten();
+        let future = handler(req.state());
+        Box::pin(async move {
+            let health = future.await;
+            health_check_response(&mut accept, health)
+        })
+    })
+}
+
 fn best_response_type<E>(
     accept: &mut Option<Accept>,
     available: &[Mime],
@@ -317,23 +379,29 @@ fn best_response_type<E>(
     }
 }
 
+fn response_body<T: Serialize, E>(
+    accept: &mut Option<Accept>,
+    body: T,
+) -> Result<(Body, Mime), RouteError<E>> {
+    let ty = best_response_type(accept, &[mime::JSON, mime::BYTE_STREAM])?;
+    if ty == mime::BYTE_STREAM {
+        let bytes = bincode::serialize(&body).map_err(RouteError::Bincode)?;
+        Ok((bytes.into(), mime::BYTE_STREAM))
+    } else if ty == mime::JSON {
+        let json = serde_json::to_string(&body).map_err(RouteError::Json)?;
+        Ok((json.into(), mime::JSON))
+    } else {
+        unreachable!()
+    }
+}
+
 fn respond_with<T: Serialize, E>(
     accept: &mut Option<Accept>,
     body: T,
 ) -> Result<tide::Response, RouteError<E>> {
-    let ty = best_response_type(accept, &[mime::JSON, mime::BYTE_STREAM])?;
-    if ty == mime::BYTE_STREAM {
-        let bytes = bincode::serialize(&body).map_err(RouteError::Bincode)?;
-        Ok(tide::Response::builder(tide::StatusCode::Ok)
-            .body(bytes)
-            .content_type(mime::BYTE_STREAM)
-            .build())
-    } else if ty == mime::JSON {
-        Ok(tide::Response::builder(tide::StatusCode::Ok)
-            .body(serde_json::to_string(&body).map_err(RouteError::Json)?)
-            .content_type(mime::JSON)
-            .build())
-    } else {
-        unreachable!()
-    }
+    let (body, content_type) = response_body(accept, body)?;
+    Ok(tide::Response::builder(StatusCode::Ok)
+        .body(body)
+        .content_type(content_type)
+        .build())
 }
