@@ -4,7 +4,6 @@ use async_std::task::spawn;
 use async_std::task::JoinHandle;
 use clap::CommandFactory;
 use config::{Config, ConfigError};
-//use edit_distance;
 use routefinder::Router;
 use serde::Deserialize;
 use std::fs::read_to_string;
@@ -23,7 +22,7 @@ use tide::{
     Request, Response, StatusCode,
 };
 use toml::value::Value;
-use tracing::{error, info};
+use tracing::error;
 use url::Url;
 
 #[derive(AsRefStr, Debug)]
@@ -118,17 +117,24 @@ pub fn check_api(api: toml::Value) -> bool {
                     .as_array()
                     .expect("Expecting TOML array.");
                 for path in paths {
-                    for segment in path.as_str().unwrap().split('/') {
-                        if let Some(parameter) = segment.strip_prefix(':') {
-                            let stype = vk(entry, segment);
-                            if UrlSegment::from_str(&stype).is_err() {
-                                error!(
-                                    "Route /{}: Unrecognized type {} for pattern {}.",
-                                    &first_segment, stype, &parameter
-                                );
-                                error_count += 1;
+                    if path.is_str() {
+                        for segment in path.as_str().unwrap().split('/') {
+                            if let Some(parameter) = segment.strip_prefix(':') {
+                                let stype = vk(entry, segment);
+                                if UrlSegment::from_str(&stype).is_err() {
+                                    error!(
+                                        "Route /{}: Unrecognized type {} for pattern {}.",
+                                        &first_segment, stype, &parameter
+                                    );
+                                    error_count += 1;
+                                }
                             }
                         }
+                    } else {
+                        error!(
+                            "Route /{}: Found path '{:?}' but expecting a string.",
+                            &first_segment, path
+                        );
                     }
                 }
             } else {
@@ -162,8 +168,9 @@ pub fn configure_router(api: &toml::Value) -> Arc<Router<usize>> {
                 .expect("Expecting TOML array.");
             for path in paths {
                 index += 1;
-                // TODO a syntax error in api.toml would panic here
-                router.add(path.as_str().unwrap(), index).unwrap();
+                router
+                    .add(path.as_str().expect("Expecting a path string."), index)
+                    .unwrap();
             }
         })
     }
@@ -214,13 +221,6 @@ fn vk(v: &Value, key: &str) -> String {
         "<missing>".to_string()
     }
 }
-/*            .expect(&format!(
-                "Expecting TOML string for {}, but found type {}",
-                key,
-                v[key].type_str()
-            ))
-            .to_string()
-*/
 
 // Given a string delimited by slashes, get the first non-empty
 // segment.
@@ -260,7 +260,6 @@ pub fn document_route(meta: &toml::Value, entry: &toml::Value) -> String {
         .expect("Route definitions must be tables in api.toml")
         .iter()
     {
-        info!("Parameter: {:?}", &parameter);
         if let Some(parameter) = parameter.strip_prefix(':') {
             has_parameters = true;
             help += &vk(meta, PARAMETER_ROW.as_ref())
@@ -359,57 +358,105 @@ pub async fn disco_dispatch(
         .build())
 }
 
+/// Parse URL parameters
+///
+/// We might have a valid match or there may be type errors in the
+/// captures. Type check the captures and report any failures. Return
+/// a tuple indicating success, error messages, and bindings.
+pub fn parse_parameters<T>(
+    api: &Value,
+    first_segment: &str,
+    route_match: &routefinder::Match<T>,
+) -> (bool, String, HashMap<String, UrlSegment>) {
+    let mut bindings = HashMap::<String, UrlSegment>::new();
+    let mut parse_error = false;
+    let mut errors = String::new();
+    for capture in route_match.captures().iter() {
+        let cname = ":".to_owned() + capture.name();
+        // The unwrap is safe thanks to check_api().
+        let vtype = api[ROUTE.as_ref()][&first_segment][cname].as_str().unwrap();
+        // The unwrap is safe thanks to check_api().
+        let stype = UrlSegment::from_str(vtype).unwrap();
+        let binding = UrlSegment::new(capture.value(), stype);
+        if !&binding.is_bound() {
+            parse_error = true;
+            errors = format!(
+                "{}\n<p>Expecting {} for {}.</p>\n",
+                errors,
+                vtype,
+                capture.name(),
+            );
+        }
+        bindings.insert(capture.name().to_string(), binding);
+    }
+    (parse_error, errors, bindings)
+}
+
+// Report invalid URL literal segments
+//
+// First segment matches, but no route matches. The code below
+// generates suggestions for any literal segments that are close to a
+// literal from a path pattern. This function does not check URL
+// parameters.
+//
+// Currently, no suggestions are offered for
+// - Incorrect order of literal segments
+// - Missing literal segment
+// - Extra literal segment
+pub fn check_literals(url: &Url, api: &Value, first_segment: &str) -> String {
+    let mut typos = String::new();
+    let meta = &api["meta"];
+    let api_map = api[ROUTE.as_ref()].as_table().unwrap();
+    api_map[&*first_segment][PATH.as_ref()]
+        .as_array()
+        .unwrap()
+        .iter()
+        .for_each(|path| {
+            for pseg in path.as_str().unwrap().split('/') {
+                if !pseg.is_empty() && !pseg.starts_with(':') {
+                    url.path_segments().unwrap().for_each(|useg| {
+                        let d = edit_distance::edit_distance(pseg, useg);
+                        if 0 < d && d <= pseg.len() / 2 {
+                            typos +=
+                                &format!("<p>Found '{}'. Did you mean '{}'?</p>\n", useg, pseg);
+                        }
+                    });
+                }
+            }
+        });
+    format!(
+        "<p>Invalid arguments for /{}.</p>\n{}\n{}",
+        &first_segment,
+        typos,
+        document_route(meta, &api[ROUTE.as_ref()][&first_segment])
+    )
+}
+
 pub async fn disco_web_handler(req: Request<AppServerState>) -> tide::Result {
     let router = &req.state().router;
     let path = req.url().path();
     let route_match = router.best_match(path);
     let first_segment = get_first_segment(path);
-    info!("url: {}, pattern: {:?}", req.url(), route_match);
-
     let mut body: String = "<p>Something went wrong.</p>".into();
     let mut best: String = "".into();
     let mut distance = usize::MAX;
     let api = &req.state().app_state;
     if let Some(route_match) = route_match {
-        // We might have a valid match or there may be type errors in
-        // the captures. Type check the captures and report any
-        // failures. If the types match, dispatch to the appropriate
-        // handler.
-        let mut bindings = HashMap::<String, UrlSegment>::new();
-        let mut parse_error = false;
-        body = "".into();
-        let meta = &api["meta"];
-        let entry = &api[ROUTE.as_ref()].as_table().unwrap()[&first_segment];
-        for capture in route_match.captures().iter() {
-            let cname = ":".to_owned() + capture.name();
-            // The unwrap is safe thanks to check_api().
-            let vtype = api[ROUTE.as_ref()][&first_segment][cname].as_str().unwrap();
-            // The unwrap is safe thanks to check_api().
-            let stype = UrlSegment::from_str(vtype).unwrap();
-            let binding = UrlSegment::new(capture.value(), stype);
-            if !&binding.is_bound() {
-                parse_error = true;
-                body = format!(
-                    "{}\n<p>Expecting {} for {}</p>\n",
-                    body,
-                    vtype,
-                    capture.name(),
-                );
-            }
-            bindings.insert(capture.name().to_string(), binding);
-        }
-        if parse_error {
+        let (parse_error, errors, bindings) = parse_parameters(api, &first_segment, &route_match);
+        if !parse_error {
+            disco_dispatch(req, bindings).await
+        } else {
+            let meta = &api["meta"];
             let template = vk(&req.state().app_state[META.as_ref()], MINIMAL_HTML.as_ref());
-            let content = format!("{}{}", body, &document_route(meta, entry));
-            let body = template
+            let entry = &api[ROUTE.as_ref()].as_table().unwrap()[&first_segment];
+            let content = format!("{}{}", errors, &document_route(meta, entry));
+            body = template
                 .replace("{{TITLE}}", "Route syntax error")
                 .replace("{{BODY}}", &content);
             Ok(Response::builder(StatusCode::NotFound)
                 .body(body)
                 .content_type(mime::HTML)
                 .build())
-        } else {
-            disco_dispatch(req, bindings).await
         }
     } else {
         // No pattern matched. Note, no wildcards were added, so now
@@ -432,11 +479,9 @@ pub async fn disco_web_handler(req: Request<AppServerState>) -> tide::Result {
                     document_route(meta, &api[ROUTE.as_ref()][&best])
                 )
             } else {
-                format!(
-                    "<p>Invalid arguments for /{}.</p>\n{}",
-                    &first_segment,
-                    document_route(meta, &api[ROUTE.as_ref()][&first_segment])
-                )
+                // First segment matches, but no pattern is satisfied.
+                // Suggest corrections.
+                check_literals(req.url(), api, &first_segment)
             };
         }
         Ok(Response::builder(StatusCode::NotFound)
@@ -465,8 +510,12 @@ pub async fn init_web_server(
             .allow_credentials(true),
     );
 
+    // TODO Replace these hardcoded routes with api.toml routes
     web_server.at("/help").get(compose_reference_documentation);
+    web_server.at("/help/").get(compose_reference_documentation);
     web_server.at("/healthcheck").get(healthcheck);
+    web_server.at("/healthcheck/").get(healthcheck);
+
     web_server.at("/").all(disco_web_handler);
     web_server.at("/*").all(disco_web_handler);
     web_server.at("/public").serve_dir("public/media/")?;
