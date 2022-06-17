@@ -19,6 +19,7 @@ use tide::{
     },
     Body,
 };
+use tracing::info;
 
 /// An error returned by a route handler.
 ///
@@ -150,7 +151,17 @@ pub enum RouteParseError {}
 impl<State, Error> Route<State, Error> {
     /// Parse a [Route] from a TOML specification.
     pub fn new(name: String, spec: &toml::Value) -> Result<Self, RouteParseError> {
-        unimplemented!("route parsing")
+        // TODO this should be try_into...
+        info!("name: {}", name);
+        info!("spec: {:?}", spec);
+        Ok(Route {
+            name,
+            patterns: Default::default(),
+            params: Default::default(),
+            method: http::Method::Get,
+            doc: String::new(),
+            handler: None,
+        })
     }
 
     /// The name of the route.

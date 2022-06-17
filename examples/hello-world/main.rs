@@ -26,6 +26,13 @@ impl tide_disco::Error for HelloError {
 
 #[async_std::main]
 async fn main() -> io::Result<()> {
+    // Configure logs with timestamps and settings from the RUST_LOG
+    // environment variable.
+    tracing_subscriber::fmt()
+        .with_env_filter(tracing_subscriber::EnvFilter::from_default_env())
+        .try_init()
+        .unwrap();
+
     let greeting = "Hello, world!".to_string();
     let mut app = App::<String, HelloError>::with_state(greeting);
     let mut api = Api::<String, HelloError>::new(toml::from_slice(&fs::read(
