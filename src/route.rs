@@ -165,6 +165,10 @@ pub struct Route<State, Error> {
 pub enum RouteParseError {
     MethodMustBeString,
     InvalidMethod,
+    MissingPath,
+    IncorrectPathType,
+    IncorrectParamType,
+    RouteMustBeTable,
 }
 
 impl<State, Error> Route<State, Error> {
@@ -175,8 +179,36 @@ impl<State, Error> Route<State, Error> {
         info!("spec: {:?}", spec);
         Ok(Route {
             name,
-            patterns: Default::default(),
-            params: Default::default(),
+            patterns: match spec.get("PATH").context(MissingPathSnafu)? {
+                toml::Value::String(s) => vec![s.clone()],
+                toml::Value::Array(paths) => paths
+                    .iter()
+                    .map(|path| Ok(path.as_str().context(IncorrectPathTypeSnafu)?.to_string()))
+                    .collect::<Result<_, _>>()?,
+                _ => return Err(RouteParseError::IncorrectPathType),
+            },
+            params: spec
+                .as_table()
+                .context(RouteMustBeTableSnafu)?
+                .iter()
+                .filter_map(|(key, val)| {
+                    if !key.starts_with(':') {
+                        return None;
+                    }
+                    let ty = match val.as_str() {
+                        Some(ty) => match ty.parse() {
+                            Ok(ty) => ty,
+                            Err(_) => return Some(Err(RouteParseError::IncorrectParamType)),
+                        },
+                        None => return Some(Err(RouteParseError::IncorrectParamType)),
+                    };
+                    Some(Ok(RequestParam {
+                        name: key[1..].to_string(),
+                        param_type: ty,
+                        required: true,
+                    }))
+                })
+                .collect::<Result<_, _>>()?,
             method: match spec.get("METHOD") {
                 Some(val) => val
                     .as_str()
@@ -196,6 +228,11 @@ impl<State, Error> Route<State, Error> {
     /// segment of all of the URL patterns for this route.
     pub fn name(&self) -> String {
         self.name.clone()
+    }
+
+    /// Iterate over route patterns.
+    pub fn patterns(&self) -> impl Iterator<Item = &String> {
+        self.patterns.iter()
     }
 
     /// The HTTP method of the route.

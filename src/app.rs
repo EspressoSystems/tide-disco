@@ -108,28 +108,30 @@ impl<State: Send + Sync + 'static, Error: 'static + crate::Error> App<State, Err
         for (prefix, api) in &state.apis {
             // Register routes for this API.
             for route in api {
-                let name = route.name();
-                let prefix = prefix.clone();
-                server.at(&prefix).at(&name).method(
-                    route.method(),
-                    move |req: tide::Request<Arc<Self>>| {
-                        let name = name.clone();
-                        let prefix = prefix.clone();
-                        async move {
-                            let route = &req.state().apis[&prefix][&name];
-                            let state = &*req.state().state;
-                            let req = request_params(&req, route.params())?;
-                            route
-                                .handle(req, state)
-                                .await
-                                .map_err(|err| match err {
-                                    RouteError::AppSpecific(err) => err.into(),
-                                    _ => Error::from_route_error(err),
-                                })
-                                .map_err(|err| err.into_tide_error())
-                        }
-                    },
-                );
+                for pattern in route.patterns() {
+                    let name = route.name();
+                    let prefix = prefix.clone();
+                    server.at(&prefix).at(pattern).method(
+                        route.method(),
+                        move |req: tide::Request<Arc<Self>>| {
+                            let name = name.clone();
+                            let prefix = prefix.clone();
+                            async move {
+                                let route = &req.state().apis[&prefix][&name];
+                                let state = &*req.state().state;
+                                let req = request_params(&req, route.params())?;
+                                route
+                                    .handle(req, state)
+                                    .await
+                                    .map_err(|err| match err {
+                                        RouteError::AppSpecific(err) => err.into(),
+                                        _ => Error::from_route_error(err),
+                                    })
+                                    .map_err(|err| err.into_tide_error())
+                            }
+                        },
+                    );
+                }
             }
 
             // Register automatic routes for this API: `healthcheck`.

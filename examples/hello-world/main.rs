@@ -36,7 +36,7 @@ async fn main() -> io::Result<()> {
         .try_init()
         .unwrap();
 
-    let mut app = App::<_, HelloError>::with_state(RwLock::new("Hello, world!".to_string()));
+    let mut app = App::<_, HelloError>::with_state(RwLock::new("Hello".to_string()));
     let mut api = Api::<RwLock<String>, HelloError>::new(toml::from_slice(&fs::read(
         "examples/hello-world/api.toml",
     )?)?)

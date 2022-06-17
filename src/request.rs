@@ -82,14 +82,26 @@ impl RequestParamValue {
         formal: &RequestParam,
     ) -> Result<Option<Self>, RequestError> {
         if let Ok(param) = req.param(&formal.name) {
-            unimplemented!("parsing String into RequestParamValue based on formal.param_type");
+            match formal.param_type {
+                RequestParamType::Literal => {
+                    Ok(Some(RequestParamValue::Literal(param.to_string())))
+                }
+                _ => unimplemented!(
+                    "parsing String into RequestParamValue based on formal.param_type"
+                ),
+            }
         } else {
             unimplemented!("check for the parameter in the request body")
         }
     }
 
     pub fn as_string(&self) -> Option<String> {
-        unimplemented!()
+        match self {
+            Self::Literal(s) => Some(s.clone()),
+            _ => {
+                unimplemented!("extracting a String from other parameter types, like TaggedBase64")
+            }
+        }
     }
 
     pub fn as_integer(&self) -> Option<u128> {
@@ -97,7 +109,7 @@ impl RequestParamValue {
     }
 }
 
-#[derive(Clone, Debug, EnumString)]
+#[derive(Clone, Copy, Debug, EnumString)]
 pub enum RequestParamType {
     Boolean,
     Hexadecimal,
@@ -108,7 +120,7 @@ pub enum RequestParamType {
 
 #[derive(Clone, Debug)]
 pub struct RequestParam {
-    name: String,
-    param_type: RequestParamType,
-    required: bool,
+    pub name: String,
+    pub param_type: RequestParamType,
+    pub required: bool,
 }
