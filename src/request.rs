@@ -13,6 +13,7 @@ pub enum RequestError {
 /// Parameters passed to a route handler.
 ///
 /// These parameters describe the incoming request and the current server state.
+#[derive(Clone, Debug)]
 pub struct RequestParams<State> {
     headers: Headers,
     state: Arc<State>,
