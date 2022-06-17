@@ -1,4 +1,3 @@
-use async_std::sync::Arc;
 use snafu::Snafu;
 use std::collections::HashMap;
 use strum_macros::EnumString;
@@ -14,21 +13,18 @@ pub enum RequestError {
 ///
 /// These parameters describe the incoming request and the current server state.
 #[derive(Clone, Debug)]
-pub struct RequestParams<State> {
+pub struct RequestParams {
     headers: Headers,
-    state: Arc<State>,
     params: HashMap<String, RequestParamValue>,
 }
 
-impl<State> RequestParams<State> {
+impl RequestParams {
     pub(crate) fn new<S>(
         req: &tide::Request<S>,
-        state: Arc<State>,
         formal_params: &[RequestParam],
     ) -> Result<Self, RequestError> {
         Ok(Self {
             headers: AsRef::<Headers>::as_ref(req).clone(),
-            state,
             params: formal_params
                 .iter()
                 .filter_map(|param| match RequestParamValue::new(req, param) {
@@ -40,14 +36,29 @@ impl<State> RequestParams<State> {
         })
     }
 
-    /// The current server state.
-    pub fn state(&self) -> &State {
-        &*self.state
-    }
-
     /// The headers of the incoming request.
     pub fn headers(&self) -> &Headers {
         &self.headers
+    }
+
+    /// Get the value of a named parameter.
+    pub fn param(&self, name: &str) -> Option<&RequestParamValue> {
+        self.params.get(name)
+    }
+
+    /// Get the value of a named parameter and convert it to an integer.
+    pub fn integer_param(&self, name: &str) -> Option<u128> {
+        self.params.get(name).and_then(|val| val.as_integer())
+    }
+
+    /// Get the value of a named parameter and convert it to a [u64].
+    pub fn u64_param(&self, name: &str) -> Option<u64> {
+        self.integer_param(name).and_then(|i| i.try_into().ok())
+    }
+
+    /// Get the value of a named parameter and convert it to a string.
+    pub fn string_param(&self, name: &str) -> Option<String> {
+        self.params.get(name).and_then(|val| val.as_string())
     }
 }
 
@@ -75,6 +86,14 @@ impl RequestParamValue {
         } else {
             unimplemented!("check for the parameter in the request body")
         }
+    }
+
+    pub fn as_string(&self) -> Option<String> {
+        unimplemented!()
+    }
+
+    pub fn as_integer(&self) -> Option<u128> {
+        unimplemented!()
     }
 }
 

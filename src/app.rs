@@ -31,7 +31,7 @@ pub enum AppError {
     ModuleAlreadyExists,
 }
 
-impl<State: Clone + Send + Sync + 'static, Error: 'static> App<State, Error> {
+impl<State: Send + Sync + 'static, Error: 'static> App<State, Error> {
     /// Create a new [App] with a given state.
     pub fn with_state(state: State) -> Self {
         Self {
@@ -68,11 +68,11 @@ impl<State: Clone + Send + Sync + 'static, Error: 'static> App<State, Error> {
     /// module is healthy. Detailed health status from each module is not included in the response
     /// (due to type erasure) but can be queried using [module_health](Self::module_health) or by
     /// hitting the endpoint `GET /:module/healthcheck`.
-    pub async fn health(&self, req: RequestParams<State>) -> AppHealth {
+    pub async fn health(&self, req: RequestParams, state: &State) -> AppHealth {
         let mut modules = HashMap::new();
         let mut status = HealthStatus::Available;
         for (name, api) in &self.apis {
-            let health = api.health(req.clone()).await.status();
+            let health = api.health(req.clone(), state).await.status();
             if health != StatusCode::Ok {
                 status = HealthStatus::Unhealthy;
             }
@@ -91,15 +91,16 @@ impl<State: Clone + Send + Sync + 'static, Error: 'static> App<State, Error> {
     /// If there is no module with the given name, returns [None].
     pub async fn module_health(
         &self,
-        req: RequestParams<State>,
+        req: RequestParams,
+        state: &State,
         module: &str,
     ) -> Option<tide::Response> {
         let api = self.apis.get(module)?;
-        Some(api.health(req).await)
+        Some(api.health(req, state).await)
     }
 }
 
-impl<State: Clone + Send + Sync + 'static, Error: 'static + crate::Error> App<State, Error> {
+impl<State: Send + Sync + 'static, Error: 'static + crate::Error> App<State, Error> {
     /// Serve the [App] asynchronously.
     pub async fn serve<L: ToListener<Arc<Self>>>(self, listener: L) -> io::Result<()> {
         let state = Arc::new(self);
@@ -116,9 +117,10 @@ impl<State: Clone + Send + Sync + 'static, Error: 'static + crate::Error> App<St
                         let prefix = prefix.clone();
                         async move {
                             let route = &req.state().apis[&prefix][&name];
+                            let state = &*req.state().state;
                             let req = request_params(&req, route.params())?;
                             route
-                                .handle(req)
+                                .handle(req, state)
                                 .await
                                 .map_err(|err| match err {
                                     RouteError::AppSpecific(err) => err.into(),
@@ -139,7 +141,9 @@ impl<State: Clone + Send + Sync + 'static, Error: 'static + crate::Error> App<St
                     let prefix = prefix.clone();
                     async move {
                         let api = &req.state().apis[&prefix];
-                        Ok(api.health(request_params(&req, &[])?).await)
+                        Ok(api
+                            .health(request_params(&req, &[])?, &*req.state().state)
+                            .await)
                     }
                 });
         }
@@ -149,9 +153,10 @@ impl<State: Clone + Send + Sync + 'static, Error: 'static + crate::Error> App<St
             .at("healthcheck")
             .get(|req: tide::Request<Arc<Self>>| async move {
                 let state = req.state();
+                let app_state = &*state.state;
                 let req = request_params(&req, &[])?;
                 let mut accept = Accept::from_headers(req.headers())?;
-                let res = state.health(req).await;
+                let res = state.health(req, app_state).await;
                 Ok(health_check_response(&mut accept, res))
             });
 
@@ -162,9 +167,8 @@ impl<State: Clone + Send + Sync + 'static, Error: 'static + crate::Error> App<St
 fn request_params<State, Error: crate::Error>(
     req: &tide::Request<Arc<App<State, Error>>>,
     params: &[RequestParam],
-) -> Result<RequestParams<State>, tide::Error> {
-    RequestParams::new(&req, req.state().state.clone(), params)
-        .map_err(|err| Error::from_request_error(err).into_tide_error())
+) -> Result<RequestParams, tide::Error> {
+    RequestParams::new(&req, params).map_err(|err| Error::from_request_error(err).into_tide_error())
 }
 
 /// The health status of an application.
