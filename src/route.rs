@@ -1,15 +1,17 @@
 use crate::{
     healthcheck::HealthCheck,
-    request::{RequestParam, RequestParams},
+    request::{RequestParam, RequestParamType, RequestParams},
 };
 use async_trait::async_trait;
 use futures::Future;
 use serde::Serialize;
 use snafu::Snafu;
+use std::collections::HashMap;
 use std::convert::Infallible;
 use std::fmt::{self, Display, Formatter};
 use std::marker::PhantomData;
 use std::pin::Pin;
+use std::str::FromStr;
 use tide::{
     http::{
         self,
@@ -19,7 +21,6 @@ use tide::{
     },
     Body,
 };
-use tracing::info;
 
 /// An error returned by a route handler.
 ///
@@ -146,17 +147,54 @@ pub struct Route<State, Error> {
 }
 
 #[derive(Clone, Debug, Snafu)]
-pub enum RouteParseError {}
+pub enum RouteParseError {
+    MissingPathArray,
+    PathElementError,
+    InvalidTypeExpression,
+    UnrecognizedType,
+}
 
 impl<State, Error> Route<State, Error> {
     /// Parse a [Route] from a TOML specification.
     pub fn new(name: String, spec: &toml::Value) -> Result<Self, RouteParseError> {
-        // TODO this should be try_into...
-        info!("name: {}", name);
-        info!("spec: {:?}", spec);
+        let paths: Vec<String> = spec["PATH"]
+            .as_array()
+            .ok_or(RouteParseError::MissingPathArray)?
+            .iter()
+            .map(|v| {
+                v.as_str()
+                    .ok_or(RouteParseError::PathElementError)
+                    .unwrap()
+                    .to_string()
+            })
+            .collect();
+        let mut pmap = HashMap::<String, RequestParam>::new();
+        for path in paths.iter() {
+            for seg in path.split('/') {
+                if seg.starts_with(':') {
+                    let ptype = RequestParamType::from_str(
+                        spec[seg]
+                            .as_str()
+                            .ok_or(RouteParseError::InvalidTypeExpression)?,
+                    )
+                    .map_err(|_| RouteParseError::UnrecognizedType)?;
+                    // TODO Should the map key and name be different? If
+                    // not, then RequestParam::name is redundant.
+                    pmap.insert(
+                        seg.to_string(),
+                        RequestParam {
+                            name: seg.to_string(),
+                            param_type: ptype,
+                            // TODO How should we encode optioanl params?
+                            required: true,
+                        },
+                    );
+                }
+            }
+        }
         Ok(Route {
             name,
-            patterns: Default::default(),
+            patterns: paths,
             params: Default::default(),
             method: http::Method::Get,
             doc: String::new(),

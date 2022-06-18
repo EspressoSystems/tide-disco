@@ -89,7 +89,7 @@ pub enum RequestParamType {
 
 #[derive(Clone, Debug)]
 pub struct RequestParam {
-    name: String,
-    param_type: RequestParamType,
-    required: bool,
+    pub name: String,
+    pub param_type: RequestParamType,
+    pub required: bool,
 }
