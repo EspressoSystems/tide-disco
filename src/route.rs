@@ -6,6 +6,7 @@ use async_trait::async_trait;
 use futures::Future;
 use serde::Serialize;
 use snafu::Snafu;
+use snafu::{OptionExt, Snafu};
 use std::collections::HashMap;
 use std::convert::Infallible;
 use std::fmt::{self, Display, Formatter};
@@ -152,6 +153,12 @@ pub enum RouteParseError {
     PathElementError,
     InvalidTypeExpression,
     UnrecognizedType,
+    MethodMustBeString,
+    InvalidMethod,
+    MissingPath,
+    IncorrectPathType,
+    IncorrectParamType,
+    RouteMustBeTable,
 }
 
 impl<State, Error> Route<State, Error> {
@@ -194,9 +201,44 @@ impl<State, Error> Route<State, Error> {
         }
         Ok(Route {
             name,
-            patterns: paths,
-            params: Default::default(),
-            method: http::Method::Get,
+            patterns: match spec.get("PATH").context(MissingPathSnafu)? {
+                toml::Value::String(s) => vec![s.clone()],
+                toml::Value::Array(paths) => paths
+                    .iter()
+                    .map(|path| Ok(path.as_str().context(IncorrectPathTypeSnafu)?.to_string()))
+                    .collect::<Result<_, _>>()?,
+                _ => return Err(RouteParseError::IncorrectPathType),
+            },
+            params: spec
+                .as_table()
+                .context(RouteMustBeTableSnafu)?
+                .iter()
+                .filter_map(|(key, val)| {
+                    if !key.starts_with(':') {
+                        return None;
+                    }
+                    let ty = match val.as_str() {
+                        Some(ty) => match ty.parse() {
+                            Ok(ty) => ty,
+                            Err(_) => return Some(Err(RouteParseError::IncorrectParamType)),
+                        },
+                        None => return Some(Err(RouteParseError::IncorrectParamType)),
+                    };
+                    Some(Ok(RequestParam {
+                        name: key[1..].to_string(),
+                        param_type: ty,
+                        required: true,
+                    }))
+                })
+                .collect::<Result<_, _>>()?,
+            method: match spec.get("METHOD") {
+                Some(val) => val
+                    .as_str()
+                    .context(MethodMustBeStringSnafu)?
+                    .parse()
+                    .map_err(|_| RouteParseError::InvalidMethod)?,
+                None => Method::Get,
+            },
             doc: String::new(),
             handler: None,
         })
