@@ -1,3 +1,143 @@
+//! Web server framework with built-in discoverability.
+//!
+//! # Overview
+//! TODO
+//!
+//! # Boxed futures
+//!
+//! As a web server framework, Tide Disco naturally includes many interfaces that take functions as
+//! arguments. For example, route handlers are registered by passing a handler function to an [Api]
+//! object. Also naturally, many of these function parameters are async, which of course just means
+//! that they are regular functions returning some type `F` that implements the
+//! [Future](futures::Future) trait. This is all perfectly usual, but throughout the interfaces in
+//! this crate, you may notice something that is a bit unusual: many of these functions are required
+//! to return not just any [Future](futures::Future), but a
+//! [BoxFuture](futures::future::BoxFuture). This is due to a limitation that currently exists
+//! in the Rust compiler.
+//!
+//! The problem arises with functions where the returned future is not `'static`, but rather borrows
+//! from the function parameters. Consider the following route definition, for example:
+//!
+//! ```ignore
+//! type State = RwLock<u64>;
+//! type Error = ();
+//!
+//! api.at("someroute", |_req, state: &State| async {
+//!     Ok(*state.read().await)
+//! })
+//! ```
+//!
+//! The `async` block in the route handler uses the `state` reference, so the resulting future is
+//! only valid for as long as the reference `state` is valid. We could write the signature of the
+//! route handler like this:
+//!
+//! ```
+//! use futures::Future;
+//! use tide_disco::RequestParams;
+//!
+//! type State = async_std::sync::RwLock<u64>;
+//! type Error = ();
+//!
+//! fn handler<'a>(
+//!     req: RequestParams,
+//!     state: &'a State,
+//! ) -> impl 'a + Future<Output = Result<u64, Error>> {
+//!     // ...
+//!     # async { Ok(*state.read().await) }
+//! }
+//! ```
+//!
+//! Notice how we explicitly constrain the future type by the lifetime `'a` using `impl` syntax.
+//! Unfortunately, while we can write a function signature like this, we cannot write a type bound
+//! that uses the [Fn] trait and represents the equivalent function signature. This is a problem,
+//! since interfaces like [at](Api::at) would like to consume any function-like object which
+//! implements [Fn], not just static function pointers. Here is what we would _like_ to write:
+//!
+//! ```ignore
+//! impl<State, Error> Api<State, Error> {
+//!     pub fn at<F, T>(&mut self, route: &str, handler: F)
+//!     where
+//!         F: for<'a> Fn<(RequestParams, &'a State)>,
+//!         for<'a> <F as Fn<(RequestParams, &'a State)>>::Output:
+//!             'a + Future<Output = Result<T, Error>>,
+//!     {...}
+//! }
+//! ```
+//!
+//! Here we are using a higher-rank trait bound on the associated type `Output` of the [Fn]
+//! implementation for `F` in order to constrain the future by the lifetime `'a`, which is the
+//! lifetime of the `State` reference. It is actually possible to write this function signature
+//! today in unstable Rust (using the raw [Fn] trait as a bound is unstable), but even then, no
+//! associated type will be able to implement the HRTB due to a bug in the compiler. This limitation
+//! is described in detail in
+//! [this post](https://users.rust-lang.org/t/trait-bounds-for-fn-returning-a-future-that-forwards-the-lifetime-of-the-fn-s-arguments/63275/7).
+//!
+//! As a workaround until this is fixed, we require the function `F` to return a concrete future
+//! type with an explicit lifetime parameter: [BoxFuture](futures::future::BoxFuture). This allows
+//! us to specify the lifetime constraint within the HRTB on `F` itself, rather than resorting to a
+//! separate HRTB on the associated type `Output` in order to be able to name the return type of
+//! `F`. Here is the actual (partial) signature of [at](Api::at):
+//!
+//! ```ignore
+//! impl<State, Error> Api<State, Error> {
+//!     pub fn at<F, T>(&mut self, route: &str, handler: F)
+//!     where
+//!         F: for<'a> Fn(RequestParams, &'a State) -> BoxFuture<'a, Result<T, Error>>,
+//!     {...}
+//! }
+//! ```
+//!
+//! What this means for your code is that functions you pass to the Tide Disco framework must return
+//! a boxed future. When passing a closure, you can simply add `.boxed()` to your `async` block,
+//! like this:
+//!
+//! ```
+//! use async_std::sync::RwLock;
+//! use futures::FutureExt;
+//! use tide_disco::Api;
+//!
+//! type State = RwLock<u64>;
+//! type Error = ();
+//!
+//! fn define_routes(api: &mut Api<State, Error>) {
+//!     api.at("someroute", |_req, state: &State| async {
+//!         Ok(*state.read().await)
+//!     }.boxed());
+//! }
+//! ```
+//!
+//! This also means that you cannot pass the name of an `async fn` directly, since `async` functions
+//! declared with the `async fn` syntax do not return a boxed future. Instead, you can wrap the
+//! function in a closure:
+//!
+//! ```
+//! use async_std::sync::RwLock;
+//! use futures::FutureExt;
+//! use tide_disco::{Api, RequestParams};
+//!
+//! type State = RwLock<u64>;
+//! type Error = ();
+//!
+//! async fn handler(_req: RequestParams, state: &State) -> Result<u64, Error> {
+//!     Ok(*state.read().await)
+//! }
+//!
+//! fn register(api: &mut Api<State, Error>) {
+//!     api.at("someroute", |req, state: &State| handler(req, state).boxed());
+//! }
+//! ```
+//!
+//! In the future, we may create an attribute macro which can rewrite an `async fn` to return a
+//! boxed future directly, like
+//!
+//! ```ignore
+//! #[boxed_future]
+//! async fn handler(_req: RequestParams, state: &State) -> Result<u64, Error> {
+//!     Ok(*state.read().await)
+//! }
+//! ```
+//!
+
 use crate::ApiKey::*;
 use async_std::sync::{Arc, RwLock};
 use async_std::task::spawn;
@@ -29,6 +169,7 @@ pub mod api;
 pub mod app;
 pub mod error;
 pub mod healthcheck;
+pub mod method;
 pub mod request;
 pub mod route;
 

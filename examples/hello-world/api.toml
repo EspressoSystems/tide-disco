@@ -1,3 +1,8 @@
 [route.greeting]
-PATH = ["greeting", "greeting/:name"]
+PATH = ["greeting/:name"]
+":name" = "Literal"
 
+[route.setgreeting]
+PATH = ["greeting/:greeting"]
+METHOD = "POST"
+":greeting" = "Literal"
