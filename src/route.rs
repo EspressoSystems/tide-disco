@@ -3,7 +3,8 @@ use crate::{
     request::{RequestParam, RequestParamType, RequestParams},
 };
 use async_trait::async_trait;
-use futures::Future;
+use derive_more::From;
+use futures::future::{BoxFuture, Future, FutureExt};
 use serde::Serialize;
 use snafu::{OptionExt, Snafu};
 use std::collections::HashMap;
@@ -17,7 +18,7 @@ use tide::{
         self,
         content::Accept,
         mime::{self, Mime},
-        StatusCode,
+        Method, StatusCode,
     },
     Body,
 };
@@ -72,14 +73,18 @@ impl<E> RouteError<E> {
 /// take [RequestParams] and produce either a response or an appropriately typed error.
 ///
 /// Implementations of this trait are provided for handler functions returning a serializable
-/// response ([FnHandler]),for boxed handlers, and for the [MapErr] type which can be used to
+/// response ([FnHandler]), for boxed handlers, and for the [MapErr] type which can be used to
 /// transform the `Error` type of a [Handler]. This trait is usually used as
 /// `Box<dyn Handler<State, Error>>`, in order to type-erase route-specific details such as the
 /// return type of a handler function. The types which are preserved, `State` and `Error`, should be
 /// the same for all handlers in an API module.
 #[async_trait]
 pub(crate) trait Handler<State, Error>: 'static + Send + Sync {
-    async fn handle(&self, req: RequestParams<State>) -> Result<tide::Response, RouteError<Error>>;
+    async fn handle(
+        &self,
+        req: RequestParams,
+        state: &State,
+    ) -> Result<tide::Response, RouteError<Error>>;
 }
 
 /// A [Handler] which delegates to an async function.
@@ -91,43 +96,55 @@ pub(crate) trait Handler<State, Error>: 'static + Send + Sync {
 /// serializing the response is flexible. This implementation will use the [Accept] header of the
 /// incoming request to try to provide a format that the client expects. Supported formats are
 /// `application/json` (using [serde_json]) and `application/octet-stream` (using [bincode]).
-pub(crate) struct FnHandler<F, Fut, R> {
-    f: F,
-    _phantom: PhantomData<(Fut, R)>,
-}
-
-impl<F, Fut, R> From<F> for FnHandler<F, Fut, R> {
-    fn from(f: F) -> Self {
-        Self {
-            f,
-            _phantom: Default::default(),
-        }
-    }
-}
+///
+/// # Limitations
+///
+/// [Like many function parameters](crate#boxed-futures) in [tide_disco](crate), the handler
+/// function is required to return a [BoxFuture].
+#[derive(From)]
+pub(crate) struct FnHandler<F>(F);
 
 #[async_trait]
-impl<F, Fut, R, State, Error> Handler<State, Error> for FnHandler<F, Fut, R>
+impl<F, T, State, Error> Handler<State, Error> for FnHandler<F>
 where
-    F: 'static + Send + Sync + Fn(RequestParams<State>) -> Fut,
-    Fut: 'static + Send + Sync + Future<Output = Result<R, Error>>,
-    R: 'static + Send + Sync + Serialize,
+    F: 'static + Send + Sync + Fn(RequestParams, &State) -> BoxFuture<'_, Result<T, Error>>,
+    T: Serialize,
     State: 'static + Send + Sync,
 {
-    async fn handle(&self, req: RequestParams<State>) -> Result<tide::Response, RouteError<Error>> {
-        let mut accept = Accept::from_headers(req.headers()).map_err(RouteError::Tide)?;
-        (self.f)(req)
-            .await
-            .map_err(RouteError::AppSpecific)
-            .and_then(|res| respond_with(&mut accept, &res))
+    async fn handle(
+        &self,
+        req: RequestParams,
+        state: &State,
+    ) -> Result<tide::Response, RouteError<Error>> {
+        let accept = accept_header(&req)?;
+        response_from_result(accept, (self.0)(req, state).await)
     }
+}
+
+pub(crate) fn accept_header<Error>(
+    req: &RequestParams,
+) -> Result<Option<Accept>, RouteError<Error>> {
+    Accept::from_headers(req.headers()).map_err(RouteError::Tide)
+}
+
+pub(crate) fn response_from_result<T: Serialize, Error>(
+    mut accept: Option<Accept>,
+    res: Result<T, Error>,
+) -> Result<tide::Response, RouteError<Error>> {
+    res.map_err(RouteError::AppSpecific)
+        .and_then(|res| respond_with(&mut accept, &res))
 }
 
 #[async_trait]
 impl<H: ?Sized + Handler<State, Error>, State: 'static + Send + Sync, Error> Handler<State, Error>
     for Box<H>
 {
-    async fn handle(&self, req: RequestParams<State>) -> Result<tide::Response, RouteError<Error>> {
-        (**self).handle(req).await
+    async fn handle(
+        &self,
+        req: RequestParams,
+        state: &State,
+    ) -> Result<tide::Response, RouteError<Error>> {
+        (**self).handle(req, state).await
     }
 }
 
@@ -251,6 +268,11 @@ impl<State, Error> Route<State, Error> {
         self.name.clone()
     }
 
+    /// Iterate over route patterns.
+    pub fn patterns(&self) -> impl Iterator<Item = &String> {
+        self.patterns.iter()
+    }
+
     /// The HTTP method of the route.
     pub fn method(&self) -> http::Method {
         self.method
@@ -298,11 +320,10 @@ impl<State, Error> Route<State, Error> {
         self.handler = Some(Box::new(handler));
     }
 
-    pub(crate) fn set_fn_handler<F, Fut, T>(&mut self, handler: F)
+    pub(crate) fn set_fn_handler<F, T>(&mut self, handler: F)
     where
-        F: 'static + Send + Sync + Fn(RequestParams<State>) -> Fut,
-        Fut: 'static + Send + Sync + Future<Output = Result<T, Error>>,
-        T: 'static + Send + Sync + Serialize,
+        F: 'static + Send + Sync + Fn(RequestParams, &State) -> BoxFuture<'_, Result<T, Error>>,
+        T: Serialize,
         State: 'static + Send + Sync,
     {
         self.set_handler(FnHandler::from(handler))
@@ -310,7 +331,8 @@ impl<State, Error> Route<State, Error> {
 
     pub(crate) fn default_handler(
         &self,
-        _req: RequestParams<State>,
+        _req: RequestParams,
+        _state: &State,
     ) -> Result<tide::Response, RouteError<Error>> {
         unimplemented!()
     }
@@ -322,10 +344,14 @@ where
     Error: 'static,
     State: 'static + Send + Sync,
 {
-    async fn handle(&self, req: RequestParams<State>) -> Result<tide::Response, RouteError<Error>> {
+    async fn handle(
+        &self,
+        req: RequestParams,
+        state: &State,
+    ) -> Result<tide::Response, RouteError<Error>> {
         match &self.handler {
-            Some(handler) => handler.handle(req).await,
-            None => self.default_handler(req),
+            Some(handler) => handler.handle(req, state).await,
+            None => self.default_handler(req, state),
         }
     }
 }
@@ -333,7 +359,7 @@ where
 pub struct MapErr<H, F, E> {
     handler: H,
     map: F,
-    _phantom: std::marker::PhantomData<E>,
+    _phantom: PhantomData<E>,
 }
 
 impl<H, F, E> MapErr<H, F, E> {
@@ -357,10 +383,11 @@ where
 {
     async fn handle(
         &self,
-        req: RequestParams<State>,
+        req: RequestParams,
+        state: &State,
     ) -> Result<tide::Response, RouteError<Error2>> {
         self.handler
-            .handle(req)
+            .handle(req, state)
             .await
             .map_err(|err| err.map_app_specific(&self.map))
     }
@@ -372,12 +399,8 @@ where
 /// we store the healthcheck handler in a wrapper that converts the `HealthCheck` to a
 /// `tide::Response`. The status code of the response will be the status code of the `HealthCheck`
 /// implementation returned by the underlying handler.
-pub(crate) type HealthCheckHandler<State> = Box<
-    dyn 'static
-        + Send
-        + Sync
-        + Fn(RequestParams<State>) -> Pin<Box<dyn Send + Future<Output = tide::Response>>>,
->;
+pub(crate) type HealthCheckHandler<State> =
+    Box<dyn 'static + Send + Sync + Fn(RequestParams, &State) -> BoxFuture<'_, tide::Response>>;
 
 pub(crate) fn health_check_response<H: HealthCheck>(
     accept: &mut Option<Accept>,
@@ -410,13 +433,14 @@ where
     H: HealthCheck,
     F: 'static + Send + Future<Output = H>,
 {
-    Box::new(move |req| {
+    Box::new(move |req, state| {
         let mut accept = Accept::from_headers(req.headers()).ok().flatten();
-        let future = handler(req.state());
-        Box::pin(async move {
+        let future = handler(state);
+        async move {
             let health = future.await;
             health_check_response(&mut accept, health)
-        })
+        }
+        .boxed()
     })
 }
 

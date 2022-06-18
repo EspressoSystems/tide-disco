@@ -1,8 +1,11 @@
+use async_std::sync::RwLock;
+use futures::FutureExt;
 use serde::{Deserialize, Serialize};
 use snafu::Snafu;
 use std::fs;
 use std::io;
 use tide_disco::{http::StatusCode, Api, App};
+use tracing::info;
 
 #[derive(Clone, Debug, Deserialize, Serialize, Snafu)]
 enum HelloError {
@@ -33,14 +36,30 @@ async fn main() -> io::Result<()> {
         .try_init()
         .unwrap();
 
-    let greeting = "Hello, world!".to_string();
-    let mut app = App::<String, HelloError>::with_state(greeting);
-    let mut api = Api::<String, HelloError>::new(toml::from_slice(&fs::read(
+    let mut app = App::<_, HelloError>::with_state(RwLock::new("Hello".to_string()));
+    let mut api = Api::<RwLock<String>, HelloError>::new(toml::from_slice(&fs::read(
         "examples/hello-world/api.toml",
     )?)?)
     .unwrap();
-    api.at("greeting", |req| async move { Ok(req.state().clone()) })
-        .unwrap();
+    api.get("greeting", |req, greeting| {
+        async move {
+            let name = req.string_param("name").unwrap();
+            info!("called /greeting with :name = {}", name);
+            Ok(format!("{}, {}", greeting, name,))
+        }
+        .boxed()
+    })
+    .unwrap();
+    api.post("setgreeting", |req, greeting| {
+        async move {
+            let new_greeting = req.string_param("greeting").unwrap();
+            info!("called /setgreeting with :greeting = {}", new_greeting);
+            *greeting = new_greeting;
+            Ok(())
+        }
+        .boxed()
+    })
+    .unwrap();
     app.register_module("", api).unwrap();
     app.serve("0.0.0.0:8080").await
 }
