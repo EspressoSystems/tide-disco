@@ -5,7 +5,6 @@ use crate::{
 use async_trait::async_trait;
 use futures::Future;
 use serde::Serialize;
-use snafu::Snafu;
 use snafu::{OptionExt, Snafu};
 use std::collections::HashMap;
 use std::convert::Infallible;
@@ -237,7 +236,7 @@ impl<State, Error> Route<State, Error> {
                     .context(MethodMustBeStringSnafu)?
                     .parse()
                     .map_err(|_| RouteParseError::InvalidMethod)?,
-                None => Method::Get,
+                None => http::Method::Get,
             },
             doc: String::new(),
             handler: None,
