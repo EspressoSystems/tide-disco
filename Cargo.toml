@@ -7,6 +7,10 @@ description = "Discoverability for Tide"
 repository = "https://github.com/EspressoSystems/tide-disco"
 license-file = "LICENSE"
 
+[[example]]
+name = "hello-world"
+test = true
+
 [dependencies]
 async-std = { version = "1.8.0", features = ["attributes"] }
 async-trait = "0.1.51"
@@ -42,3 +46,7 @@ tracing-futures = "0.2"
 tracing-log = "0.1.2"
 tracing-subscriber = { version = "0.3.10", features = ["env-filter", "json"] }
 url = "2.2.2"
+
+[dev-dependencies]
+portpicker = "0.1"
+tracing-test = "0.2"
