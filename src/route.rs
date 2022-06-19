@@ -455,7 +455,7 @@ fn best_response_type<E>(
     }
 }
 
-fn response_body<T: Serialize, E>(
+pub(crate) fn response_body<T: Serialize, E>(
     accept: &mut Option<Accept>,
     body: T,
 ) -> Result<(Body, Mime), RouteError<E>> {

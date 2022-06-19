@@ -2,14 +2,18 @@ use crate::{
     api::Api,
     healthcheck::{HealthCheck, HealthStatus},
     request::{RequestParam, RequestParams},
-    route::{health_check_response, Handler, RouteError},
+    route::{self, health_check_response, Handler, RouteError},
 };
 use async_std::sync::Arc;
+use futures::future::BoxFuture;
 use serde::{Deserialize, Serialize};
 use snafu::Snafu;
 use std::collections::hash_map::{Entry, HashMap};
 use std::io;
-use tide::{http::content::Accept, StatusCode};
+use tide::{
+    http::{content::Accept, mime},
+    StatusCode,
+};
 
 pub use tide::listener::{Listener, ToListener};
 
@@ -105,6 +109,8 @@ impl<State: Send + Sync + 'static, Error: 'static + crate::Error> App<State, Err
     pub async fn serve<L: ToListener<Arc<Self>>>(self, listener: L) -> io::Result<()> {
         let state = Arc::new(self);
         let mut server = tide::Server::with_state(state.clone());
+        server.with(add_error_body::<_, Error>);
+
         for (prefix, api) in &state.apis {
             // Register routes for this API.
             for route in api {
@@ -189,4 +195,37 @@ impl HealthCheck for AppHealth {
     fn status(&self) -> StatusCode {
         self.status.status()
     }
+}
+
+/// Server middleware which automatically populates the body of error responses.
+///
+/// If the response contains an error, the error is encoded into the [Error](crate::Error) type
+/// (either by downcasting if the server has generated an instance of [Error](crate::Error), or by
+/// converting to a [String] using [Display] if the error can not be downcasted to
+/// [Error](crate::Error)). The resulting [Error](crate::Error) is then serialized and used as the
+/// body of the response.
+///
+/// If the response does not contain an error, it is passed through unchanged.
+fn add_error_body<'a, T: Clone + Send + Sync + 'static, E: crate::Error>(
+    req: tide::Request<T>,
+    next: tide::Next<'a, T>,
+) -> BoxFuture<'a, tide::Result> {
+    Box::pin(async {
+        let mut accept = Accept::from_headers(&req)?;
+        let mut res = next.run(req).await;
+        if let Some(error) = res.take_error() {
+            let error = E::from_server_error(error);
+            tracing::warn!("responding with error: {}", error);
+            // Try to add the error to the response body using a format accepted by the client. If
+            // we cannot do that (for example, if the client requested a format that is incompatible
+            // with a serialized error) just add the error as a string using plaintext.
+            let (body, content_type) = route::response_body::<_, E>(&mut accept, &error)
+                .unwrap_or_else(|_| (error.to_string().into(), mime::PLAIN));
+            res.set_body(body);
+            res.set_content_type(content_type);
+            Ok(res)
+        } else {
+            Ok(res)
+        }
+    })
 }
