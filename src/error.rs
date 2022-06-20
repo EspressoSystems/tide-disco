@@ -30,4 +30,11 @@ pub trait Error: std::error::Error + Serialize + DeserializeOwned + Send + Sync 
     fn into_tide_error(self) -> tide::Error {
         tide::Error::new(self.status(), self)
     }
+
+    fn from_server_error(source: tide::Error) -> Self {
+        match source.downcast::<Self>() {
+            Ok(err) => err,
+            Err(source) => Self::catch_all(source.status(), source.to_string()),
+        }
+    }
 }
