@@ -27,15 +27,7 @@ impl tide_disco::Error for HelloError {
     }
 }
 
-#[async_std::main]
-async fn main() -> io::Result<()> {
-    // Configure logs with timestamps and settings from the RUST_LOG
-    // environment variable.
-    tracing_subscriber::fmt()
-        .with_env_filter(tracing_subscriber::EnvFilter::from_default_env())
-        .try_init()
-        .unwrap();
-
+async fn serve(port: u16) -> io::Result<()> {
     let mut app = App::<_, HelloError>::with_state(RwLock::new("Hello".to_string()));
     let mut api = Api::<RwLock<String>, HelloError>::new(toml::from_slice(&fs::read(
         "examples/hello-world/api.toml",
@@ -61,5 +53,53 @@ async fn main() -> io::Result<()> {
     })
     .unwrap();
     app.register_module("", api).unwrap();
-    app.serve("0.0.0.0:8080").await
+    app.serve(format!("0.0.0.0:{}", port)).await
+}
+
+#[async_std::main]
+async fn main() -> io::Result<()> {
+    // Configure logs with timestamps and settings from the RUST_LOG
+    // environment variable.
+    tracing_subscriber::fmt()
+        .with_env_filter(tracing_subscriber::EnvFilter::from_default_env())
+        .try_init()
+        .unwrap();
+    serve(8080).await
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use async_std::task::spawn;
+    use portpicker::pick_unused_port;
+    use surf::Url;
+    use tracing_test::traced_test;
+
+    #[async_std::test]
+    #[traced_test]
+    async fn test_get_set_greeting() {
+        let port = pick_unused_port().unwrap();
+        spawn(serve(port));
+        let url = Url::parse(&format!("http://localhost:{}", port)).unwrap();
+
+        let mut res = surf::get(url.join("greeting/tester").unwrap())
+            .send()
+            .await
+            .unwrap();
+        assert_eq!(res.status(), StatusCode::Ok);
+        assert_eq!(res.body_json::<String>().await.unwrap(), "Hello, tester");
+
+        let res = surf::post(url.join("greeting/Sup").unwrap())
+            .send()
+            .await
+            .unwrap();
+        assert_eq!(res.status(), StatusCode::Ok);
+
+        let mut res = surf::get(url.join("greeting/tester").unwrap())
+            .send()
+            .await
+            .unwrap();
+        assert_eq!(res.status(), StatusCode::Ok);
+        assert_eq!(res.body_json::<String>().await.unwrap(), "Sup, tester");
+    }
 }

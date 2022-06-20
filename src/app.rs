@@ -130,7 +130,7 @@ impl<State: Send + Sync + 'static, Error: 'static + crate::Error> App<State, Err
                                     .handle(req, state)
                                     .await
                                     .map_err(|err| match err {
-                                        RouteError::AppSpecific(err) => err.into(),
+                                        RouteError::AppSpecific(err) => err,
                                         _ => Error::from_route_error(err),
                                     })
                                     .map_err(|err| err.into_tide_error())
@@ -176,7 +176,7 @@ fn request_params<State, Error: crate::Error>(
     req: &tide::Request<Arc<App<State, Error>>>,
     params: &[RequestParam],
 ) -> Result<RequestParams, tide::Error> {
-    RequestParams::new(&req, params).map_err(|err| Error::from_request_error(err).into_tide_error())
+    RequestParams::new(req, params).map_err(|err| Error::from_request_error(err).into_tide_error())
 }
 
 /// The health status of an application.
