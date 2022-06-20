@@ -52,7 +52,7 @@ pub trait ReadState {
     /// function to apply to the state is also required to return a _boxed_ future.
     async fn read<T>(
         &self,
-        op: impl Send + for<'a> FnOnce(&'a Self::State) -> BoxFuture<'a, T>,
+        op: impl Send + for<'a> FnOnce(&'a Self::State) -> BoxFuture<'a, T> + 'async_trait,
     ) -> T;
 }
 
@@ -72,7 +72,7 @@ pub trait WriteState: ReadState {
     /// GATs, this trait could be written like
     ///
     /// ```ignore
-    /// trait ReadState {
+    /// trait WriteState {
     ///     type State: 'static;
     ///     type MutReference<'a>: 'a + DerefMut<Target = Self::State>;
     ///     fn write(&self) -> Self::MutReference<'_>;
@@ -83,7 +83,7 @@ pub trait WriteState: ReadState {
     /// function to apply to the state is also required to return a _boxed_ future.
     async fn write<T>(
         &self,
-        op: impl Send + for<'a> FnOnce(&'a mut Self::State) -> BoxFuture<'a, T>,
+        op: impl Send + for<'a> FnOnce(&'a mut Self::State) -> BoxFuture<'a, T> + 'async_trait,
     ) -> T;
 }
 
@@ -92,7 +92,7 @@ impl<State: 'static + Send + Sync> ReadState for RwLock<State> {
     type State = State;
     async fn read<T>(
         &self,
-        op: impl Send + for<'a> FnOnce(&'a Self::State) -> BoxFuture<'a, T>,
+        op: impl Send + for<'a> FnOnce(&'a Self::State) -> BoxFuture<'a, T> + 'async_trait,
     ) -> T {
         op(&*self.read().await).await
     }
@@ -102,7 +102,7 @@ impl<State: 'static + Send + Sync> ReadState for RwLock<State> {
 impl<State: 'static + Send + Sync> WriteState for RwLock<State> {
     async fn write<T>(
         &self,
-        op: impl Send + for<'a> FnOnce(&'a mut Self::State) -> BoxFuture<'a, T>,
+        op: impl Send + for<'a> FnOnce(&'a mut Self::State) -> BoxFuture<'a, T> + 'async_trait,
     ) -> T {
         op(&mut *self.write().await).await
     }
@@ -113,7 +113,7 @@ impl<State: 'static + Send + Sync> ReadState for Mutex<State> {
     type State = State;
     async fn read<T>(
         &self,
-        op: impl Send + for<'a> FnOnce(&'a Self::State) -> BoxFuture<'a, T>,
+        op: impl Send + for<'a> FnOnce(&'a Self::State) -> BoxFuture<'a, T> + 'async_trait,
     ) -> T {
         op(&*self.lock().await).await
     }
@@ -123,7 +123,7 @@ impl<State: 'static + Send + Sync> ReadState for Mutex<State> {
 impl<State: 'static + Send + Sync> WriteState for Mutex<State> {
     async fn write<T>(
         &self,
-        op: impl Send + for<'a> FnOnce(&'a mut Self::State) -> BoxFuture<'a, T>,
+        op: impl Send + for<'a> FnOnce(&'a mut Self::State) -> BoxFuture<'a, T> + 'async_trait,
     ) -> T {
         op(&mut *self.lock().await).await
     }
@@ -134,7 +134,7 @@ impl<R: Send + Sync + ReadState> ReadState for Arc<R> {
     type State = R::State;
     async fn read<T>(
         &self,
-        op: impl Send + for<'a> FnOnce(&'a Self::State) -> BoxFuture<'a, T>,
+        op: impl Send + for<'a> FnOnce(&'a Self::State) -> BoxFuture<'a, T> + 'async_trait,
     ) -> T {
         (**self).read(op).await
     }
@@ -144,7 +144,7 @@ impl<R: Send + Sync + ReadState> ReadState for Arc<R> {
 impl<W: Send + Sync + WriteState> WriteState for Arc<W> {
     async fn write<T>(
         &self,
-        op: impl Send + for<'a> FnOnce(&'a mut Self::State) -> BoxFuture<'a, T>,
+        op: impl Send + for<'a> FnOnce(&'a mut Self::State) -> BoxFuture<'a, T> + 'async_trait,
     ) -> T {
         (**self).write(op).await
     }

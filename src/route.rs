@@ -11,14 +11,13 @@ use std::collections::HashMap;
 use std::convert::Infallible;
 use std::fmt::{self, Display, Formatter};
 use std::marker::PhantomData;
-use std::pin::Pin;
 use std::str::FromStr;
 use tide::{
     http::{
         self,
         content::Accept,
         mime::{self, Mime},
-        Method, StatusCode,
+        StatusCode,
     },
     Body,
 };
