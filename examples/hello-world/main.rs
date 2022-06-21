@@ -33,6 +33,10 @@ async fn serve(port: u16) -> io::Result<()> {
         "examples/hello-world/api.toml",
     )?)?)
     .unwrap();
+    // Can invoke by browsing
+    //    `http://0.0.0.0:8080/greeting/dude`
+    // Note: "greeting" is the route name in `api.toml`. `[route.greeting]` is
+    // unrelated to the route PATH list.
     api.get("greeting", |req, greeting| {
         async move {
             let name = req.string_param("name").unwrap();
@@ -42,6 +46,8 @@ async fn serve(port: u16) -> io::Result<()> {
         .boxed()
     })
     .unwrap();
+    // Can invoke with
+    //    `curl -i -X POST http://0.0.0.0:8080/greeting/yo`
     api.post("setgreeting", |req, greeting| {
         async move {
             let new_greeting = req.string_param("greeting").unwrap();
