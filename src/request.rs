@@ -1,3 +1,4 @@
+use snafu::OptionExt;
 use snafu::Snafu;
 use std::collections::HashMap;
 use std::fmt::Display;
@@ -7,7 +8,27 @@ use tide::http::Headers;
 
 #[derive(Clone, Debug, Snafu)]
 pub enum RequestError {
-    MissingParam { param: RequestParam },
+    #[snafu(display("missing required parameter: {}", name))]
+    MissingParam { name: String },
+
+    #[snafu(display(
+        "incorrect type for parameter {}: {} cannot be converted to {}",
+        name,
+        param_type,
+        expected
+    ))]
+    IncorrectParamType {
+        name: String,
+        param_type: RequestParamType,
+        expected: String,
+    },
+
+    #[snafu(display("value {} for {} is too large for type {}", value, name, expected))]
+    IntegerOverflow {
+        value: u128,
+        name: String,
+        expected: String,
+    },
 }
 
 /// Parameters passed to a route handler.
@@ -49,9 +70,9 @@ impl RequestParams {
     ///
     /// ```
     /// # use tide_disco::*;
-    /// # fn ex(req: &RequestParams) -> Option<&RequestParamValue> {
+    /// # fn ex(req: &RequestParams) {
     /// req.param("foo")
-    /// # }
+    /// # ;}
     /// ```
     ///
     /// However, you have the option of defining a statically typed enum representing the possible
@@ -78,9 +99,9 @@ impl RequestParams {
     /// }
     ///
     /// # use tide_disco::*;
-    /// # fn ex(req: &RequestParams) -> Option<&RequestParamValue> {
+    /// # fn ex(req: &RequestParams) {
     /// req.param(&RouteParams::Param1)
-    /// # }
+    /// # ;}
     /// ```
     ///
     /// You can also use [strum_macros] to automatically derive the [Display] implementation, so you
@@ -96,48 +117,115 @@ impl RequestParams {
     /// }
     ///
     /// # use tide_disco::*;
-    /// # fn ex(req: &RequestParams) -> Option<&RequestParamValue> {
+    /// # fn ex(req: &RequestParams) {
     /// req.param(&RouteParams::Param1)
-    /// # }
+    /// # ;}
     /// ```
-    pub fn param<Name>(&self, name: &Name) -> Option<&RequestParamValue>
+    ///
+    /// # Errors
+    ///
+    /// Returns [RequestError::MissingParam] if a parameter called `name` was not provided with the
+    /// request.
+    ///
+    /// It is recommended to implement `From<RequestError>` for the error type for your API, so that
+    /// you can use `?` with this function in a route handler. If your error type implements
+    /// [Error](crate::Error), you can easily use the [catch_all](crate::Error::catch_all)
+    /// constructor to do this:
+    ///
+    /// ```
+    /// use serde::{Deserialize, Serialize};
+    /// use snafu::Snafu;
+    /// use tide_disco::{Error, RequestError, RequestParams, StatusCode};
+    ///
+    /// type ApiState = ();
+    ///
+    /// #[derive(Debug, Snafu, Deserialize, Serialize)]
+    /// struct ApiError {
+    ///     status: StatusCode,
+    ///     msg: String,
+    /// }
+    ///
+    /// impl Error for ApiError {
+    ///     fn catch_all(status: StatusCode, msg: String) -> Self {
+    ///         Self { status, msg }
+    ///     }
+    ///
+    ///     fn status(&self) -> StatusCode {
+    ///         self.status
+    ///     }
+    /// }
+    ///
+    /// impl From<RequestError> for ApiError {
+    ///     fn from(err: RequestError) -> Self {
+    ///         Self::catch_all(StatusCode::BadRequest, err.to_string())
+    ///     }
+    /// }
+    ///
+    /// async fn my_route_handler(req: RequestParams, _state: &ApiState) -> Result<(), ApiError> {
+    ///     let param = req.param("my_param")?;
+    ///     Ok(())
+    /// }
+    /// ```
+    pub fn param<Name>(&self, name: &Name) -> Result<&RequestParamValue, RequestError>
     where
         Name: ?Sized + Display,
     {
-        self.params.get(&name.to_string())
+        self.params
+            .get(&name.to_string())
+            .context(MissingParamSnafu {
+                name: name.to_string(),
+            })
     }
 
     /// Get the value of a named parameter and convert it to an integer.
     ///
     /// Like [param](Self::param), but returns [None] if the parameter value cannot be converted to
     /// an integer.
-    pub fn integer_param<Name>(&self, name: &Name) -> Option<u128>
+    pub fn integer_param<Name>(&self, name: &Name) -> Result<u128, RequestError>
     where
         Name: ?Sized + Display,
     {
-        self.param(name).and_then(|val| val.as_integer())
+        self.param(name).and_then(|val| {
+            val.as_integer().context(IncorrectParamTypeSnafu {
+                name: name.to_string(),
+                param_type: val.param_type(),
+                expected: "Integer".to_string(),
+            })
+        })
     }
 
     /// Get the value of a named parameter and convert it to a [u64].
     ///
     /// Like [param](Self::param), but returns [None] if the parameter value cannot be converted to
     /// a [u64].
-    pub fn u64_param<Name>(&self, name: &Name) -> Option<u64>
+    pub fn u64_param<Name>(&self, name: &Name) -> Result<u64, RequestError>
     where
         Name: ?Sized + Display,
     {
-        self.integer_param(name).and_then(|i| i.try_into().ok())
+        self.integer_param(name).and_then(|i| {
+            i.try_into().ok().context(IntegerOverflowSnafu {
+                name: name.to_string(),
+                value: i,
+                expected: "u64".to_string(),
+            })
+        })
     }
 
     /// Get the value of a named parameter and convert it to a string.
     ///
     /// Like [param](Self::param), but returns [None] if the parameter value cannot be converted to
     /// a [String].
-    pub fn string_param<Name>(&self, name: &Name) -> Option<String>
+    pub fn string_param<Name>(&self, name: &Name) -> Result<String, RequestError>
     where
         Name: ?Sized + Display,
     {
-        self.param(name).and_then(|val| val.as_string())
+        self.param(name).and_then(|val| {
+            val.as_string().context(IncorrectParamTypeSnafu {
+                name: name.to_string(),
+                param_type: val.param_type(),
+                expected: "String".to_string(),
+            })
+        })
     }
 }
 
@@ -174,6 +262,16 @@ impl RequestParamValue {
         }
     }
 
+    pub fn param_type(&self) -> RequestParamType {
+        match self {
+            Self::Boolean(_) => RequestParamType::Boolean,
+            Self::Hexadecimal(_) => RequestParamType::Hexadecimal,
+            Self::Integer(_) => RequestParamType::Integer,
+            Self::TaggedBase64(_) => RequestParamType::TaggedBase64,
+            Self::Literal(_) => RequestParamType::Literal,
+        }
+    }
+
     pub fn as_string(&self) -> Option<String> {
         match self {
             Self::Literal(s) => Some(s.clone()),
@@ -188,7 +286,7 @@ impl RequestParamValue {
     }
 }
 
-#[derive(Clone, Copy, Debug, EnumString)]
+#[derive(Clone, Copy, Debug, EnumString, strum_macros::Display)]
 pub enum RequestParamType {
     Boolean,
     Hexadecimal,

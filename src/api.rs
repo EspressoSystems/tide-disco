@@ -455,9 +455,9 @@ impl<State, Error> Api<State, Error> {
     ///
     /// type State = RwLock<u64>;
     ///
-    /// # fn ex(api: &mut Api<State, ()>) {
+    /// # fn ex(api: &mut Api<State, tide_disco::RequestError>) {
     /// api.post("replace", |req, state| async move {
-    ///     *state = req.u64_param("new_state").unwrap();
+    ///     *state = req.u64_param("new_state")?;
     ///     Ok(())
     /// }.boxed());
     /// # }
