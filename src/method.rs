@@ -150,6 +150,29 @@ impl<W: Send + Sync + WriteState> WriteState for Arc<W> {
     }
 }
 
+/// This allows you to do `api.get(...)` in a simple API where the state is `()`.
+#[async_trait]
+impl ReadState for () {
+    type State = ();
+    async fn read<T>(
+        &self,
+        op: impl Send + for<'a> FnOnce(&'a Self::State) -> BoxFuture<'a, T> + 'async_trait,
+    ) -> T {
+        op(&()).await
+    }
+}
+
+/// This allows you to do `api.post(...)` in a simple API where the state is `()`.
+#[async_trait]
+impl WriteState for () {
+    async fn write<T>(
+        &self,
+        op: impl Send + for<'a> FnOnce(&'a mut Self::State) -> BoxFuture<'a, T> + 'async_trait,
+    ) -> T {
+        op(&mut ()).await
+    }
+}
+
 /// Check if an HTTP method implies mutable access to the state.
 pub fn method_is_mutable(method: Method) -> bool {
     !method.is_safe()
