@@ -29,12 +29,16 @@ impl tide_disco::Error for HelloError {
 
 async fn serve(port: u16) -> io::Result<()> {
     let mut app = App::<_, HelloError>::with_state(RwLock::new("Hello".to_string()));
+    app.with_version(env!("CARGO_PKG_VERSION").parse().unwrap());
+
     let mut api = Api::<RwLock<String>, HelloError>::new(toml::from_slice(&fs::read(
         "examples/hello-world/api.toml",
     )?)?)
     .unwrap();
+    api.with_version(env!("CARGO_PKG_VERSION").parse().unwrap());
+
     // Can invoke by browsing
-    //    `http://0.0.0.0:8080/greeting/dude`
+    //    `http://0.0.0.0:8080/hello/greeting/dude`
     // Note: "greeting" is the route name in `api.toml`. `[route.greeting]` is
     // unrelated to the route PATH list.
     api.get("greeting", |req, greeting| {
@@ -46,8 +50,9 @@ async fn serve(port: u16) -> io::Result<()> {
         .boxed()
     })
     .unwrap();
+
     // Can invoke with
-    //    `curl -i -X POST http://0.0.0.0:8080/greeting/yo`
+    //    `curl -i -X POST http://0.0.0.0:8080/hello/greeting/yo`
     api.post("setgreeting", |req, greeting| {
         async move {
             let new_greeting = req.string_param("greeting").unwrap();
@@ -58,7 +63,8 @@ async fn serve(port: u16) -> io::Result<()> {
         .boxed()
     })
     .unwrap();
-    app.register_module("", api).unwrap();
+
+    app.register_module("hello", api).unwrap();
     app.serve(format!("0.0.0.0:{}", port)).await
 }
 
@@ -79,6 +85,11 @@ mod test {
     use async_std::task::spawn;
     use portpicker::pick_unused_port;
     use surf::Url;
+    use tide_disco::{
+        api::ApiVersion,
+        app::{AppHealth, AppVersion},
+        healthcheck::HealthStatus,
+    };
     use tracing_test::traced_test;
 
     #[async_std::test]
@@ -86,7 +97,7 @@ mod test {
     async fn test_get_set_greeting() {
         let port = pick_unused_port().unwrap();
         spawn(serve(port));
-        let url = Url::parse(&format!("http://localhost:{}", port)).unwrap();
+        let url = Url::parse(&format!("http://localhost:{}/hello/", port)).unwrap();
 
         let mut res = surf::get(url.join("greeting/tester").unwrap())
             .send()
@@ -107,5 +118,80 @@ mod test {
             .unwrap();
         assert_eq!(res.status(), StatusCode::Ok);
         assert_eq!(res.body_json::<String>().await.unwrap(), "Sup, tester");
+    }
+
+    #[async_std::test]
+    #[traced_test]
+    async fn test_version() {
+        let port = pick_unused_port().unwrap();
+        spawn(serve(port));
+        let url = Url::parse(&format!("http://localhost:{}/", port)).unwrap();
+
+        // Check the API version.
+        let mut res = surf::get(url.join("hello/version").unwrap())
+            .send()
+            .await
+            .unwrap();
+        assert_eq!(res.status(), StatusCode::Ok);
+        let api_version = ApiVersion {
+            api_version: Some(env!("CARGO_PKG_VERSION").parse().unwrap()),
+            spec_version: "0.1.0".parse().unwrap(),
+        };
+        assert_eq!(res.body_json::<ApiVersion>().await.unwrap(), api_version);
+
+        // Check the overall version.
+        let mut res = surf::get(url.join("version").unwrap())
+            .send()
+            .await
+            .unwrap();
+        assert_eq!(res.status(), StatusCode::Ok);
+        assert_eq!(
+            res.body_json::<AppVersion>().await.unwrap(),
+            AppVersion {
+                app_version: Some(env!("CARGO_PKG_VERSION").parse().unwrap()),
+                disco_version: env!("CARGO_PKG_VERSION").parse().unwrap(),
+                modules: [("hello".to_string(), api_version)]
+                    .iter()
+                    .cloned()
+                    .collect(),
+            }
+        )
+    }
+
+    #[async_std::test]
+    #[traced_test]
+    async fn test_healthcheck() {
+        let port = pick_unused_port().unwrap();
+        spawn(serve(port));
+        let url = Url::parse(&format!("http://localhost:{}/", port)).unwrap();
+
+        // Check the API health.
+        let mut res = surf::get(url.join("hello/healthcheck").unwrap())
+            .send()
+            .await
+            .unwrap();
+        assert_eq!(res.status(), StatusCode::Ok);
+        // The example API does not have a custom healthcheck, so we just get the default response.
+        assert_eq!(
+            res.body_json::<HealthStatus>().await.unwrap(),
+            HealthStatus::Available
+        );
+
+        // Check the overall health.
+        let mut res = surf::get(url.join("healthcheck").unwrap())
+            .send()
+            .await
+            .unwrap();
+        assert_eq!(res.status(), StatusCode::Ok);
+        assert_eq!(
+            res.body_json::<AppHealth>().await.unwrap(),
+            AppHealth {
+                status: HealthStatus::Available,
+                modules: [("hello".to_string(), StatusCode::Ok)]
+                    .iter()
+                    .cloned()
+                    .collect(),
+            }
+        )
     }
 }

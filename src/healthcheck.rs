@@ -21,7 +21,7 @@ pub trait HealthCheck: Serialize {
 }
 
 /// Common health statuses of an application.
-#[derive(Clone, Copy, Debug, Deserialize, Serialize)]
+#[derive(Clone, Copy, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub enum HealthStatus {
     Initializing,

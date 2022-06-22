@@ -1,14 +1,17 @@
 use crate::{
-    api::Api,
+    api::{Api, ApiVersion},
     healthcheck::{HealthCheck, HealthStatus},
     request::{RequestParam, RequestParams},
-    route::{self, health_check_response, Handler, RouteError},
+    route::{self, health_check_response, respond_with, Handler, RouteError},
 };
 use async_std::sync::Arc;
 use futures::future::BoxFuture;
+use semver::Version;
 use serde::{Deserialize, Serialize};
+use serde_with::{serde_as, DisplayFromStr};
 use snafu::Snafu;
 use std::collections::hash_map::{Entry, HashMap};
+use std::convert::Infallible;
 use std::io;
 use tide::{
     http::{content::Accept, mime},
@@ -27,6 +30,7 @@ pub struct App<State, Error> {
     // Map from base URL to module API.
     apis: HashMap<String, Api<State, Error>>,
     state: Arc<State>,
+    app_version: Option<Version>,
 }
 
 /// An error encountered while building an [App].
@@ -41,6 +45,7 @@ impl<State: Send + Sync + 'static, Error: 'static> App<State, Error> {
         Self {
             apis: HashMap::new(),
             state: Arc::new(state),
+            app_version: None,
         }
     }
 
@@ -64,6 +69,48 @@ impl<State: Send + Sync + 'static, Error: 'static> App<State, Error> {
         }
 
         Ok(self)
+    }
+
+    /// Set the application version.
+    ///
+    /// The version information will automatically be included in responses to `GET /version`.
+    ///
+    /// This is the version of the overall application, which may encompass several APIs, each with
+    /// their own version. Changes to the version of any of the APIs which make up this application
+    /// should imply a change to the application version, but the application version may also
+    /// change without changing any of the API versions.
+    ///
+    /// This version is optional, as the `/version` endpoint will automatically include the version
+    /// of each registered API, which is usually enough to uniquely identify the application. Set
+    /// this explicitly if you want to track the version of additional behavior or interfaces which
+    /// are not encompassed by the sub-modules of this application.
+    ///
+    /// If you set an application version, it is a good idea to use the version of the application
+    /// crate found in Cargo.toml. This can be automatically found at build time using the
+    /// environment variable `CARGO_PKG_VERSION` and the [env] macro. As long as the following code
+    /// is contained in the application crate, it should result in a reasonable version:
+    ///
+    /// ```
+    /// # fn ex(app: &mut tide_disco::App<(), ()>) {
+    /// app.with_version(env!("CARGO_PKG_VERSION").parse().unwrap());
+    /// # }
+    /// ```
+    pub fn with_version(&mut self, version: Version) -> &mut Self {
+        self.app_version = Some(version);
+        self
+    }
+
+    /// Get the version of this application.
+    pub fn version(&self) -> AppVersion {
+        AppVersion {
+            app_version: self.app_version.clone(),
+            disco_version: env!("CARGO_PKG_VERSION").parse().unwrap(),
+            modules: self
+                .apis
+                .iter()
+                .map(|(name, api)| (name.clone(), api.version()))
+                .collect(),
+        }
     }
 
     /// Check the health of each registered module in response to a request.
@@ -140,23 +187,40 @@ impl<State: Send + Sync + 'static, Error: 'static + crate::Error> App<State, Err
                 }
             }
 
-            // Register automatic routes for this API: `healthcheck`.
-            let prefix = prefix.clone();
-            server
-                .at(&prefix)
-                .at("healthcheck")
-                .get(move |req: tide::Request<Arc<Self>>| {
-                    let prefix = prefix.clone();
-                    async move {
-                        let api = &req.state().apis[&prefix];
-                        Ok(api
-                            .health(request_params(&req, &[])?, &*req.state().state)
-                            .await)
-                    }
-                });
+            // Register automatic routes for this API: `healthcheck` and `version`.
+            {
+                let prefix = prefix.clone();
+                server
+                    .at(&prefix)
+                    .at("healthcheck")
+                    .get(move |req: tide::Request<Arc<Self>>| {
+                        let prefix = prefix.clone();
+                        async move {
+                            let api = &req.state().apis[&prefix];
+                            Ok(api
+                                .health(request_params(&req, &[])?, &*req.state().state)
+                                .await)
+                        }
+                    });
+            }
+            {
+                let prefix = prefix.clone();
+                server
+                    .at(&prefix)
+                    .at("version")
+                    .get(move |req: tide::Request<Arc<Self>>| {
+                        let prefix = prefix.clone();
+                        async move {
+                            let api = &req.state().apis[&prefix];
+                            respond_with(&mut Accept::from_headers(&req)?, api.version()).map_err(
+                                |err| Error::from_route_error::<Infallible>(err).into_tide_error(),
+                            )
+                        }
+                    });
+            }
         }
 
-        // Register app-level automatic routes: `healthcheck`.
+        // Register app-level automatic routes: `healthcheck` and `version`.
         server
             .at("healthcheck")
             .get(|req: tide::Request<Arc<Self>>| async move {
@@ -166,6 +230,12 @@ impl<State: Send + Sync + 'static, Error: 'static + crate::Error> App<State, Err
                 let mut accept = Accept::from_headers(req.headers())?;
                 let res = state.health(req, app_state).await;
                 Ok(health_check_response(&mut accept, res))
+            });
+        server
+            .at("version")
+            .get(|req: tide::Request<Arc<Self>>| async move {
+                respond_with(&mut Accept::from_headers(&req)?, req.state().version())
+                    .map_err(|err| Error::from_route_error::<Infallible>(err).into_tide_error())
             });
 
         server.listen(listener).await
@@ -180,7 +250,7 @@ fn request_params<State, Error: crate::Error>(
 }
 
 /// The health status of an application.
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct AppHealth {
     /// The status of the overall application.
     ///
@@ -195,6 +265,22 @@ impl HealthCheck for AppHealth {
     fn status(&self) -> StatusCode {
         self.status.status()
     }
+}
+
+/// Version information about an application.
+#[serde_as]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+pub struct AppVersion {
+    /// The version of each module registered with this application.
+    pub modules: HashMap<String, ApiVersion>,
+
+    /// The version of this application.
+    #[serde_as(as = "Option<DisplayFromStr>")]
+    pub app_version: Option<Version>,
+
+    /// The version of the Tide Disco server framework.
+    #[serde_as(as = "DisplayFromStr")]
+    pub disco_version: Version,
 }
 
 /// Server middleware which automatically populates the body of error responses.
