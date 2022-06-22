@@ -176,7 +176,7 @@ pub mod route;
 pub use api::Api;
 pub use app::App;
 pub use error::Error;
-pub use request::RequestParams;
+pub use request::{RequestParam, RequestParamType, RequestParamValue, RequestParams};
 pub use tide::http;
 
 #[derive(AsRefStr, Debug)]

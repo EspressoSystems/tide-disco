@@ -1,5 +1,6 @@
 use snafu::Snafu;
 use std::collections::HashMap;
+use std::fmt::Display;
 use strum_macros::EnumString;
 use tagged_base64::TaggedBase64;
 use tide::http::Headers;
@@ -42,23 +43,101 @@ impl RequestParams {
     }
 
     /// Get the value of a named parameter.
-    pub fn param(&self, name: &str) -> Option<&RequestParamValue> {
-        self.params.get(name)
+    ///
+    /// The name of the parameter can be given by any type that implements [Display]. Of course, the
+    /// simplest option is to use [str] or [String], as in
+    ///
+    /// ```
+    /// # use tide_disco::*;
+    /// # fn ex(req: &RequestParams) -> Option<&RequestParamValue> {
+    /// req.param("foo")
+    /// # }
+    /// ```
+    ///
+    /// However, you have the option of defining a statically typed enum representing the possible
+    /// parameters of a given route and using enum variants as parameter names. Among other
+    /// benefits, this allows you to change the client-facing parameter names just by tweaking the
+    /// [Display] implementation of your enum, without changing other code.
+    ///
+    /// ```
+    /// use std::fmt::{self, Display, Formatter};
+    ///
+    /// enum RouteParams {
+    ///     Param1,
+    ///     Param2,
+    /// }
+    ///
+    /// impl Display for RouteParams {
+    ///     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+    ///         let name = match self {
+    ///             Self::Param1 => "param1",
+    ///             Self::Param2 => "param2",
+    ///         };
+    ///         write!(f, "{}", name)
+    ///     }
+    /// }
+    ///
+    /// # use tide_disco::*;
+    /// # fn ex(req: &RequestParams) -> Option<&RequestParamValue> {
+    /// req.param(&RouteParams::Param1)
+    /// # }
+    /// ```
+    ///
+    /// You can also use [strum_macros] to automatically derive the [Display] implementation, so you
+    /// only have to specify the client-facing names of each parameter:
+    ///
+    /// ```
+    /// #[derive(strum_macros::Display)]
+    /// enum RouteParams {
+    ///     #[strum(serialize = "param1")]
+    ///     Param1,
+    ///     #[strum(serialize = "param2")]
+    ///     Param2,
+    /// }
+    ///
+    /// # use tide_disco::*;
+    /// # fn ex(req: &RequestParams) -> Option<&RequestParamValue> {
+    /// req.param(&RouteParams::Param1)
+    /// # }
+    /// ```
+    pub fn param<Name>(&self, name: &Name) -> Option<&RequestParamValue>
+    where
+        Name: ?Sized + Display,
+    {
+        self.params.get(&name.to_string())
     }
 
     /// Get the value of a named parameter and convert it to an integer.
-    pub fn integer_param(&self, name: &str) -> Option<u128> {
-        self.params.get(name).and_then(|val| val.as_integer())
+    ///
+    /// Like [param](Self::param), but returns [None] if the parameter value cannot be converted to
+    /// an integer.
+    pub fn integer_param<Name>(&self, name: &Name) -> Option<u128>
+    where
+        Name: ?Sized + Display,
+    {
+        self.param(name).and_then(|val| val.as_integer())
     }
 
     /// Get the value of a named parameter and convert it to a [u64].
-    pub fn u64_param(&self, name: &str) -> Option<u64> {
+    ///
+    /// Like [param](Self::param), but returns [None] if the parameter value cannot be converted to
+    /// a [u64].
+    pub fn u64_param<Name>(&self, name: &Name) -> Option<u64>
+    where
+        Name: ?Sized + Display,
+    {
         self.integer_param(name).and_then(|i| i.try_into().ok())
     }
 
     /// Get the value of a named parameter and convert it to a string.
-    pub fn string_param(&self, name: &str) -> Option<String> {
-        self.params.get(name).and_then(|val| val.as_string())
+    ///
+    /// Like [param](Self::param), but returns [None] if the parameter value cannot be converted to
+    /// a [String].
+    pub fn string_param<Name>(&self, name: &Name) -> Option<String>
+    where
+        Name: ?Sized + Display,
+    {
+        self.param(name).and_then(|val| val.as_string())
     }
 }
 
