@@ -1,8 +1,10 @@
+use async_std::task::block_on;
 use snafu::Snafu;
 use std::collections::HashMap;
 use strum_macros::EnumString;
 use tagged_base64::TaggedBase64;
-use tide::http::Headers;
+use tide::http::{Headers, Request};
+use tracing::info;
 
 #[derive(Clone, Debug, Snafu)]
 pub enum RequestError {
@@ -15,6 +17,7 @@ pub enum RequestError {
 #[derive(Clone, Debug)]
 pub struct RequestParams {
     headers: Headers,
+    post_data: Vec<u8>,
     params: HashMap<String, RequestParamValue>,
 }
 
@@ -23,8 +26,11 @@ impl RequestParams {
         req: &tide::Request<S>,
         formal_params: &[RequestParam],
     ) -> Result<Self, RequestError> {
+        let pd = block_on(AsRef::<Request>::as_ref(req).clone().body_bytes()).unwrap();
+        info!("pd: {:?}", pd);
         Ok(Self {
             headers: AsRef::<Headers>::as_ref(req).clone(),
+            post_data: block_on(AsRef::<Request>::as_ref(req).clone().body_bytes()).unwrap(),
             params: formal_params
                 .iter()
                 .filter_map(|param| match RequestParamValue::new(req, param) {
@@ -59,6 +65,10 @@ impl RequestParams {
     /// Get the value of a named parameter and convert it to a string.
     pub fn string_param(&self, name: &str) -> Option<String> {
         self.params.get(name).and_then(|val| val.as_string())
+    }
+
+    pub fn body_bytes(&self) -> Vec<u8> {
+        self.post_data.clone()
     }
 }
 

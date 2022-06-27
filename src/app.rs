@@ -11,9 +11,12 @@ use snafu::Snafu;
 use std::collections::hash_map::{Entry, HashMap};
 use std::io;
 use tide::{
+    http::headers::HeaderValue,
     http::{content::Accept, mime},
+    security::{CorsMiddleware, Origin},
     StatusCode,
 };
+use tracing::info;
 
 pub use tide::listener::{Listener, ToListener};
 
@@ -110,6 +113,13 @@ impl<State: Send + Sync + 'static, Error: 'static + crate::Error> App<State, Err
         let state = Arc::new(self);
         let mut server = tide::Server::with_state(state.clone());
         server.with(add_error_body::<_, Error>);
+        server.with(
+            CorsMiddleware::new()
+                .allow_methods("GET, POST".parse::<HeaderValue>().unwrap())
+                .allow_headers("*".parse::<HeaderValue>().unwrap())
+                .allow_origin(Origin::from("*"))
+                .allow_credentials(true),
+        );
 
         for (prefix, api) in &state.apis {
             // Register routes for this API.
