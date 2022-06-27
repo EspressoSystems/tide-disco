@@ -506,7 +506,7 @@ pub(crate) fn response_body<T: Serialize, E>(
     }
 }
 
-fn respond_with<T: Serialize, E>(
+pub(crate) fn respond_with<T: Serialize, E>(
     accept: &mut Option<Accept>,
     body: T,
 ) -> Result<tide::Response, RouteError<E>> {
