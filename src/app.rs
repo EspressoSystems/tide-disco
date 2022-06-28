@@ -179,9 +179,9 @@ impl<State: Send + Sync + 'static, Error: 'static + crate::Error> App<State, Err
                             let name = name.clone();
                             let prefix = prefix.clone();
                             async move {
-                                let route = &req.state().apis[&prefix][&name];
-                                let state = &*req.state().state;
-                                let req = request_params(&req, route.params())?;
+                                let route = &req.state().clone().apis[&prefix][&name];
+                                let state = &*req.state().clone().state;
+                                let req = request_params(req, route.params()).await?;
                                 route
                                     .handle(req, state)
                                     .await
@@ -205,9 +205,10 @@ impl<State: Send + Sync + 'static, Error: 'static + crate::Error> App<State, Err
                     .get(move |req: tide::Request<Arc<Self>>| {
                         let prefix = prefix.clone();
                         async move {
-                            let api = &req.state().apis[&prefix];
+                            let api = &req.state().clone().apis[&prefix];
+                            let state = req.state().clone();
                             Ok(api
-                                .health(request_params(&req, &[])?, &*req.state().state)
+                                .health(request_params(req, &[]).await?, &state.state)
                                 .await)
                         }
                     });
@@ -233,9 +234,9 @@ impl<State: Send + Sync + 'static, Error: 'static + crate::Error> App<State, Err
         server
             .at("healthcheck")
             .get(|req: tide::Request<Arc<Self>>| async move {
-                let state = req.state();
+                let state = req.state().clone();
                 let app_state = &*state.state;
-                let req = request_params(&req, &[])?;
+                let req = request_params(req, &[]).await?;
                 let mut accept = Accept::from_headers(req.headers())?;
                 let res = state.health(req, app_state).await;
                 Ok(health_check_response(&mut accept, res))
@@ -251,11 +252,13 @@ impl<State: Send + Sync + 'static, Error: 'static + crate::Error> App<State, Err
     }
 }
 
-fn request_params<State, Error: crate::Error>(
-    req: &tide::Request<Arc<App<State, Error>>>,
+async fn request_params<State, Error: crate::Error>(
+    req: tide::Request<Arc<App<State, Error>>>,
     params: &[RequestParam],
 ) -> Result<RequestParams, tide::Error> {
-    RequestParams::new(req, params).map_err(|err| Error::from_request_error(err).into_tide_error())
+    RequestParams::new(req, params)
+        .await
+        .map_err(|err| Error::from_request_error(err).into_tide_error())
 }
 
 /// The health status of an application.
