@@ -194,20 +194,18 @@ impl<State, Error> Route<State, Error> {
         for path in paths.iter() {
             for seg in path.split('/') {
                 if seg.starts_with(':') {
+                    // TODO also accept a structure with param_type and required
                     let ptype = RequestParamType::from_str(
                         spec[seg]
                             .as_str()
                             .ok_or(RouteParseError::InvalidTypeExpression)?,
                     )
                     .map_err(|_| RouteParseError::UnrecognizedType)?;
-                    // TODO Should the map key and name be different? If
-                    // not, then RequestParam::name is redundant.
                     pmap.insert(
                         seg.to_string(),
                         RequestParam {
                             name: seg.to_string(),
                             param_type: ptype,
-                            // TODO How should we encode optioanl params?
                             required: true,
                         },
                     );
