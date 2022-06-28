@@ -7,7 +7,9 @@ use crate::{
 use async_trait::async_trait;
 use derive_more::From;
 use futures::future::{BoxFuture, Future};
-use serde::Serialize;
+use semver::Version;
+use serde::{Deserialize, Serialize};
+use serde_with::{serde_as, DisplayFromStr};
 use snafu::{OptionExt, ResultExt, Snafu};
 use std::collections::hash_map::{HashMap, IntoValues, Values};
 use std::ops::Index;
@@ -22,6 +24,23 @@ pub enum ApiError {
     UndefinedRoute,
     HandlerAlreadyRegistered,
     IncorrectMethod { expected: Method, actual: Method },
+    MetaMustBeTable,
+    MissingMetaTable,
+    MissingFormatVersion,
+    InvalidFormatVersion,
+}
+
+/// Version information about an API.
+#[serde_as]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+pub struct ApiVersion {
+    /// The version of this API.
+    #[serde_as(as = "Option<DisplayFromStr>")]
+    pub api_version: Option<Version>,
+
+    /// The format version of the TOML specification used to load this API.
+    #[serde_as(as = "DisplayFromStr")]
+    pub spec_version: Version,
 }
 
 /// A description of an API.
@@ -32,6 +51,7 @@ pub enum ApiError {
 pub struct Api<State, Error> {
     routes: HashMap<String, Route<State, Error>>,
     health_check: Option<HealthCheckHandler<State>>,
+    version: ApiVersion,
 }
 
 impl<'a, State, Error> IntoIterator for &'a Api<State, Error> {
@@ -67,6 +87,10 @@ impl<State, Error> Api<State, Error> {
             Some(routes) => routes.as_table().context(RoutesMustBeTableSnafu)?,
             None => return Err(ApiError::MissingRoutesTable),
         };
+        let meta = match api.get("meta") {
+            Some(meta) => meta.as_table().context(MetaMustBeTableSnafu)?,
+            None => return Err(ApiError::MissingMetaTable),
+        };
         Ok(Self {
             routes: routes
                 .into_iter()
@@ -76,7 +100,42 @@ impl<State, Error> Api<State, Error> {
                 })
                 .collect::<Result<_, _>>()?,
             health_check: None,
+            version: ApiVersion {
+                api_version: None,
+                spec_version: meta
+                    .get("FORMAT_VERSION")
+                    .context(MissingFormatVersionSnafu)?
+                    .as_str()
+                    .context(InvalidFormatVersionSnafu)?
+                    .parse()
+                    .map_err(|_| ApiError::InvalidFormatVersion)?,
+            },
         })
+    }
+
+    /// Set the API version.
+    ///
+    /// The version information will automatically be included in responses to `GET /version`.
+    ///
+    /// This is the version of the application or sub-application which this instance of [Api]
+    /// represents. The versioning encompasses both the API specification passed to [new](Api::new)
+    /// and the Rust crate implementing the route handlers for the API. Changes to either of
+    /// these components should result in a change to the version.
+    ///
+    /// Since the API specification and the route handlers are usually packaged together, and since
+    /// Rust crates are versioned anyways using Cargo, it is a good idea to use the version of the
+    /// API crate found in Cargo.toml. This can be automatically found at build time using the
+    /// environment variable `CARGO_PKG_VERSION` and the [env] macro. As long as the following code
+    /// is contained in the API crate, it should result in a reasonable version:
+    ///
+    /// ```
+    /// # fn ex(api: &mut tide_disco::Api<(), ()>) {
+    /// api.with_version(env!("CARGO_PKG_VERSION").parse().unwrap());
+    /// # }
+    /// ```
+    pub fn with_version(&mut self, version: Version) -> &mut Self {
+        self.version.api_version = Some(version);
+        self
     }
 
     /// Register a handler for a route.
@@ -396,9 +455,9 @@ impl<State, Error> Api<State, Error> {
     ///
     /// type State = RwLock<u64>;
     ///
-    /// # fn ex(api: &mut Api<State, ()>) {
+    /// # fn ex(api: &mut Api<State, tide_disco::RequestError>) {
     /// api.post("replace", |req, state| async move {
-    ///     *state = req.u64_param("new_state").unwrap();
+    ///     *state = req.u64_param("new_state")?;
     ///     Ok(())
     /// }.boxed());
     /// # }
@@ -501,7 +560,7 @@ impl<State, Error> Api<State, Error> {
     ///
     /// This overrides the existing handler. If `health_check` has not yet been called, the default
     /// handler is one which simply returns `Health::default()`.
-    pub async fn health_check<H, F>(
+    pub async fn with_health_check<H, F>(
         &mut self,
         handler: impl 'static + Send + Sync + Fn(&State) -> F,
     ) -> &mut Self
@@ -526,6 +585,11 @@ impl<State, Error> Api<State, Error> {
         }
     }
 
+    /// Get the version of this API.
+    pub fn version(&self) -> ApiVersion {
+        self.version.clone()
+    }
+
     /// Create a new [Api] which is just like this one, except has a transformed `Error` type.
     pub fn map_err<Error2>(
         self,
@@ -543,6 +607,7 @@ impl<State, Error> Api<State, Error> {
                 .map(|(name, route)| (name, route.map_err(f.clone())))
                 .collect(),
             health_check: self.health_check,
+            version: self.version,
         }
     }
 }

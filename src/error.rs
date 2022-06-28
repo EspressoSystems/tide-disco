@@ -1,8 +1,10 @@
 use crate::request::RequestError;
 use crate::route::RouteError;
+use config::ConfigError;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use snafu::Snafu;
 use std::fmt::Display;
+use std::io::Error as IoError;
 use tide::StatusCode;
 
 /// Errors which can be serialized in a response body.
@@ -19,6 +21,14 @@ use tide::StatusCode;
 pub trait Error: std::error::Error + Serialize + DeserializeOwned + Send + Sync + 'static {
     fn catch_all(status: StatusCode, msg: String) -> Self;
     fn status(&self) -> StatusCode;
+
+    fn from_io_error(source: IoError) -> Self {
+        Self::catch_all(StatusCode::InternalServerError, source.to_string())
+    }
+
+    fn from_config_error(source: ConfigError) -> Self {
+        Self::catch_all(StatusCode::InternalServerError, source.to_string())
+    }
 
     fn from_route_error<E: Display>(source: RouteError<E>) -> Self {
         Self::catch_all(source.status(), source.to_string())

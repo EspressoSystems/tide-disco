@@ -254,7 +254,7 @@ use tide::{
     http::headers::HeaderValue,
     http::mime,
     security::{CorsMiddleware, Origin},
-    Request, Response, StatusCode,
+    Request, Response,
 };
 use toml::value::Value;
 use tracing::error;
@@ -271,8 +271,8 @@ pub mod route;
 pub use api::Api;
 pub use app::App;
 pub use error::Error;
-pub use request::RequestParams;
-pub use tide::http;
+pub use request::{RequestError, RequestParam, RequestParamType, RequestParamValue, RequestParams};
+pub use tide::http::{self, StatusCode};
 
 #[derive(AsRefStr, Debug)]
 #[allow(non_camel_case_types)]
