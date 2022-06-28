@@ -19,7 +19,6 @@ use tide::{
     security::{CorsMiddleware, Origin},
     StatusCode,
 };
-use tracing::info;
 
 pub use tide::listener::{Listener, ToListener};
 

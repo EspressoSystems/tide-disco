@@ -1,10 +1,8 @@
-use async_std::task::block_on;
 use snafu::Snafu;
 use std::collections::HashMap;
 use strum_macros::EnumString;
 use tagged_base64::TaggedBase64;
-use tide::http::{Headers, Request};
-use tracing::info;
+use tide::http::Headers;
 
 #[derive(Clone, Debug, Snafu)]
 pub enum RequestError {
