@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use snafu::Snafu;
 use std::fs;
 use std::io;
-use tide_disco::{http::StatusCode, Api, App};
+use tide_disco::{http::StatusCode, Api, App, Error, RequestError};
 use tracing::info;
 
 #[derive(Clone, Debug, Deserialize, Serialize, Snafu)]
@@ -27,6 +27,12 @@ impl tide_disco::Error for HelloError {
     }
 }
 
+impl From<RequestError> for HelloError {
+    fn from(err: RequestError) -> Self {
+        Self::catch_all(StatusCode::BadRequest, err.to_string())
+    }
+}
+
 async fn serve(port: u16) -> io::Result<()> {
     let mut app = App::<_, HelloError>::with_state(RwLock::new("Hello".to_string()));
     app.with_version(env!("CARGO_PKG_VERSION").parse().unwrap());
@@ -43,7 +49,7 @@ async fn serve(port: u16) -> io::Result<()> {
     // unrelated to the route PATH list.
     api.get("greeting", |req, greeting| {
         async move {
-            let name = req.string_param("name").unwrap();
+            let name = req.string_param("name")?;
             info!("called /greeting with :name = {}", name);
             Ok(format!("{}, {}", greeting, name,))
         }
@@ -55,7 +61,7 @@ async fn serve(port: u16) -> io::Result<()> {
     //    `curl -i -X POST http://0.0.0.0:8080/hello/greeting/yo`
     api.post("setgreeting", |req, greeting| {
         async move {
-            let new_greeting = req.string_param("greeting").unwrap();
+            let new_greeting = req.string_param("greeting")?;
             info!("called /setgreeting with :greeting = {}", new_greeting);
             *greeting = new_greeting;
             Ok(())
