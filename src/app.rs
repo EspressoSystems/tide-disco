@@ -207,8 +207,9 @@ impl<State: Send + Sync + 'static, Error: 'static + crate::Error> App<State, Err
                         let prefix = prefix.clone();
                         async move {
                             let api = &req.state().clone().apis[&prefix];
+                            let state = req.state().clone();
                             Ok(api
-                                .health(request_params(req, &[]).await?, &req.state().clone().state)
+                                .health(request_params(req, &[]).await?, &state.state)
                                 .await)
                         }
                     });
@@ -234,7 +235,7 @@ impl<State: Send + Sync + 'static, Error: 'static + crate::Error> App<State, Err
         server
             .at("healthcheck")
             .get(|req: tide::Request<Arc<Self>>| async move {
-                let state = req.state();
+                let state = req.state().clone();
                 let app_state = &*state.state;
                 let req = request_params(req, &[]).await?;
                 let mut accept = Accept::from_headers(req.headers())?;
