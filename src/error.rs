@@ -1,7 +1,8 @@
 use crate::request::RequestError;
 use crate::route::RouteError;
 use config::ConfigError;
-use serde::{de::DeserializeOwned, Serialize};
+use serde::{de::DeserializeOwned, Deserialize, Serialize};
+use snafu::Snafu;
 use std::fmt::Display;
 use std::io::Error as IoError;
 use tide::StatusCode;
@@ -46,5 +47,27 @@ pub trait Error: std::error::Error + Serialize + DeserializeOwned + Send + Sync 
             Ok(err) => err,
             Err(source) => Self::catch_all(source.status(), source.to_string()),
         }
+    }
+}
+
+/// The simplest possible implementation of [Error].
+///
+/// You can use this to get up and running quickly if you don't want to create your own error type.
+/// However, we strongly reccommend creating a custom error type and implementing [Error] for it, so
+/// that you can provide more informative and structured error responses specific to your API.
+#[derive(Clone, Debug, Snafu, Serialize, Deserialize)]
+#[snafu(display("Error {}: {}", status, message))]
+pub struct ServerError {
+    status: StatusCode,
+    message: String,
+}
+
+impl Error for ServerError {
+    fn catch_all(status: StatusCode, message: String) -> Self {
+        Self { status, message }
+    }
+
+    fn status(&self) -> StatusCode {
+        self.status
     }
 }
