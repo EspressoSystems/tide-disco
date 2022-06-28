@@ -1,4 +1,4 @@
-use snafu::Snafu;
+use snafu::{OptionExt, Snafu};
 use std::collections::HashMap;
 use strum_macros::EnumString;
 use tagged_base64::TaggedBase64;
