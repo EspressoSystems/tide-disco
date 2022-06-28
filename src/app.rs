@@ -180,8 +180,8 @@ impl<State: Send + Sync + 'static, Error: 'static + crate::Error> App<State, Err
                             let name = name.clone();
                             let prefix = prefix.clone();
                             async move {
-                                let route = &req.state().apis[&prefix][&name];
-                                let state = &*req.state().state;
+                                let route = &req.state().clone().apis[&prefix][&name];
+                                let state = &*req.state().clone().state;
                                 let req = request_params(req, route.params()).await?;
                                 route
                                     .handle(req, state)
@@ -206,9 +206,9 @@ impl<State: Send + Sync + 'static, Error: 'static + crate::Error> App<State, Err
                     .get(move |req: tide::Request<Arc<Self>>| {
                         let prefix = prefix.clone();
                         async move {
-                            let api = &req.state().apis[&prefix];
+                            let api = &req.state().clone().apis[&prefix];
                             Ok(api
-                                .health(request_params(req, &[]).await?, &*req.state().state)
+                                .health(request_params(req, &[]).await?, &req.state().clone().state)
                                 .await)
                         }
                     });
