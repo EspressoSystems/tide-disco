@@ -82,8 +82,9 @@ async fn main() -> io::Result<()> {
 #[cfg(test)]
 mod test {
     use super::*;
-    use async_std::task::spawn;
+    use async_std::task::{sleep, spawn};
     use portpicker::pick_unused_port;
+    use std::time::Duration;
     use surf::Url;
     use tide_disco::{
         api::ApiVersion,
@@ -92,12 +93,29 @@ mod test {
     };
     use tracing_test::traced_test;
 
+    const STARTUP_RETRIES: usize = 255;
+
+    async fn wait_for_server(port: u16) {
+        let sleep_ms = Duration::from_millis(100);
+        for _ in 0..STARTUP_RETRIES {
+            if surf::connect(format!("http://localhost:{}", port))
+                .send()
+                .await
+                .is_ok()
+            {
+                return;
+            }
+            sleep(sleep_ms).await;
+        }
+    }
+
     #[async_std::test]
     #[traced_test]
     async fn test_get_set_greeting() {
         let port = pick_unused_port().unwrap();
         spawn(serve(port));
         let url = Url::parse(&format!("http://localhost:{}/hello/", port)).unwrap();
+        wait_for_server(port).await;
 
         let mut res = surf::get(url.join("greeting/tester").unwrap())
             .send()
@@ -126,6 +144,7 @@ mod test {
         let port = pick_unused_port().unwrap();
         spawn(serve(port));
         let url = Url::parse(&format!("http://localhost:{}/", port)).unwrap();
+        wait_for_server(port).await;
 
         // Check the API version.
         let mut res = surf::get(url.join("hello/version").unwrap())
@@ -164,6 +183,7 @@ mod test {
         let port = pick_unused_port().unwrap();
         spawn(serve(port));
         let url = Url::parse(&format!("http://localhost:{}/", port)).unwrap();
+        wait_for_server(port).await;
 
         // Check the API health.
         let mut res = surf::get(url.join("hello/healthcheck").unwrap())
