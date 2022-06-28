@@ -28,7 +28,7 @@ impl RequestParams {
     ) -> Result<Self, RequestError> {
         Ok(Self {
             headers: AsRef::<Headers>::as_ref(&req).clone(),
-            post_data: pd,
+            post_data: req.body_bytes().await.unwrap(),
             params: formal_params
                 .iter()
                 .filter_map(|param| match RequestParamValue::new(&req, param) {
