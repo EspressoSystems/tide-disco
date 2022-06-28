@@ -26,17 +26,8 @@ impl RequestParams {
         mut req: tide::Request<S>,
         formal_params: &[RequestParam],
     ) -> Result<Self, RequestError> {
-        // pub(crate) fn new<S>(
-        //     req: &tide::Request<S>,
-        //     formal_params: &[RequestParam],
-        // ) -> Result<Self, RequestError> {
-        // let pd = block_on(AsRef::<Request>::as_ref(req).clone().body_bytes()).unwrap();
-        let pd = req.body_bytes().await.unwrap();
-        info!("pd: {:?}", pd);
         Ok(Self {
-            // headers: AsRef::<Headers>::as_ref(req).clone(),
             headers: AsRef::<Headers>::as_ref(&req).clone(),
-            // post_data: block_on(AsRef::<Request>::as_ref(req).clone().body_bytes()).unwrap(),
             post_data: pd,
             params: formal_params
                 .iter()
