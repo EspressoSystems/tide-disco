@@ -28,6 +28,9 @@ pub enum RequestError {
         name: String,
         expected: String,
     },
+
+    #[snafu(display("Unable to compose JSON"))]
+    JsonSnafu,
 }
 
 /// Parameters passed to a route handler.
@@ -231,6 +234,13 @@ impl RequestParams {
 
     pub fn body_bytes(&self) -> Vec<u8> {
         self.post_data.clone()
+    }
+
+    pub fn body_json<T>(&self) -> Result<T, RequestError>
+    where
+        T: serde::de::DeserializeOwned,
+    {
+        serde_json::from_slice(&self.post_data.clone()).map_err(|_| RequestError::JsonSnafu {})
     }
 }
 
