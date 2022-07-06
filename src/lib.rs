@@ -142,7 +142,7 @@ use crate::ApiKey::*;
 use async_std::sync::{Arc, RwLock};
 use async_std::task::spawn;
 use async_std::task::JoinHandle;
-use clap::CommandFactory;
+use clap::{CommandFactory, Parser};
 use config::{Config, ConfigError};
 use routefinder::Router;
 use serde::Deserialize;
@@ -179,9 +179,24 @@ pub use error::Error;
 pub use request::{RequestError, RequestParam, RequestParamType, RequestParamValue, RequestParams};
 pub use tide::http::{self, StatusCode};
 
+#[derive(Parser, Debug)]
+#[clap(author, version, about, long_about = None)]
+pub struct DiscoArgs {
+    #[clap(long)]
+    /// Server address
+    pub base_url: Option<Url>,
+    #[clap(long)]
+    /// HTTP routes
+    pub api_toml: Option<PathBuf>,
+    /// If true, log in color. Otherwise, no color.
+    #[clap(long)]
+    pub ansi_color: Option<bool>,
+}
+
+// TODO Rename this DiscoKey or something suggestive of Tide Disco
 #[derive(AsRefStr, Debug)]
 #[allow(non_camel_case_types)]
-pub enum ConfigKey {
+pub enum DiscoKey {
     base_url,
     disco_toml,
     brand_toml,
@@ -714,11 +729,11 @@ pub fn get_settings<Args: CommandFactory>() -> Result<Config, ConfigError> {
     // file keys lower case. This is a config-rs bug. See
     // https://github.com/mehcode/config-rs/issues/340
     Config::builder()
-        .set_default(ConfigKey::base_url.as_ref(), "http://localhost:65535")?
-        .set_default(ConfigKey::disco_toml.as_ref(), "api/disco.toml")?
-        .set_default(ConfigKey::brand_toml.as_ref(), "api/brand.toml")?
-        .set_default(ConfigKey::api_toml.as_ref(), "api/api.toml")?
-        .set_default(ConfigKey::ansi_color.as_ref(), false)?
+        .set_default(DiscoKey::base_url.as_ref(), "http://localhost:65535")?
+        .set_default(DiscoKey::disco_toml.as_ref(), "api/disco.toml")?
+        .set_default(DiscoKey::brand_toml.as_ref(), "api/brand.toml")?
+        .set_default(DiscoKey::api_toml.as_ref(), "api/api.toml")?
+        .set_default(DiscoKey::ansi_color.as_ref(), false)?
         .add_source(config::File::with_name("config/default.toml"))
         .add_source(config::File::with_name("config/org.toml"))
         .add_source(config::File::with_name("config/app.toml"))
