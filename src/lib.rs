@@ -146,7 +146,8 @@ use clap::{CommandFactory, Parser};
 use config::{Config, ConfigError};
 use routefinder::Router;
 use serde::Deserialize;
-use std::fs::read_to_string;
+use std::fs::{read_to_string, OpenOptions};
+use std::io::Write;
 use std::str::FromStr;
 use std::{
     collections::HashMap,
@@ -162,7 +163,7 @@ use tide::{
     Request, Response,
 };
 use toml::value::Value;
-use tracing::error;
+use tracing::{error, info};
 use url::Url;
 
 pub mod api;
@@ -193,15 +194,18 @@ pub struct DiscoArgs {
     pub ansi_color: Option<bool>,
 }
 
-// TODO Rename this DiscoKey or something suggestive of Tide Disco
+/// Configuration keys for Tide Disco settings
+///
+/// The application is expected to define additional keys. Note, string literals could be used
+/// directly, but defining an enum allows the compiler to catch typos.
 #[derive(AsRefStr, Debug)]
 #[allow(non_camel_case_types)]
 pub enum DiscoKey {
+    ansi_color,
+    api_toml,
+    app_toml,
     base_url,
     disco_toml,
-    brand_toml,
-    api_toml,
-    ansi_color,
 }
 
 #[derive(AsRefStr, Clone, Debug, Deserialize, strum_macros::Display)]
@@ -664,13 +668,14 @@ pub async fn disco_web_handler(req: Request<AppServerState>) -> tide::Result {
     }
 }
 
-// TODO The routes should come from api.toml.
 pub async fn init_web_server(
     base_url: &str,
     state: AppServerState,
 ) -> std::io::Result<JoinHandle<std::io::Result<()>>> {
+    info!("a");
     let base_url = Url::parse(base_url).unwrap();
     let mut web_server = tide::with_state(state);
+    info!("9");
     web_server.with(
         CorsMiddleware::new()
             .allow_methods("GET, POST".parse::<HeaderValue>().unwrap())
@@ -678,16 +683,19 @@ pub async fn init_web_server(
             .allow_origin(Origin::from("*"))
             .allow_credentials(true),
     );
+    info!("9");
 
     // TODO Replace these hardcoded routes with api.toml routes
     web_server.at("/help").get(compose_reference_documentation);
     web_server.at("/help/").get(compose_reference_documentation);
     web_server.at("/healthcheck").get(healthcheck);
     web_server.at("/healthcheck/").get(healthcheck);
+    info!("10");
 
     web_server.at("/").all(disco_web_handler);
     web_server.at("/*").all(disco_web_handler);
     web_server.at("/public").serve_dir("public/media/")?;
+    info!("11");
 
     Ok(spawn(web_server.listen(base_url.to_string())))
 }
@@ -716,28 +724,89 @@ fn get_cmd_line_map<Args: CommandFactory>() -> config::Environment {
 
 /// Get the application configuration
 ///
-/// Gets the configuration from
-/// - Defaults in the source
-/// - A configuration file config/app.toml
+/// Build the configuration from
+/// - Defaults in the tide-disco source
+/// - Defaults passed from the app
+/// - A configuration file from the app
 /// - Command line arguments
 /// - Environment variables
-/// Last one wins. Additional file sources can be added.
-pub fn get_settings<Args: CommandFactory>() -> Result<Config, ConfigError> {
-    // In the config-rs crate, environment variable names are
-    // converted to lower case, but keys in files are not, so if we
-    // want environment variables to override file value, we must make
-    // file keys lower case. This is a config-rs bug. See
-    // https://github.com/mehcode/config-rs/issues/340
-    Config::builder()
+/// Last one wins.
+///
+/// Environment variables have a prefix of the given app_name in upper case with hyphens converted
+/// to underscores. Hyphens are illegal in environment variables in bash, et.al..
+pub fn compose_settings<Args: CommandFactory>(
+    org_name: &str,
+    app_name: &str,
+    app_defaults: &[(&str, &str)],
+    app_config_file: &PathBuf,
+) -> Result<Config, ConfigError> {
+    {
+        let app_config = OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .open(app_config_file);
+        if let Ok(mut app_config) = app_config {
+            write!(
+                app_config,
+                "# {app_name} configuration\n\n\
+                 # Note: keys must be lower case.\n\n"
+            )
+            .map_err(|e| ConfigError::Foreign(e.into()))?;
+            for (k, v) in app_defaults {
+                write!(app_config, "{k} = \"{v}\"\n")
+                    .map_err(|e| ConfigError::Foreign(e.into()))?;
+            }
+        }
+        // app_config file handle gets closed exiting this scope so
+        // Config can read it.
+    }
+    let env_var_prefix = &app_name.replace("-", "_");
+    let org_config_file = org_data_path(&org_name).join("org.toml");
+    // In the config-rs crate, environment variable names are converted to lower case, but keys in
+    // files are not, so if we want environment variables to override file value, we must make file
+    // keys lower case. This is a config-rs bug. See https://github.com/mehcode/config-rs/issues/340
+    let mut builder = Config::builder()
         .set_default(DiscoKey::base_url.as_ref(), "http://localhost:65535")?
-        .set_default(DiscoKey::disco_toml.as_ref(), "api/disco.toml")?
-        .set_default(DiscoKey::brand_toml.as_ref(), "api/brand.toml")?
-        .set_default(DiscoKey::api_toml.as_ref(), "api/api.toml")?
+        .set_default(DiscoKey::disco_toml.as_ref(), "disco.toml")? // TODO path to share config
+        .set_default(
+            DiscoKey::app_toml.as_ref(),
+            app_api_path(&org_name, &app_name)
+                .to_str()
+                .expect("Invalid api path"),
+        )?
         .set_default(DiscoKey::ansi_color.as_ref(), false)?
         .add_source(config::File::with_name("config/default.toml"))
-        .add_source(config::File::with_name("config/org.toml"))
-        .add_source(config::File::with_name("config/app.toml"))
+        .add_source(config::File::with_name(
+            org_config_file
+                .to_str()
+                .expect("Invalid organization configuration file path"),
+        ))
+        .add_source(config::File::with_name(
+            app_config_file
+                .to_str()
+                .expect("Invalid application configuration file path"),
+        ))
         .add_source(get_cmd_line_map::<Args>())
-        .add_source(config::Environment::with_prefix("APP"))
-        .build()
+        .add_source(config::Environment::with_prefix(env_var_prefix)); // No hyphens allowed
+    for (k, v) in app_defaults {
+        builder = builder.set_default(*k, *v).expect("Failed to set default");
+    }
+    builder.build()
+}
+
+pub fn init_logging(want_color: bool) {
+    tracing_subscriber::fmt()
+        .with_env_filter(tracing_subscriber::EnvFilter::from_default_env())
+        .with_ansi(want_color)
+        .init();
+}
+
+pub fn org_data_path(org_name: &str) -> PathBuf {
+    dirs::data_local_dir()
+        .unwrap_or_else(|| env::current_dir().unwrap_or_else(|_| PathBuf::from("./")))
+        .join(org_name)
+}
+
+pub fn app_api_path(org_name: &str, app_name: &str) -> PathBuf {
+    org_data_path(org_name).join(app_name).join("api.toml")
 }

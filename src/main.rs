@@ -1,16 +1,15 @@
 use crate::signal::Interrupt;
 use async_std::sync::{Arc, RwLock};
-use clap::Parser;
 use config::ConfigError;
 use signal::InterruptHandle;
 use signal_hook::consts::{SIGINT, SIGTERM, SIGUSR1};
-use std::{path::PathBuf, process};
+use std::path::PathBuf;
+use std::process;
 use tide_disco::{
-    configure_router, get_api_path, get_settings, init_web_server, load_api, AppServerState,
+    compose_settings, configure_router, get_api_path, init_web_server, load_api, AppServerState,
     DiscoArgs, DiscoKey, HealthStatus::*,
 };
 use tracing::info;
-use url::Url;
 
 mod signal;
 
@@ -25,7 +24,7 @@ impl Interrupt for InterruptHandle {
 #[async_std::main]
 async fn main() -> Result<(), ConfigError> {
     // Combine settings from multiple sources.
-    let settings = get_settings::<DiscoArgs>()?;
+    let settings = compose_settings::<DiscoArgs>("acme", "rocket-sleds", &[], &PathBuf::from("."))?;
 
     // Colorful logs upon request.
     let want_color = settings
