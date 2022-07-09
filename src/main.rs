@@ -3,11 +3,12 @@ use async_std::sync::{Arc, RwLock};
 use config::ConfigError;
 use signal::InterruptHandle;
 use signal_hook::consts::{SIGINT, SIGTERM, SIGUSR1};
+use std::env::current_dir;
 use std::path::PathBuf;
 use std::process;
 use tide_disco::{
-    compose_settings, configure_router, get_api_path, init_web_server, load_api, AppServerState,
-    DiscoArgs, DiscoKey, HealthStatus::*,
+    app_api_path, compose_settings, configure_router, get_api_path, init_web_server, load_api,
+    AppServerState, DiscoArgs, DiscoKey, HealthStatus::*,
 };
 use tracing::info;
 
@@ -23,8 +24,16 @@ impl Interrupt for InterruptHandle {
 
 #[async_std::main]
 async fn main() -> Result<(), ConfigError> {
+    let api_path = current_dir().unwrap().join("api").join("api.toml");
+    let api_path_str = api_path.to_str().unwrap();
+
     // Combine settings from multiple sources.
-    let settings = compose_settings::<DiscoArgs>("acme", "rocket-sleds", &[], &PathBuf::from("."))?;
+    let settings = compose_settings::<DiscoArgs>(
+        "acme",
+        "rocket-sleds",
+        &[(DiscoKey::api_toml.as_ref(), api_path_str)],
+        &app_api_path("acme", "rocket-sleds"),
+    )?;
 
     // Colorful logs upon request.
     let want_color = settings
@@ -39,13 +48,18 @@ async fn main() -> Result<(), ConfigError> {
         .try_init()
         .unwrap();
 
-    info!("{:?}", settings);
+    info!("Settings: {:?}", settings);
+    info!("api_path: {:?}", api_path_str);
+    info!("app_api_path: {:?}", app_api_path("acme", "rocket-sleds"));
 
     // Fetch the configuration values before any slow operations.
     let api_toml = &settings.get_string(DiscoKey::api_toml.as_ref())?;
     let base_url = &settings.get_string(DiscoKey::base_url.as_ref())?;
 
     // Load a TOML file and display something from it.
+    info!("api_toml: {:?}", api_toml);
+    info!("base_url: {:?}", base_url);
+    info!("get_api_path: {:?}", &get_api_path(api_toml));
     let api = load_api(&get_api_path(api_toml));
     let router = configure_router(&api);
 

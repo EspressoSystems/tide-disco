@@ -163,7 +163,7 @@ use tide::{
     Request, Response,
 };
 use toml::value::Value;
-use tracing::{error, info};
+use tracing::{error, info, trace};
 use url::Url;
 
 pub mod api;
@@ -340,6 +340,7 @@ pub fn configure_router(api: &toml::Value) -> Arc<Router<usize>> {
                 .as_array()
                 .expect("Expecting TOML array.");
             for path in paths {
+                trace!("adding path: {:?}", path);
                 index += 1;
                 router
                     .add(path.as_str().expect("Expecting a path string."), index)
