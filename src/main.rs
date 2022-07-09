@@ -4,7 +4,6 @@ use config::ConfigError;
 use signal::InterruptHandle;
 use signal_hook::consts::{SIGINT, SIGTERM, SIGUSR1};
 use std::env::current_dir;
-use std::path::PathBuf;
 use std::process;
 use tide_disco::{
     app_api_path, compose_settings, configure_router, get_api_path, init_web_server, load_api,
@@ -32,7 +31,6 @@ async fn main() -> Result<(), ConfigError> {
         "acme",
         "rocket-sleds",
         &[(DiscoKey::api_toml.as_ref(), api_path_str)],
-        &app_api_path("acme", "rocket-sleds"),
     )?;
 
     // Colorful logs upon request.

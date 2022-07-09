@@ -140,6 +140,7 @@
 
 use crate::ApiKey::*;
 use async_std::sync::{Arc, RwLock};
+use async_std::task::sleep;
 use async_std::task::spawn;
 use async_std::task::JoinHandle;
 use clap::{CommandFactory, Parser};
@@ -149,6 +150,7 @@ use serde::Deserialize;
 use std::fs::{read_to_string, OpenOptions};
 use std::io::Write;
 use std::str::FromStr;
+use std::time::Duration;
 use std::{
     collections::HashMap,
     env,
@@ -179,6 +181,9 @@ pub use app::App;
 pub use error::Error;
 pub use request::{RequestError, RequestParam, RequestParamType, RequestParamValue, RequestParams};
 pub use tide::http::{self, StatusCode};
+
+/// Number of times to poll before failing
+const STARTUP_RETRIES: u32 = 255;
 
 #[derive(Parser, Debug)]
 #[clap(author, version, about, long_about = None)]
@@ -723,6 +728,14 @@ fn get_cmd_line_map<Args: CommandFactory>() -> config::Environment {
     }))
 }
 
+/// Compose the path to the application's configuration file
+pub fn compose_config_path(org_dir_name: &str, app_name: &str) -> PathBuf {
+    let mut app_config_path = org_data_path(org_dir_name);
+    app_config_path = app_config_path.join(app_name).join(app_name);
+    app_config_path.set_extension("toml");
+    app_config_path
+}
+
 /// Get the application configuration
 ///
 /// Build the configuration from
@@ -739,8 +752,8 @@ pub fn compose_settings<Args: CommandFactory>(
     org_name: &str,
     app_name: &str,
     app_defaults: &[(&str, &str)],
-    app_config_file: &PathBuf,
 ) -> Result<Config, ConfigError> {
+    let app_config_file = &compose_config_path(org_name, app_name);
     {
         let app_config = OpenOptions::new()
             .write(true)
@@ -810,4 +823,23 @@ pub fn org_data_path(org_name: &str) -> PathBuf {
 
 pub fn app_api_path(org_name: &str, app_name: &str) -> PathBuf {
     org_data_path(org_name).join(app_name).join("api.toml")
+}
+
+/// Wait for the server to respond to a connection request
+///
+/// This is useful for tests for which it doesn't make sense to send requests until the server has
+/// started.
+pub async fn wait_for_server(base_url: &str) {
+    // Wait for the server to come up and start serving.
+    let pause_ms = Duration::from_millis(100);
+    for _ in 0..STARTUP_RETRIES {
+        if surf::connect(base_url).send().await.is_ok() {
+            return;
+        }
+        sleep(pause_ms).await;
+    }
+    panic!(
+        "Address Book did not start in {:?} milliseconds",
+        pause_ms * STARTUP_RETRIES
+    );
 }
