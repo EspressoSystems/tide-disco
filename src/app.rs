@@ -1,3 +1,16 @@
+// COPYRIGHT100 (c) 2022 Espresso Systems (espressosys.com)
+//
+// This program is free software: you can redistribute it and/or modify it under the terms of the
+// GNU General Public License as published by the Free Software Foundation, either version 3 of the
+// License, or (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
+// even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+// General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License along with this program. If
+// not, see <https://www.gnu.org/licenses/>.
+
 use crate::{
     api::{Api, ApiVersion},
     healthcheck::{HealthCheck, HealthStatus},
@@ -247,6 +260,29 @@ impl<State: Send + Sync + 'static, Error: 'static + crate::Error> App<State, Err
                 respond_with(&mut Accept::from_headers(&req)?, req.state().version())
                     .map_err(|err| Error::from_route_error::<Infallible>(err).into_tide_error())
             });
+
+        // Register catch-all routes for discoverability
+        {
+            server
+                .at("/")
+                .get(move |req: tide::Request<Arc<Self>>| async move {
+                    // TODO invoke disco_web_handler with the URL, etc.
+                    Ok(format!("help /\n{:?}", req.url()))
+                });
+        }
+        {
+            server
+                .at("/*")
+                .get(move |req: tide::Request<Arc<Self>>| async move {
+                    // TODO invoke disco_web_handler with the URL, etc.
+                    Ok(format!("help /*\n{:?}", req.url()))
+                });
+        }
+        // TODO add a call to serve_dir
+        {
+            // TODO This path is not found for address-book
+            //server.at("/public").serve_dir("public/media/")?;
+        }
 
         server.listen(listener).await
     }

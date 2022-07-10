@@ -1,7 +1,32 @@
-//! Web server framework with built-in discoverability.
+//! _Tide Disco is a web server framework with built-in discoverability support for
+//! [Tide](https://github.com/http-rs/tide)_
 //!
-//! # Overview
-//! TODO
+//! We say a system is _discoverable_ if guesses and mistakes regarding usage are rewarded with
+//! relevant documentation and assistance at producing correct requests. To offer this capability in
+//! a practical way, it is helpful to specify the web API in data files, rather than code, so that
+//! all relevant text can be edited in one concise readable specification.
+//!
+//! Tide Disco leverages TOML to specify
+//! - Routes with typed parameters
+//! - Route documentation
+//! - Route error messages
+//! - General documentation
+//!
+//! ## Goals
+//!
+//! - Context-sensitive help
+//! - Spelling suggestions
+//! - Reference documentation assembled from route documentation
+//! - Forms and other user interfaces to aid in the construction of correct inputs
+//! - Localization
+//! - Novice and expert help
+//! - Flexible route parsing, e.g. named parameters rather than positional parameters
+//! - API fuzz testing automation based on parameter types
+//!
+//! ## Future
+//!
+//! - WebSocket support
+//! - Runtime control over logging
 //!
 //! # Boxed futures
 //!
@@ -165,7 +190,7 @@ use tide::{
     Request, Response,
 };
 use toml::value::Value;
-use tracing::{error, info, trace};
+use tracing::{error, trace};
 use url::Url;
 
 pub mod api;
@@ -678,10 +703,8 @@ pub async fn init_web_server(
     base_url: &str,
     state: AppServerState,
 ) -> std::io::Result<JoinHandle<std::io::Result<()>>> {
-    info!("a");
     let base_url = Url::parse(base_url).unwrap();
     let mut web_server = tide::with_state(state);
-    info!("9");
     web_server.with(
         CorsMiddleware::new()
             .allow_methods("GET, POST".parse::<HeaderValue>().unwrap())
@@ -689,19 +712,16 @@ pub async fn init_web_server(
             .allow_origin(Origin::from("*"))
             .allow_credentials(true),
     );
-    info!("9");
 
     // TODO Replace these hardcoded routes with api.toml routes
     web_server.at("/help").get(compose_reference_documentation);
     web_server.at("/help/").get(compose_reference_documentation);
     web_server.at("/healthcheck").get(healthcheck);
     web_server.at("/healthcheck/").get(healthcheck);
-    info!("10");
 
     web_server.at("/").all(disco_web_handler);
     web_server.at("/*").all(disco_web_handler);
     web_server.at("/public").serve_dir("public/media/")?;
-    info!("11");
 
     Ok(spawn(web_server.listen(base_url.to_string())))
 }
