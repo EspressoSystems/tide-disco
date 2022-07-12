@@ -1,32 +1,17 @@
 use crate::signal::Interrupt;
 use async_std::sync::{Arc, RwLock};
-use clap::Parser;
 use config::ConfigError;
 use signal::InterruptHandle;
 use signal_hook::consts::{SIGINT, SIGTERM, SIGUSR1};
-use std::{path::PathBuf, process};
+use std::env::current_dir;
+use std::process;
 use tide_disco::{
-    configure_router, get_api_path, get_settings, init_web_server, load_api, AppServerState,
-    ConfigKey, HealthStatus::*,
+    app_api_path, compose_settings, configure_router, get_api_path, init_web_server, load_api,
+    AppServerState, DiscoArgs, DiscoKey, HealthStatus::*,
 };
 use tracing::info;
-use url::Url;
 
 mod signal;
-
-#[derive(Parser, Debug)]
-#[clap(author, version, about, long_about = None)]
-struct Args {
-    #[clap(long)]
-    /// Server address
-    base_url: Option<Url>,
-    #[clap(long)]
-    /// HTTP routes
-    api_toml: Option<PathBuf>,
-    /// If true, log in color. Otherwise, no color.
-    #[clap(long)]
-    ansi_color: Option<bool>,
-}
 
 impl Interrupt for InterruptHandle {
     fn signal_action(signal: i32) {
@@ -36,13 +21,25 @@ impl Interrupt for InterruptHandle {
     }
 }
 
+// This demonstrates the older way of configuring the web server. What's valuable here is that it
+// shows the bare bones of discoverability from a TOML file.
+// TODO integrate discoverability into the new method of wrapping Tide.
 #[async_std::main]
 async fn main() -> Result<(), ConfigError> {
+    let api_path = current_dir().unwrap().join("api").join("api.toml");
+    let api_path_str = api_path.to_str().unwrap();
+
     // Combine settings from multiple sources.
-    let settings = get_settings::<Args>()?;
+    let settings = compose_settings::<DiscoArgs>(
+        "acme",
+        "rocket-sleds",
+        &[(DiscoKey::api_toml.as_ref(), api_path_str)],
+    )?;
 
     // Colorful logs upon request.
-    let want_color = settings.get_bool("ansi_color").unwrap_or(false);
+    let want_color = settings
+        .get_bool(DiscoKey::ansi_color.as_ref())
+        .unwrap_or(false);
 
     // Configure logs with timestamps, no color, and settings from
     // the RUST_LOG environment variable.
@@ -52,13 +49,18 @@ async fn main() -> Result<(), ConfigError> {
         .try_init()
         .unwrap();
 
-    info!("{:?}", settings);
+    info!("Settings: {:?}", settings);
+    info!("api_path: {:?}", api_path_str);
+    info!("app_api_path: {:?}", app_api_path("acme", "rocket-sleds"));
 
     // Fetch the configuration values before any slow operations.
-    let api_toml = &settings.get_string(ConfigKey::api_toml.as_ref())?;
-    let base_url = &settings.get_string(ConfigKey::base_url.as_ref())?;
+    let api_toml = &settings.get_string(DiscoKey::api_toml.as_ref())?;
+    let base_url = &settings.get_string(DiscoKey::base_url.as_ref())?;
 
     // Load a TOML file and display something from it.
+    info!("api_toml: {:?}", api_toml);
+    info!("base_url: {:?}", base_url);
+    info!("get_api_path: {:?}", &get_api_path(api_toml));
     let api = load_api(&get_api_path(api_toml));
     let router = configure_router(&api);
 

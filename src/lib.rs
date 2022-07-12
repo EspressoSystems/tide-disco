@@ -1,4 +1,5 @@
-//! Web server framework with built-in discoverability.
+//! _Tide Disco is a web server framework with built-in discoverability support for
+//! [Tide](https://github.com/http-rs/tide)_
 //!
 //! # Overview
 //!
@@ -235,14 +236,17 @@
 
 use crate::ApiKey::*;
 use async_std::sync::{Arc, RwLock};
+use async_std::task::sleep;
 use async_std::task::spawn;
 use async_std::task::JoinHandle;
-use clap::CommandFactory;
+use clap::{CommandFactory, Parser};
 use config::{Config, ConfigError};
 use routefinder::Router;
 use serde::Deserialize;
-use std::fs::read_to_string;
+use std::fs::{read_to_string, OpenOptions};
+use std::io::Write;
 use std::str::FromStr;
+use std::time::Duration;
 use std::{
     collections::HashMap,
     env,
@@ -257,7 +261,7 @@ use tide::{
     Request, Response,
 };
 use toml::value::Value;
-use tracing::error;
+use tracing::{error, trace};
 use url::Url;
 
 pub mod api;
@@ -274,14 +278,35 @@ pub use error::Error;
 pub use request::{RequestError, RequestParam, RequestParamType, RequestParamValue, RequestParams};
 pub use tide::http::{self, StatusCode};
 
+/// Number of times to poll before failing
+const STARTUP_RETRIES: u32 = 255;
+
+#[derive(Parser, Debug)]
+#[clap(author, version, about, long_about = None)]
+pub struct DiscoArgs {
+    #[clap(long)]
+    /// Server address
+    pub base_url: Option<Url>,
+    #[clap(long)]
+    /// HTTP routes
+    pub api_toml: Option<PathBuf>,
+    /// If true, log in color. Otherwise, no color.
+    #[clap(long)]
+    pub ansi_color: Option<bool>,
+}
+
+/// Configuration keys for Tide Disco settings
+///
+/// The application is expected to define additional keys. Note, string literals could be used
+/// directly, but defining an enum allows the compiler to catch typos.
 #[derive(AsRefStr, Debug)]
 #[allow(non_camel_case_types)]
-pub enum ConfigKey {
+pub enum DiscoKey {
+    ansi_color,
+    api_toml,
+    app_toml,
     base_url,
     disco_toml,
-    brand_toml,
-    api_toml,
-    ansi_color,
 }
 
 #[derive(AsRefStr, Clone, Debug, Deserialize, strum_macros::Display)]
@@ -416,6 +441,7 @@ pub fn configure_router(api: &toml::Value) -> Arc<Router<usize>> {
                 .as_array()
                 .expect("Expecting TOML array.");
             for path in paths {
+                trace!("adding path: {:?}", path);
                 index += 1;
                 router
                     .add(path.as_str().expect("Expecting a path string."), index)
@@ -549,7 +575,7 @@ pub async fn compose_reference_documentation(
             help += &document_route(meta, entry);
         });
     }
-    help += &format!("{}\n", &vk(meta, HTML_BOTTOM.as_ref()));
+    help = format!("{}{}\n", help, &vk(meta, HTML_BOTTOM.as_ref()));
     Ok(tide::Response::builder(200)
         .content_type(tide::http::mime::HTML)
         .body(help)
@@ -666,8 +692,10 @@ pub fn check_literals(url: &Url, api: &Value, first_segment: &str) -> String {
                     url.path_segments().unwrap().for_each(|useg| {
                         let d = edit_distance::edit_distance(pseg, useg);
                         if 0 < d && d <= pseg.len() / 2 {
-                            typos +=
-                                &format!("<p>Found '{}'. Did you mean '{}'?</p>\n", useg, pseg);
+                            typos = format!(
+                                "{}<p>Found '{}'. Did you mean '{}'?</p>\n",
+                                typos, useg, pseg
+                            );
                         }
                     });
                 }
@@ -744,7 +772,6 @@ pub async fn disco_web_handler(req: Request<AppServerState>) -> tide::Result {
     }
 }
 
-// TODO The routes should come from api.toml.
 pub async fn init_web_server(
     base_url: &str,
     state: AppServerState,
@@ -794,30 +821,118 @@ fn get_cmd_line_map<Args: CommandFactory>() -> config::Environment {
     }))
 }
 
+/// Compose the path to the application's configuration file
+pub fn compose_config_path(org_dir_name: &str, app_name: &str) -> PathBuf {
+    let mut app_config_path = org_data_path(org_dir_name);
+    app_config_path = app_config_path.join(app_name).join(app_name);
+    app_config_path.set_extension("toml");
+    app_config_path
+}
+
 /// Get the application configuration
 ///
-/// Gets the configuration from
-/// - Defaults in the source
-/// - A configuration file config/app.toml
+/// Build the configuration from
+/// - Defaults in the tide-disco source
+/// - Defaults passed from the app
+/// - A configuration file from the app
 /// - Command line arguments
 /// - Environment variables
-/// Last one wins. Additional file sources can be added.
-pub fn get_settings<Args: CommandFactory>() -> Result<Config, ConfigError> {
-    // In the config-rs crate, environment variable names are
-    // converted to lower case, but keys in files are not, so if we
-    // want environment variables to override file value, we must make
-    // file keys lower case. This is a config-rs bug. See
-    // https://github.com/mehcode/config-rs/issues/340
-    Config::builder()
-        .set_default(ConfigKey::base_url.as_ref(), "http://localhost:65535")?
-        .set_default(ConfigKey::disco_toml.as_ref(), "api/disco.toml")?
-        .set_default(ConfigKey::brand_toml.as_ref(), "api/brand.toml")?
-        .set_default(ConfigKey::api_toml.as_ref(), "api/api.toml")?
-        .set_default(ConfigKey::ansi_color.as_ref(), false)?
+/// Last one wins.
+///
+/// Environment variables have a prefix of the given app_name in upper case with hyphens converted
+/// to underscores. Hyphens are illegal in environment variables in bash, et.al..
+pub fn compose_settings<Args: CommandFactory>(
+    org_name: &str,
+    app_name: &str,
+    app_defaults: &[(&str, &str)],
+) -> Result<Config, ConfigError> {
+    let app_config_file = &compose_config_path(org_name, app_name);
+    {
+        let app_config = OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .open(app_config_file);
+        if let Ok(mut app_config) = app_config {
+            write!(
+                app_config,
+                "# {app_name} configuration\n\n\
+                 # Note: keys must be lower case.\n\n"
+            )
+            .map_err(|e| ConfigError::Foreign(e.into()))?;
+            for (k, v) in app_defaults {
+                writeln!(app_config, "{k} = \"{v}\"")
+                    .map_err(|e| ConfigError::Foreign(e.into()))?;
+            }
+        }
+        // app_config file handle gets closed exiting this scope so
+        // Config can read it.
+    }
+    let env_var_prefix = &app_name.replace('-', "_");
+    let org_config_file = org_data_path(org_name).join("org.toml");
+    // In the config-rs crate, environment variable names are converted to lower case, but keys in
+    // files are not, so if we want environment variables to override file value, we must make file
+    // keys lower case. This is a config-rs bug. See https://github.com/mehcode/config-rs/issues/340
+    let mut builder = Config::builder()
+        .set_default(DiscoKey::base_url.as_ref(), "http://localhost:65535")?
+        .set_default(DiscoKey::disco_toml.as_ref(), "disco.toml")? // TODO path to share config
+        .set_default(
+            DiscoKey::app_toml.as_ref(),
+            app_api_path(org_name, app_name)
+                .to_str()
+                .expect("Invalid api path"),
+        )?
+        .set_default(DiscoKey::ansi_color.as_ref(), false)?
         .add_source(config::File::with_name("config/default.toml"))
-        .add_source(config::File::with_name("config/org.toml"))
-        .add_source(config::File::with_name("config/app.toml"))
+        .add_source(config::File::with_name(
+            org_config_file
+                .to_str()
+                .expect("Invalid organization configuration file path"),
+        ))
+        .add_source(config::File::with_name(
+            app_config_file
+                .to_str()
+                .expect("Invalid application configuration file path"),
+        ))
         .add_source(get_cmd_line_map::<Args>())
-        .add_source(config::Environment::with_prefix("APP"))
-        .build()
+        .add_source(config::Environment::with_prefix(env_var_prefix)); // No hyphens allowed
+    for (k, v) in app_defaults {
+        builder = builder.set_default(*k, *v).expect("Failed to set default");
+    }
+    builder.build()
+}
+
+pub fn init_logging(want_color: bool) {
+    tracing_subscriber::fmt()
+        .with_env_filter(tracing_subscriber::EnvFilter::from_default_env())
+        .with_ansi(want_color)
+        .init();
+}
+
+pub fn org_data_path(org_name: &str) -> PathBuf {
+    dirs::data_local_dir()
+        .unwrap_or_else(|| env::current_dir().unwrap_or_else(|_| PathBuf::from("./")))
+        .join(org_name)
+}
+
+pub fn app_api_path(org_name: &str, app_name: &str) -> PathBuf {
+    org_data_path(org_name).join(app_name).join("api.toml")
+}
+
+/// Wait for the server to respond to a connection request
+///
+/// This is useful for tests for which it doesn't make sense to send requests until the server has
+/// started.
+pub async fn wait_for_server(base_url: &str) {
+    // Wait for the server to come up and start serving.
+    let pause_ms = Duration::from_millis(100);
+    for _ in 0..STARTUP_RETRIES {
+        if surf::connect(base_url).send().await.is_ok() {
+            return;
+        }
+        sleep(pause_ms).await;
+    }
+    panic!(
+        "Address Book did not start in {:?} milliseconds",
+        pause_ms * STARTUP_RETRIES
+    );
 }
