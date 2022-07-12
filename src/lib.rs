@@ -1,10 +1,12 @@
 //! _Tide Disco is a web server framework with built-in discoverability support for
 //! [Tide](https://github.com/http-rs/tide)_
 //!
+//! # Overview
+//!
 //! We say a system is _discoverable_ if guesses and mistakes regarding usage are rewarded with
 //! relevant documentation and assistance at producing correct requests. To offer this capability in
-//! a practical way, it is helpful to specify the web API in data files, rather than code, so that
-//! all relevant text can be edited in one concise readable specification.
+//! a practical way, it is helpful to specify the API in data files, rather than code, so that all
+//! relevant text can be edited in one concise readable specification.
 //!
 //! Tide Disco leverages TOML to specify
 //! - Routes with typed parameters
@@ -23,10 +25,79 @@
 //! - Flexible route parsing, e.g. named parameters rather than positional parameters
 //! - API fuzz testing automation based on parameter types
 //!
-//! ## Future
+//! ## Future work
 //!
 //! - WebSocket support
 //! - Runtime control over logging
+//!
+//! # Getting started
+//!
+//! A Tide Disco app is composed of one or more _API modules_. An API module consists of a TOML
+//! specification and a set of route handlers -- Rust functions -- to provide the behavior of the
+//! routes defined in the TOML. You can learn the format of the TOML file by looking at the examples
+//! in this crate. Once you have it, you can load it into an API description using [Api::new]:
+//!
+//! ```no_run
+//! # fn main() -> Result<(), tide_disco::api::ApiError> {
+//! use tide_disco::Api;
+//! use tide_disco::error::ServerError;
+//!
+//! type State = ();
+//! type Error = ServerError;
+//!
+//! let spec = toml::from_slice(&std::fs::read("/path/to/api.toml").unwrap()).unwrap();
+//! let mut api = Api::<State, Error>::new(spec)?;
+//! # Ok(())
+//! # }
+//! ```
+//!
+//! Once you have an [Api], you can define route handlers for any routes in your TOML specification.
+//! Suppose you have the following route definition:
+//!
+//! ```toml
+//! [route.hello]
+//! PATH = ["hello"]
+//! METHOD = "GET"
+//! ```
+//!
+//! Register a handler for it like this:
+//!
+//! ```no_run
+//! # use tide_disco::Api;
+//! # fn main() -> Result<(), tide_disco::api::ApiError> {
+//! # let spec = toml::from_slice(&std::fs::read("/path/to/api.toml").unwrap()).unwrap();
+//! # let mut api = Api::<(), tide_disco::error::ServerError>::new(spec)?;
+//! use futures::FutureExt;
+//!
+//! api.get("hello", |req, state| async move { Ok("Hello, world!") }.boxed())?;
+//! # Ok(())
+//! # }
+//! ```
+//!
+//! See [the API reference](Api) for more details on what you can do to create an [Api].
+//!
+//! Once you have registered all of your route handlers, you need to register your [Api] module with
+//! an [App]:
+//!
+//! ```no_run
+//! # type State = ();
+//! # type Error = tide_disco::error::ServerError;
+//! # #[async_std::main] async fn main() {
+//! # let spec = toml::from_slice(&std::fs::read("/path/to/api.toml").unwrap()).unwrap();
+//! # let api = tide_disco::Api::new(spec).unwrap();
+//! use tide_disco::App;
+//!
+//! let mut app = App::<State, Error>::with_state(());
+//! app.register_module("api", api);
+//! app.serve("http://localhost:8080").await;
+//! # }
+//! ```
+//!
+//! Then you can use your application:
+//!
+//! ```text
+//! curl http://localhost:8080/api/hello
+//! ```
 //!
 //! # Boxed futures
 //!
