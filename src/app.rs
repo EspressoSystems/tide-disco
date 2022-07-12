@@ -340,10 +340,10 @@ pub struct AppVersion {
 /// body of the response.
 ///
 /// If the response does not contain an error, it is passed through unchanged.
-fn add_error_body<'a, T: Clone + Send + Sync + 'static, E: crate::Error>(
+fn add_error_body<T: Clone + Send + Sync + 'static, E: crate::Error>(
     req: tide::Request<T>,
-    next: tide::Next<'a, T>,
-) -> BoxFuture<'a, tide::Result> {
+    next: tide::Next<T>,
+) -> BoxFuture<tide::Result> {
     Box::pin(async {
         let mut accept = Accept::from_headers(&req)?;
         let mut res = next.run(req).await;

@@ -575,7 +575,7 @@ pub async fn compose_reference_documentation(
             help += &document_route(meta, entry);
         });
     }
-    help += &format!("{}\n", &vk(meta, HTML_BOTTOM.as_ref()));
+    help = format!("{}{}\n", help, &vk(meta, HTML_BOTTOM.as_ref()));
     Ok(tide::Response::builder(200)
         .content_type(tide::http::mime::HTML)
         .body(help)
@@ -692,8 +692,10 @@ pub fn check_literals(url: &Url, api: &Value, first_segment: &str) -> String {
                     url.path_segments().unwrap().for_each(|useg| {
                         let d = edit_distance::edit_distance(pseg, useg);
                         if 0 < d && d <= pseg.len() / 2 {
-                            typos +=
-                                &format!("<p>Found '{}'. Did you mean '{}'?</p>\n", useg, pseg);
+                            typos = format!(
+                                "{}<p>Found '{}'. Did you mean '{}'?</p>\n",
+                                typos, useg, pseg
+                            );
                         }
                     });
                 }
@@ -858,15 +860,15 @@ pub fn compose_settings<Args: CommandFactory>(
             )
             .map_err(|e| ConfigError::Foreign(e.into()))?;
             for (k, v) in app_defaults {
-                write!(app_config, "{k} = \"{v}\"\n")
+                writeln!(app_config, "{k} = \"{v}\"")
                     .map_err(|e| ConfigError::Foreign(e.into()))?;
             }
         }
         // app_config file handle gets closed exiting this scope so
         // Config can read it.
     }
-    let env_var_prefix = &app_name.replace("-", "_");
-    let org_config_file = org_data_path(&org_name).join("org.toml");
+    let env_var_prefix = &app_name.replace('-', "_");
+    let org_config_file = org_data_path(org_name).join("org.toml");
     // In the config-rs crate, environment variable names are converted to lower case, but keys in
     // files are not, so if we want environment variables to override file value, we must make file
     // keys lower case. This is a config-rs bug. See https://github.com/mehcode/config-rs/issues/340
@@ -875,7 +877,7 @@ pub fn compose_settings<Args: CommandFactory>(
         .set_default(DiscoKey::disco_toml.as_ref(), "disco.toml")? // TODO path to share config
         .set_default(
             DiscoKey::app_toml.as_ref(),
-            app_api_path(&org_name, &app_name)
+            app_api_path(org_name, app_name)
                 .to_str()
                 .expect("Invalid api path"),
         )?
