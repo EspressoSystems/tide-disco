@@ -30,7 +30,7 @@ pub enum RequestError {
     },
 
     #[snafu(display("Unable to compose JSON"))]
-    JsonSnafu,
+    Json,
 }
 
 /// Parameters passed to a route handler.
@@ -240,7 +240,7 @@ impl RequestParams {
     where
         T: serde::de::DeserializeOwned,
     {
-        serde_json::from_slice(&self.post_data.clone()).map_err(|_| RequestError::JsonSnafu {})
+        serde_json::from_slice(&self.post_data.clone()).map_err(|_| RequestError::Json {})
     }
 }
 

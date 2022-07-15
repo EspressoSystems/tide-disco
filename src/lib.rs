@@ -279,7 +279,10 @@ pub use request::{RequestError, RequestParam, RequestParamType, RequestParamValu
 pub use tide::http::{self, StatusCode};
 
 /// Number of times to poll before failing
-const STARTUP_RETRIES: u32 = 255;
+pub const SERVER_STARTUP_RETRIES: u64 = 255;
+
+/// Number of milliseconds to sleep between attempts
+pub const SERVER_STARTUP_SLEEP_MS: u64 = 100;
 
 #[derive(Parser, Debug)]
 #[clap(author, version, about, long_about = None)]
@@ -922,17 +925,16 @@ pub fn app_api_path(org_name: &str, app_name: &str) -> PathBuf {
 ///
 /// This is useful for tests for which it doesn't make sense to send requests until the server has
 /// started.
-pub async fn wait_for_server(base_url: &str) {
-    // Wait for the server to come up and start serving.
-    let pause_ms = Duration::from_millis(100);
-    for _ in 0..STARTUP_RETRIES {
-        if surf::connect(base_url).send().await.is_ok() {
+pub async fn wait_for_server(url: &Url, retries: u64, sleep_ms: u64) {
+    let dur = Duration::from_millis(sleep_ms);
+    for _ in 0..retries {
+        if surf::connect(&url).send().await.is_ok() {
             return;
         }
-        sleep(pause_ms).await;
+        sleep(dur).await;
     }
     panic!(
-        "Address Book did not start in {:?} milliseconds",
-        pause_ms * STARTUP_RETRIES
+        "Server did not start in {:?} milliseconds",
+        sleep_ms * SERVER_STARTUP_RETRIES
     );
 }
