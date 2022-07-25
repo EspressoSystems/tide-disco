@@ -29,8 +29,14 @@ pub enum RequestError {
         expected: String,
     },
 
-    #[snafu(display("Unable to compose JSON"))]
+    #[snafu(display("Unable to deserialize from JSON"))]
     Json,
+
+    #[snafu(display("Unable to deserialize from bincode"))]
+    Bincode,
+
+    #[snafu(display("Body type not specified or type not supported"))]
+    UnsupportedBody,
 }
 
 /// Parameters passed to a route handler.
@@ -241,6 +247,27 @@ impl RequestParams {
         T: serde::de::DeserializeOwned,
     {
         serde_json::from_slice(&self.post_data.clone()).map_err(|_| RequestError::Json {})
+    }
+
+    /// Deserialize the body of a request.
+    ///
+    /// The Content-Type header is used to determine the serialization format.
+    pub fn body_auto<T>(&self) -> Result<T, RequestError>
+    where
+        T: serde::de::DeserializeOwned,
+    {
+        if let Some(content_type) = self.headers.get("Content-Type") {
+            match content_type.as_str() {
+                "application/json" => self.body_json(),
+                "application/octet-stream" => {
+                    let bytes = self.body_bytes();
+                    bincode::deserialize(&bytes).map_err(|_err| RequestError::Bincode {})
+                }
+                _content_type => Err(RequestError::UnsupportedBody {}),
+            }
+        } else {
+            Err(RequestError::UnsupportedBody {})
+        }
     }
 }
 
