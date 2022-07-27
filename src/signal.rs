@@ -40,9 +40,7 @@ impl InterruptHandle {
         // Stop waiting for an interrupt.
         self.handle.close();
 
-        // TODO This is here to mimic the example in the documentation, but
-        // it doesn't seem to make any difference whether or not it's here. Why?
-        // https://docs.rs/signal-hook-async-std/latest/signal_hook_async_std/
+        // TODO https://github.com/EspressoSystems/tide-disco/issues/57
         if let Some(task) = &mut self.task.take() {
             task.await
         }

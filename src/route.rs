@@ -194,7 +194,7 @@ impl<State, Error> Route<State, Error> {
         for path in paths.iter() {
             for seg in path.split('/') {
                 if seg.starts_with(':') {
-                    // TODO also accept a structure with param_type and required
+                    // TODO https://github.com/EspressoSystems/tide-disco/issues/56
                     let ptype = RequestParamType::from_str(
                         spec[seg]
                             .as_str()

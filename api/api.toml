@@ -39,7 +39,7 @@ PARAMETER_TABLE_CLOSE = "</table>\n\n"
 PARAMETER_ROW = "<tr><td class='parameter'>{{NAME}}</td><td class='type'>{{TYPE}}</td></tr>\n"
 PARAMETER_NONE = "<div class='meta'>None</div>"
 
-# TODO Maybe refactor to eliminate redundancy with HTML_TOP and HTML_BOTTOM
+# TODO https://github.com/EspressoSystems/tide-disco/issues/52
 MINIMAL_HTML = """
 <!doctype html>
 <html lang='en'>
