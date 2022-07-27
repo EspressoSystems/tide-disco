@@ -262,11 +262,11 @@ impl<State: Send + Sync + 'static, Error: 'static + crate::Error> App<State, Err
             });
 
         // Register catch-all routes for discoverability
+        // TODO https://github.com/EspressoSystems/tide-disco/issues/54
         {
             server
                 .at("/")
                 .get(move |req: tide::Request<Arc<Self>>| async move {
-                    // TODO invoke disco_web_handler with the URL, etc.
                     Ok(format!("help /\n{:?}", req.url()))
                 });
         }
@@ -274,13 +274,12 @@ impl<State: Send + Sync + 'static, Error: 'static + crate::Error> App<State, Err
             server
                 .at("/*")
                 .get(move |req: tide::Request<Arc<Self>>| async move {
-                    // TODO invoke disco_web_handler with the URL, etc.
                     Ok(format!("help /*\n{:?}", req.url()))
                 });
         }
-        // TODO add a call to serve_dir
+        // TODO https://github.com/EspressoSystems/tide-disco/issues/55
         {
-            // TODO This path is not found for address-book
+            // This path is not found for address-book
             //server.at("/public").serve_dir("public/media/")?;
         }
 

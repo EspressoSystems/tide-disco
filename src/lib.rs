@@ -619,7 +619,7 @@ impl UrlSegment {
     }
 }
 
-// TODO Associate a handler with a pattern somehow.
+// TODO https://github.com/EspressoSystems/tide-disco/issues/54
 pub async fn disco_dispatch(
     req: Request<AppServerState>,
     bindings: HashMap<String, UrlSegment>,
@@ -789,7 +789,7 @@ pub async fn init_web_server(
             .allow_credentials(true),
     );
 
-    // TODO Replace these hardcoded routes with api.toml routes
+    // TODO https://github.com/EspressoSystems/tide-disco/issues/58
     web_server.at("/help").get(compose_reference_documentation);
     web_server.at("/help/").get(compose_reference_documentation);
     web_server.at("/healthcheck").get(healthcheck);
@@ -877,7 +877,7 @@ pub fn compose_settings<Args: CommandFactory>(
     // keys lower case. This is a config-rs bug. See https://github.com/mehcode/config-rs/issues/340
     let mut builder = Config::builder()
         .set_default(DiscoKey::base_url.as_ref(), "http://localhost:65535")?
-        .set_default(DiscoKey::disco_toml.as_ref(), "disco.toml")? // TODO path to share config
+        .set_default(DiscoKey::disco_toml.as_ref(), "disco.toml")?
         .set_default(
             DiscoKey::app_toml.as_ref(),
             app_api_path(org_name, app_name)

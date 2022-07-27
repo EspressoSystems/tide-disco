@@ -15,7 +15,6 @@ mod signal;
 
 impl Interrupt for InterruptHandle {
     fn signal_action(signal: i32) {
-        // TOOD modify web_state based on the signal.
         println!("\nReceived signal {}", signal);
         process::exit(1);
     }
@@ -23,7 +22,6 @@ impl Interrupt for InterruptHandle {
 
 // This demonstrates the older way of configuring the web server. What's valuable here is that it
 // shows the bare bones of discoverability from a TOML file.
-// TODO integrate discoverability into the new method of wrapping Tide.
 #[async_std::main]
 async fn main() -> Result<(), ConfigError> {
     let api_path = current_dir().unwrap().join("api").join("api.toml");
