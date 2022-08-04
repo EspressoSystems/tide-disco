@@ -1,10 +1,10 @@
-use crate::signal::Interrupt;
 use async_std::sync::{Arc, RwLock};
 use config::ConfigError;
+#[cfg(not(windows))]
 use signal::InterruptHandle;
+#[cfg(not(windows))]
 use signal_hook::consts::{SIGINT, SIGTERM, SIGUSR1};
 use std::env::current_dir;
-use std::process;
 use tide_disco::{
     app_api_path, compose_settings, configure_router, get_api_path, init_web_server, load_api,
     AppServerState, DiscoArgs, DiscoKey, HealthStatus::*,
@@ -12,13 +12,6 @@ use tide_disco::{
 use tracing::info;
 
 mod signal;
-
-impl Interrupt for InterruptHandle {
-    fn signal_action(signal: i32) {
-        println!("\nReceived signal {}", signal);
-        process::exit(1);
-    }
-}
 
 // This demonstrates the older way of configuring the web server. What's valuable here is that it
 // shows the bare bones of discoverability from a TOML file.
@@ -73,6 +66,7 @@ async fn main() -> Result<(), ConfigError> {
     *web_state.health_status.write().await = Available;
 
     // Activate the handler for ^C, etc.
+    #[cfg(not(windows))]
     let mut interrupt_handler = InterruptHandle::new(&[SIGINT, SIGTERM, SIGUSR1]);
     init_web_server(base_url, web_state)
         .await
@@ -82,6 +76,7 @@ async fn main() -> Result<(), ConfigError> {
         .await
         .unwrap();
 
+    #[cfg(not(windows))]
     interrupt_handler.finalize().await;
 
     Ok(())
