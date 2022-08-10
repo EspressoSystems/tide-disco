@@ -593,8 +593,16 @@ impl<State, Error> Api<State, Error> {
         } else {
             // If there is no healthcheck handler registered, just return [HealthStatus::Available]
             // by default; after all, if this handler is getting hit at all, the service must be up.
-            let mut accept = Accept::from_headers(req.headers()).ok().flatten();
-            route::health_check_response(&mut accept, HealthStatus::Available)
+            route::health_check_response(
+                &req.accept().unwrap_or_else(|_| {
+                    // The healthcheck endpoint is not allowed to fail, so just use the default content
+                    // type if we can't parse the Accept header.
+                    let mut accept = Accept::new();
+                    accept.set_wildcard(true);
+                    accept
+                }),
+                HealthStatus::Available,
+            )
         }
     }
 
@@ -653,8 +661,11 @@ where
         req: RequestParams,
         state: &State,
     ) -> Result<tide::Response, RouteError<Error>> {
-        let accept = accept_header(&req)?;
-        response_from_result(accept, state.read(|state| (self.handler)(req, state)).await)
+        let accept = req.accept()?;
+        response_from_result(
+            &accept,
+            state.read(|state| (self.handler)(req, state)).await,
+        )
     }
 }
 
@@ -679,9 +690,9 @@ where
         req: RequestParams,
         state: &State,
     ) -> Result<tide::Response, RouteError<Error>> {
-        let accept = accept_header(&req)?;
+        let accept = req.accept()?;
         response_from_result(
-            accept,
+            &accept,
             state.write(|state| (self.handler)(req, state)).await,
         )
     }

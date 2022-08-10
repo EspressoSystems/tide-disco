@@ -1,6 +1,6 @@
 use crate::{
     healthcheck::HealthCheck,
-    request::{RequestParam, RequestParamType, RequestParams},
+    request::{RequestError, RequestParam, RequestParamType, RequestParams},
 };
 use async_trait::async_trait;
 use derive_more::From;
@@ -29,6 +29,7 @@ use tide::{
 /// result of the user-installed handler into an HTTP response.
 pub enum RouteError<E> {
     AppSpecific(E),
+    Request(RequestError),
     UnsupportedContentType,
     Bincode(bincode::Error),
     Json(serde_json::Error),
@@ -39,6 +40,7 @@ impl<E: Display> Display for RouteError<E> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match self {
             Self::AppSpecific(err) => write!(f, "{}", err),
+            Self::Request(err) => write!(f, "{}", err),
             Self::UnsupportedContentType => write!(f, "requested content type is not supported"),
             Self::Bincode(err) => write!(f, "error creating byte stream: {}", err),
             Self::Json(err) => write!(f, "error creating JSON response: {}", err),
@@ -50,7 +52,7 @@ impl<E: Display> Display for RouteError<E> {
 impl<E> RouteError<E> {
     pub fn status(&self) -> StatusCode {
         match self {
-            Self::UnsupportedContentType => StatusCode::BadRequest,
+            Self::Request(_) | Self::UnsupportedContentType => StatusCode::BadRequest,
             _ => StatusCode::InternalServerError,
         }
     }
@@ -58,11 +60,18 @@ impl<E> RouteError<E> {
     pub fn map_app_specific<E2>(self, f: impl Fn(E) -> E2) -> RouteError<E2> {
         match self {
             RouteError::AppSpecific(e) => RouteError::AppSpecific(f(e)),
+            RouteError::Request(e) => RouteError::Request(e),
             RouteError::UnsupportedContentType => RouteError::UnsupportedContentType,
             RouteError::Bincode(err) => RouteError::Bincode(err),
             RouteError::Json(err) => RouteError::Json(err),
             RouteError::Tide(err) => RouteError::Tide(err),
         }
+    }
+}
+
+impl<E> From<RequestError> for RouteError<E> {
+    fn from(err: RequestError) -> Self {
+        Self::Request(err)
     }
 }
 
@@ -115,23 +124,17 @@ where
         req: RequestParams,
         state: &State,
     ) -> Result<tide::Response, RouteError<Error>> {
-        let accept = accept_header(&req)?;
-        response_from_result(accept, (self.0)(req, state).await)
+        let accept = req.accept()?;
+        response_from_result(&accept, (self.0)(req, state).await)
     }
 }
 
-pub(crate) fn accept_header<Error>(
-    req: &RequestParams,
-) -> Result<Option<Accept>, RouteError<Error>> {
-    Accept::from_headers(req.headers()).map_err(RouteError::Tide)
-}
-
 pub(crate) fn response_from_result<T: Serialize, Error>(
-    mut accept: Option<Accept>,
+    accept: &Accept,
     res: Result<T, Error>,
 ) -> Result<tide::Response, RouteError<Error>> {
     res.map_err(RouteError::AppSpecific)
-        .and_then(|res| respond_with(&mut accept, &res))
+        .and_then(|res| respond_with(accept, &res))
 }
 
 #[async_trait]
@@ -399,10 +402,7 @@ where
 pub(crate) type HealthCheckHandler<State> =
     Box<dyn 'static + Send + Sync + Fn(RequestParams, &State) -> BoxFuture<'_, tide::Response>>;
 
-pub(crate) fn health_check_response<H: HealthCheck>(
-    accept: &mut Option<Accept>,
-    health: H,
-) -> tide::Response {
+pub(crate) fn health_check_response<H: HealthCheck>(accept: &Accept, health: H) -> tide::Response {
     let status = health.status();
     let (body, content_type) =
         response_body::<H, Infallible>(accept, health).unwrap_or_else(|err| {
@@ -431,67 +431,59 @@ where
     F: 'static + Send + Future<Output = H>,
 {
     Box::new(move |req, state| {
-        let mut accept = Accept::from_headers(req.headers()).ok().flatten();
+        let accept = req.accept().unwrap_or_else(|_| {
+            // The healthcheck endpoint is not allowed to fail, so just use the default content
+            // type if we can't parse the Accept header.
+            let mut accept = Accept::new();
+            accept.set_wildcard(true);
+            accept
+        });
         let future = handler(state);
         async move {
             let health = future.await;
-            health_check_response(&mut accept, health)
+            health_check_response(&accept, health)
         }
         .boxed()
     })
 }
 
-fn best_response_type<E>(
-    accept: &mut Option<Accept>,
-    available: &[Mime],
-) -> Result<Mime, RouteError<E>> {
-    match accept {
-        Some(accept) => {
-            // The Accept type has a `negotiate` method, but it doesn't properly handle
-            // wildcards. It handles * but not */* and basetype/*, because for content type
-            // proposals like */* and basetype/*, it looks for a literal match in `available`,
-            // it does not perform pattern matching. So, we implement negotiation ourselves.
-            //
-            // First sort by the weight parameter, which the Accept type does do correctly.
-            accept.sort();
-            // Go through each proposed content type, in the order specified by the client, and
-            // match them against our available types, respecting wildcards.
-            for proposed in accept.iter() {
-                if proposed.basetype() == "*" {
-                    // The only acceptable Accept value with a basetype of * is */*, therefore
-                    // this will match any available type.
-                    return Ok(available[0].clone());
-                } else if proposed.subtype() == "*" {
-                    // If the subtype is * but the basetype is not, look for a proposed type
-                    // with a matching basetype and any subtype.
-                    for mime in available {
-                        if mime.basetype() == proposed.basetype() {
-                            return Ok(mime.clone());
-                        }
-                    }
-                } else if available.contains(proposed) {
-                    // If neither part of the proposal is a wildcard, look for a literal match.
-                    return Ok((**proposed).clone());
+fn best_response_type<E>(accept: &Accept, available: &[Mime]) -> Result<Mime, RouteError<E>> {
+    // The Accept type has a `negotiate` method, but it doesn't properly handle wildcards. It
+    // handles * but not */* and basetype/*, because for content type proposals like */* and
+    // basetype/*, it looks for a literal match in `available`, it does not perform pattern
+    // matching. So, we implement negotiation ourselves. Go through each proposed content type, in
+    // the order specified by the client, and match them against our available types, respecting
+    // wildcards.
+    for proposed in accept.iter() {
+        if proposed.basetype() == "*" {
+            // The only acceptable Accept value with a basetype of * is */*, therefore this will
+            // match any available type.
+            return Ok(available[0].clone());
+        } else if proposed.subtype() == "*" {
+            // If the subtype is * but the basetype is not, look for a proposed type with a matching
+            // basetype and any subtype.
+            for mime in available {
+                if mime.basetype() == proposed.basetype() {
+                    return Ok(mime.clone());
                 }
             }
+        } else if available.contains(proposed) {
+            // If neither part of the proposal is a wildcard, look for a literal match.
+            return Ok((**proposed).clone());
+        }
+    }
 
-            if accept.wildcard() {
-                // If no proposals are available but a wildcard flag * was given, return any
-                // available content type.
-                Ok(available[0].clone())
-            } else {
-                Err(RouteError::UnsupportedContentType)
-            }
-        }
-        None => {
-            // If no content type is explicitly requested, default to the first available type.
-            Ok(available[0].clone())
-        }
+    if accept.wildcard() {
+        // If no proposals are available but a wildcard flag * was given, return any available
+        // content type.
+        Ok(available[0].clone())
+    } else {
+        Err(RouteError::UnsupportedContentType)
     }
 }
 
 pub(crate) fn response_body<T: Serialize, E>(
-    accept: &mut Option<Accept>,
+    accept: &Accept,
     body: T,
 ) -> Result<(Body, Mime), RouteError<E>> {
     let ty = best_response_type(accept, &[mime::JSON, mime::BYTE_STREAM])?;
@@ -507,7 +499,7 @@ pub(crate) fn response_body<T: Serialize, E>(
 }
 
 pub(crate) fn respond_with<T: Serialize, E>(
-    accept: &mut Option<Accept>,
+    accept: &Accept,
     body: T,
 ) -> Result<tide::Response, RouteError<E>> {
     let (body, content_type) = response_body(accept, body)?;

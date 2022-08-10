@@ -27,8 +27,7 @@ use std::collections::hash_map::{Entry, HashMap};
 use std::convert::Infallible;
 use std::io;
 use tide::{
-    http::headers::HeaderValue,
-    http::{content::Accept, mime},
+    http::{headers::HeaderValue, mime},
     security::{CorsMiddleware, Origin},
     StatusCode,
 };
@@ -235,9 +234,10 @@ impl<State: Send + Sync + 'static, Error: 'static + crate::Error> App<State, Err
                         let prefix = prefix.clone();
                         async move {
                             let api = &req.state().apis[&prefix];
-                            respond_with(&mut Accept::from_headers(&req)?, api.version()).map_err(
-                                |err| Error::from_route_error::<Infallible>(err).into_tide_error(),
-                            )
+                            let accept = RequestParams::accept_from_headers(&req)?;
+                            respond_with(&accept, api.version()).map_err(|err| {
+                                Error::from_route_error::<Infallible>(err).into_tide_error()
+                            })
                         }
                     });
             }
@@ -250,14 +250,15 @@ impl<State: Send + Sync + 'static, Error: 'static + crate::Error> App<State, Err
                 let state = req.state().clone();
                 let app_state = &*state.state;
                 let req = request_params(req, &[]).await?;
-                let mut accept = Accept::from_headers(req.headers())?;
+                let accept = req.accept()?;
                 let res = state.health(req, app_state).await;
-                Ok(health_check_response(&mut accept, res))
+                Ok(health_check_response(&accept, res))
             });
         server
             .at("version")
             .get(|req: tide::Request<Arc<Self>>| async move {
-                respond_with(&mut Accept::from_headers(&req)?, req.state().version())
+                let accept = RequestParams::accept_from_headers(&req)?;
+                respond_with(&accept, req.state().version())
                     .map_err(|err| Error::from_route_error::<Infallible>(err).into_tide_error())
             });
 
@@ -344,7 +345,7 @@ fn add_error_body<T: Clone + Send + Sync + 'static, E: crate::Error>(
     next: tide::Next<T>,
 ) -> BoxFuture<tide::Result> {
     Box::pin(async {
-        let mut accept = Accept::from_headers(&req)?;
+        let accept = RequestParams::accept_from_headers(&req)?;
         let mut res = next.run(req).await;
         if let Some(error) = res.take_error() {
             let error = E::from_server_error(error);
@@ -352,7 +353,7 @@ fn add_error_body<T: Clone + Send + Sync + 'static, E: crate::Error>(
             // Try to add the error to the response body using a format accepted by the client. If
             // we cannot do that (for example, if the client requested a format that is incompatible
             // with a serialized error) just add the error as a string using plaintext.
-            let (body, content_type) = route::response_body::<_, E>(&mut accept, &error)
+            let (body, content_type) = route::response_body::<_, E>(&accept, &error)
                 .unwrap_or_else(|_| (error.to_string().into(), mime::PLAIN));
             res.set_body(body);
             res.set_content_type(content_type);

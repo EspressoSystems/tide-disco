@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use std::fmt::Display;
 use strum_macros::EnumString;
 use tagged_base64::TaggedBase64;
-use tide::http::Headers;
+use tide::http::{content::Accept, Headers};
 
 #[derive(Clone, Debug, Snafu)]
 pub enum RequestError {
@@ -37,6 +37,9 @@ pub enum RequestError {
 
     #[snafu(display("Body type not specified or type not supported"))]
     UnsupportedBody,
+
+    #[snafu(display("HTTP protocol error: {}", reason))]
+    Http { reason: String },
 }
 
 /// Parameters passed to a route handler.
@@ -71,6 +74,37 @@ impl RequestParams {
     /// The headers of the incoming request.
     pub fn headers(&self) -> &Headers {
         &self.headers
+    }
+
+    /// The [Accept] header of this request.
+    ///
+    /// The media type proposals in the resulting header are sorted in order of decreasing weight.
+    ///
+    /// If no [Accept] header was explicitly set, defaults to the wildcard `Accept: *`.
+    ///
+    /// # Error
+    ///
+    /// Returns [RequestError::Http] if the [Accept] header is malformed.
+    pub fn accept(&self) -> Result<Accept, RequestError> {
+        Self::accept_from_headers(&self.headers)
+    }
+
+    pub(crate) fn accept_from_headers(
+        headers: impl AsRef<Headers>,
+    ) -> Result<Accept, RequestError> {
+        match Accept::from_headers(headers).map_err(|err| RequestError::Http {
+            reason: err.to_string(),
+        })? {
+            Some(mut accept) => {
+                accept.sort();
+                Ok(accept)
+            }
+            None => {
+                let mut accept = Accept::new();
+                accept.set_wildcard(true);
+                Ok(accept)
+            }
+        }
     }
 
     /// Get the value of a named parameter.
