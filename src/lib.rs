@@ -275,6 +275,7 @@ pub mod route;
 pub use api::Api;
 pub use app::App;
 pub use error::Error;
+pub use method::Method;
 pub use request::{RequestError, RequestParam, RequestParamType, RequestParamValue, RequestParams};
 pub use tide::http::{self, StatusCode};
 

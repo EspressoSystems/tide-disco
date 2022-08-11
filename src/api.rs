@@ -13,7 +13,7 @@
 
 use crate::{
     healthcheck::{HealthCheck, HealthStatus},
-    method::{method_is_mutable, ReadState, WriteState},
+    method::{Method, ReadState, WriteState},
     request::RequestParams,
     route::{self, *},
 };
@@ -26,7 +26,7 @@ use serde_with::{serde_as, DisplayFromStr};
 use snafu::{OptionExt, ResultExt, Snafu};
 use std::collections::hash_map::{HashMap, IntoValues, Values};
 use std::ops::Index;
-use tide::http::{content::Accept, Method};
+use tide::http::content::Accept;
 
 /// An error encountered when parsing or constructing an [Api].
 #[derive(Clone, Debug, Snafu)]
@@ -264,7 +264,7 @@ impl<State, Error> Api<State, Error> {
         T: Serialize,
         State: 'static + Send + Sync + ReadState,
     {
-        assert!(!method_is_mutable(method));
+        assert!(method.is_http() && !method.is_mutable());
         let route = self.routes.get_mut(name).ok_or(ApiError::UndefinedRoute)?;
         if route.method() != method {
             return Err(ApiError::IncorrectMethod {
@@ -338,7 +338,7 @@ impl<State, Error> Api<State, Error> {
         T: Serialize,
         State: 'static + Send + Sync + ReadState,
     {
-        self.method_immutable(Method::Get, name, handler)
+        self.method_immutable(Method::get(), name, handler)
     }
 
     fn method_mutable<F, T>(
@@ -355,7 +355,7 @@ impl<State, Error> Api<State, Error> {
         T: Serialize,
         State: 'static + Send + Sync + WriteState,
     {
-        assert!(method_is_mutable(method));
+        assert!(method.is_http() && method.is_mutable());
         let route = self.routes.get_mut(name).ok_or(ApiError::UndefinedRoute)?;
         if route.method() != method {
             return Err(ApiError::IncorrectMethod {
@@ -433,7 +433,7 @@ impl<State, Error> Api<State, Error> {
         T: Serialize,
         State: 'static + Send + Sync + WriteState,
     {
-        self.method_mutable(Method::Post, name, handler)
+        self.method_mutable(Method::post(), name, handler)
     }
 
     /// Register a handler for a PUT route.
@@ -500,7 +500,7 @@ impl<State, Error> Api<State, Error> {
         T: Serialize,
         State: 'static + Send + Sync + WriteState,
     {
-        self.method_mutable(Method::Put, name, handler)
+        self.method_mutable(Method::put(), name, handler)
     }
 
     /// Register a handler for a DELETE route.
@@ -566,7 +566,7 @@ impl<State, Error> Api<State, Error> {
         T: Serialize,
         State: 'static + Send + Sync + WriteState,
     {
-        self.method_mutable(Method::Delete, name, handler)
+        self.method_mutable(Method::delete(), name, handler)
     }
 
     /// Set the health check handler for this API.

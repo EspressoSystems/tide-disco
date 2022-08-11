@@ -1,5 +1,6 @@
 use crate::{
     healthcheck::HealthCheck,
+    method::Method,
     request::{RequestError, RequestParam, RequestParamType, RequestParams},
 };
 use async_trait::async_trait;
@@ -14,7 +15,6 @@ use std::marker::PhantomData;
 use std::str::FromStr;
 use tide::{
     http::{
-        self,
         content::Accept,
         mime::{self, Mime},
         StatusCode,
@@ -160,7 +160,7 @@ pub struct Route<State, Error> {
     name: String,
     patterns: Vec<String>,
     params: Vec<RequestParam>,
-    method: http::Method,
+    method: Method,
     doc: String,
     handler: Option<Box<dyn Handler<State, Error>>>,
 }
@@ -253,7 +253,7 @@ impl<State, Error> Route<State, Error> {
                     .context(MethodMustBeStringSnafu)?
                     .parse()
                     .map_err(|_| RouteParseError::InvalidMethod)?,
-                None => http::Method::Get,
+                None => Method::get(),
             },
             doc: String::new(),
             handler: None,
@@ -274,7 +274,7 @@ impl<State, Error> Route<State, Error> {
     }
 
     /// The HTTP method of the route.
-    pub fn method(&self) -> http::Method {
+    pub fn method(&self) -> Method {
         self.method
     }
 

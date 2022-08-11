@@ -13,10 +13,87 @@
 //! traits yourself if your state type has some other notion of shared access or interior
 //! mutability.
 
-use crate::http::Method;
+use crate::http;
 use async_std::sync::{Arc, Mutex, RwLock};
 use async_trait::async_trait;
 use futures::future::BoxFuture;
+use std::fmt::{self, Display, Formatter};
+use std::str::FromStr;
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Method {
+    Http(http::Method),
+    Socket,
+}
+
+impl Method {
+    /// The HTTP GET method.
+    pub fn get() -> Self {
+        Self::Http(http::Method::Get)
+    }
+
+    /// The HTTP POST method.
+    pub fn post() -> Self {
+        Self::Http(http::Method::Post)
+    }
+
+    /// The HTTP PUT method.
+    pub fn put() -> Self {
+        Self::Http(http::Method::Put)
+    }
+
+    /// The HTTP DELETE method.
+    pub fn delete() -> Self {
+        Self::Http(http::Method::Delete)
+    }
+
+    /// The Tide Disco SOCKET method.
+    pub fn socket() -> Self {
+        Self::Socket
+    }
+
+    /// Check if a method is a standard HTTP method.
+    pub fn is_http(&self) -> bool {
+        matches!(self, Self::Http(_))
+    }
+
+    /// Check if a request method implies mutable access to the state.
+    pub fn is_mutable(&self) -> bool {
+        match self {
+            Self::Http(m) => !m.is_safe(),
+            Self::Socket => true,
+        }
+    }
+}
+
+impl From<http::Method> for Method {
+    fn from(m: http::Method) -> Self {
+        Self::Http(m)
+    }
+}
+
+impl Display for Method {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+        match self {
+            Self::Http(m) => write!(f, "{}", m),
+            Self::Socket => write!(f, "SOCKET"),
+        }
+    }
+}
+
+pub struct ParseMethodError;
+
+impl FromStr for Method {
+    type Err = ParseMethodError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        if s == "SOCKET" {
+            Ok(Self::Socket)
+        } else {
+            s.parse().map_err(|_| ParseMethodError).map(Self::Http)
+        }
+    }
+}
 
 /// A state which allows read access.
 ///
@@ -171,9 +248,4 @@ impl WriteState for () {
     ) -> T {
         op(&mut ()).await
     }
-}
-
-/// Check if an HTTP method implies mutable access to the state.
-pub fn method_is_mutable(method: Method) -> bool {
-    !method.is_safe()
 }

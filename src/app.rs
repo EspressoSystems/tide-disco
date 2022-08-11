@@ -14,8 +14,9 @@
 use crate::{
     api::{Api, ApiError, ApiVersion},
     healthcheck::{HealthCheck, HealthStatus},
+    method::Method,
     request::{RequestParam, RequestParams},
-    route::{self, health_check_response, respond_with, Handler, RouteError},
+    route::{self, health_check_response, respond_with, Handler, Route, RouteError},
 };
 use async_std::sync::Arc;
 use futures::future::BoxFuture;
@@ -206,28 +207,7 @@ impl<State: Send + Sync + 'static, Error: 'static + crate::Error> App<State, Err
             // Register routes for this API.
             for route in api {
                 for pattern in route.patterns() {
-                    let name = route.name();
-                    let prefix = prefix.clone();
-                    server.at(&prefix).at(pattern).method(
-                        route.method(),
-                        move |req: tide::Request<Arc<Self>>| {
-                            let name = name.clone();
-                            let prefix = prefix.clone();
-                            async move {
-                                let route = &req.state().clone().apis[&prefix][&name];
-                                let state = &*req.state().clone().state;
-                                let req = request_params(req, route.params()).await?;
-                                route
-                                    .handle(req, state)
-                                    .await
-                                    .map_err(|err| match err {
-                                        RouteError::AppSpecific(err) => err,
-                                        _ => Error::from_route_error(err),
-                                    })
-                                    .map_err(|err| err.into_tide_error())
-                            }
-                        },
-                    );
+                    Self::register_route(&mut server, prefix.clone(), route, pattern);
                 }
             }
 
@@ -308,6 +288,40 @@ impl<State: Send + Sync + 'static, Error: 'static + crate::Error> App<State, Err
         }
 
         server.listen(listener).await
+    }
+
+    fn register_route(
+        server: &mut tide::Server<Arc<Self>>,
+        prefix: String,
+        route: &Route<State, Error>,
+        pattern: &str,
+    ) {
+        let name = route.name();
+        match route.method() {
+            Method::Http(method) => {
+                server.at(&prefix).at(pattern).method(
+                    method,
+                    move |req: tide::Request<Arc<Self>>| {
+                        let name = name.clone();
+                        let prefix = prefix.clone();
+                        async move {
+                            let route = &req.state().clone().apis[&prefix][&name];
+                            let state = &*req.state().clone().state;
+                            let req = request_params(req, route.params()).await?;
+                            route
+                                .handle(req, state)
+                                .await
+                                .map_err(|err| match err {
+                                    RouteError::AppSpecific(err) => err,
+                                    _ => Error::from_route_error(err),
+                                })
+                                .map_err(|err| err.into_tide_error())
+                        }
+                    },
+                );
+            }
+            Method::Socket => unimplemented!(),
+        }
     }
 }
 
@@ -475,18 +489,22 @@ mod test {
         };
         {
             let mut api = app.module("mod", api_toml).unwrap();
-            api.get("get_test", |_req, _state| async move { Ok(Get.to_string()) }.boxed())
-                .unwrap()
-                .post("post_test", |_req, _state| {
-                    async move { Ok(Post.to_string()) }.boxed()
-                })
-                .unwrap()
-                .put("put_test", |_req, _state| async move { Ok(Put.to_string()) }.boxed())
-                .unwrap()
-                .delete("delete_test", |_req, _state| {
-                    async move { Ok(Delete.to_string()) }.boxed()
-                })
-                .unwrap();
+            api.get("get_test", |_req, _state| {
+                async move { Ok(Get.to_string()) }.boxed()
+            })
+            .unwrap()
+            .post("post_test", |_req, _state| {
+                async move { Ok(Post.to_string()) }.boxed()
+            })
+            .unwrap()
+            .put("put_test", |_req, _state| {
+                async move { Ok(Put.to_string()) }.boxed()
+            })
+            .unwrap()
+            .delete("delete_test", |_req, _state| {
+                async move { Ok(Delete.to_string()) }.boxed()
+            })
+            .unwrap();
         }
         let port = pick_unused_port().unwrap();
         let url: Url = format!("http://0.0.0.0:{}", port).parse().unwrap();
@@ -498,7 +516,8 @@ mod test {
             .try_into()
             .unwrap();
         for method in [Get, Post, Put, Delete] {
-            let mut res = client.request(method, url.join("mod/test").unwrap())
+            let mut res = client
+                .request(method, url.join("mod/test").unwrap())
                 .send()
                 .await
                 .unwrap();
