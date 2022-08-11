@@ -12,7 +12,7 @@
 // not, see <https://www.gnu.org/licenses/>.
 
 use crate::{
-    api::{Api, ApiVersion},
+    api::{Api, ApiError, ApiVersion},
     healthcheck::{HealthCheck, HealthStatus},
     request::{RequestParam, RequestParams},
     route::{self, health_check_response, respond_with, Handler, RouteError},
@@ -22,10 +22,11 @@ use futures::future::BoxFuture;
 use semver::Version;
 use serde::{Deserialize, Serialize};
 use serde_with::{serde_as, DisplayFromStr};
-use snafu::Snafu;
+use snafu::{ResultExt, Snafu};
 use std::collections::hash_map::{Entry, HashMap};
 use std::convert::Infallible;
 use std::io;
+use std::ops::{Deref, DerefMut};
 use tide::{
     http::{headers::HeaderValue, mime},
     security::{CorsMiddleware, Origin},
@@ -50,6 +51,7 @@ pub struct App<State, Error> {
 /// An error encountered while building an [App].
 #[derive(Clone, Debug, Snafu)]
 pub enum AppError {
+    Api { source: ApiError },
     ModuleAlreadyExists,
 }
 
@@ -61,6 +63,27 @@ impl<State: Send + Sync + 'static, Error: 'static> App<State, Error> {
             state: Arc::new(state),
             app_version: None,
         }
+    }
+
+    /// Create and register an API module.
+    pub fn module<'a, ModuleError>(
+        &'a mut self,
+        base_url: &'a str,
+        api: toml::Value,
+    ) -> Result<Module<'a, State, Error, ModuleError>, AppError>
+    where
+        Error: From<ModuleError>,
+        ModuleError: 'static + Send + Sync,
+    {
+        if self.apis.contains_key(base_url) {
+            return Err(AppError::ModuleAlreadyExists);
+        }
+
+        Ok(Module {
+            app: self,
+            base_url,
+            api: Some(Api::new(api).context(ApiSnafu)?),
+        })
     }
 
     /// Register an API module.
@@ -362,4 +385,125 @@ fn add_error_body<T: Clone + Send + Sync + 'static, E: crate::Error>(
             Ok(res)
         }
     })
+}
+
+pub struct Module<'a, State, Error, ModuleError>
+where
+    State: 'static + Send + Sync,
+    Error: 'static + From<ModuleError>,
+    ModuleError: 'static + Send + Sync,
+{
+    app: &'a mut App<State, Error>,
+    base_url: &'a str,
+    // This is only an [Option] so we can [take] out of it during [drop].
+    api: Option<Api<State, ModuleError>>,
+}
+
+impl<'a, State, Error, ModuleError> Deref for Module<'a, State, Error, ModuleError>
+where
+    State: 'static + Send + Sync,
+    Error: 'static + From<ModuleError>,
+    ModuleError: 'static + Send + Sync,
+{
+    type Target = Api<State, ModuleError>;
+
+    fn deref(&self) -> &Self::Target {
+        self.api.as_ref().unwrap()
+    }
+}
+
+impl<'a, State, Error, ModuleError> DerefMut for Module<'a, State, Error, ModuleError>
+where
+    State: 'static + Send + Sync,
+    Error: 'static + From<ModuleError>,
+    ModuleError: 'static + Send + Sync,
+{
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        self.api.as_mut().unwrap()
+    }
+}
+
+impl<'a, State, Error, ModuleError> Drop for Module<'a, State, Error, ModuleError>
+where
+    State: 'static + Send + Sync,
+    Error: 'static + From<ModuleError>,
+    ModuleError: 'static + Send + Sync,
+{
+    fn drop(&mut self) {
+        self.app
+            .register_module(self.base_url, self.api.take().unwrap())
+            .unwrap();
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use crate::{
+        error::ServerError, wait_for_server, Url, SERVER_STARTUP_RETRIES, SERVER_STARTUP_SLEEP_MS,
+    };
+    use async_std::{sync::RwLock, task::spawn};
+    use futures::FutureExt;
+    use portpicker::pick_unused_port;
+    use toml::toml;
+
+    /// Test route dispatching for routes with the same path and different methods.
+    #[async_std::test]
+    async fn test_method_dispatch() {
+        use crate::http::Method::*;
+
+        let mut app = App::<_, ServerError>::with_state(RwLock::new(()));
+        let api_toml = toml! {
+            [meta]
+            FORMAT_VERSION = "0.1.0"
+
+            [route.get_test]
+            PATH = ["/test"]
+            METHOD = "GET"
+
+            [route.post_test]
+            PATH = ["/test"]
+            METHOD = "POST"
+
+            [route.put_test]
+            PATH = ["/test"]
+            METHOD = "PUT"
+
+            [route.delete_test]
+            PATH = ["/test"]
+            METHOD = "DELETE"
+        };
+        {
+            let mut api = app.module("mod", api_toml).unwrap();
+            api.get("get_test", |_req, _state| async move { Ok(Get.to_string()) }.boxed())
+                .unwrap()
+                .post("post_test", |_req, _state| {
+                    async move { Ok(Post.to_string()) }.boxed()
+                })
+                .unwrap()
+                .put("put_test", |_req, _state| async move { Ok(Put.to_string()) }.boxed())
+                .unwrap()
+                .delete("delete_test", |_req, _state| {
+                    async move { Ok(Delete.to_string()) }.boxed()
+                })
+                .unwrap();
+        }
+        let port = pick_unused_port().unwrap();
+        let url: Url = format!("http://0.0.0.0:{}", port).parse().unwrap();
+        spawn(app.serve(url.to_string()));
+        wait_for_server(&url, SERVER_STARTUP_RETRIES, SERVER_STARTUP_SLEEP_MS).await;
+
+        let client: surf::Client = surf::Config::new()
+            .set_base_url(url.clone())
+            .try_into()
+            .unwrap();
+        for method in [Get, Post, Put, Delete] {
+            let mut res = client.request(method, url.join("mod/test").unwrap())
+                .send()
+                .await
+                .unwrap();
+            assert_eq!(res.status(), StatusCode::Ok);
+            assert_eq!(res.body_json::<String>().await.unwrap(), method.to_string());
+        }
+    }
 }
