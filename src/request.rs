@@ -1,9 +1,10 @@
+use crate::method::Method;
 use snafu::{OptionExt, Snafu};
 use std::collections::HashMap;
 use std::fmt::Display;
 use strum_macros::EnumString;
 use tagged_base64::TaggedBase64;
-use tide::http::{content::Accept, Headers};
+use tide::http::{content::Accept, mime::Mime, Headers};
 
 #[derive(Clone, Debug, Snafu)]
 pub enum RequestError {
@@ -35,8 +36,8 @@ pub enum RequestError {
     #[snafu(display("Unable to deserialize from bincode"))]
     Bincode,
 
-    #[snafu(display("Body type not specified or type not supported"))]
-    UnsupportedBody,
+    #[snafu(display("Content type not specified or type not supported"))]
+    UnsupportedContentType,
 
     #[snafu(display("HTTP protocol error: {}", reason))]
     Http { reason: String },
@@ -50,6 +51,7 @@ pub struct RequestParams {
     headers: Headers,
     post_data: Vec<u8>,
     params: HashMap<String, RequestParamValue>,
+    method: Method,
 }
 
 impl RequestParams {
@@ -68,7 +70,13 @@ impl RequestParams {
                     Err(err) => Some(Err(err)),
                 })
                 .collect::<Result<_, _>>()?,
+            method: req.method().into(),
         })
+    }
+
+    /// The [Method] used to dispatch the request.
+    pub fn method(&self) -> Method {
+        self.method
     }
 
     /// The headers of the incoming request.
@@ -297,10 +305,10 @@ impl RequestParams {
                     let bytes = self.body_bytes();
                     bincode::deserialize(&bytes).map_err(|_err| RequestError::Bincode {})
                 }
-                _content_type => Err(RequestError::UnsupportedBody {}),
+                _content_type => Err(RequestError::UnsupportedContentType {}),
             }
         } else {
-            Err(RequestError::UnsupportedBody {})
+            Err(RequestError::UnsupportedContentType {})
         }
     }
 }
@@ -376,4 +384,42 @@ pub struct RequestParam {
     pub name: String,
     pub param_type: RequestParamType,
     pub required: bool,
+}
+
+pub(crate) fn best_response_type(
+    accept: &Accept,
+    available: &[Mime],
+) -> Result<Mime, RequestError> {
+    // The Accept type has a `negotiate` method, but it doesn't properly handle wildcards. It
+    // handles * but not */* and basetype/*, because for content type proposals like */* and
+    // basetype/*, it looks for a literal match in `available`, it does not perform pattern
+    // matching. So, we implement negotiation ourselves. Go through each proposed content type, in
+    // the order specified by the client, and match them against our available types, respecting
+    // wildcards.
+    for proposed in accept.iter() {
+        if proposed.basetype() == "*" {
+            // The only acceptable Accept value with a basetype of * is */*, therefore this will
+            // match any available type.
+            return Ok(available[0].clone());
+        } else if proposed.subtype() == "*" {
+            // If the subtype is * but the basetype is not, look for a proposed type with a matching
+            // basetype and any subtype.
+            for mime in available {
+                if mime.basetype() == proposed.basetype() {
+                    return Ok(mime.clone());
+                }
+            }
+        } else if available.contains(proposed) {
+            // If neither part of the proposal is a wildcard, look for a literal match.
+            return Ok((**proposed).clone());
+        }
+    }
+
+    if accept.wildcard() {
+        // If no proposals are available but a wildcard flag * was given, return any available
+        // content type.
+        Ok(available[0].clone())
+    } else {
+        Err(RequestError::UnsupportedContentType)
+    }
 }

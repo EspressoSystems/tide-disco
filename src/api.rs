@@ -16,15 +16,16 @@ use crate::{
     method::{Method, ReadState, WriteState},
     request::RequestParams,
     route::{self, *},
+    socket,
 };
 use async_trait::async_trait;
 use derive_more::From;
 use futures::future::{BoxFuture, Future};
 use semver::Version;
-use serde::{Deserialize, Serialize};
+use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use serde_with::{serde_as, DisplayFromStr};
 use snafu::{OptionExt, ResultExt, Snafu};
-use std::collections::hash_map::{HashMap, IntoValues, Values};
+use std::collections::hash_map::{Entry, HashMap, IntoValues, Values};
 use std::ops::Index;
 use tide::http::content::Accept;
 
@@ -41,6 +42,7 @@ pub enum ApiError {
     MissingMetaTable,
     MissingFormatVersion,
     InvalidFormatVersion,
+    AmbiguousRoutes { route1: String, route2: String },
 }
 
 /// Version information about an API.
@@ -63,6 +65,7 @@ pub struct ApiVersion {
 /// TOML file and registered as a module of an [App](crate::App).
 pub struct Api<State, Error> {
     routes: HashMap<String, Route<State, Error>>,
+    routes_by_path: HashMap<String, Vec<String>>,
     health_check: Option<HealthCheckHandler<State>>,
     version: ApiVersion,
 }
@@ -93,6 +96,24 @@ impl<State, Error> Index<&str> for Api<State, Error> {
     }
 }
 
+/// Iterator for [routes_by_path](Api::routes_by_path).
+///
+/// This type iterates over all of the routes that have a given path.
+/// [routes_by_path](Api::routes_by_path), in turn, returns an iterator over paths whose items
+/// contain a [RoutesWithPath] iterator.
+pub struct RoutesWithPath<'a, State, Error> {
+    routes: std::slice::Iter<'a, String>,
+    api: &'a Api<State, Error>,
+}
+
+impl<'a, State, Error> Iterator for RoutesWithPath<'a, State, Error> {
+    type Item = &'a Route<State, Error>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        Some(&self.api.routes[self.routes.next()?])
+    }
+}
+
 impl<State, Error> Api<State, Error> {
     /// Parse an API from a TOML specification.
     pub fn new(api: toml::Value) -> Result<Self, ApiError> {
@@ -104,14 +125,41 @@ impl<State, Error> Api<State, Error> {
             Some(meta) => meta.as_table().context(MetaMustBeTableSnafu)?,
             None => return Err(ApiError::MissingMetaTable),
         };
+        // Collect routes into a [HashMap] indexed by route name.
+        let routes = routes
+            .into_iter()
+            .map(|(name, spec)| {
+                let route = Route::new(name.clone(), spec).context(RouteSnafu)?;
+                Ok((route.name(), route))
+            })
+            .collect::<Result<HashMap<_, _>, _>>()?;
+        // Collect routes into groups of route names indexed by route pattern.
+        let mut routes_by_path = HashMap::new();
+        for route in routes.values() {
+            for path in route.patterns() {
+                match routes_by_path.entry(path.clone()) {
+                    Entry::Vacant(e) => e.insert(Vec::new()).push(route.name().clone()),
+                    Entry::Occupied(mut e) => {
+                        // If there is already a route with this path and method, then dispatch is
+                        // ambiguous.
+                        if let Some(ambiguous_name) = e
+                            .get()
+                            .iter()
+                            .find(|name| routes[*name].method() == route.method())
+                        {
+                            return Err(ApiError::AmbiguousRoutes {
+                                route1: route.name(),
+                                route2: ambiguous_name.clone(),
+                            });
+                        }
+                        e.get_mut().push(route.name());
+                    }
+                }
+            }
+        }
         Ok(Self {
-            routes: routes
-                .into_iter()
-                .map(|(name, spec)| {
-                    let route = Route::new(name.clone(), spec).context(RouteSnafu)?;
-                    Ok((route.name(), route))
-                })
-                .collect::<Result<_, _>>()?,
+            routes,
+            routes_by_path,
             health_check: None,
             version: ApiVersion {
                 api_version: None,
@@ -123,6 +171,19 @@ impl<State, Error> Api<State, Error> {
                     .parse()
                     .map_err(|_| ApiError::InvalidFormatVersion)?,
             },
+        })
+    }
+
+    /// Iterate over groups of routes with the same path.
+    pub fn routes_by_path(&self) -> impl Iterator<Item = (&str, RoutesWithPath<'_, State, Error>)> {
+        self.routes_by_path.iter().map(|(path, routes)| {
+            (
+                path.as_str(),
+                RoutesWithPath {
+                    routes: routes.iter(),
+                    api: self,
+                },
+            )
         })
     }
 
@@ -231,6 +292,10 @@ impl<State, Error> Api<State, Error> {
     /// default handler that echoes parameters and shows documentation, but this default handler can
     /// replaced by this function without raising [ApiError::HandlerAlreadyRegistered].
     ///
+    /// If the route `name` exists, but it is not an HTTP route (for example, `METHOD = "SOCKET"`
+    /// was used when defining the route in the API specification), [ApiError::IncorrectMethod] is
+    /// returned.
+    ///
     /// # Limitations
     ///
     /// [Like many function parameters](crate#boxed-futures) in [tide_disco](crate), the
@@ -244,9 +309,22 @@ impl<State, Error> Api<State, Error> {
         let route = self.routes.get_mut(name).ok_or(ApiError::UndefinedRoute)?;
         if route.has_handler() {
             return Err(ApiError::HandlerAlreadyRegistered);
-        } else {
-            route.set_fn_handler(handler);
         }
+
+        if !route.method().is_http() {
+            return Err(ApiError::IncorrectMethod {
+                // Just pick any HTTP method as the expected method.
+                expected: Method::get(),
+                actual: route.method(),
+            });
+        }
+
+        // `set_fn_handler` only fails if the route is not an HTTP route; since we have already
+        // checked that it is, this cannot fail.
+        route
+            .set_fn_handler(handler)
+            .unwrap_or_else(|_| panic!("unexpected failure in set_fn_handler"));
+
         Ok(self)
     }
 
@@ -275,7 +353,11 @@ impl<State, Error> Api<State, Error> {
         if route.has_handler() {
             return Err(ApiError::HandlerAlreadyRegistered);
         }
-        route.set_handler(ReadHandler::from(handler));
+        // `set_handler` only fails if the route is not an HTTP route; since we have already checked
+        // that it is, this cannot fail.
+        route
+            .set_handler(ReadHandler::from(handler))
+            .unwrap_or_else(|_| panic!("unexpected failure in set_handler"));
         Ok(self)
     }
 
@@ -366,7 +448,12 @@ impl<State, Error> Api<State, Error> {
         if route.has_handler() {
             return Err(ApiError::HandlerAlreadyRegistered);
         }
-        route.set_handler(WriteHandler::from(handler));
+
+        // `set_handler` only fails if the route is not an HTTP route; since we have already checked
+        // that it is, this cannot fail.
+        route
+            .set_handler(WriteHandler::from(handler))
+            .unwrap_or_else(|_| panic!("unexpected failure in set_handler"));
         Ok(self)
     }
 
@@ -569,6 +656,103 @@ impl<State, Error> Api<State, Error> {
         self.method_mutable(Method::delete(), name, handler)
     }
 
+    /// Register a handler for a SOCKET route.
+    ///
+    /// When the server receives any request whose URL matches the pattern for this route and which
+    /// includes the WebSockets upgrade headers, the server will negotiate a protocol upgrade with
+    /// the client, establishing a WebSockets connection, and then invoke `handler`. `handler` will
+    /// be given the parameters of the request which initiated the connection and a reference to the
+    /// application state, as well as a [Connection](socket::Connection) object which it can then
+    /// use for asynchronous, bi-directional communication with the client.
+    ///
+    /// The server side of the connection will remain open as long as the future returned by
+    /// `handler` is remains unresolved. The handler can terminate the connection by returning. If
+    /// it returns an error, the error message will be included in the
+    /// [CloseFrame](tide_websockets::tungstenite::protocol::CloseFrame) sent to the client when
+    /// tearing down the connection.
+    ///
+    /// # Examples
+    ///
+    /// A socket endpoint which receives amounts from the client and returns a running sum.
+    ///
+    /// `api.toml`
+    ///
+    /// ```toml
+    /// [route.sum]
+    /// PATH = ["/sum"]
+    /// METHOD = "SOCKET"
+    /// DOC = "Stream a running sum."
+    /// ```
+    ///
+    /// ```
+    /// use futures::{FutureExt, SinkExt, StreamExt};
+    /// use tide_disco::{error::ServerError, socket::Connection, Api};
+    ///
+    /// # fn ex(api: &mut Api<(), ServerError>) {
+    /// api.socket("sum", |_req, mut conn: Connection<i32, i32, ServerError>, _state| async move {
+    ///     let mut sum = 0;
+    ///     while let Some(amount) = conn.next().await {
+    ///         sum += amount?;
+    ///         conn.send(&sum).await?;
+    ///     }
+    ///     Ok(())
+    /// }.boxed());
+    /// # }
+    /// ```
+    //
+    /// # Errors
+    ///
+    /// If the route `name` does not exist in the API specification, or if the route already has a
+    /// handler registered, an error is returned. Note that all routes are initialized with a
+    /// default handler that echoes parameters and shows documentation, but this default handler can
+    /// replaced by this function without raising [ApiError::HandlerAlreadyRegistered].
+    ///
+    /// If the route `name` exists, but the method is not SOCKET (that is, `METHOD = "M"` was used
+    /// in the route definition in `api.toml`, with `M` other than `SOCKET`) the error
+    /// [IncorrectMethod](ApiError::IncorrectMethod) is returned.
+    ///
+    /// # Limitations
+    ///
+    /// [Like many function parameters](crate#boxed-futures) in [tide_disco](crate), the
+    /// handler function is required to return a [BoxFuture].
+    pub fn socket<F, ToClient, FromClient>(
+        &mut self,
+        name: &str,
+        handler: F,
+    ) -> Result<&mut Self, ApiError>
+    where
+        F: 'static
+            + Send
+            + Sync
+            + Fn(
+                RequestParams,
+                socket::Connection<ToClient, FromClient, Error>,
+                &State,
+            ) -> BoxFuture<'_, Result<(), Error>>,
+        ToClient: 'static + Serialize + ?Sized,
+        FromClient: 'static + DeserializeOwned,
+        State: 'static + Send + Sync,
+        Error: 'static + Send,
+    {
+        let route = self.routes.get_mut(name).ok_or(ApiError::UndefinedRoute)?;
+        if route.method() != Method::Socket {
+            return Err(ApiError::IncorrectMethod {
+                expected: Method::Socket,
+                actual: route.method(),
+            });
+        }
+        if route.has_handler() {
+            return Err(ApiError::HandlerAlreadyRegistered);
+        }
+
+        // `set_handler` only fails if the route is not a socket route; since we have already
+        // checked that it is, this cannot fail.
+        route
+            .set_socket_handler(socket::handler(handler))
+            .unwrap_or_else(|_| panic!("unexpected failure in set_socket_handler"));
+        Ok(self)
+    }
+
     /// Set the health check handler for this API.
     ///
     /// This overrides the existing handler. If `health_check` has not yet been called, the default
@@ -627,6 +811,7 @@ impl<State, Error> Api<State, Error> {
                 .into_iter()
                 .map(|(name, route)| (name, route.map_err(f.clone())))
                 .collect(),
+            routes_by_path: self.routes_by_path,
             health_check: self.health_check,
             version: self.version,
         }
@@ -695,5 +880,107 @@ where
             &accept,
             state.write(|state| (self.handler)(req, state)).await,
         )
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use crate::{
+        error::ServerError, socket::Connection, wait_for_server, App, Url, SERVER_STARTUP_RETRIES,
+        SERVER_STARTUP_SLEEP_MS,
+    };
+    use async_std::{sync::RwLock, task::spawn};
+    use async_tungstenite::{
+        async_std::connect_async,
+        tungstenite::{client::IntoClientRequest, http::header::*, protocol::Message},
+    };
+    use futures::{FutureExt, SinkExt, StreamExt};
+    use portpicker::pick_unused_port;
+    use toml::toml;
+
+    #[async_std::test]
+    async fn test_socket_endpoint() {
+        let mut app = App::<_, ServerError>::with_state(RwLock::new(()));
+        let api_toml = toml! {
+            [meta]
+            FORMAT_VERSION = "0.1.0"
+
+            [route.echo]
+            PATH = ["/echo"]
+            METHOD = "SOCKET"
+        };
+        {
+            let mut api = app.module::<ServerError>("mod", api_toml).unwrap();
+            api.socket(
+                "echo",
+                |_req, mut conn: Connection<String, String, _>, _state| {
+                    async move {
+                        while let Some(msg) = conn.next().await {
+                            conn.send(&msg?).await?;
+                        }
+                        Ok(())
+                    }
+                    .boxed()
+                },
+            )
+            .unwrap();
+        }
+        let port = pick_unused_port().unwrap();
+        let url: Url = format!("http://0.0.0.0:{}", port).parse().unwrap();
+        spawn(app.serve(url.to_string()));
+        wait_for_server(&url, SERVER_STARTUP_RETRIES, SERVER_STARTUP_SLEEP_MS).await;
+
+        let mut socket_url = url.join("mod/echo").unwrap();
+        socket_url.set_scheme("ws").unwrap();
+
+        // Create a client that accepts JSON messages.
+        let mut socket_req = socket_url.clone().into_client_request().unwrap();
+        socket_req
+            .headers_mut()
+            .insert(ACCEPT, "application/json".parse().unwrap());
+        let mut conn = connect_async(socket_req).await.unwrap().0;
+
+        // Send a JSON message.
+        conn.send(Message::Text(serde_json::to_string("hello").unwrap()))
+            .await
+            .unwrap();
+        assert_eq!(
+            conn.next().await.unwrap().unwrap(),
+            Message::Text(serde_json::to_string("hello").unwrap())
+        );
+
+        // Send a binary message.
+        conn.send(Message::Binary(bincode::serialize("goodbye").unwrap()))
+            .await
+            .unwrap();
+        assert_eq!(
+            conn.next().await.unwrap().unwrap(),
+            Message::Text(serde_json::to_string("goodbye").unwrap())
+        );
+
+        // Create a client that accepts binary messages.
+        let mut socket_req = socket_url.into_client_request().unwrap();
+        socket_req
+            .headers_mut()
+            .insert(ACCEPT, "application/octet-stream".parse().unwrap());
+        let mut conn = connect_async(socket_req).await.unwrap().0;
+
+        // Send a JSON message.
+        conn.send(Message::Text(serde_json::to_string("hello").unwrap()))
+            .await
+            .unwrap();
+        assert_eq!(
+            conn.next().await.unwrap().unwrap(),
+            Message::Binary(bincode::serialize("hello").unwrap())
+        );
+
+        // Send a binary message.
+        conn.send(Message::Binary(bincode::serialize("goodbye").unwrap()))
+            .await
+            .unwrap();
+        assert_eq!(
+            conn.next().await.unwrap().unwrap(),
+            Message::Binary(bincode::serialize("goodbye").unwrap())
+        );
     }
 }
