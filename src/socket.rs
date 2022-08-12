@@ -7,17 +7,21 @@ use crate::{
 };
 use async_std::sync::Arc;
 use futures::{
-    future::{ready, BoxFuture},
+    future::BoxFuture,
     sink,
     stream::BoxStream,
     task::{Context, Poll},
     FutureExt, Sink, SinkExt, Stream, StreamExt, TryFutureExt,
 };
 use serde::{de::DeserializeOwned, Serialize};
+use std::borrow::Cow;
 use std::fmt::{self, Display, Formatter};
 use std::marker::PhantomData;
 use std::pin::Pin;
-use tide_websockets::{Message, WebSocketConnection};
+use tide_websockets::{
+    tungstenite::protocol::frame::{coding::CloseCode, CloseFrame},
+    Message, WebSocketConnection,
+};
 
 /// An error returned by a socket handler.
 ///
@@ -44,6 +48,10 @@ impl<E> SocketError<E> {
             }
             _ => StatusCode::InternalServerError,
         }
+    }
+
+    pub fn code(&self) -> CloseCode {
+        CloseCode::Error
     }
 
     pub fn map_app_specific<E2>(self, f: &impl Fn(E) -> E2) -> SocketError<E2> {
@@ -266,7 +274,7 @@ where
     State: 'static + Send + Sync,
     ToClient: 'static + Serialize + ?Sized,
     FromClient: 'static + DeserializeOwned,
-    Error: 'static + Send,
+    Error: 'static + Send + Display,
 {
     raw_handler(move |req, conn, state| {
         f(req, conn, state)
@@ -306,7 +314,7 @@ where
     F: 'static + Send + Sync + Fn(RequestParams, &State) -> BoxStream<Result<Msg, Error>>,
     State: 'static + Send + Sync,
     Msg: 'static + Serialize + Send + Sync,
-    Error: 'static + Send,
+    Error: 'static + Send + Display,
 {
     let handler = StreamHandler(f);
     raw_handler(move |req, conn, state| handler.handle(req, conn, state))
@@ -325,18 +333,30 @@ where
     State: 'static + Send + Sync,
     ToClient: 'static + Serialize + ?Sized,
     FromClient: 'static + DeserializeOwned,
-    Error: 'static + Send,
+    Error: 'static + Send + Display,
 {
-    Box::new(move |req, conn, state| {
+    let close = |conn: WebSocketConnection, res: Result<(), SocketError<Error>>| async move {
+        // When the handler finishes, send a close message. If there was an error, include the error
+        // message.
+        let msg = res.as_ref().err().map(|err| CloseFrame {
+            code: err.code(),
+            reason: Cow::Owned(err.to_string()),
+        });
+        conn.send(Message::Close(msg)).await?;
+        res
+    };
+    Box::new(move |req, raw_conn, state| {
         let accept = match req.accept() {
             Ok(accept) => accept,
-            Err(err) => return ready(Err(err.into())).boxed(),
+            Err(err) => return close(raw_conn, Err(err.into())).boxed(),
         };
-        let conn = match Connection::new(&accept, conn) {
+        let conn = match Connection::new(&accept, raw_conn.clone()) {
             Ok(conn) => conn,
-            Err(err) => return ready(Err(err)).boxed(),
+            Err(err) => return close(raw_conn, Err(err)).boxed(),
         };
-        f(req, conn, state).boxed()
+        f(req, conn, state)
+            .then(move |res| close(raw_conn, res))
+            .boxed()
     })
 }
 

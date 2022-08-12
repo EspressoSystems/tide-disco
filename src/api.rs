@@ -29,6 +29,7 @@ use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use serde_with::{serde_as, DisplayFromStr};
 use snafu::{OptionExt, ResultExt, Snafu};
 use std::collections::hash_map::{Entry, HashMap, IntoValues, Values};
+use std::fmt::Display;
 use std::ops::Index;
 use tide::http::content::Accept;
 
@@ -735,7 +736,7 @@ impl<State, Error> Api<State, Error> {
         ToClient: 'static + Serialize + ?Sized,
         FromClient: 'static + DeserializeOwned,
         State: 'static + Send + Sync,
-        Error: 'static + Send,
+        Error: 'static + Send + Display,
     {
         self.register_socket_handler(name, socket::handler(handler))
     }
@@ -755,7 +756,7 @@ impl<State, Error> Api<State, Error> {
         F: 'static + Send + Sync + Fn(RequestParams, &State) -> BoxStream<Result<Msg, Error>>,
         Msg: 'static + Serialize + Send + Sync,
         State: 'static + Send + Sync,
-        Error: 'static + Send,
+        Error: 'static + Send + Display,
     {
         self.register_socket_handler(name, socket::stream_handler(handler))
     }
@@ -925,11 +926,12 @@ mod test {
     use async_tungstenite::{
         async_std::connect_async,
         tungstenite::{
-            client::IntoClientRequest, error::Error as WsError, http::header::*, protocol::Message,
+            client::IntoClientRequest, http::header::*, protocol::frame::coding::CloseCode,
+            protocol::Message,
         },
     };
     use futures::{
-        stream::{iter, repeat},
+        stream::{iter, once, repeat},
         FutureExt, SinkExt, StreamExt,
     };
     use portpicker::pick_unused_port;
@@ -944,6 +946,14 @@ mod test {
 
             [route.echo]
             PATH = ["/echo"]
+            METHOD = "SOCKET"
+
+            [route.once]
+            PATH = ["/once"]
+            METHOD = "SOCKET"
+
+            [route.error]
+            PATH = ["/error"]
             METHOD = "SOCKET"
         };
         {
@@ -960,6 +970,24 @@ mod test {
                     .boxed()
                 },
             )
+            .unwrap()
+            .socket("once", |_req, mut conn: Connection<_, (), _>, _state| {
+                async move {
+                    conn.send("msg").boxed().await?;
+                    Ok(())
+                }
+                .boxed()
+            })
+            .unwrap()
+            .socket("error", |_req, _conn: Connection<(), (), _>, _state| {
+                async move {
+                    Err(ServerError::catch_all(
+                        StatusCode::InternalServerError,
+                        "an error message".to_string(),
+                    ))
+                }
+                .boxed()
+            })
             .unwrap();
         }
         let port = pick_unused_port().unwrap();
@@ -1019,6 +1047,33 @@ mod test {
             conn.next().await.unwrap().unwrap(),
             Message::Binary(bincode::serialize("goodbye").unwrap())
         );
+
+        // Test a stream that exits normally.
+        let mut socket_url = url.join("mod/once").unwrap();
+        socket_url.set_scheme("ws").unwrap();
+        let mut conn = connect_async(socket_url).await.unwrap().0;
+        assert_eq!(
+            conn.next().await.unwrap().unwrap(),
+            Message::Text(serde_json::to_string("msg").unwrap())
+        );
+        match conn.next().await.unwrap().unwrap() {
+            Message::Close(None) => {}
+            msg => panic!("expected normal close frame, got {:?}", msg),
+        };
+        assert!(conn.next().await.is_none());
+
+        // Test a stream that errors.
+        let mut socket_url = url.join("mod/error").unwrap();
+        socket_url.set_scheme("ws").unwrap();
+        let mut conn = connect_async(socket_url).await.unwrap().0;
+        match conn.next().await.unwrap().unwrap() {
+            Message::Close(Some(frame)) => {
+                assert_eq!(frame.code, CloseCode::Error);
+                assert_eq!(frame.reason, "Error 500: an error message");
+            }
+            msg => panic!("expected error close frame, got {:?}", msg),
+        }
+        assert!(conn.next().await.is_none());
     }
 
     #[async_std::test]
@@ -1032,6 +1087,10 @@ mod test {
             PATH = ["/nat"]
             METHOD = "SOCKET"
 
+            [route.once]
+            PATH = ["/once"]
+            METHOD = "SOCKET"
+
             [route.error]
             PATH = ["/error"]
             METHOD = "SOCKET"
@@ -1039,6 +1098,8 @@ mod test {
         {
             let mut api = app.module::<ServerError>("mod", api_toml).unwrap();
             api.stream("nat", |_req, _state| iter(0..).map(Ok).boxed())
+                .unwrap()
+                .stream("once", |_req, _state| once(async { Ok(0) }).boxed())
                 .unwrap()
                 .stream::<_, ()>("error", |_req, _state| {
                     // We intentionally return a stream that never terminates, to check that simply
@@ -1059,11 +1120,7 @@ mod test {
         // Consume the `nat` stream.
         let mut socket_url = url.join("mod/nat").unwrap();
         socket_url.set_scheme("ws").unwrap();
-        let mut socket_req = socket_url.clone().into_client_request().unwrap();
-        socket_req
-            .headers_mut()
-            .insert(ACCEPT, "application/json".parse().unwrap());
-        let mut conn = connect_async(socket_req).await.unwrap().0;
+        let mut conn = connect_async(socket_url).await.unwrap().0;
 
         for i in 0..100 {
             assert_eq!(
@@ -1072,20 +1129,33 @@ mod test {
             );
         }
 
-        // Consume the `error` stream.
+        // Test a finite stream.
+        let mut socket_url = url.join("mod/once").unwrap();
+        socket_url.set_scheme("ws").unwrap();
+        let mut conn = connect_async(socket_url).await.unwrap().0;
+
+        assert_eq!(
+            conn.next().await.unwrap().unwrap(),
+            Message::Text(serde_json::to_string(&0).unwrap())
+        );
+        match conn.next().await.unwrap().unwrap() {
+            Message::Close(None) => {}
+            msg => panic!("expected normal close frame, got {:?}", msg),
+        }
+        assert!(conn.next().await.is_none());
+
+        // Test a stream that errors.
         let mut socket_url = url.join("mod/error").unwrap();
         socket_url.set_scheme("ws").unwrap();
-        let mut socket_req = socket_url.clone().into_client_request().unwrap();
-        socket_req
-            .headers_mut()
-            .insert(ACCEPT, "application/json".parse().unwrap());
-        let mut conn = connect_async(socket_req).await.unwrap().0;
+        let mut conn = connect_async(socket_url).await.unwrap().0;
 
-        let msg = conn.next().await.unwrap().unwrap();
-        assert!(matches!(msg, Message::Close(_)), "{:?}", msg);
-        assert!(matches!(
-            conn.next().await.unwrap().unwrap_err(),
-            WsError::ConnectionClosed
-        ));
+        match conn.next().await.unwrap().unwrap() {
+            Message::Close(Some(frame)) => {
+                assert_eq!(frame.code, CloseCode::Error);
+                assert_eq!(frame.reason, "Error 500: an error message");
+            }
+            msg => panic!("expected error close frame, got {:?}", msg),
+        }
+        assert!(conn.next().await.is_none());
     }
 }
