@@ -20,7 +20,10 @@ use crate::{
 };
 use async_trait::async_trait;
 use derive_more::From;
-use futures::future::{BoxFuture, Future};
+use futures::{
+    future::{BoxFuture, Future},
+    stream::BoxStream,
+};
 use semver::Version;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use serde_with::{serde_as, DisplayFromStr};
@@ -734,6 +737,34 @@ impl<State, Error> Api<State, Error> {
         State: 'static + Send + Sync,
         Error: 'static + Send,
     {
+        self.register_socket_handler(name, socket::handler(handler))
+    }
+
+    /// Register a uni-directional handler for a SOCKET route.
+    ///
+    /// This function is very similar to [socket](Self::socket), but it permits the handler only to
+    /// send messages to the client, not to receive messages back. As such, the handler does not
+    /// take a [Connection](socket::Connection). Instead, it simply returns a stream of messages
+    /// which are forwarded to the client as they are generated. If the stream ever yields an error,
+    /// the error is propagated to the client and then the connection is closed.
+    ///
+    /// This function can be simpler to use than [socket](Self::socket) in case the handler does not
+    /// need to receive messages from the client.
+    pub fn stream<F, Msg>(&mut self, name: &str, handler: F) -> Result<&mut Self, ApiError>
+    where
+        F: 'static + Send + Sync + Fn(RequestParams, &State) -> BoxStream<Result<Msg, Error>>,
+        Msg: 'static + Serialize + Send + Sync,
+        State: 'static + Send + Sync,
+        Error: 'static + Send,
+    {
+        self.register_socket_handler(name, socket::stream_handler(handler))
+    }
+
+    fn register_socket_handler(
+        &mut self,
+        name: &str,
+        handler: socket::Handler<State, Error>,
+    ) -> Result<&mut Self, ApiError> {
         let route = self.routes.get_mut(name).ok_or(ApiError::UndefinedRoute)?;
         if route.method() != Method::Socket {
             return Err(ApiError::IncorrectMethod {
@@ -748,7 +779,7 @@ impl<State, Error> Api<State, Error> {
         // `set_handler` only fails if the route is not a socket route; since we have already
         // checked that it is, this cannot fail.
         route
-            .set_socket_handler(socket::handler(handler))
+            .set_socket_handler(handler)
             .unwrap_or_else(|_| panic!("unexpected failure in set_socket_handler"));
         Ok(self)
     }
@@ -886,15 +917,21 @@ where
 #[cfg(test)]
 mod test {
     use crate::{
-        error::ServerError, socket::Connection, wait_for_server, App, Url, SERVER_STARTUP_RETRIES,
-        SERVER_STARTUP_SLEEP_MS,
+        error::{Error, ServerError},
+        socket::Connection,
+        wait_for_server, App, StatusCode, Url, SERVER_STARTUP_RETRIES, SERVER_STARTUP_SLEEP_MS,
     };
     use async_std::{sync::RwLock, task::spawn};
     use async_tungstenite::{
         async_std::connect_async,
-        tungstenite::{client::IntoClientRequest, http::header::*, protocol::Message},
+        tungstenite::{
+            client::IntoClientRequest, error::Error as WsError, http::header::*, protocol::Message,
+        },
     };
-    use futures::{FutureExt, SinkExt, StreamExt};
+    use futures::{
+        stream::{iter, repeat},
+        FutureExt, SinkExt, StreamExt,
+    };
     use portpicker::pick_unused_port;
     use toml::toml;
 
@@ -982,5 +1019,73 @@ mod test {
             conn.next().await.unwrap().unwrap(),
             Message::Binary(bincode::serialize("goodbye").unwrap())
         );
+    }
+
+    #[async_std::test]
+    async fn test_stream_endpoint() {
+        let mut app = App::<_, ServerError>::with_state(RwLock::new(()));
+        let api_toml = toml! {
+            [meta]
+            FORMAT_VERSION = "0.1.0"
+
+            [route.nat]
+            PATH = ["/nat"]
+            METHOD = "SOCKET"
+
+            [route.error]
+            PATH = ["/error"]
+            METHOD = "SOCKET"
+        };
+        {
+            let mut api = app.module::<ServerError>("mod", api_toml).unwrap();
+            api.stream("nat", |_req, _state| iter(0..).map(Ok).boxed())
+                .unwrap()
+                .stream::<_, ()>("error", |_req, _state| {
+                    // We intentionally return a stream that never terminates, to check that simply
+                    // yielding an error causes the connection to terminate.
+                    repeat(Err(ServerError::catch_all(
+                        StatusCode::InternalServerError,
+                        "an error message".to_string(),
+                    )))
+                    .boxed()
+                })
+                .unwrap();
+        }
+        let port = pick_unused_port().unwrap();
+        let url: Url = format!("http://0.0.0.0:{}", port).parse().unwrap();
+        spawn(app.serve(url.to_string()));
+        wait_for_server(&url, SERVER_STARTUP_RETRIES, SERVER_STARTUP_SLEEP_MS).await;
+
+        // Consume the `nat` stream.
+        let mut socket_url = url.join("mod/nat").unwrap();
+        socket_url.set_scheme("ws").unwrap();
+        let mut socket_req = socket_url.clone().into_client_request().unwrap();
+        socket_req
+            .headers_mut()
+            .insert(ACCEPT, "application/json".parse().unwrap());
+        let mut conn = connect_async(socket_req).await.unwrap().0;
+
+        for i in 0..100 {
+            assert_eq!(
+                conn.next().await.unwrap().unwrap(),
+                Message::Text(serde_json::to_string(&i).unwrap())
+            );
+        }
+
+        // Consume the `error` stream.
+        let mut socket_url = url.join("mod/error").unwrap();
+        socket_url.set_scheme("ws").unwrap();
+        let mut socket_req = socket_url.clone().into_client_request().unwrap();
+        socket_req
+            .headers_mut()
+            .insert(ACCEPT, "application/json".parse().unwrap());
+        let mut conn = connect_async(socket_req).await.unwrap().0;
+
+        let msg = conn.next().await.unwrap().unwrap();
+        assert!(matches!(msg, Message::Close(_)), "{:?}", msg);
+        assert!(matches!(
+            conn.next().await.unwrap().unwrap_err(),
+            WsError::ConnectionClosed
+        ));
     }
 }

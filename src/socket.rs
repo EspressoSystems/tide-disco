@@ -9,8 +9,9 @@ use async_std::sync::Arc;
 use futures::{
     future::{ready, BoxFuture},
     sink,
+    stream::BoxStream,
     task::{Context, Poll},
-    FutureExt, Sink, Stream,
+    FutureExt, Sink, SinkExt, Stream, StreamExt, TryFutureExt,
 };
 use serde::{de::DeserializeOwned, Serialize};
 use std::fmt::{self, Display, Formatter};
@@ -252,42 +253,6 @@ pub(crate) type Handler<State, Error> = Box<
         + Fn(RequestParams, WebSocketConnection, &State) -> BoxFuture<Result<(), SocketError<Error>>>,
 >;
 
-struct FnHandler<F>(F);
-
-impl<F> FnHandler<F> {
-    fn handle<'a, State, Error: 'a, ToClient, FromClient>(
-        &self,
-        req: RequestParams,
-        conn: WebSocketConnection,
-        state: &'a State,
-    ) -> BoxFuture<'a, Result<(), SocketError<Error>>>
-    where
-        F: 'static
-            + Send
-            + Sync
-            + Fn(
-                RequestParams,
-                Connection<ToClient, FromClient, Error>,
-                &State,
-            ) -> BoxFuture<Result<(), Error>>,
-        State: Send + Sync,
-        ToClient: Serialize + ?Sized,
-        FromClient: DeserializeOwned,
-        Error: Send,
-    {
-        let accept = match req.accept() {
-            Ok(accept) => accept,
-            Err(err) => return ready(Err(err.into())).boxed(),
-        };
-        let conn = match Connection::new(&accept, conn) {
-            Ok(conn) => conn,
-            Err(err) => return ready(Err(err)).boxed(),
-        };
-        let fut = self.0(req, conn, state);
-        async move { fut.await.map_err(SocketError::AppSpecific) }.boxed()
-    }
-}
-
 pub(crate) fn handler<State, Error, ToClient, FromClient, F>(f: F) -> Handler<State, Error>
 where
     F: 'static
@@ -303,8 +268,76 @@ where
     FromClient: 'static + DeserializeOwned,
     Error: 'static + Send,
 {
-    let handler = FnHandler(f);
-    Box::new(move |req, conn, state| handler.handle(req, conn, state))
+    raw_handler(move |req, conn, state| {
+        f(req, conn, state)
+            .map_err(SocketError::AppSpecific)
+            .boxed()
+    })
+}
+
+struct StreamHandler<F>(F);
+
+impl<F> StreamHandler<F> {
+    fn handle<'a, State, Error, Msg>(
+        &self,
+        req: RequestParams,
+        mut conn: Connection<Msg, (), Error>,
+        state: &'a State,
+    ) -> BoxFuture<'a, Result<(), SocketError<Error>>>
+    where
+        F: 'static + Send + Sync + Fn(RequestParams, &State) -> BoxStream<Result<Msg, Error>>,
+        State: 'static + Send + Sync,
+        Msg: 'static + Serialize + Send + Sync,
+        Error: 'static + Send,
+    {
+        let mut stream = (self.0)(req, state);
+        async move {
+            while let Some(msg) = stream.next().await {
+                conn.send(&msg.map_err(SocketError::AppSpecific)?).await?;
+            }
+            Ok(())
+        }
+        .boxed()
+    }
+}
+
+pub(crate) fn stream_handler<State, Error, Msg, F>(f: F) -> Handler<State, Error>
+where
+    F: 'static + Send + Sync + Fn(RequestParams, &State) -> BoxStream<Result<Msg, Error>>,
+    State: 'static + Send + Sync,
+    Msg: 'static + Serialize + Send + Sync,
+    Error: 'static + Send,
+{
+    let handler = StreamHandler(f);
+    raw_handler(move |req, conn, state| handler.handle(req, conn, state))
+}
+
+fn raw_handler<State, Error, ToClient, FromClient, F>(f: F) -> Handler<State, Error>
+where
+    F: 'static
+        + Send
+        + Sync
+        + Fn(
+            RequestParams,
+            Connection<ToClient, FromClient, Error>,
+            &State,
+        ) -> BoxFuture<Result<(), SocketError<Error>>>,
+    State: 'static + Send + Sync,
+    ToClient: 'static + Serialize + ?Sized,
+    FromClient: 'static + DeserializeOwned,
+    Error: 'static + Send,
+{
+    Box::new(move |req, conn, state| {
+        let accept = match req.accept() {
+            Ok(accept) => accept,
+            Err(err) => return ready(Err(err.into())).boxed(),
+        };
+        let conn = match Connection::new(&accept, conn) {
+            Ok(conn) => conn,
+            Err(err) => return ready(Err(err)).boxed(),
+        };
+        f(req, conn, state).boxed()
+    })
 }
 
 struct MapErr<State, Error, F> {
