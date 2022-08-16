@@ -685,7 +685,7 @@ pub fn check_literals(url: &Url, api: &Value, first_segment: &str) -> String {
     let mut typos = String::new();
     let meta = &api["meta"];
     let api_map = api[ROUTE.as_ref()].as_table().unwrap();
-    api_map[&*first_segment][PATH.as_ref()]
+    api_map[first_segment][PATH.as_ref()]
         .as_array()
         .unwrap()
         .iter()
