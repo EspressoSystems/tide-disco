@@ -1,3 +1,6 @@
+use ark_serialize::CanonicalDeserialize;
+use jf_utils::Tagged;
+use serde::{Deserialize, Serialize};
 use snafu::{OptionExt, Snafu};
 use std::collections::HashMap;
 use std::fmt::Display;
@@ -5,7 +8,7 @@ use strum_macros::EnumString;
 use tagged_base64::TaggedBase64;
 use tide::http::{content::Accept, Headers};
 
-#[derive(Clone, Debug, Snafu)]
+#[derive(Clone, Debug, Snafu, Deserialize, Serialize)]
 pub enum RequestError {
     #[snafu(display("missing required parameter: {}", name))]
     MissingParam { name: String },
@@ -35,11 +38,20 @@ pub enum RequestError {
     #[snafu(display("Unable to deserialize from bincode"))]
     Bincode,
 
+    #[snafu(display("Unable to deserialize from ark format: {}", reason))]
+    ArkSerialize { reason: String },
+
     #[snafu(display("Body type not specified or type not supported"))]
     UnsupportedBody,
 
     #[snafu(display("HTTP protocol error: {}", reason))]
     Http { reason: String },
+
+    #[snafu(display("error parsing {} parameter: {}", param_type, reason))]
+    InvalidParam { param_type: String, reason: String },
+
+    #[snafu(display("unexpected tag in TaggedBase64: {} (expected {})", actual, expected))]
+    TagMismatch { actual: String, expected: String },
 }
 
 /// Parameters passed to a route handler.
@@ -259,7 +271,7 @@ impl RequestParams {
     ///
     /// Like [param](Self::param), but returns [None] if the parameter value cannot be converted to
     /// a [String].
-    pub fn string_param<Name>(&self, name: &Name) -> Result<String, RequestError>
+    pub fn string_param<Name>(&self, name: &Name) -> Result<&str, RequestError>
     where
         Name: ?Sized + Display,
     {
@@ -269,6 +281,46 @@ impl RequestParams {
                 param_type: val.param_type(),
                 expected: "String".to_string(),
             })
+        })
+    }
+
+    /// Get the value of a named parameter and convert it to [TaggedBase64].
+    ///
+    /// Like [param](Self::param), but returns [None] if the parameter value cannot be converted to
+    /// [TaggedBase64].
+    pub fn tagged_base64_param<Name>(&self, name: &Name) -> Result<&TaggedBase64, RequestError>
+    where
+        Name: ?Sized + Display,
+    {
+        self.param(name).and_then(|val| {
+            val.as_tagged_base64().context(IncorrectParamTypeSnafu {
+                name: name.to_string(),
+                param_type: val.param_type(),
+                expected: "TaggedBase64".to_string(),
+            })
+        })
+    }
+
+    /// Get the value of a named parameter and convert it to a custom type through [TaggedBase64].
+    ///
+    /// Like [param](Self::param), but returns [None] if the parameter value cannot be converted to
+    /// `T`.
+    pub fn blob_param<Name, T>(&self, name: &Name) -> Result<T, RequestError>
+    where
+        Name: ?Sized + Display,
+        T: Tagged + CanonicalDeserialize,
+    {
+        self.tagged_base64_param(name).and_then(|tb64| {
+            if tb64.tag() == T::tag() {
+                T::deserialize(&*tb64.value()).map_err(|source| RequestError::ArkSerialize {
+                    reason: source.to_string(),
+                })
+            } else {
+                Err(RequestError::TagMismatch {
+                    actual: tb64.tag(),
+                    expected: T::tag(),
+                })
+            }
         })
     }
 
@@ -329,9 +381,36 @@ impl RequestParamValue {
                 RequestParamType::Literal => {
                     Ok(Some(RequestParamValue::Literal(param.to_string())))
                 }
-                _ => unimplemented!(
-                    "parsing String into RequestParamValue based on formal.param_type"
-                ),
+                RequestParamType::Boolean => {
+                    Ok(Some(RequestParamValue::Boolean(param.parse().map_err(
+                        |err: std::str::ParseBoolError| RequestError::InvalidParam {
+                            param_type: "Boolean".to_string(),
+                            reason: err.to_string(),
+                        },
+                    )?)))
+                }
+                RequestParamType::Integer => {
+                    Ok(Some(RequestParamValue::Integer(param.parse().map_err(
+                        |err: std::num::ParseIntError| RequestError::InvalidParam {
+                            param_type: "Integer".to_string(),
+                            reason: err.to_string(),
+                        },
+                    )?)))
+                }
+                RequestParamType::Hexadecimal => Ok(Some(RequestParamValue::Hexadecimal(
+                    param.parse().map_err(|err: std::num::ParseIntError| {
+                        RequestError::InvalidParam {
+                            param_type: "Hexadecimal".to_string(),
+                            reason: err.to_string(),
+                        }
+                    })?,
+                ))),
+                RequestParamType::TaggedBase64 => Ok(Some(RequestParamValue::TaggedBase64(
+                    TaggedBase64::parse(param).map_err(|err| RequestError::InvalidParam {
+                        param_type: "TaggedBase64".to_string(),
+                        reason: err.to_string(),
+                    })?,
+                ))),
             }
         } else {
             unimplemented!("check for the parameter in the request body")
@@ -348,21 +427,36 @@ impl RequestParamValue {
         }
     }
 
-    pub fn as_string(&self) -> Option<String> {
+    pub fn as_string(&self) -> Option<&str> {
         match self {
-            Self::Literal(s) => Some(s.clone()),
-            _ => {
-                unimplemented!("extracting a String from other parameter types, like TaggedBase64")
-            }
+            Self::Literal(s) => Some(s),
+            _ => None,
         }
     }
 
     pub fn as_integer(&self) -> Option<u128> {
-        unimplemented!()
+        match self {
+            Self::Integer(x) | Self::Hexadecimal(x) => Some(*x),
+            _ => None,
+        }
+    }
+
+    pub fn as_boolean(&self) -> Option<bool> {
+        match self {
+            Self::Boolean(x) => Some(*x),
+            _ => None,
+        }
+    }
+
+    pub fn as_tagged_base64(&self) -> Option<&TaggedBase64> {
+        match self {
+            Self::TaggedBase64(x) => Some(x),
+            _ => None,
+        }
     }
 }
 
-#[derive(Clone, Copy, Debug, EnumString, strum_macros::Display)]
+#[derive(Clone, Copy, Debug, EnumString, strum_macros::Display, Deserialize, Serialize)]
 pub enum RequestParamType {
     Boolean,
     Hexadecimal,

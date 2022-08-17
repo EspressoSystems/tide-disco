@@ -63,7 +63,7 @@ async fn serve(port: u16) -> io::Result<()> {
         async move {
             let new_greeting = req.string_param("greeting")?;
             info!("called /setgreeting with :greeting = {}", new_greeting);
-            *greeting = new_greeting;
+            *greeting = new_greeting.to_string();
             Ok(())
         }
         .boxed()
