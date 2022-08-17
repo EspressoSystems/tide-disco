@@ -1,6 +1,8 @@
 use crate::{
     healthcheck::HealthCheck,
-    request::{RequestError, RequestParam, RequestParamType, RequestParams},
+    method::Method,
+    request::{best_response_type, RequestError, RequestParam, RequestParamType, RequestParams},
+    socket::{self, SocketError},
 };
 use async_trait::async_trait;
 use derive_more::From;
@@ -21,6 +23,7 @@ use tide::{
     },
     Body,
 };
+use tide_websockets::WebSocketConnection;
 
 /// An error returned by a route handler.
 ///
@@ -34,6 +37,7 @@ pub enum RouteError<E> {
     Bincode(bincode::Error),
     Json(serde_json::Error),
     Tide(tide::Error),
+    IncorrectMethod { expected: Method },
 }
 
 impl<E: Display> Display for RouteError<E> {
@@ -45,6 +49,9 @@ impl<E: Display> Display for RouteError<E> {
             Self::Bincode(err) => write!(f, "error creating byte stream: {}", err),
             Self::Json(err) => write!(f, "error creating JSON response: {}", err),
             Self::Tide(err) => write!(f, "{}", err),
+            Self::IncorrectMethod { expected } => {
+                write!(f, "route may only be called as {}", expected)
+            }
         }
     }
 }
@@ -52,7 +59,9 @@ impl<E: Display> Display for RouteError<E> {
 impl<E> RouteError<E> {
     pub fn status(&self) -> StatusCode {
         match self {
-            Self::Request(_) | Self::UnsupportedContentType => StatusCode::BadRequest,
+            Self::Request(_) | Self::UnsupportedContentType | Self::IncorrectMethod { .. } => {
+                StatusCode::BadRequest
+            }
             _ => StatusCode::InternalServerError,
         }
     }
@@ -65,6 +74,7 @@ impl<E> RouteError<E> {
             RouteError::Bincode(err) => RouteError::Bincode(err),
             RouteError::Json(err) => RouteError::Json(err),
             RouteError::Tide(err) => RouteError::Tide(err),
+            Self::IncorrectMethod { expected } => RouteError::IncorrectMethod { expected },
         }
     }
 }
@@ -150,6 +160,44 @@ impl<H: ?Sized + Handler<State, Error>, State: 'static + Send + Sync, Error> Han
     }
 }
 
+enum RouteImplementation<State, Error> {
+    Http {
+        method: http::Method,
+        handler: Option<Box<dyn Handler<State, Error>>>,
+    },
+    Socket {
+        handler: Option<socket::Handler<State, Error>>,
+    },
+}
+
+impl<State, Error> RouteImplementation<State, Error> {
+    fn map_err<Error2>(
+        self,
+        f: impl 'static + Send + Sync + Fn(Error) -> Error2,
+    ) -> RouteImplementation<State, Error2>
+    where
+        State: 'static + Send + Sync,
+        Error: 'static + Send + Sync,
+        Error2: 'static,
+    {
+        match self {
+            Self::Http { method, handler } => RouteImplementation::Http {
+                method,
+                handler: handler.map(|h| {
+                    let h: Box<dyn Handler<State, Error2>> =
+                        Box::new(MapErr::<Box<dyn Handler<State, Error>>, _, Error>::new(
+                            h, f,
+                        ));
+                    h
+                }),
+            },
+            Self::Socket { handler } => RouteImplementation::Socket {
+                handler: handler.map(|h| socket::map_err(h, f)),
+            },
+        }
+    }
+}
+
 /// All the information we need to parse, typecheck, and dispatch a request.
 ///
 /// A [Route] is a structured representation of a route specification from an `api.toml` API spec.
@@ -160,9 +208,8 @@ pub struct Route<State, Error> {
     name: String,
     patterns: Vec<String>,
     params: Vec<RequestParam>,
-    method: http::Method,
     doc: String,
-    handler: Option<Box<dyn Handler<State, Error>>>,
+    handler: RouteImplementation<State, Error>,
 }
 
 #[derive(Clone, Debug, Snafu)]
@@ -215,6 +262,21 @@ impl<State, Error> Route<State, Error> {
                 }
             }
         }
+        let method = match spec.get("METHOD") {
+            Some(val) => val
+                .as_str()
+                .context(MethodMustBeStringSnafu)?
+                .parse()
+                .map_err(|_| RouteParseError::InvalidMethod)?,
+            None => Method::get(),
+        };
+        let handler = match method {
+            Method::Http(method) => RouteImplementation::Http {
+                method,
+                handler: None,
+            },
+            Method::Socket => RouteImplementation::Socket { handler: None },
+        };
         Ok(Route {
             name,
             patterns: match spec.get("PATH").context(MissingPathSnafu)? {
@@ -247,16 +309,8 @@ impl<State, Error> Route<State, Error> {
                     }))
                 })
                 .collect::<Result<_, _>>()?,
-            method: match spec.get("METHOD") {
-                Some(val) => val
-                    .as_str()
-                    .context(MethodMustBeStringSnafu)?
-                    .parse()
-                    .map_err(|_| RouteParseError::InvalidMethod)?,
-                None => http::Method::Get,
-            },
+            handler,
             doc: String::new(),
-            handler: None,
         })
     }
 
@@ -274,13 +328,19 @@ impl<State, Error> Route<State, Error> {
     }
 
     /// The HTTP method of the route.
-    pub fn method(&self) -> http::Method {
-        self.method
+    pub fn method(&self) -> Method {
+        match &self.handler {
+            RouteImplementation::Http { method, .. } => (*method).into(),
+            RouteImplementation::Socket { .. } => Method::socket(),
+        }
     }
 
     /// Whether a non-default handler has been bound to this route.
     pub fn has_handler(&self) -> bool {
-        self.handler.is_some()
+        match &self.handler {
+            RouteImplementation::Http { handler, .. } => handler.is_some(),
+            RouteImplementation::Socket { handler, .. } => handler.is_some(),
+        }
     }
 
     /// Get all formal parameters.
@@ -299,28 +359,32 @@ impl<State, Error> Route<State, Error> {
         Error2: 'static,
     {
         Route {
-            handler: self.handler.map(|h| {
-                let h: Box<dyn Handler<State, Error2>> =
-                    Box::new(MapErr::<Box<dyn Handler<State, Error>>, _, Error>::new(
-                        h, f,
-                    ));
-                h
-            }),
+            handler: self.handler.map_err(f),
             name: self.name,
             patterns: self.patterns,
             params: self.params,
-            method: self.method,
             doc: self.doc,
         }
     }
 }
 
 impl<State, Error> Route<State, Error> {
-    pub(crate) fn set_handler(&mut self, handler: impl Handler<State, Error>) {
-        self.handler = Some(Box::new(handler));
+    pub(crate) fn set_handler(
+        &mut self,
+        h: impl Handler<State, Error>,
+    ) -> Result<(), RouteError<Error>> {
+        match &mut self.handler {
+            RouteImplementation::Http { handler, .. } => {
+                *handler = Some(Box::new(h));
+                Ok(())
+            }
+            RouteImplementation::Socket { .. } => Err(RouteError::IncorrectMethod {
+                expected: self.method(),
+            }),
+        }
     }
 
-    pub(crate) fn set_fn_handler<F, T>(&mut self, handler: F)
+    pub(crate) fn set_fn_handler<F, T>(&mut self, handler: F) -> Result<(), RouteError<Error>>
     where
         F: 'static + Send + Sync + Fn(RequestParams, &State) -> BoxFuture<'_, Result<T, Error>>,
         T: Serialize,
@@ -329,12 +393,51 @@ impl<State, Error> Route<State, Error> {
         self.set_handler(FnHandler::from(handler))
     }
 
+    pub(crate) fn set_socket_handler(
+        &mut self,
+        h: socket::Handler<State, Error>,
+    ) -> Result<(), RouteError<Error>> {
+        match &mut self.handler {
+            RouteImplementation::Socket { handler, .. } => {
+                *handler = Some(h);
+                Ok(())
+            }
+            RouteImplementation::Http { .. } => Err(RouteError::IncorrectMethod {
+                expected: self.method(),
+            }),
+        }
+    }
+
+    /// Print documentation about the route, to aid the developer when the route is not yet
+    /// implemented.
     pub(crate) fn default_handler(
         &self,
         _req: RequestParams,
         _state: &State,
     ) -> Result<tide::Response, RouteError<Error>> {
         unimplemented!()
+    }
+
+    pub(crate) async fn handle_socket(
+        &self,
+        req: RequestParams,
+        conn: WebSocketConnection,
+        state: &State,
+    ) -> Result<(), SocketError<Error>> {
+        match &self.handler {
+            RouteImplementation::Socket { handler, .. } => match handler {
+                Some(handler) => handler(req, conn, state).await,
+                // If there is no socket handler registered, the top-level app should register the
+                // route in such a way that the socket upgrade request is rejected and the route
+                // instead displays a simple HTML page with the documentation for the route. That
+                // means that we should not get here.
+                None => unreachable!(),
+            },
+            RouteImplementation::Http { .. } => Err(SocketError::IncorrectMethod {
+                expected: self.method(),
+                actual: req.method(),
+            }),
+        }
     }
 }
 
@@ -350,8 +453,13 @@ where
         state: &State,
     ) -> Result<tide::Response, RouteError<Error>> {
         match &self.handler {
-            Some(handler) => handler.handle(req, state).await,
-            None => self.default_handler(req, state),
+            RouteImplementation::Http { handler, .. } => match handler {
+                Some(handler) => handler.handle(req, state).await,
+                None => self.default_handler(req, state),
+            },
+            RouteImplementation::Socket { .. } => Err(RouteError::IncorrectMethod {
+                expected: self.method(),
+            }),
         }
     }
 }
@@ -445,41 +553,6 @@ where
         }
         .boxed()
     })
-}
-
-fn best_response_type<E>(accept: &Accept, available: &[Mime]) -> Result<Mime, RouteError<E>> {
-    // The Accept type has a `negotiate` method, but it doesn't properly handle wildcards. It
-    // handles * but not */* and basetype/*, because for content type proposals like */* and
-    // basetype/*, it looks for a literal match in `available`, it does not perform pattern
-    // matching. So, we implement negotiation ourselves. Go through each proposed content type, in
-    // the order specified by the client, and match them against our available types, respecting
-    // wildcards.
-    for proposed in accept.iter() {
-        if proposed.basetype() == "*" {
-            // The only acceptable Accept value with a basetype of * is */*, therefore this will
-            // match any available type.
-            return Ok(available[0].clone());
-        } else if proposed.subtype() == "*" {
-            // If the subtype is * but the basetype is not, look for a proposed type with a matching
-            // basetype and any subtype.
-            for mime in available {
-                if mime.basetype() == proposed.basetype() {
-                    return Ok(mime.clone());
-                }
-            }
-        } else if available.contains(proposed) {
-            // If neither part of the proposal is a wildcard, look for a literal match.
-            return Ok((**proposed).clone());
-        }
-    }
-
-    if accept.wildcard() {
-        // If no proposals are available but a wildcard flag * was given, return any available
-        // content type.
-        Ok(available[0].clone())
-    } else {
-        Err(RouteError::UnsupportedContentType)
-    }
 }
 
 pub(crate) fn response_body<T: Serialize, E>(

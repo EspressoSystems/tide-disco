@@ -1,5 +1,4 @@
-use crate::request::RequestError;
-use crate::route::RouteError;
+use crate::{request::RequestError, route::RouteError, socket::SocketError};
 use config::ConfigError;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use snafu::Snafu;
@@ -38,6 +37,10 @@ pub trait Error: std::error::Error + Serialize + DeserializeOwned + Send + Sync 
         Self::catch_all(StatusCode::BadRequest, source.to_string())
     }
 
+    fn from_socket_error<E: Display>(source: SocketError<E>) -> Self {
+        Self::catch_all(source.status(), source.to_string())
+    }
+
     fn into_tide_error(self) -> tide::Error {
         tide::Error::new(self.status(), self)
     }
@@ -69,5 +72,35 @@ impl Error for ServerError {
 
     fn status(&self) -> StatusCode {
         self.status
+    }
+}
+
+impl From<IoError> for ServerError {
+    fn from(source: IoError) -> Self {
+        Self::from_io_error(source)
+    }
+}
+
+impl From<ConfigError> for ServerError {
+    fn from(source: ConfigError) -> Self {
+        Self::from_config_error(source)
+    }
+}
+
+impl<E: Display> From<RouteError<E>> for ServerError {
+    fn from(source: RouteError<E>) -> Self {
+        Self::from_route_error(source)
+    }
+}
+
+impl From<RequestError> for ServerError {
+    fn from(source: RequestError) -> Self {
+        Self::from_request_error(source)
+    }
+}
+
+impl<E: Display> From<SocketError<E>> for ServerError {
+    fn from(source: SocketError<E>) -> Self {
+        Self::from_socket_error(source)
     }
 }

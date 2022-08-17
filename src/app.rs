@@ -12,25 +12,30 @@
 // not, see <https://www.gnu.org/licenses/>.
 
 use crate::{
-    api::{Api, ApiVersion},
+    api::{Api, ApiError, ApiVersion},
     healthcheck::{HealthCheck, HealthStatus},
+    http,
+    method::Method,
     request::{RequestParam, RequestParams},
-    route::{self, health_check_response, respond_with, Handler, RouteError},
+    route::{self, health_check_response, respond_with, Handler, Route, RouteError},
+    socket::SocketError,
 };
 use async_std::sync::Arc;
 use futures::future::BoxFuture;
 use semver::Version;
 use serde::{Deserialize, Serialize};
 use serde_with::{serde_as, DisplayFromStr};
-use snafu::Snafu;
+use snafu::{ResultExt, Snafu};
 use std::collections::hash_map::{Entry, HashMap};
 use std::convert::Infallible;
 use std::io;
+use std::ops::{Deref, DerefMut};
 use tide::{
     http::{headers::HeaderValue, mime},
     security::{CorsMiddleware, Origin},
     StatusCode,
 };
+use tide_websockets::WebSocket;
 
 pub use tide::listener::{Listener, ToListener};
 
@@ -50,6 +55,7 @@ pub struct App<State, Error> {
 /// An error encountered while building an [App].
 #[derive(Clone, Debug, Snafu)]
 pub enum AppError {
+    Api { source: ApiError },
     ModuleAlreadyExists,
 }
 
@@ -61,6 +67,27 @@ impl<State: Send + Sync + 'static, Error: 'static> App<State, Error> {
             state: Arc::new(state),
             app_version: None,
         }
+    }
+
+    /// Create and register an API module.
+    pub fn module<'a, ModuleError>(
+        &'a mut self,
+        base_url: &'a str,
+        api: toml::Value,
+    ) -> Result<Module<'a, State, Error, ModuleError>, AppError>
+    where
+        Error: From<ModuleError>,
+        ModuleError: 'static + Send + Sync,
+    {
+        if self.apis.contains_key(base_url) {
+            return Err(AppError::ModuleAlreadyExists);
+        }
+
+        Ok(Module {
+            app: self,
+            base_url,
+            api: Some(Api::new(api).context(ApiSnafu)?),
+        })
     }
 
     /// Register an API module.
@@ -181,30 +208,23 @@ impl<State: Send + Sync + 'static, Error: 'static + crate::Error> App<State, Err
 
         for (prefix, api) in &state.apis {
             // Register routes for this API.
-            for route in api {
-                for pattern in route.patterns() {
-                    let name = route.name();
-                    let prefix = prefix.clone();
-                    server.at(&prefix).at(pattern).method(
-                        route.method(),
-                        move |req: tide::Request<Arc<Self>>| {
-                            let name = name.clone();
-                            let prefix = prefix.clone();
-                            async move {
-                                let route = &req.state().clone().apis[&prefix][&name];
-                                let state = &*req.state().clone().state;
-                                let req = request_params(req, route.params()).await?;
-                                route
-                                    .handle(req, state)
-                                    .await
-                                    .map_err(|err| match err {
-                                        RouteError::AppSpecific(err) => err,
-                                        _ => Error::from_route_error(err),
-                                    })
-                                    .map_err(|err| err.into_tide_error())
-                            }
-                        },
-                    );
+            let mut api_endpoint = server.at(prefix);
+            for (path, routes) in api.routes_by_path() {
+                let mut endpoint = api_endpoint.at(path);
+                let routes = routes.collect::<Vec<_>>();
+                if let Some(socket_route) =
+                    routes.iter().find(|route| route.method() == Method::Socket)
+                {
+                    // If there is a socket route with this pattern, add the socket middleware to
+                    // all endpoints registered under this pattern, so that any request with any
+                    // method that has the socket upgrade headers will trigger a WebSockets upgrade.
+                    Self::register_socket(prefix.to_owned(), &mut endpoint, socket_route);
+                }
+                // Register the HTTP routes.
+                for route in routes {
+                    if let Method::Http(method) = route.method() {
+                        Self::register_route(prefix.to_owned(), &mut endpoint, route, method);
+                    }
                 }
             }
 
@@ -267,14 +287,14 @@ impl<State: Send + Sync + 'static, Error: 'static + crate::Error> App<State, Err
         {
             server
                 .at("/")
-                .get(move |req: tide::Request<Arc<Self>>| async move {
+                .all(move |req: tide::Request<Arc<Self>>| async move {
                     Ok(format!("help /\n{:?}", req.url()))
                 });
         }
         {
             server
                 .at("/*")
-                .get(move |req: tide::Request<Arc<Self>>| async move {
+                .all(move |req: tide::Request<Arc<Self>>| async move {
                     Ok(format!("help /*\n{:?}", req.url()))
                 });
         }
@@ -285,6 +305,94 @@ impl<State: Send + Sync + 'static, Error: 'static + crate::Error> App<State, Err
         }
 
         server.listen(listener).await
+    }
+
+    fn register_route(
+        api: String,
+        endpoint: &mut tide::Route<Arc<Self>>,
+        route: &Route<State, Error>,
+        method: http::Method,
+    ) {
+        let name = route.name();
+        endpoint.method(method, move |req: tide::Request<Arc<Self>>| {
+            let name = name.clone();
+            let api = api.clone();
+            async move {
+                let route = &req.state().clone().apis[&api][&name];
+                let state = &*req.state().clone().state;
+                let req = request_params(req, route.params()).await?;
+                route
+                    .handle(req, state)
+                    .await
+                    .map_err(|err| match err {
+                        RouteError::AppSpecific(err) => err,
+                        _ => Error::from_route_error(err),
+                    })
+                    .map_err(|err| err.into_tide_error())
+            }
+        });
+    }
+
+    fn register_socket(
+        api: String,
+        endpoint: &mut tide::Route<Arc<Self>>,
+        route: &Route<State, Error>,
+    ) {
+        let name = route.name();
+        if route.has_handler() {
+            // If there is a socket handler, add the [WebSocket] middleware to the endpoint, so that
+            // upgrade requests will automatically upgrade to a WebSockets connection.
+            let name = name.clone();
+            let api = api.clone();
+            endpoint.with(WebSocket::new(
+                move |req: tide::Request<Arc<Self>>, conn| {
+                    let name = name.clone();
+                    let api = api.clone();
+                    async move {
+                        let route = &req.state().clone().apis[&api][&name];
+                        let state = &*req.state().clone().state;
+                        let req = request_params(req, route.params()).await?;
+                        route
+                            .handle_socket(req, conn, state)
+                            .await
+                            .map_err(|err| match err {
+                                SocketError::AppSpecific(err) => err,
+                                _ => Error::from_socket_error(err),
+                            })
+                            .map_err(|err| err.into_tide_error())
+                    }
+                },
+            ));
+        }
+
+        // Register a catch-all HTTP handler for the route, which serves the route documentation as
+        // HTML. This ensures that there is at least one endpoint registered with the Tide
+        // dispatcher, so that the middleware actually fires on requests to this path. In addition,
+        // this handler will trigger for requests that are not valid WebSockets handshakes. The
+        // documentation should make clear that this is a WebSockets endpoint, aiding in
+        // discoverability. This will also trigger if there is no socket handler for this route,
+        // which will signal to the developer that they need to implement a socket handler for this
+        // route to work.
+        //
+        // We register the default handler using `all`, which makes it act as a fallback handler.
+        // This means if there are other, non-socket routes with this same path, we will still
+        // dispatch to them if the path is hit with the appropriate method.
+        endpoint.all(move |req: tide::Request<Arc<Self>>| {
+            let name = name.clone();
+            let api = api.clone();
+            async move {
+                let route = &req.state().clone().apis[&api][&name];
+                let state = &*req.state().clone().state;
+                let req = request_params(req, route.params()).await?;
+                route
+                    .default_handler(req, state)
+                    .map_err(|err| match err {
+                        RouteError::AppSpecific(err) => err,
+                        _ => Error::from_route_error(err),
+                    })
+                    .map_err(|err| err.into_tide_error())
+            }
+        });
     }
 }
 
@@ -362,4 +470,158 @@ fn add_error_body<T: Clone + Send + Sync + 'static, E: crate::Error>(
             Ok(res)
         }
     })
+}
+
+pub struct Module<'a, State, Error, ModuleError>
+where
+    State: 'static + Send + Sync,
+    Error: 'static + From<ModuleError>,
+    ModuleError: 'static + Send + Sync,
+{
+    app: &'a mut App<State, Error>,
+    base_url: &'a str,
+    // This is only an [Option] so we can [take] out of it during [drop].
+    api: Option<Api<State, ModuleError>>,
+}
+
+impl<'a, State, Error, ModuleError> Deref for Module<'a, State, Error, ModuleError>
+where
+    State: 'static + Send + Sync,
+    Error: 'static + From<ModuleError>,
+    ModuleError: 'static + Send + Sync,
+{
+    type Target = Api<State, ModuleError>;
+
+    fn deref(&self) -> &Self::Target {
+        self.api.as_ref().unwrap()
+    }
+}
+
+impl<'a, State, Error, ModuleError> DerefMut for Module<'a, State, Error, ModuleError>
+where
+    State: 'static + Send + Sync,
+    Error: 'static + From<ModuleError>,
+    ModuleError: 'static + Send + Sync,
+{
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        self.api.as_mut().unwrap()
+    }
+}
+
+impl<'a, State, Error, ModuleError> Drop for Module<'a, State, Error, ModuleError>
+where
+    State: 'static + Send + Sync,
+    Error: 'static + From<ModuleError>,
+    ModuleError: 'static + Send + Sync,
+{
+    fn drop(&mut self) {
+        self.app
+            .register_module(self.base_url, self.api.take().unwrap())
+            .unwrap();
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use crate::{
+        error::ServerError, socket::Connection, wait_for_server, Url, SERVER_STARTUP_RETRIES,
+        SERVER_STARTUP_SLEEP_MS,
+    };
+    use async_std::{sync::RwLock, task::spawn};
+    use async_tungstenite::{async_std::connect_async, tungstenite::Message};
+    use futures::{FutureExt, SinkExt, StreamExt};
+    use portpicker::pick_unused_port;
+    use toml::toml;
+
+    /// Test route dispatching for routes with the same path and different methods.
+    #[async_std::test]
+    async fn test_method_dispatch() {
+        use crate::http::Method::*;
+
+        let mut app = App::<_, ServerError>::with_state(RwLock::new(()));
+        let api_toml = toml! {
+            [meta]
+            FORMAT_VERSION = "0.1.0"
+
+            [route.get_test]
+            PATH = ["/test"]
+            METHOD = "GET"
+
+            [route.post_test]
+            PATH = ["/test"]
+            METHOD = "POST"
+
+            [route.put_test]
+            PATH = ["/test"]
+            METHOD = "PUT"
+
+            [route.delete_test]
+            PATH = ["/test"]
+            METHOD = "DELETE"
+
+            [route.socket_test]
+            PATH = ["/test"]
+            METHOD = "SOCKET"
+        };
+        {
+            let mut api = app.module::<ServerError>("mod", api_toml).unwrap();
+            api.get("get_test", |_req, _state| {
+                async move { Ok(Get.to_string()) }.boxed()
+            })
+            .unwrap()
+            .post("post_test", |_req, _state| {
+                async move { Ok(Post.to_string()) }.boxed()
+            })
+            .unwrap()
+            .put("put_test", |_req, _state| {
+                async move { Ok(Put.to_string()) }.boxed()
+            })
+            .unwrap()
+            .delete("delete_test", |_req, _state| {
+                async move { Ok(Delete.to_string()) }.boxed()
+            })
+            .unwrap()
+            .socket(
+                "socket_test",
+                |_req, mut conn: Connection<_, (), _>, _state| {
+                    async move {
+                        conn.send("SOCKET").await.unwrap();
+                        Ok(())
+                    }
+                    .boxed()
+                },
+            )
+            .unwrap();
+        }
+        let port = pick_unused_port().unwrap();
+        let url: Url = format!("http://0.0.0.0:{}", port).parse().unwrap();
+        spawn(app.serve(url.to_string()));
+        wait_for_server(&url, SERVER_STARTUP_RETRIES, SERVER_STARTUP_SLEEP_MS).await;
+
+        let client: surf::Client = surf::Config::new()
+            .set_base_url(url.clone())
+            .try_into()
+            .unwrap();
+        for method in [Get, Post, Put, Delete] {
+            let mut res = client
+                .request(method, url.join("mod/test").unwrap())
+                .send()
+                .await
+                .unwrap();
+            assert_eq!(res.status(), StatusCode::Ok);
+            assert_eq!(res.body_json::<String>().await.unwrap(), method.to_string());
+        }
+
+        let mut socket_url = url.join("mod/test").unwrap();
+        socket_url.set_scheme("ws").unwrap();
+        let mut conn = connect_async(socket_url).await.unwrap().0;
+        let msg = conn.next().await.unwrap().unwrap();
+        let body: String = match msg {
+            Message::Text(m) => serde_json::from_str(&m).unwrap(),
+            Message::Binary(m) => bincode::deserialize(&m).unwrap(),
+            m => panic!("expected Text or Binary message, but got {}", m),
+        };
+        assert_eq!(body, "SOCKET");
+    }
 }

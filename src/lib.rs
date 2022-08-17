@@ -84,7 +84,7 @@
 //! # type Error = tide_disco::error::ServerError;
 //! # #[async_std::main] async fn main() {
 //! # let spec = toml::from_slice(&std::fs::read("/path/to/api.toml").unwrap()).unwrap();
-//! # let api = tide_disco::Api::new(spec).unwrap();
+//! # let api = tide_disco::Api::<State, Error>::new(spec).unwrap();
 //! use tide_disco::App;
 //!
 //! let mut app = App::<State, Error>::with_state(());
@@ -271,10 +271,12 @@ pub mod healthcheck;
 pub mod method;
 pub mod request;
 pub mod route;
+pub mod socket;
 
 pub use api::Api;
 pub use app::App;
 pub use error::Error;
+pub use method::Method;
 pub use request::{RequestError, RequestParam, RequestParamType, RequestParamValue, RequestParams};
 pub use tide::http::{self, StatusCode};
 

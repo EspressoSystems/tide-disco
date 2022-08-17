@@ -55,5 +55,6 @@ url = "2.2.2"
 signal-hook-async-std = "0.2.2"
 
 [dev-dependencies]
+async-tungstenite = { version = "0.17", features = ["async-std-runtime"] }
 portpicker = "0.1"
 tracing-test = "0.2"
