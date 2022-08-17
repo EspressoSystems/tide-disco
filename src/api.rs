@@ -927,15 +927,38 @@ mod test {
         async_std::connect_async,
         tungstenite::{
             client::IntoClientRequest, http::header::*, protocol::frame::coding::CloseCode,
-            protocol::Message,
+            protocol::Message, Error as WsError,
         },
+        WebSocketStream,
     };
     use futures::{
         stream::{iter, once, repeat},
-        FutureExt, SinkExt, StreamExt,
+        AsyncRead, AsyncWrite, FutureExt, SinkExt, StreamExt,
     };
     use portpicker::pick_unused_port;
+    use std::io::ErrorKind;
     use toml::toml;
+
+    async fn check_stream_closed<S>(mut conn: WebSocketStream<S>)
+    where
+        S: AsyncRead + AsyncWrite + Unpin,
+    {
+        let msg = conn.next().await;
+
+        #[cfg(not(windows))]
+        assert!(msg.is_none(), "{:?}", msg);
+
+        // Windows doesn't handle shutdown very gracefully.
+        #[cfg(windows)]
+        match msg {
+            None => {}
+            Some(Err(WsError::Io(err))) if err.kind() == ErrorKind::ConnectionAborted => {}
+            msg => panic!(
+                "expected end of stream or ConnectionAborted error, got {:?}",
+                msg
+            ),
+        }
+    }
 
     #[async_std::test]
     async fn test_socket_endpoint() {
@@ -991,8 +1014,8 @@ mod test {
             .unwrap();
         }
         let port = pick_unused_port().unwrap();
-        let url: Url = format!("http://0.0.0.0:{}", port).parse().unwrap();
-        spawn(app.serve(url.to_string()));
+        let url: Url = format!("http://localhost:{}", port).parse().unwrap();
+        spawn(app.serve(format!("0.0.0.0:{}", port)));
         wait_for_server(&url, SERVER_STARTUP_RETRIES, SERVER_STARTUP_SLEEP_MS).await;
 
         let mut socket_url = url.join("mod/echo").unwrap();
@@ -1060,7 +1083,7 @@ mod test {
             Message::Close(None) => {}
             msg => panic!("expected normal close frame, got {:?}", msg),
         };
-        assert!(conn.next().await.is_none());
+        check_stream_closed(conn).await;
 
         // Test a stream that errors.
         let mut socket_url = url.join("mod/error").unwrap();
@@ -1073,7 +1096,7 @@ mod test {
             }
             msg => panic!("expected error close frame, got {:?}", msg),
         }
-        assert!(conn.next().await.is_none());
+        check_stream_closed(conn).await;
     }
 
     #[async_std::test]
@@ -1113,8 +1136,8 @@ mod test {
                 .unwrap();
         }
         let port = pick_unused_port().unwrap();
-        let url: Url = format!("http://0.0.0.0:{}", port).parse().unwrap();
-        spawn(app.serve(url.to_string()));
+        let url: Url = format!("http://localhost:{}", port).parse().unwrap();
+        spawn(app.serve(format!("0.0.0.0:{}", port)));
         wait_for_server(&url, SERVER_STARTUP_RETRIES, SERVER_STARTUP_SLEEP_MS).await;
 
         // Consume the `nat` stream.
@@ -1142,7 +1165,7 @@ mod test {
             Message::Close(None) => {}
             msg => panic!("expected normal close frame, got {:?}", msg),
         }
-        assert!(conn.next().await.is_none());
+        check_stream_closed(conn).await;
 
         // Test a stream that errors.
         let mut socket_url = url.join("mod/error").unwrap();
@@ -1156,6 +1179,6 @@ mod test {
             }
             msg => panic!("expected error close frame, got {:?}", msg),
         }
-        assert!(conn.next().await.is_none());
+        check_stream_closed(conn).await;
     }
 }

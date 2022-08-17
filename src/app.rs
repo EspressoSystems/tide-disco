@@ -595,8 +595,8 @@ mod test {
             .unwrap();
         }
         let port = pick_unused_port().unwrap();
-        let url: Url = format!("http://0.0.0.0:{}", port).parse().unwrap();
-        spawn(app.serve(url.to_string()));
+        let url: Url = format!("http://localhost:{}", port).parse().unwrap();
+        spawn(app.serve(format!("0.0.0.0:{}", port)));
         wait_for_server(&url, SERVER_STARTUP_RETRIES, SERVER_STARTUP_SLEEP_MS).await;
 
         let client: surf::Client = surf::Config::new()
