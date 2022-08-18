@@ -391,7 +391,7 @@ impl<State, Error> Route<State, Error> {
                 .replace("{{NAME}}", &self.name())))
             (PreEscaped(&meta.heading_routes))
             @for path in self.patterns() {
-                (PreEscaped(meta.route_path.replace("{{PATH}}", path)))
+                (PreEscaped(meta.route_path.replace("{{PATH}}", &format!("/{}/{}", meta.name, path))))
             }
             (PreEscaped(&meta.heading_parameters))
             (PreEscaped(&meta.parameter_table_open))
