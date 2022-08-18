@@ -19,9 +19,11 @@ use crate::{
     request::{RequestParam, RequestParams},
     route::{self, health_check_response, respond_with, Handler, Route, RouteError},
     socket::SocketError,
+    Html,
 };
 use async_std::sync::Arc;
 use futures::future::BoxFuture;
+use maud::html;
 use semver::Version;
 use serde::{Deserialize, Serialize};
 use serde_with::{serde_as, DisplayFromStr};
@@ -105,7 +107,9 @@ impl<State: Send + Sync + 'static, Error: 'static> App<State, Error> {
                 return Err(AppError::ModuleAlreadyExists);
             }
             Entry::Vacant(e) => {
-                e.insert(api.map_err(Error::from));
+                let mut api = api.map_err(Error::from);
+                api.set_name(base_url.to_string());
+                e.insert(api);
             }
         }
 
@@ -197,6 +201,11 @@ impl<State: Send + Sync + 'static, Error: 'static + crate::Error> App<State, Err
     pub async fn serve<L: ToListener<Arc<Self>>>(self, listener: L) -> io::Result<()> {
         let state = Arc::new(self);
         let mut server = tide::Server::with_state(state.clone());
+        for (name, api) in &state.apis {
+            if let Some(path) = api.public() {
+                server.at("/public").at(name).serve_dir(path)?;
+            }
+        }
         server.with(add_error_body::<_, Error>);
         server.with(
             CorsMiddleware::new()
@@ -283,28 +292,49 @@ impl<State: Send + Sync + 'static, Error: 'static + crate::Error> App<State, Err
             });
 
         // Register catch-all routes for discoverability
-        // TODO https://github.com/EspressoSystems/tide-disco/issues/54
         {
             server
                 .at("/")
                 .all(move |req: tide::Request<Arc<Self>>| async move {
-                    Ok(format!("help /\n{:?}", req.url()))
+                    Ok(html! {
+                        "This is a Tide Disco app composed of the following modules:"
+                        (req.state().list_apis())
+                    })
                 });
         }
         {
             server
                 .at("/*")
                 .all(move |req: tide::Request<Arc<Self>>| async move {
-                    Ok(format!("help /*\n{:?}", req.url()))
+                    let api_name = req.url().path_segments().unwrap().next().unwrap();
+                    let state = req.state();
+                    if let Some(api) = state.apis.get(api_name) {
+                        Ok(api.documentation())
+                    } else {
+                        Ok(html! {
+                            "No valid route begins with \"" (api_name) "\". Try routes beginning
+                            with one of the following API identifiers:"
+                            (state.list_apis())
+                        })
+                    }
                 });
-        }
-        // TODO https://github.com/EspressoSystems/tide-disco/issues/55
-        {
-            // This path is not found for address-book
-            //server.at("/public").serve_dir("public/media/")?;
         }
 
         server.listen(listener).await
+    }
+
+    fn list_apis(&self) -> Html {
+        html! {
+            ul {
+                @for (name, api) in &self.apis {
+                    li {
+                        a href=(format!("/{}", name)) {(name)}
+                        " "
+                        (api.description())
+                    }
+                }
+            }
+        }
     }
 
     fn register_route(

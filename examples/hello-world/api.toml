@@ -1,11 +1,19 @@
 [meta]
+NAME = "hello-world"
+DESCRIPTION = "An example of a simple Tide Disco module"
 FORMAT_VERSION = "0.1.0"
 
 [route.greeting]
 PATH = ["greeting/:name"]
 ":name" = "Literal"
+DOC = """
+Return a greeting personalized for `name`.
+"""
 
 [route.setgreeting]
 PATH = ["greeting/:greeting"]
 METHOD = "POST"
 ":greeting" = "Literal"
+DOC = """
+Set the personalized greeting to return from [greeting](#greeting).
+"""

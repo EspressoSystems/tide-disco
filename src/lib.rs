@@ -237,8 +237,6 @@
 use crate::ApiKey::*;
 use async_std::sync::{Arc, RwLock};
 use async_std::task::sleep;
-use async_std::task::spawn;
-use async_std::task::JoinHandle;
 use clap::{CommandFactory, Parser};
 use config::{Config, ConfigError};
 use routefinder::Router;
@@ -254,12 +252,7 @@ use std::{
 };
 use strum_macros::{AsRefStr, EnumString};
 use tagged_base64::TaggedBase64;
-use tide::{
-    http::headers::HeaderValue,
-    http::mime,
-    security::{CorsMiddleware, Origin},
-    Request, Response,
-};
+use tide::http::mime;
 use toml::value::Value;
 use tracing::{error, trace};
 use url::Url;
@@ -279,6 +272,8 @@ pub use error::Error;
 pub use method::Method;
 pub use request::{RequestError, RequestParam, RequestParamType, RequestParamValue, RequestParams};
 pub use tide::http::{self, StatusCode};
+
+pub type Html = maud::Markup;
 
 /// Number of times to poll before failing
 pub const SERVER_STARTUP_RETRIES: u64 = 255;
@@ -336,23 +331,8 @@ pub type AppServerState = ServerState<AppState>;
 #[derive(AsRefStr, Debug)]
 enum ApiKey {
     DOC,
-    FORMAT_VERSION,
-    HEADING_DESCRIPTION,
-    HEADING_ENTRY,
-    HEADING_PARAMETERS,
-    HEADING_ROUTES,
-    HTML_BOTTOM,
-    HTML_TOP,
-    #[strum(serialize = "meta")]
-    META,
     METHOD,
-    MINIMAL_HTML,
-    PARAMETER_NONE,
-    PARAMETER_ROW,
-    PARAMETER_TABLE_CLOSE,
-    PARAMETER_TABLE_OPEN,
     PATH,
-    ROUTE_PATH,
     #[strum(serialize = "route")]
     ROUTE,
 }
@@ -517,76 +497,6 @@ fn get_first_segment(s: &str) -> String {
         .to_string()
 }
 
-/// Compose an HTML fragment documenting all the variations on
-/// a single route
-pub fn document_route(meta: &toml::Value, entry: &toml::Value) -> String {
-    let mut help: String = "".into();
-    let paths = entry[PATH.as_ref()]
-        .as_array()
-        .expect("Expecting TOML array.");
-    let first_segment = get_first_segment(vs(&paths[0]));
-    help += &vk(meta, HEADING_ENTRY.as_ref())
-        .replace("{{METHOD}}", &vk(entry, METHOD.as_ref()))
-        .replace("{{NAME}}", &first_segment);
-    help += &vk(meta, HEADING_ROUTES.as_ref());
-    for path in paths.iter() {
-        help += &vk(meta, ROUTE_PATH.as_ref()).replace("{{PATH}}", vs(path));
-    }
-    help += &vk(meta, HEADING_PARAMETERS.as_ref());
-    help += &vk(meta, PARAMETER_TABLE_OPEN.as_ref());
-    let mut has_parameters = false;
-    for (parameter, ptype) in entry
-        .as_table()
-        .expect("Route definitions must be tables in api.toml")
-        .iter()
-    {
-        if let Some(parameter) = parameter.strip_prefix(':') {
-            has_parameters = true;
-            help += &vk(meta, PARAMETER_ROW.as_ref())
-                .to_owned()
-                .replace("{{NAME}}", parameter)
-                .replace("{{TYPE}}", vs(ptype));
-        }
-    }
-    if !has_parameters {
-        help += &vk(meta, PARAMETER_NONE.as_ref());
-    }
-    help += &vk(meta, PARAMETER_TABLE_CLOSE.as_ref());
-    help += &vk(meta, HEADING_DESCRIPTION.as_ref());
-    help += &markdown::to_html(vk(entry, DOC.as_ref()).trim());
-    help
-}
-
-/// Compose `api.toml` into HTML.
-///
-/// This function iterates over the routes, adding headers and HTML
-/// class attributes to make a documentation page for the web API.
-///
-/// The results of this could be precomputed and cached.
-pub async fn compose_reference_documentation(
-    req: tide::Request<AppServerState>,
-) -> Result<tide::Response, tide::Error> {
-    let package_name = env!("CARGO_PKG_NAME");
-    let package_description = env!("CARGO_PKG_DESCRIPTION");
-    let api = &req.state().app_state;
-    let meta = &api["meta"];
-    let version = vk(meta, FORMAT_VERSION.as_ref());
-    let mut help = vk(meta, HTML_TOP.as_ref())
-        .replace("{{NAME}}", package_name)
-        .replace("{{FORMAT_VERSION}}", &version)
-        .replace("{{DESCRIPTION}}", package_description);
-    if let Some(api_map) = api[ROUTE.as_ref()].as_table() {
-        api_map.values().for_each(|entry| {
-            help += &document_route(meta, entry);
-        });
-    }
-    help = format!("{}{}\n", help, &vk(meta, HTML_BOTTOM.as_ref()));
-    Ok(tide::Response::builder(200)
-        .content_type(tide::http::mime::HTML)
-        .body(help)
-        .build())
-}
-
 #[derive(Clone, Debug, EnumString)]
 pub enum UrlSegment {
     Boolean(Option<bool>),
@@ -619,189 +529,6 @@ impl UrlSegment {
             UrlSegment::Literal(v) => v.is_some(),
         }
     }
-}
-
-// TODO https://github.com/EspressoSystems/tide-disco/issues/54
-pub async fn disco_dispatch(
-    req: Request<AppServerState>,
-    bindings: HashMap<String, UrlSegment>,
-) -> tide::Result {
-    let title = "Valid response here";
-    let body = &format!("<pre>Bindings: {:?}</pre>", bindings);
-    Ok(Response::builder(StatusCode::Ok)
-        .body(
-            vk(&req.state().app_state[META.as_ref()], MINIMAL_HTML.as_ref())
-                .replace("{{TITLE}}", title)
-                .replace("{{BODY}}", body),
-        )
-        .content_type(mime::HTML)
-        .build())
-}
-
-/// Parse URL parameters
-///
-/// We might have a valid match or there may be type errors in the
-/// captures. Type check the captures and report any failures. Return
-/// a tuple indicating success, error messages, and bindings.
-pub fn parse_parameters<T>(
-    api: &Value,
-    first_segment: &str,
-    route_match: &routefinder::Match<T>,
-) -> (bool, String, HashMap<String, UrlSegment>) {
-    let mut bindings = HashMap::<String, UrlSegment>::new();
-    let mut parse_error = false;
-    let mut errors = String::new();
-    for capture in route_match.captures().iter() {
-        let cname = ":".to_owned() + capture.name();
-        // The unwrap is safe thanks to check_api().
-        let vtype = api[ROUTE.as_ref()][&first_segment][cname].as_str().unwrap();
-        // The unwrap is safe thanks to check_api().
-        let stype = UrlSegment::from_str(vtype).unwrap();
-        let binding = UrlSegment::new(capture.value(), stype);
-        if !&binding.is_bound() {
-            parse_error = true;
-            errors = format!(
-                "{}\n<p>Expecting {} for {}.</p>\n",
-                errors,
-                vtype,
-                capture.name(),
-            );
-        }
-        bindings.insert(capture.name().to_string(), binding);
-    }
-    (parse_error, errors, bindings)
-}
-
-// Report invalid URL literal segments
-//
-// First segment matches, but no route matches. The code below
-// generates suggestions for any literal segments that are close to a
-// literal from a path pattern. This function does not check URL
-// parameters.
-//
-// Currently, no suggestions are offered for
-// - Incorrect order of literal segments
-// - Missing literal segment
-// - Extra literal segment
-pub fn check_literals(url: &Url, api: &Value, first_segment: &str) -> String {
-    let mut typos = String::new();
-    let meta = &api["meta"];
-    let api_map = api[ROUTE.as_ref()].as_table().unwrap();
-    api_map[first_segment][PATH.as_ref()]
-        .as_array()
-        .unwrap()
-        .iter()
-        .for_each(|path| {
-            for pseg in path.as_str().unwrap().split('/') {
-                if !pseg.is_empty() && !pseg.starts_with(':') {
-                    url.path_segments().unwrap().for_each(|useg| {
-                        let d = edit_distance::edit_distance(pseg, useg);
-                        if 0 < d && d <= pseg.len() / 2 {
-                            typos = format!(
-                                "{}<p>Found '{}'. Did you mean '{}'?</p>\n",
-                                typos, useg, pseg
-                            );
-                        }
-                    });
-                }
-            }
-        });
-    format!(
-        "<p>Invalid arguments for /{}.</p>\n{}\n{}",
-        &first_segment,
-        typos,
-        document_route(meta, &api[ROUTE.as_ref()][&first_segment])
-    )
-}
-
-pub async fn disco_web_handler(req: Request<AppServerState>) -> tide::Result {
-    let router = &req.state().router;
-    let path = req.url().path();
-    let route_match = router.best_match(path);
-    let first_segment = get_first_segment(path);
-    let mut body: String = "<p>Something went wrong.</p>".into();
-    let mut best: String = "".into();
-    let mut distance = usize::MAX;
-    let api = &req.state().app_state;
-    if let Some(route_match) = route_match {
-        let (parse_error, errors, bindings) = parse_parameters(api, &first_segment, &route_match);
-        if !parse_error {
-            disco_dispatch(req, bindings).await
-        } else {
-            let meta = &api["meta"];
-            let template = vk(&req.state().app_state[META.as_ref()], MINIMAL_HTML.as_ref());
-            let entry = &api[ROUTE.as_ref()].as_table().unwrap()[&first_segment];
-            let content = format!("{}{}", errors, &document_route(meta, entry));
-            body = template
-                .replace("{{TITLE}}", "Route syntax error")
-                .replace("{{BODY}}", &content);
-            Ok(Response::builder(StatusCode::NotFound)
-                .body(body)
-                .content_type(mime::HTML)
-                .build())
-        }
-    } else {
-        // No pattern matched. Note, no wildcards were added, so now
-        // we fuzzy match and give closest help
-        // - Does the first segment match?
-        // - Is the first segment spelled incorrectly?
-        let meta = &api["meta"];
-        if let Some(api_map) = api[ROUTE.as_ref()].as_table() {
-            api_map.keys().for_each(|entry| {
-                let d = edit_distance::edit_distance(&first_segment, entry);
-                if d < distance {
-                    (best, distance) = (entry.into(), d);
-                }
-            });
-            body = if 0 < distance {
-                format!(
-                    "<p>No exact match for /{}. Closet match is /{}.</p>\n{}",
-                    &first_segment,
-                    &best,
-                    document_route(meta, &api[ROUTE.as_ref()][&best])
-                )
-            } else {
-                // First segment matches, but no pattern is satisfied.
-                // Suggest corrections.
-                check_literals(req.url(), api, &first_segment)
-            };
-        }
-        Ok(Response::builder(StatusCode::NotFound)
-            .body(
-                vk(&req.state().app_state[META.as_ref()], MINIMAL_HTML.as_ref())
-                    .replace("{{TITLE}}", "Route not found")
-                    .replace("{{BODY}}", &body),
-            )
-            .content_type(mime::HTML)
-            .build())
-    }
-}
-
-pub async fn init_web_server(
-    base_url: &str,
-    state: AppServerState,
-) -> std::io::Result<JoinHandle<std::io::Result<()>>> {
-    let base_url = Url::parse(base_url).unwrap();
-    let mut web_server = tide::with_state(state);
-    web_server.with(
-        CorsMiddleware::new()
-            .allow_methods("GET, POST".parse::<HeaderValue>().unwrap())
-            .allow_headers("*".parse::<HeaderValue>().unwrap())
-            .allow_origin(Origin::from("*"))
-            .allow_credentials(true),
-    );
-
-    // TODO https://github.com/EspressoSystems/tide-disco/issues/58
-    web_server.at("/help").get(compose_reference_documentation);
-    web_server.at("/help/").get(compose_reference_documentation);
-    web_server.at("/healthcheck").get(healthcheck);
-    web_server.at("/healthcheck/").get(healthcheck);
-
-    web_server.at("/").all(disco_web_handler);
-    web_server.at("/*").all(disco_web_handler);
-    web_server.at("/public").serve_dir("public/media/")?;
-
-    Ok(spawn(web_server.listen(base_url.to_string())))
 }
 
 /// Get the path to `api.toml`
