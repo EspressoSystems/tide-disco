@@ -232,6 +232,15 @@ pub enum RouteParseError {
 
 impl<State, Error> Route<State, Error> {
     /// Parse a [Route] from a TOML specification.
+    ///
+    /// The specification must be a table containing at least the following keys:
+    /// * `PATH`: an array of patterns for this route
+    /// * for each route parameter (route segment starting with `:`), a key with the same name as
+    ///   the parameter (including the `:`) whose value is the type of the parameter
+    ///
+    /// In addition, the following optional keys may be specified:
+    /// * `METHOD`: the method to use to dispatch the route (default `GET`)
+    /// * `DOC`: Markdown description of the route
     pub fn new(name: String, spec: &toml::Value) -> Result<Self, RouteParseError> {
         let paths: Vec<String> = spec["PATH"]
             .as_array()
