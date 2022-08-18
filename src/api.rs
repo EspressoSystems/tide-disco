@@ -16,7 +16,7 @@ use crate::{
     method::{Method, ReadState, WriteState},
     request::RequestParams,
     route::{self, *},
-    socket,
+    socket, Html,
 };
 use async_trait::async_trait;
 use derive_more::From;
@@ -24,6 +24,7 @@ use futures::{
     future::{BoxFuture, Future},
     stream::BoxStream,
 };
+use maud::{html, PreEscaped};
 use semver::Version;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use serde_with::{serde_as, DisplayFromStr};
@@ -31,19 +32,20 @@ use snafu::{OptionExt, ResultExt, Snafu};
 use std::collections::hash_map::{Entry, HashMap, IntoValues, Values};
 use std::fmt::Display;
 use std::ops::Index;
+use std::path::PathBuf;
 use tide::http::content::Accept;
 
 /// An error encountered when parsing or constructing an [Api].
 #[derive(Clone, Debug, Snafu)]
 pub enum ApiError {
     Route { source: RouteParseError },
+    ApiMustBeTable,
     MissingRoutesTable,
     RoutesMustBeTable,
     UndefinedRoute,
     HandlerAlreadyRegistered,
     IncorrectMethod { expected: Method, actual: Method },
-    MetaMustBeTable,
-    MissingMetaTable,
+    InvalidMetaTable { source: toml::de::Error },
     MissingFormatVersion,
     InvalidFormatVersion,
     AmbiguousRoutes { route1: String, route2: String },
@@ -62,16 +64,202 @@ pub struct ApiVersion {
     pub spec_version: Version,
 }
 
+/// Metadata used for describing and documenting an API.
+///
+/// [ApiMetadata] contains version information about the API, as well as optional HTML fragments to
+/// customize the formatting of automatically generated API documentation. Each of the supported
+/// HTML fragments is optional and will be filled in with a reasonable default if not provided. Some
+/// of the HTML fragments may contain "placeholders", which are identifiers enclosed in `{{ }}`,
+/// like `{{SOME_PLACEHOLDER}}`. These will be replaced by contextual information when the
+/// documentation is generated. The placeholders supported by each HTML fragment are documented
+/// below.
+#[serde_as]
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub struct ApiMetadata {
+    /// The name of this API.
+    ///
+    /// Note that the name of the API may be overridden if the API is registered with an app using
+    /// a different name.
+    #[serde(default = "meta_defaults::name")]
+    pub name: String,
+
+    /// A description of this API.
+    #[serde(default = "meta_defaults::description")]
+    pub description: String,
+
+    /// The version of the Tide Disco API specification format.
+    ///
+    /// If not specified, the version of this crate will be used.
+    #[serde_as(as = "DisplayFromStr")]
+    #[serde(default = "meta_defaults::format_version")]
+    pub format_version: Version,
+
+    /// HTML to be prepended to automatically generated documentation.
+    ///
+    /// # Placeholders
+    ///
+    /// * `NAME`: the name of the API
+    /// * `DESCRIPTION`: the description provided in `Cargo.toml`
+    /// * `VERSION`: the version of the API
+    /// * `FORMAT_VERSION`: the `FORMAT_VERSION` of the API
+    /// * `PUBLIC`: the URL where the public directory for this API is being served
+    #[serde(default = "meta_defaults::html_top")]
+    pub html_top: String,
+
+    /// HTML to be appended to automatically generated documentation.
+    #[serde(default = "meta_defaults::html_bottom")]
+    pub html_bottom: String,
+
+    /// The heading for documentation of a route.
+    ///
+    /// # Placeholders
+    ///
+    /// * `METHOD`: the method of the route
+    /// * `NAME`: the name of the route
+    #[serde(default = "meta_defaults::heading_entry")]
+    pub heading_entry: String,
+
+    /// The heading preceding documentation of all routes in this API.
+    #[serde(default = "meta_defaults::heading_routes")]
+    pub heading_routes: String,
+
+    /// The heading preceding documentation of route parameters.
+    #[serde(default = "meta_defaults::heading_parameters")]
+    pub heading_parameters: String,
+
+    /// The heading preceding documentation of a route description.
+    #[serde(default = "meta_defaults::heading_description")]
+    pub heading_description: String,
+
+    /// HTML formatting the path of a route.
+    ///
+    /// # Placeholders
+    ///
+    /// * `PATH`: the path being formatted
+    #[serde(default = "meta_defaults::route_path")]
+    pub route_path: String,
+
+    /// HTML preceding the contents of a table documenting the parameters of a route.
+    #[serde(default = "meta_defaults::parameter_table_open")]
+    pub parameter_table_open: String,
+
+    /// HTML closing a table documenting the parameters of a route.
+    #[serde(default = "meta_defaults::parameter_table_close")]
+    pub parameter_table_close: String,
+
+    /// HTML formatting an entry in a table documenting the parameters of a route.
+    ///
+    /// # Placeholders
+    ///
+    /// * `NAME`: the parameter being documented
+    /// * `TYPE`: the type of the parameter being documented
+    #[serde(default = "meta_defaults::parameter_row")]
+    pub parameter_row: String,
+
+    /// Documentation to insert in the parameters section of a route with no parameters.
+    #[serde(default = "meta_defaults::parameter_none")]
+    pub parameter_none: String,
+}
+
+impl Default for ApiMetadata {
+    fn default() -> Self {
+        // Deserialize an empty table, using the `serde` defaults for every field.
+        toml::Value::Table(Default::default()).try_into().unwrap()
+    }
+}
+
+mod meta_defaults {
+    use super::Version;
+
+    pub fn name() -> String {
+        "default-tide-disco-api".to_string()
+    }
+
+    pub fn description() -> String {
+        "Default Tide Disco API".to_string()
+    }
+
+    pub fn format_version() -> Version {
+        "0.1.0".parse().unwrap()
+    }
+
+    pub fn html_top() -> String {
+        "
+        <!DOCTYPE html>
+        <html lang='en'>
+          <head>
+            <meta charset='utf-8'>
+            <title>{{NAME}} Reference</title>
+            <link rel='stylesheet' href='{{PUBLIC}}/css/style.css'>
+            <script src='{{PUBLIC}}/js/script.js'></script>
+            <link rel='icon' type='image/svg+xml'
+             href='/public/favicon.svg'>
+          </head>
+          <body>
+            <div><a href='/'><img src='{{PUBLIC}}/espressosys_logo.svg'
+                      alt='Espresso Systems Logo'
+                      /></a></div>
+            <h1>{{NAME}} API {{VERSION}} Reference</h1>
+            <p>{{DESCRIPTION}}</p>
+        "
+        .to_string()
+    }
+
+    pub fn html_bottom() -> String {
+        "
+            <h1>&nbsp;</h1>
+            <p>Copyright © 2022 Espresso Systems. All rights reserved.</p>
+          </body>
+        </html>
+        "
+        .to_string()
+    }
+
+    pub fn heading_entry() -> String {
+        "<a name='{{NAME}}'><h3 class='entry'><span class='meth'>{{METHOD}}</span> {{NAME}}</h3></a>\n".to_string()
+    }
+
+    pub fn heading_routes() -> String {
+        "<h3>Routes</h3>\n".to_string()
+    }
+    pub fn heading_parameters() -> String {
+        "<h3>Parameters</h3>\n".to_string()
+    }
+    pub fn heading_description() -> String {
+        "<h3>Description</h3>\n".to_string()
+    }
+
+    pub fn route_path() -> String {
+        "<p class='path'>{{PATH}}</p>\n".to_string()
+    }
+
+    pub fn parameter_table_open() -> String {
+        "<table>\n".to_string()
+    }
+    pub fn parameter_table_close() -> String {
+        "</table>\n\n".to_string()
+    }
+    pub fn parameter_row() -> String {
+        "<tr><td class='parameter'>{{NAME}}</td><td class='type'>{{TYPE}}</td></tr>\n".to_string()
+    }
+    pub fn parameter_none() -> String {
+        "<div class='meta'>None</div>".to_string()
+    }
+}
+
 /// A description of an API.
 ///
 /// An [Api] is a structured representation of an `api.toml` specification. It contains API-level
 /// metadata and descriptions of all of the routes in the specification. It can be parsed from a
 /// TOML file and registered as a module of an [App](crate::App).
 pub struct Api<State, Error> {
+    meta: ApiMetadata,
     routes: HashMap<String, Route<State, Error>>,
     routes_by_path: HashMap<String, Vec<String>>,
     health_check: Option<HealthCheckHandler<State>>,
-    version: ApiVersion,
+    api_version: Option<Version>,
+    public: Option<PathBuf>,
 }
 
 impl<'a, State, Error> IntoIterator for &'a Api<State, Error> {
@@ -120,14 +308,19 @@ impl<'a, State, Error> Iterator for RoutesWithPath<'a, State, Error> {
 
 impl<State, Error> Api<State, Error> {
     /// Parse an API from a TOML specification.
-    pub fn new(api: toml::Value) -> Result<Self, ApiError> {
+    pub fn new(mut api: toml::Value) -> Result<Self, ApiError> {
+        let meta = match api
+            .as_table_mut()
+            .context(ApiMustBeTableSnafu)?
+            .remove("meta")
+        {
+            Some(meta) => toml::Value::try_into(meta)
+                .map_err(|source| ApiError::InvalidMetaTable { source })?,
+            None => ApiMetadata::default(),
+        };
         let routes = match api.get("route") {
             Some(routes) => routes.as_table().context(RoutesMustBeTableSnafu)?,
             None => return Err(ApiError::MissingRoutesTable),
-        };
-        let meta = match api.get("meta") {
-            Some(meta) => meta.as_table().context(MetaMustBeTableSnafu)?,
-            None => return Err(ApiError::MissingMetaTable),
         };
         // Collect routes into a [HashMap] indexed by route name.
         let routes = routes
@@ -162,19 +355,12 @@ impl<State, Error> Api<State, Error> {
             }
         }
         Ok(Self {
+            meta,
             routes,
             routes_by_path,
             health_check: None,
-            version: ApiVersion {
-                api_version: None,
-                spec_version: meta
-                    .get("FORMAT_VERSION")
-                    .context(MissingFormatVersionSnafu)?
-                    .as_str()
-                    .context(InvalidFormatVersionSnafu)?
-                    .parse()
-                    .map_err(|_| ApiError::InvalidFormatVersion)?,
-            },
+            api_version: None,
+            public: None,
         })
     }
 
@@ -212,7 +398,13 @@ impl<State, Error> Api<State, Error> {
     /// # }
     /// ```
     pub fn with_version(&mut self, version: Version) -> &mut Self {
-        self.version.api_version = Some(version);
+        self.api_version = Some(version);
+        self
+    }
+
+    /// Serve the contents of `dir` at the URL `/public/{{NAME}}`.
+    pub fn with_public(&mut self, dir: PathBuf) -> &mut Self {
+        self.public = Some(dir);
         self
     }
 
@@ -824,7 +1016,14 @@ impl<State, Error> Api<State, Error> {
 
     /// Get the version of this API.
     pub fn version(&self) -> ApiVersion {
-        self.version.clone()
+        ApiVersion {
+            api_version: self.api_version.clone(),
+            spec_version: self.meta.format_version.clone(),
+        }
+    }
+
+    pub(crate) fn public(&self) -> Option<&PathBuf> {
+        self.public.as_ref()
     }
 
     /// Create a new [Api] which is just like this one, except has a transformed `Error` type.
@@ -838,6 +1037,7 @@ impl<State, Error> Api<State, Error> {
         State: 'static + Send + Sync,
     {
         Api {
+            meta: self.meta,
             routes: self
                 .routes
                 .into_iter()
@@ -845,8 +1045,37 @@ impl<State, Error> Api<State, Error> {
                 .collect(),
             routes_by_path: self.routes_by_path,
             health_check: self.health_check,
-            version: self.version,
+            api_version: self.api_version,
+            public: self.public,
         }
+    }
+
+    pub(crate) fn set_name(&mut self, name: String) {
+        self.meta.name = name;
+    }
+
+    /// Compose an HTML page documenting all the routes in this API.
+    pub fn documentation(&self) -> Html {
+        html! {
+            (PreEscaped(self.meta.html_top
+                .replace("{{NAME}}", &self.meta.name)
+                .replace("{{DESCRIPTION}}", &self.meta.description)
+                .replace("{{VERSION}}", &match &self.api_version {
+                    Some(version) => version.to_string(),
+                    None => "(no version)".to_string(),
+                })
+                .replace("{{FORMAT_VERSION}}", &self.meta.format_version.to_string())
+                .replace("{{PUBLIC}}", &format!("/public/{}", self.meta.name))))
+            @for route in self.routes.values() {
+                (route.documentation(&self.meta))
+            }
+            (PreEscaped(&self.meta.html_bottom))
+        }
+    }
+
+    /// The description of this API from the specification.
+    pub fn description(&self) -> &str {
+        &self.meta.description
     }
 }
 
@@ -927,7 +1156,7 @@ mod test {
         async_std::connect_async,
         tungstenite::{
             client::IntoClientRequest, http::header::*, protocol::frame::coding::CloseCode,
-            protocol::Message, Error as WsError,
+            protocol::Message,
         },
         WebSocketStream,
     };
@@ -936,8 +1165,12 @@ mod test {
         AsyncRead, AsyncWrite, FutureExt, SinkExt, StreamExt,
     };
     use portpicker::pick_unused_port;
-    use std::io::ErrorKind;
     use toml::toml;
+
+    #[cfg(windows)]
+    use async_tungstenite::tungstenite::Error as WsError;
+    #[cfg(windows)]
+    use std::io::ErrorKind;
 
     async fn check_stream_closed<S>(mut conn: WebSocketStream<S>)
     where

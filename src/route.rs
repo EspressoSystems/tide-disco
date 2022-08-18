@@ -1,12 +1,15 @@
 use crate::{
+    api::ApiMetadata,
     healthcheck::HealthCheck,
     method::Method,
     request::{best_response_type, RequestError, RequestParam, RequestParamType, RequestParams},
     socket::{self, SocketError},
+    Html,
 };
 use async_trait::async_trait;
 use derive_more::From;
 use futures::future::{BoxFuture, Future, FutureExt};
+use maud::{html, PreEscaped};
 use serde::Serialize;
 use snafu::{OptionExt, Snafu};
 use std::collections::HashMap;
@@ -223,6 +226,7 @@ pub enum RouteParseError {
     MissingPath,
     IncorrectPathType,
     IncorrectParamType,
+    IncorrectDocType,
     RouteMustBeTable,
 }
 
@@ -310,7 +314,10 @@ impl<State, Error> Route<State, Error> {
                 })
                 .collect::<Result<_, _>>()?,
             handler,
-            doc: String::new(),
+            doc: match spec.get("DOC") {
+                Some(doc) => markdown::to_html(doc.as_str().context(IncorrectDocTypeSnafu)?),
+                None => String::new(),
+            },
         })
     }
 
@@ -364,6 +371,32 @@ impl<State, Error> Route<State, Error> {
             patterns: self.patterns,
             params: self.params,
             doc: self.doc,
+        }
+    }
+
+    /// Compose an HTML fragment documenting all the variations on this route.
+    pub fn documentation(&self, meta: &ApiMetadata) -> Html {
+        html! {
+            (PreEscaped(meta.heading_entry
+                .replace("{{METHOD}}", &self.method().to_string())
+                .replace("{{NAME}}", &self.name())))
+            (PreEscaped(&meta.heading_routes))
+            @for path in self.patterns() {
+                (PreEscaped(meta.route_path.replace("{{PATH}}", path)))
+            }
+            (PreEscaped(&meta.heading_parameters))
+            (PreEscaped(&meta.parameter_table_open))
+            @for param in self.params() {
+                (PreEscaped(meta.parameter_row
+                    .replace("{{NAME}}", &param.name)
+                    .replace("{{TYPE}}", &param.param_type.to_string())))
+            }
+            @if self.params().is_empty() {
+                (PreEscaped(&meta.parameter_none))
+            }
+            (PreEscaped(&meta.parameter_table_close))
+            (PreEscaped(&meta.heading_description))
+            (PreEscaped(&self.doc))
         }
     }
 }

@@ -4,6 +4,8 @@ use serde::{Deserialize, Serialize};
 use snafu::Snafu;
 use std::fs;
 use std::io;
+use std::path::PathBuf;
+use std::str::FromStr;
 use tide_disco::{http::StatusCode, Api, App, Error, RequestError};
 use tracing::info;
 
@@ -41,7 +43,12 @@ async fn serve(port: u16) -> io::Result<()> {
         "examples/hello-world/api.toml",
     )?)?)
     .unwrap();
-    api.with_version(env!("CARGO_PKG_VERSION").parse().unwrap());
+    api.with_version(env!("CARGO_PKG_VERSION").parse().unwrap())
+        .with_public(
+            PathBuf::from_str(env!("CARGO_MANIFEST_DIR"))
+                .unwrap()
+                .join("public/media"),
+        );
 
     // Can invoke by browsing
     //    `http://0.0.0.0:8080/hello/greeting/dude`
