@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":[["RouteError","An error returned by a route handler."],["RouteParseError",""]],"struct":[["MapErr",""],["Route","All the information we need to parse, typecheck, and dispatch a request."]]};

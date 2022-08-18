@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":[["HealthStatus","Common health statuses of an application."]],"trait":[["HealthCheck","A response to a healthcheck endpoint."]]};

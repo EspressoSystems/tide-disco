@@ -1,0 +1,3 @@
+(function() {var implementors = {};
+implementors["tide_disco"] = [{"text":"impl&lt;State, Error&gt; <a class=\"trait\" href=\"https://doc.rust-lang.org/1.63.0/core/ops/index/trait.Index.html\" title=\"trait core::ops::index::Index\">Index</a>&lt;&amp;<a class=\"primitive\" href=\"https://doc.rust-lang.org/1.63.0/std/primitive.str.html\">str</a>&gt; for <a class=\"struct\" href=\"tide_disco/api/struct.Api.html\" title=\"struct tide_disco::api::Api\">Api</a>&lt;State, Error&gt;","synthetic":false,"types":["tide_disco::api::Api"]}];
+if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

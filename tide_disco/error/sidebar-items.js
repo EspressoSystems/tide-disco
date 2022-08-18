@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":[["ServerError","The simplest possible implementation of [Error]."]],"trait":[["Error","Errors which can be serialized in a response body."]]};

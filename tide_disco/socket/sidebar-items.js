@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":[["SocketError","An error returned by a socket handler."]],"struct":[["Connection","A connection facilitating bi-directional, asynchronous communication with a client."]]};
