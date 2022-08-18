@@ -31,8 +31,9 @@ use serde_with::{serde_as, DisplayFromStr};
 use snafu::{OptionExt, ResultExt, Snafu};
 use std::collections::hash_map::{Entry, HashMap, IntoValues, Values};
 use std::fmt::Display;
+use std::fs;
 use std::ops::Index;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use tide::http::content::Accept;
 
 /// An error encountered when parsing or constructing an [Api].
@@ -49,6 +50,7 @@ pub enum ApiError {
     MissingFormatVersion,
     InvalidFormatVersion,
     AmbiguousRoutes { route1: String, route2: String },
+    CannotReadToml { reason: String },
 }
 
 /// Version information about an API.
@@ -362,6 +364,18 @@ impl<State, Error> Api<State, Error> {
             api_version: None,
             public: None,
         })
+    }
+
+    /// Create an [Api] by reading a TOML specification from a file.
+    pub fn from_file<P: AsRef<Path>>(path: P) -> Result<Self, ApiError> {
+        Self::new(
+            toml::from_slice(&fs::read(path).map_err(|err| ApiError::CannotReadToml {
+                reason: err.to_string(),
+            })?)
+            .map_err(|err| ApiError::CannotReadToml {
+                reason: err.to_string(),
+            })?,
+        )
     }
 
     /// Iterate over groups of routes with the same path.
