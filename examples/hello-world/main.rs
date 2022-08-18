@@ -2,7 +2,6 @@ use async_std::sync::RwLock;
 use futures::FutureExt;
 use serde::{Deserialize, Serialize};
 use snafu::Snafu;
-use std::fs;
 use std::io;
 use tide_disco::{http::StatusCode, Api, App, Error, RequestError};
 use tracing::info;
@@ -37,10 +36,8 @@ async fn serve(port: u16) -> io::Result<()> {
     let mut app = App::<_, HelloError>::with_state(RwLock::new("Hello".to_string()));
     app.with_version(env!("CARGO_PKG_VERSION").parse().unwrap());
 
-    let mut api = Api::<RwLock<String>, HelloError>::new(toml::from_slice(&fs::read(
-        "examples/hello-world/api.toml",
-    )?)?)
-    .unwrap();
+    let mut api =
+        Api::<RwLock<String>, HelloError>::from_file("examples/hello-world/api.toml").unwrap();
     api.with_version(env!("CARGO_PKG_VERSION").parse().unwrap());
 
     // Can invoke by browsing
