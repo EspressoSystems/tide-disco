@@ -23,6 +23,8 @@ use crate::{
 };
 use async_std::sync::Arc;
 use futures::future::BoxFuture;
+use include_dir::{include_dir, Dir};
+use lazy_static::lazy_static;
 use maud::html;
 use semver::Version;
 use serde::{Deserialize, Serialize};
@@ -30,8 +32,11 @@ use serde_with::{serde_as, DisplayFromStr};
 use snafu::{ResultExt, Snafu};
 use std::collections::hash_map::{Entry, HashMap};
 use std::convert::Infallible;
+use std::env;
+use std::fs;
 use std::io;
 use std::ops::{Deref, DerefMut};
+use std::path::PathBuf;
 use tide::{
     http::{headers::HeaderValue, mime},
     security::{CorsMiddleware, Origin},
@@ -196,15 +201,37 @@ impl<State: Send + Sync + 'static, Error: 'static> App<State, Error> {
     }
 }
 
+static DEFAULT_PUBLIC_DIR: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/public/media");
+lazy_static! {
+    static ref DEFAULT_PUBLIC_PATH: PathBuf = {
+        // The contents of the default public directory are included in the binary. The first time
+        // the default directory is used, if ever, we extract them to a directory on the host file
+        // system and return the path to that directory.
+        let path = dirs::data_local_dir()
+            .unwrap_or_else(|| env::current_dir().unwrap_or_else(|_| PathBuf::from("./")))
+            .join("tide-disco/public/media");
+        // If the path already exists, move it aside so we can update it.
+        let _ = fs::rename(&path, path.with_extension("old"));
+        DEFAULT_PUBLIC_DIR.extract(&path).unwrap();
+        path
+    };
+}
+
 impl<State: Send + Sync + 'static, Error: 'static + crate::Error> App<State, Error> {
     /// Serve the [App] asynchronously.
     pub async fn serve<L: ToListener<Arc<Self>>>(self, listener: L) -> io::Result<()> {
         let state = Arc::new(self);
         let mut server = tide::Server::with_state(state.clone());
         for (name, api) in &state.apis {
-            if let Some(path) = api.public() {
-                server.at("/public").at(name).serve_dir(path)?;
-            }
+            // Clippy complains if the only non-trivial operation in an `unwrap_or_else` closure is
+            // a deref, but for `lazy_static` types, deref is an effectful operation that (in this
+            // case) causes a directory to be renamed and another extracted. We only want to execute
+            // this if we need to (if `api.public()` is `None`) so we disable the lint.
+            #[allow(clippy::unnecessary_lazy_evaluations)]
+            server
+                .at("/public")
+                .at(name)
+                .serve_dir(api.public().unwrap_or_else(|| &DEFAULT_PUBLIC_PATH))?;
         }
         server.with(add_error_body::<_, Error>);
         server.with(

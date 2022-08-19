@@ -12,6 +12,7 @@ body {
 }
 h1, h2, h3 { margin-left: 1.5em; }
 p, table, ul, ol { margin-left: 3em; margin-top: 0; }
+pre { margin-left: 4em; margin-top: 0; }
 h1 { font-size: 1.4em; margin-top: 3em; color: gray; }
 h2 { font-size: 1.2em; margin-top: 3em; color: gray; font-variant: small-caps; }
 h3 { font-size: 1.1em; margin-top: 1em; margin-bottom: 0; color: gray; font-variant: small-caps; }
