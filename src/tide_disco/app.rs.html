@@ -661,6 +661,33 @@
 <span id="655">655</span>
 <span id="656">656</span>
 <span id="657">657</span>
+<span id="658">658</span>
+<span id="659">659</span>
+<span id="660">660</span>
+<span id="661">661</span>
+<span id="662">662</span>
+<span id="663">663</span>
+<span id="664">664</span>
+<span id="665">665</span>
+<span id="666">666</span>
+<span id="667">667</span>
+<span id="668">668</span>
+<span id="669">669</span>
+<span id="670">670</span>
+<span id="671">671</span>
+<span id="672">672</span>
+<span id="673">673</span>
+<span id="674">674</span>
+<span id="675">675</span>
+<span id="676">676</span>
+<span id="677">677</span>
+<span id="678">678</span>
+<span id="679">679</span>
+<span id="680">680</span>
+<span id="681">681</span>
+<span id="682">682</span>
+<span id="683">683</span>
+<span id="684">684</span>
 </pre><pre class="rust"><code><span class="comment">// COPYRIGHT100 (c) 2022 Espresso Systems (espressosys.com)</span>
 <span class="comment">//</span>
 <span class="comment">// This program is free software: you can redistribute it and/or modify it under the terms of the</span>
@@ -686,6 +713,8 @@
 };
 <span class="kw">use</span> <span class="ident">async_std::sync::Arc</span>;
 <span class="kw">use</span> <span class="ident">futures::future::BoxFuture</span>;
+<span class="kw">use</span> <span class="ident">include_dir</span>::{<span class="ident">include_dir</span>, <span class="ident">Dir</span>};
+<span class="kw">use</span> <span class="ident">lazy_static::lazy_static</span>;
 <span class="kw">use</span> <span class="ident">maud::html</span>;
 <span class="kw">use</span> <span class="ident">semver::Version</span>;
 <span class="kw">use</span> <span class="ident">serde</span>::{<span class="ident">Deserialize</span>, <span class="ident">Serialize</span>};
@@ -693,8 +722,11 @@
 <span class="kw">use</span> <span class="ident">snafu</span>::{<span class="ident">ResultExt</span>, <span class="ident">Snafu</span>};
 <span class="kw">use</span> <span class="ident">std::collections::hash_map</span>::{<span class="ident">Entry</span>, <span class="ident">HashMap</span>};
 <span class="kw">use</span> <span class="ident">std::convert::Infallible</span>;
+<span class="kw">use</span> <span class="ident">std::env</span>;
+<span class="kw">use</span> <span class="ident">std::fs</span>;
 <span class="kw">use</span> <span class="ident">std::io</span>;
 <span class="kw">use</span> <span class="ident">std::ops</span>::{<span class="ident">Deref</span>, <span class="ident">DerefMut</span>};
+<span class="kw">use</span> <span class="ident">std::path::PathBuf</span>;
 <span class="kw">use</span> <span class="ident">tide</span>::{
     <span class="ident">http</span>::{<span class="ident">headers::HeaderValue</span>, <span class="ident">mime</span>},
     <span class="ident">security</span>::{<span class="ident">CorsMiddleware</span>, <span class="ident">Origin</span>},
@@ -859,15 +891,37 @@
     }
 }
 
+<span class="kw">static</span> <span class="ident">DEFAULT_PUBLIC_DIR</span>: <span class="ident">Dir</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span> <span class="op">=</span> <span class="macro">include_dir!</span>(<span class="string">&quot;$CARGO_MANIFEST_DIR/public/media&quot;</span>);
+<span class="macro">lazy_static!</span> {
+    <span class="kw">static</span> <span class="kw-2">ref</span> <span class="ident">DEFAULT_PUBLIC_PATH</span>: <span class="ident">PathBuf</span> <span class="op">=</span> {
+        <span class="comment">// The contents of the default public directory are included in the binary. The first time</span>
+        <span class="comment">// the default directory is used, if ever, we extract them to a directory on the host file</span>
+        <span class="comment">// system and return the path to that directory.</span>
+        <span class="kw">let</span> <span class="ident">path</span> <span class="op">=</span> <span class="ident">dirs::data_local_dir</span>()
+            .<span class="ident">unwrap_or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="ident">env::current_dir</span>().<span class="ident">unwrap_or_else</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">PathBuf::from</span>(<span class="string">&quot;./&quot;</span>)))
+            .<span class="ident">join</span>(<span class="string">&quot;tide-disco/public/media&quot;</span>);
+        <span class="comment">// If the path already exists, move it aside so we can update it.</span>
+        <span class="kw">let</span> <span class="kw">_</span> <span class="op">=</span> <span class="ident">fs::rename</span>(<span class="kw-2">&amp;</span><span class="ident">path</span>, <span class="ident">path</span>.<span class="ident">with_extension</span>(<span class="string">&quot;old&quot;</span>));
+        <span class="ident">DEFAULT_PUBLIC_DIR</span>.<span class="ident">extract</span>(<span class="kw-2">&amp;</span><span class="ident">path</span>).<span class="ident">unwrap</span>();
+        <span class="ident">path</span>
+    };
+}
+
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">State</span>: <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Sync</span> <span class="op">+</span> <span class="lifetime">&#39;static</span>, <span class="ident">Error</span>: <span class="lifetime">&#39;static</span> <span class="op">+</span> <span class="ident"><span class="kw">crate</span>::Error</span><span class="op">&gt;</span> <span class="ident">App</span><span class="op">&lt;</span><span class="ident">State</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
     <span class="doccomment">/// Serve the [App] asynchronously.</span>
     <span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">serve</span><span class="op">&lt;</span><span class="ident">L</span>: <span class="ident">ToListener</span><span class="op">&lt;</span><span class="ident">Arc</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span>(<span class="self">self</span>, <span class="ident">listener</span>: <span class="ident">L</span>) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">state</span> <span class="op">=</span> <span class="ident">Arc::new</span>(<span class="self">self</span>);
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">server</span> <span class="op">=</span> <span class="ident">tide::Server::with_state</span>(<span class="ident">state</span>.<span class="ident">clone</span>());
         <span class="kw">for</span> (<span class="ident">name</span>, <span class="ident">api</span>) <span class="kw">in</span> <span class="kw-2">&amp;</span><span class="ident">state</span>.<span class="ident">apis</span> {
-            <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">path</span>) <span class="op">=</span> <span class="ident">api</span>.<span class="ident">public</span>() {
-                <span class="ident">server</span>.<span class="ident">at</span>(<span class="string">&quot;/public&quot;</span>).<span class="ident">at</span>(<span class="ident">name</span>).<span class="ident">serve_dir</span>(<span class="ident">path</span>)<span class="question-mark">?</span>;
-            }
+            <span class="comment">// Clippy complains if the only non-trivial operation in an `unwrap_or_else` closure is</span>
+            <span class="comment">// a deref, but for `lazy_static` types, deref is an effectful operation that (in this</span>
+            <span class="comment">// case) causes a directory to be renamed and another extracted. We only want to execute</span>
+            <span class="comment">// this if we need to (if `api.public()` is `None`) so we disable the lint.</span>
+            <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">clippy::unnecessary_lazy_evaluations</span>)]</span>
+            <span class="ident">server</span>
+                .<span class="ident">at</span>(<span class="string">&quot;/public&quot;</span>)
+                .<span class="ident">at</span>(<span class="ident">name</span>)
+                .<span class="ident">serve_dir</span>(<span class="ident">api</span>.<span class="ident">public</span>().<span class="ident">unwrap_or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="kw-2">&amp;</span><span class="ident">DEFAULT_PUBLIC_PATH</span>))<span class="question-mark">?</span>;
         }
         <span class="ident">server</span>.<span class="ident">with</span>(<span class="ident">add_error_body</span>::<span class="op">&lt;</span><span class="kw">_</span>, <span class="ident">Error</span><span class="op">&gt;</span>);
         <span class="ident">server</span>.<span class="ident">with</span>(
