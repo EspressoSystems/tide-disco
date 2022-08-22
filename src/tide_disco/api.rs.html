@@ -2204,7 +2204,7 @@
     <span class="doccomment">///</span>
     <span class="doccomment">/// # fn ex(api: &amp;mut Api&lt;State, tide_disco::RequestError&gt;) {</span>
     <span class="doccomment">/// api.post(&quot;replace&quot;, |req, state| async move {</span>
-    <span class="doccomment">///     *state = req.u64_param(&quot;new_state&quot;)?;</span>
+    <span class="doccomment">///     *state = req.integer_param(&quot;new_state&quot;)?;</span>
     <span class="doccomment">///     Ok(())</span>
     <span class="doccomment">/// }.boxed());</span>
     <span class="doccomment">/// # }</span>

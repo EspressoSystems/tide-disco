@@ -25,7 +25,7 @@ this explicitly if you want to track the version of additional behavior or inter
 are not encompassed by the sub-modules of this application.</p>
 <p>If you set an application version, it is a good idea to use the version of the application
 crate found in Cargo.toml. This can be automatically found at build time using the
-environment variable <code>CARGO_PKG_VERSION</code> and the [env] macro. As long as the following code
+environment variable <code>CARGO_PKG_VERSION</code> and the <a href="https://doc.rust-lang.org/1.63.0/core/macro.env.html" title="env!">env!</a> macro. As long as the following code
 is contained in the application crate, it should result in a reasonable version:</p>
 
 <div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="ident">app</span>.<span class="ident">with_version</span>(<span class="macro">env!</span>(<span class="string">&quot;CARGO_PKG_VERSION&quot;</span>).<span class="ident">parse</span>().<span class="ident">unwrap</span>());</code></pre></div>
