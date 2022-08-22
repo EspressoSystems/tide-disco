@@ -840,8 +840,6 @@
 <span id="834">834</span>
 <span id="835">835</span>
 <span id="836">836</span>
-<span id="837">837</span>
-<span id="838">838</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::method::Method</span>;
 <span class="kw">use</span> <span class="ident">ark_serialize::CanonicalDeserialize</span>;
 <span class="kw">use</span> <span class="ident">jf_utils::Tagged</span>;
@@ -1274,7 +1272,7 @@
         <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Ok</span>(<span class="ident">param</span>) <span class="op">=</span> <span class="ident">req</span>.<span class="ident">param</span>(<span class="kw-2">&amp;</span><span class="ident">formal</span>.<span class="ident">name</span>) {
             <span class="ident"><span class="self">Self</span>::parse</span>(<span class="ident">param</span>, <span class="ident">formal</span>).<span class="ident">map</span>(<span class="prelude-val">Some</span>)
         } <span class="kw">else</span> {
-            <span class="macro">unimplemented!</span>(<span class="string">&quot;check for the parameter in the request body&quot;</span>)
+            <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>)
         }
     }
 
@@ -1397,7 +1395,6 @@
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">RequestParam</span> {
     <span class="kw">pub</span> <span class="ident">name</span>: <span class="ident">String</span>,
     <span class="kw">pub</span> <span class="ident">param_type</span>: <span class="ident">RequestParamType</span>,
-    <span class="kw">pub</span> <span class="ident">required</span>: <span class="ident">bool</span>,
 }
 
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">best_response_type</span>(
@@ -1457,7 +1454,6 @@
             <span class="kw-2">&amp;</span><span class="ident">RequestParam</span> {
                 <span class="ident">name</span>: <span class="ident">name</span>.<span class="ident">to_string</span>(),
                 <span class="ident">param_type</span>: <span class="ident">ty</span>,
-                <span class="ident">required</span>: <span class="bool-val">true</span>,
             },
         )
         .<span class="ident">unwrap</span>()
