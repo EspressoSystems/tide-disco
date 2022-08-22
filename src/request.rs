@@ -3,6 +3,7 @@ use ark_serialize::CanonicalDeserialize;
 use jf_utils::Tagged;
 use serde::{Deserialize, Serialize};
 use snafu::{OptionExt, Snafu};
+use std::any::type_name;
 use std::collections::HashMap;
 use std::fmt::Display;
 use strum_macros::EnumString;
@@ -15,23 +16,17 @@ pub enum RequestError {
     MissingParam { name: String },
 
     #[snafu(display(
-        "incorrect type for parameter {}: {} cannot be converted to {}",
-        name,
-        param_type,
+        "incorrect parameter type: {} cannot be converted to {}",
+        actual,
         expected
     ))]
     IncorrectParamType {
-        name: String,
-        param_type: RequestParamType,
-        expected: String,
+        actual: RequestParamType,
+        expected: RequestParamType,
     },
 
-    #[snafu(display("value {} for {} is too large for type {}", value, name, expected))]
-    IntegerOverflow {
-        value: u128,
-        name: String,
-        expected: String,
-    },
+    #[snafu(display("value {} is too large for type {}", value, expected))]
+    IntegerOverflow { value: u128, expected: String },
 
     #[snafu(display("Unable to deserialize from JSON"))]
     Json,
@@ -234,102 +229,150 @@ impl RequestParams {
     where
         Name: ?Sized + Display,
     {
-        self.params
-            .get(&name.to_string())
-            .context(MissingParamSnafu {
-                name: name.to_string(),
-            })
+        self.opt_param(name).context(MissingParamSnafu {
+            name: name.to_string(),
+        })
+    }
+
+    /// Get the value of a named optional parameter.
+    ///
+    /// Like [param](Self::param), but returns [None] instead of [Err] if the parametre is missing.
+    pub fn opt_param<Name>(&self, name: &Name) -> Option<&RequestParamValue>
+    where
+        Name: ?Sized + Display,
+    {
+        self.params.get(&name.to_string())
     }
 
     /// Get the value of a named parameter and convert it to an integer.
     ///
-    /// Like [param](Self::param), but returns [None] if the parameter value cannot be converted to
-    /// an integer.
-    pub fn integer_param<Name>(&self, name: &Name) -> Result<u128, RequestError>
+    /// Like [param](Self::param), but returns [Err] if the parameter value cannot be converted to
+    /// an integer of the desired size.
+    pub fn integer_param<Name, T>(&self, name: &Name) -> Result<T, RequestError>
     where
         Name: ?Sized + Display,
+        T: TryFrom<u128>,
     {
-        self.param(name).and_then(|val| {
-            val.as_integer().context(IncorrectParamTypeSnafu {
-                name: name.to_string(),
-                param_type: val.param_type(),
-                expected: "Integer".to_string(),
-            })
+        self.opt_integer_param(name)?.context(MissingParamSnafu {
+            name: name.to_string(),
         })
     }
 
-    /// Get the value of a named parameter and convert it to a [u64].
+    /// Get the value of a named optional parameter and convert it to an integer.
     ///
-    /// Like [param](Self::param), but returns [None] if the parameter value cannot be converted to
-    /// a [u64].
-    pub fn u64_param<Name>(&self, name: &Name) -> Result<u64, RequestError>
+    /// Like [opt_param](Self::opt_param), but returns [Err] if the parameter value cannot be
+    /// converted to an integer of the desired size.
+    pub fn opt_integer_param<Name, T>(&self, name: &Name) -> Result<Option<T>, RequestError>
+    where
+        Name: ?Sized + Display,
+        T: TryFrom<u128>,
+    {
+        self.opt_param(name).map(|val| val.as_integer()).transpose()
+    }
+
+    /// Get the value of a named parameter and convert it to a [bool].
+    ///
+    /// Like [param](Self::param), but returns [Err] if the parameter value cannot be converted to
+    /// a [bool].
+    pub fn boolean_param<Name>(&self, name: &Name) -> Result<bool, RequestError>
     where
         Name: ?Sized + Display,
     {
-        self.integer_param(name).and_then(|i| {
-            i.try_into().ok().context(IntegerOverflowSnafu {
-                name: name.to_string(),
-                value: i,
-                expected: "u64".to_string(),
-            })
+        self.opt_boolean_param(name)?.context(MissingParamSnafu {
+            name: name.to_string(),
         })
+    }
+
+    /// Get the value of a named optional parameter and convert it to a [bool].
+    ///
+    /// Like [opt_param](Self::opt_param), but returns [Err] if the parameter value cannot be
+    /// converted to a [bool].
+    pub fn opt_boolean_param<Name>(&self, name: &Name) -> Result<Option<bool>, RequestError>
+    where
+        Name: ?Sized + Display,
+    {
+        self.opt_param(name).map(|val| val.as_boolean()).transpose()
     }
 
     /// Get the value of a named parameter and convert it to a string.
     ///
-    /// Like [param](Self::param), but returns [None] if the parameter value cannot be converted to
+    /// Like [param](Self::param), but returns [Err] if the parameter value cannot be converted to
     /// a [String].
     pub fn string_param<Name>(&self, name: &Name) -> Result<&str, RequestError>
     where
         Name: ?Sized + Display,
     {
-        self.param(name).and_then(|val| {
-            val.as_string().context(IncorrectParamTypeSnafu {
-                name: name.to_string(),
-                param_type: val.param_type(),
-                expected: "String".to_string(),
-            })
+        self.opt_string_param(name)?.context(MissingParamSnafu {
+            name: name.to_string(),
         })
+    }
+
+    /// Get the value of a named optional parameter and convert it to a string.
+    ///
+    /// Like [opt_param](Self::opt_param), but returns [Err] if the parameter value cannot be
+    /// converted to a [String].
+    pub fn opt_string_param<Name>(&self, name: &Name) -> Result<Option<&str>, RequestError>
+    where
+        Name: ?Sized + Display,
+    {
+        self.opt_param(name).map(|val| val.as_string()).transpose()
     }
 
     /// Get the value of a named parameter and convert it to [TaggedBase64].
     ///
-    /// Like [param](Self::param), but returns [None] if the parameter value cannot be converted to
+    /// Like [param](Self::param), but returns [Err] if the parameter value cannot be converted to
     /// [TaggedBase64].
     pub fn tagged_base64_param<Name>(&self, name: &Name) -> Result<&TaggedBase64, RequestError>
     where
         Name: ?Sized + Display,
     {
-        self.param(name).and_then(|val| {
-            val.as_tagged_base64().context(IncorrectParamTypeSnafu {
+        self.opt_tagged_base64_param(name)?
+            .context(MissingParamSnafu {
                 name: name.to_string(),
-                param_type: val.param_type(),
-                expected: "TaggedBase64".to_string(),
             })
-        })
+    }
+
+    /// Get the value of a named optional parameter and convert it to [TaggedBase64].
+    ///
+    /// Like [opt_param](Self::opt_param), but returns [Err] if the parameter value cannot be
+    /// converted to [TaggedBase64].
+    pub fn opt_tagged_base64_param<Name>(
+        &self,
+        name: &Name,
+    ) -> Result<Option<&TaggedBase64>, RequestError>
+    where
+        Name: ?Sized + Display,
+    {
+        self.opt_param(name)
+            .map(|val| val.as_tagged_base64())
+            .transpose()
     }
 
     /// Get the value of a named parameter and convert it to a custom type through [TaggedBase64].
     ///
-    /// Like [param](Self::param), but returns [None] if the parameter value cannot be converted to
+    /// Like [param](Self::param), but returns [Err] if the parameter value cannot be converted to
     /// `T`.
     pub fn blob_param<Name, T>(&self, name: &Name) -> Result<T, RequestError>
     where
         Name: ?Sized + Display,
         T: Tagged + CanonicalDeserialize,
     {
-        self.tagged_base64_param(name).and_then(|tb64| {
-            if tb64.tag() == T::tag() {
-                T::deserialize(&*tb64.value()).map_err(|source| RequestError::ArkSerialize {
-                    reason: source.to_string(),
-                })
-            } else {
-                Err(RequestError::TagMismatch {
-                    actual: tb64.tag(),
-                    expected: T::tag(),
-                })
-            }
+        self.opt_blob_param(name)?.context(MissingParamSnafu {
+            name: name.to_string(),
         })
+    }
+
+    /// Get the value of a named optional parameter and convert it to a custom type through
+    /// [TaggedBase64].
+    ///
+    /// Like [opt_param](Self::opt_param), but returns [Err] if the parameter value cannot be
+    /// converted to `T`.
+    pub fn opt_blob_param<Name, T>(&self, name: &Name) -> Result<Option<T>, RequestError>
+    where
+        Name: ?Sized + Display,
+        T: Tagged + CanonicalDeserialize,
+    {
+        self.opt_param(name).map(|val| val.as_blob()).transpose()
     }
 
     pub fn body_bytes(&self) -> Vec<u8> {
@@ -365,7 +408,7 @@ impl RequestParams {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum RequestParamValue {
     Boolean(bool),
     Hexadecimal(u128),
@@ -385,43 +428,40 @@ impl RequestParamValue {
         formal: &RequestParam,
     ) -> Result<Option<Self>, RequestError> {
         if let Ok(param) = req.param(&formal.name) {
-            match formal.param_type {
-                RequestParamType::Literal => {
-                    Ok(Some(RequestParamValue::Literal(param.to_string())))
-                }
-                RequestParamType::Boolean => {
-                    Ok(Some(RequestParamValue::Boolean(param.parse().map_err(
-                        |err: std::str::ParseBoolError| RequestError::InvalidParam {
-                            param_type: "Boolean".to_string(),
-                            reason: err.to_string(),
-                        },
-                    )?)))
-                }
-                RequestParamType::Integer => {
-                    Ok(Some(RequestParamValue::Integer(param.parse().map_err(
-                        |err: std::num::ParseIntError| RequestError::InvalidParam {
-                            param_type: "Integer".to_string(),
-                            reason: err.to_string(),
-                        },
-                    )?)))
-                }
-                RequestParamType::Hexadecimal => Ok(Some(RequestParamValue::Hexadecimal(
-                    param.parse().map_err(|err: std::num::ParseIntError| {
-                        RequestError::InvalidParam {
-                            param_type: "Hexadecimal".to_string(),
-                            reason: err.to_string(),
-                        }
-                    })?,
-                ))),
-                RequestParamType::TaggedBase64 => Ok(Some(RequestParamValue::TaggedBase64(
-                    TaggedBase64::parse(param).map_err(|err| RequestError::InvalidParam {
-                        param_type: "TaggedBase64".to_string(),
-                        reason: err.to_string(),
-                    })?,
-                ))),
-            }
+            Self::parse(param, formal).map(Some)
         } else {
             unimplemented!("check for the parameter in the request body")
+        }
+    }
+
+    pub fn parse(s: &str, formal: &RequestParam) -> Result<Self, RequestError> {
+        match formal.param_type {
+            RequestParamType::Literal => Ok(RequestParamValue::Literal(s.to_string())),
+            RequestParamType::Boolean => Ok(RequestParamValue::Boolean(s.parse().map_err(
+                |err: std::str::ParseBoolError| RequestError::InvalidParam {
+                    param_type: "Boolean".to_string(),
+                    reason: err.to_string(),
+                },
+            )?)),
+            RequestParamType::Integer => Ok(RequestParamValue::Integer(s.parse().map_err(
+                |err: std::num::ParseIntError| RequestError::InvalidParam {
+                    param_type: "Integer".to_string(),
+                    reason: err.to_string(),
+                },
+            )?)),
+            RequestParamType::Hexadecimal => Ok(RequestParamValue::Hexadecimal(
+                s.parse()
+                    .map_err(|err: std::num::ParseIntError| RequestError::InvalidParam {
+                        param_type: "Hexadecimal".to_string(),
+                        reason: err.to_string(),
+                    })?,
+            )),
+            RequestParamType::TaggedBase64 => Ok(RequestParamValue::TaggedBase64(
+                TaggedBase64::parse(s).map_err(|err| RequestError::InvalidParam {
+                    param_type: "TaggedBase64".to_string(),
+                    reason: err.to_string(),
+                })?,
+            )),
         }
     }
 
@@ -435,36 +475,72 @@ impl RequestParamValue {
         }
     }
 
-    pub fn as_string(&self) -> Option<&str> {
+    pub fn as_string(&self) -> Result<&str, RequestError> {
         match self {
-            Self::Literal(s) => Some(s),
-            _ => None,
+            Self::Literal(s) => Ok(s),
+            _ => Err(RequestError::IncorrectParamType {
+                expected: RequestParamType::Literal,
+                actual: self.param_type(),
+            }),
         }
     }
 
-    pub fn as_integer(&self) -> Option<u128> {
+    pub fn as_integer<T: TryFrom<u128>>(&self) -> Result<T, RequestError> {
         match self {
-            Self::Integer(x) | Self::Hexadecimal(x) => Some(*x),
-            _ => None,
+            Self::Integer(x) | Self::Hexadecimal(x) => {
+                T::try_from(*x).map_err(|_| RequestError::IntegerOverflow {
+                    value: *x,
+                    expected: type_name::<T>().to_string(),
+                })
+            }
+            _ => Err(RequestError::IncorrectParamType {
+                expected: RequestParamType::Integer,
+                actual: self.param_type(),
+            }),
         }
     }
 
-    pub fn as_boolean(&self) -> Option<bool> {
+    pub fn as_boolean(&self) -> Result<bool, RequestError> {
         match self {
-            Self::Boolean(x) => Some(*x),
-            _ => None,
+            Self::Boolean(x) => Ok(*x),
+            _ => Err(RequestError::IncorrectParamType {
+                expected: RequestParamType::Boolean,
+                actual: self.param_type(),
+            }),
         }
     }
 
-    pub fn as_tagged_base64(&self) -> Option<&TaggedBase64> {
+    pub fn as_tagged_base64(&self) -> Result<&TaggedBase64, RequestError> {
         match self {
-            Self::TaggedBase64(x) => Some(x),
-            _ => None,
+            Self::TaggedBase64(x) => Ok(x),
+            _ => Err(RequestError::IncorrectParamType {
+                expected: RequestParamType::TaggedBase64,
+                actual: self.param_type(),
+            }),
+        }
+    }
+
+    pub fn as_blob<T>(&self) -> Result<T, RequestError>
+    where
+        T: Tagged + CanonicalDeserialize,
+    {
+        let tb64 = self.as_tagged_base64()?;
+        if tb64.tag() == T::tag() {
+            T::deserialize(&*tb64.value()).map_err(|source| RequestError::ArkSerialize {
+                reason: source.to_string(),
+            })
+        } else {
+            Err(RequestError::TagMismatch {
+                actual: tb64.tag(),
+                expected: T::tag(),
+            })
         }
     }
 }
 
-#[derive(Clone, Copy, Debug, EnumString, strum_macros::Display, Deserialize, Serialize)]
+#[derive(
+    Clone, Copy, Debug, EnumString, strum_macros::Display, Deserialize, Serialize, PartialEq, Eq,
+)]
 pub enum RequestParamType {
     Boolean,
     Hexadecimal,
@@ -515,5 +591,248 @@ pub(crate) fn best_response_type(
         Ok(available[0].clone())
     } else {
         Err(RequestError::UnsupportedContentType)
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use crate::StatusCode;
+    use ark_serialize::*;
+    use jf_utils::tagged_blob;
+
+    fn default_headers() -> Headers {
+        let res = tide::Response::builder(StatusCode::Ok).build();
+        let h: &Headers = res.as_ref();
+        h.clone()
+    }
+
+    fn param(ty: RequestParamType, name: &str, val: &str) -> RequestParamValue {
+        RequestParamValue::parse(
+            val,
+            &RequestParam {
+                name: name.to_string(),
+                param_type: ty,
+                required: true,
+            },
+        )
+        .unwrap()
+    }
+
+    fn request_from_params(
+        params: impl IntoIterator<Item = (String, RequestParamValue)>,
+    ) -> RequestParams {
+        RequestParams {
+            headers: default_headers(),
+            post_data: Default::default(),
+            params: params.into_iter().collect(),
+            method: Method::get(),
+        }
+    }
+
+    #[tagged_blob("BLOB")]
+    #[derive(Clone, Debug, PartialEq, Eq, CanonicalSerialize, CanonicalDeserialize)]
+    struct Blob {
+        data: String,
+    }
+
+    #[test]
+    fn test_params() {
+        let tb64 = TaggedBase64::new("TAG", &[0; 20]).unwrap();
+        let blob = Blob {
+            data: "blob".to_string(),
+        };
+        let string_param = param(RequestParamType::Literal, "string", "hello");
+        let integer_param = param(RequestParamType::Integer, "integer", "42");
+        let boolean_param = param(RequestParamType::Boolean, "boolean", "true");
+        let tagged_base64_param = param(
+            RequestParamType::TaggedBase64,
+            "tagged_base64",
+            &tb64.to_string(),
+        );
+        let blob_param = param(RequestParamType::TaggedBase64, "blob", &blob.to_string());
+        let params = vec![
+            ("string".to_string(), string_param.clone()),
+            ("integer".to_string(), integer_param.clone()),
+            ("boolean".to_string(), boolean_param.clone()),
+            ("tagged_base64".to_string(), tagged_base64_param.clone()),
+            ("blob".to_string(), blob_param.clone()),
+        ];
+        let req = request_from_params(params);
+
+        // Check untyped param.
+        assert_eq!(*req.param("string").unwrap(), string_param);
+        assert_eq!(*req.param("integer").unwrap(), integer_param);
+        assert_eq!(*req.param("boolean").unwrap(), boolean_param);
+        assert_eq!(*req.param("tagged_base64").unwrap(), tagged_base64_param);
+        assert_eq!(*req.param("blob").unwrap(), blob_param);
+        match req.param("nosuchparam").unwrap_err() {
+            RequestError::MissingParam { name } if name == "nosuchparam" => {}
+            err => panic!("expecting MissingParam {{ nosuchparam }}, got {:?}", err),
+        }
+
+        // Check untyped optional param.
+        assert_eq!(*req.opt_param("string").unwrap(), string_param);
+        assert_eq!(*req.opt_param("integer").unwrap(), integer_param);
+        assert_eq!(*req.opt_param("boolean").unwrap(), boolean_param);
+        assert_eq!(
+            *req.opt_param("tagged_base64").unwrap(),
+            tagged_base64_param
+        );
+        assert_eq!(*req.opt_param("blob").unwrap(), blob_param);
+        assert_eq!(req.opt_param("nosuchparam"), None);
+
+        // Check typed params: correct type, incorrect type, and missing cases.
+        assert_eq!(req.string_param("string").unwrap(), "hello");
+        match req.string_param("integer").unwrap_err() {
+            RequestError::IncorrectParamType { actual, expected }
+                if actual == RequestParamType::Integer && expected == RequestParamType::Literal => {
+            }
+            err => panic!(
+                "expecting IncorrectParamType {{ Integer, String }}, got {:?}",
+                err
+            ),
+        }
+        match req.string_param("nosuchparam").unwrap_err() {
+            RequestError::MissingParam { name } if name == "nosuchparam" => {}
+            err => panic!("expecting MissingParam {{ nosuchparam }}, got {:?}", err),
+        };
+
+        assert_eq!(req.integer_param::<_, usize>("integer").unwrap(), 42);
+        match req.integer_param::<_, usize>("string").unwrap_err() {
+            RequestError::IncorrectParamType { actual, expected }
+                if actual == RequestParamType::Literal && expected == RequestParamType::Integer => {
+            }
+            err => panic!(
+                "expecting IncorrectParamType {{ Literal, Integer }}, got {:?}",
+                err
+            ),
+        }
+        match req.integer_param::<_, usize>("nosuchparam").unwrap_err() {
+            RequestError::MissingParam { name } if name == "nosuchparam" => {}
+            err => panic!("expecting MissingParam {{ nosuchparam }}, got {:?}", err),
+        };
+
+        assert_eq!(req.boolean_param("boolean").unwrap(), true);
+        match req.boolean_param("integer").unwrap_err() {
+            RequestError::IncorrectParamType { actual, expected }
+                if actual == RequestParamType::Integer && expected == RequestParamType::Boolean => {
+            }
+            err => panic!(
+                "expecting IncorrectParamType {{ Integer, Boolean }}, got {:?}",
+                err
+            ),
+        }
+        match req.boolean_param("nosuchparam").unwrap_err() {
+            RequestError::MissingParam { name } if name == "nosuchparam" => {}
+            err => panic!("expecting MissingParam {{ nosuchparam }}, got {:?}", err),
+        };
+
+        assert_eq!(*req.tagged_base64_param("tagged_base64").unwrap(), tb64);
+        match req.tagged_base64_param("integer").unwrap_err() {
+            RequestError::IncorrectParamType { actual, expected }
+                if actual == RequestParamType::Integer
+                    && expected == RequestParamType::TaggedBase64 => {}
+            err => panic!(
+                "expecting IncorrectParamType {{ Integer, TaggedBase64 }}, got {:?}",
+                err
+            ),
+        }
+        match req.tagged_base64_param("nosuchparam").unwrap_err() {
+            RequestError::MissingParam { name } if name == "nosuchparam" => {}
+            err => panic!("expecting MissingParam {{ nosuchparam }}, got {:?}", err),
+        };
+
+        assert_eq!(req.blob_param::<_, Blob>("blob").unwrap(), blob);
+        match req.tagged_base64_param("integer").unwrap_err() {
+            RequestError::IncorrectParamType { actual, expected }
+                if actual == RequestParamType::Integer
+                    && expected == RequestParamType::TaggedBase64 => {}
+            err => panic!(
+                "expecting IncorrectParamType {{ Integer, TaggedBase64 }}, got {:?}",
+                err
+            ),
+        }
+        match req.tagged_base64_param("nosuchparam").unwrap_err() {
+            RequestError::MissingParam { name } if name == "nosuchparam" => {}
+            err => panic!("expecting MissingParam {{ nosuchparam }}, got {:?}", err),
+        };
+
+        // Check typed optional params: correct type, incorrect type, and missing cases.
+        assert_eq!(req.opt_string_param("string").unwrap().unwrap(), "hello");
+        match req.opt_string_param("integer").unwrap_err() {
+            RequestError::IncorrectParamType { actual, expected }
+                if actual == RequestParamType::Integer && expected == RequestParamType::Literal => {
+            }
+            err => panic!(
+                "expecting IncorrectParamType {{ Integer, String }}, got {:?}",
+                err
+            ),
+        }
+        assert_eq!(req.opt_string_param("nosuchparam").unwrap(), None);
+
+        assert_eq!(
+            req.opt_integer_param::<_, usize>("integer")
+                .unwrap()
+                .unwrap(),
+            42
+        );
+        match req.opt_integer_param::<_, usize>("string").unwrap_err() {
+            RequestError::IncorrectParamType { actual, expected }
+                if actual == RequestParamType::Literal && expected == RequestParamType::Integer => {
+            }
+            err => panic!(
+                "expecting IncorrectParamType {{ Literal, Integer }}, got {:?}",
+                err
+            ),
+        }
+        assert_eq!(
+            req.opt_integer_param::<_, usize>("nosuchparam").unwrap(),
+            None
+        );
+
+        assert_eq!(req.opt_boolean_param("boolean").unwrap().unwrap(), true);
+        match req.opt_boolean_param("integer").unwrap_err() {
+            RequestError::IncorrectParamType { actual, expected }
+                if actual == RequestParamType::Integer && expected == RequestParamType::Boolean => {
+            }
+            err => panic!(
+                "expecting IncorrectParamType {{ Integer, Boolean }}, got {:?}",
+                err
+            ),
+        }
+        assert_eq!(req.opt_boolean_param("nosuchparam").unwrap(), None);
+
+        assert_eq!(
+            *req.opt_tagged_base64_param("tagged_base64")
+                .unwrap()
+                .unwrap(),
+            tb64
+        );
+        match req.opt_tagged_base64_param("integer").unwrap_err() {
+            RequestError::IncorrectParamType { actual, expected }
+                if actual == RequestParamType::Integer
+                    && expected == RequestParamType::TaggedBase64 => {}
+            err => panic!(
+                "expecting IncorrectParamType {{ Integer, TaggedBase64 }}, got {:?}",
+                err
+            ),
+        }
+        assert_eq!(req.opt_tagged_base64_param("nosuchparam").unwrap(), None);
+
+        assert_eq!(
+            req.opt_blob_param::<_, Blob>("blob").unwrap().unwrap(),
+            blob
+        );
+        match req.opt_blob_param::<_, Blob>("integer").unwrap_err() {
+            RequestError::IncorrectParamType { actual, expected }
+                if actual == RequestParamType::Integer
+                    && expected == RequestParamType::TaggedBase64 => {}
+            err => panic!(
+                "expecting IncorrectParamType {{ Integer, TaggedBase64 }}, got {:?}",
+                err
+            ),
+        }
+        assert_eq!(req.opt_blob_param::<_, Blob>("nosuchparam").unwrap(), None);
     }
 }

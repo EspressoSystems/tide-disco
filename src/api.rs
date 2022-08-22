@@ -767,7 +767,7 @@ impl<State, Error> Api<State, Error> {
     ///
     /// # fn ex(api: &mut Api<State, tide_disco::RequestError>) {
     /// api.post("replace", |req, state| async move {
-    ///     *state = req.u64_param("new_state")?;
+    ///     *state = req.integer_param("new_state")?;
     ///     Ok(())
     /// }.boxed());
     /// # }

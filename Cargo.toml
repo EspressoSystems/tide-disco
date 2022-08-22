@@ -57,6 +57,8 @@ url = "2.2.2"
 signal-hook-async-std = "0.2.2"
 
 [dev-dependencies]
+ark-serialize = { version = "0.3.0", features = ["derive"] }
+ark-std = "0.3.0"
 async-tungstenite = { version = "0.17", features = ["async-std-runtime"] }
 portpicker = "0.1"
 tracing-test = "0.2"

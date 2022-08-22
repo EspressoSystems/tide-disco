@@ -137,7 +137,7 @@ impl<State: Send + Sync + 'static, Error: 'static> App<State, Error> {
     ///
     /// If you set an application version, it is a good idea to use the version of the application
     /// crate found in Cargo.toml. This can be automatically found at build time using the
-    /// environment variable `CARGO_PKG_VERSION` and the [env] macro. As long as the following code
+    /// environment variable `CARGO_PKG_VERSION` and the [env!] macro. As long as the following code
     /// is contained in the application crate, it should result in a reasonable version:
     ///
     /// ```
