@@ -681,4 +681,64 @@ mod test {
         };
         assert_eq!(body, "SOCKET");
     }
+
+    /// Test route dispatching for routes with patterns containing different parmaeters
+    #[async_std::test]
+    async fn test_param_dispatch() {
+        let mut app = App::<_, ServerError>::with_state(RwLock::new(()));
+        let api_toml = toml! {
+            [meta]
+            FORMAT_VERSION = "0.1.0"
+
+            [route.test]
+            PATH = ["/test/a/:a", "/test/b/:b"]
+            ":a" = "Integer"
+            ":b" = "Boolean"
+        };
+        {
+            let mut api = app.module::<ServerError>("mod", api_toml).unwrap();
+            api.get("test", |req, _state| {
+                async move {
+                    if let Some(a) = req.opt_integer_param::<_, i32>("a")? {
+                        Ok(("a", a.to_string()))
+                    } else {
+                        Ok(("b", req.boolean_param("b")?.to_string()))
+                    }
+                }
+                .boxed()
+            })
+            .unwrap();
+        }
+        let port = pick_unused_port().unwrap();
+        let url: Url = format!("http://localhost:{}", port).parse().unwrap();
+        spawn(app.serve(format!("0.0.0.0:{}", port)));
+        wait_for_server(&url, SERVER_STARTUP_RETRIES, SERVER_STARTUP_SLEEP_MS).await;
+
+        let client: surf::Client = surf::Config::new()
+            .set_base_url(url.clone())
+            .try_into()
+            .unwrap();
+
+        let mut res = client
+            .get(url.join("mod/test/a/42").unwrap())
+            .send()
+            .await
+            .unwrap();
+        assert_eq!(res.status(), StatusCode::Ok);
+        assert_eq!(
+            res.body_json::<(String, String)>().await.unwrap(),
+            ("a".to_string(), "42".to_string())
+        );
+
+        let mut res = client
+            .get(url.join("mod/test/b/true").unwrap())
+            .send()
+            .await
+            .unwrap();
+        assert_eq!(res.status(), StatusCode::Ok);
+        assert_eq!(
+            res.body_json::<(String, String)>().await.unwrap(),
+            ("b".to_string(), "true".to_string())
+        );
+    }
 }

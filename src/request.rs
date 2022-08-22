@@ -430,7 +430,7 @@ impl RequestParamValue {
         if let Ok(param) = req.param(&formal.name) {
             Self::parse(param, formal).map(Some)
         } else {
-            unimplemented!("check for the parameter in the request body")
+            Ok(None)
         }
     }
 
@@ -553,7 +553,6 @@ pub enum RequestParamType {
 pub struct RequestParam {
     pub name: String,
     pub param_type: RequestParamType,
-    pub required: bool,
 }
 
 pub(crate) fn best_response_type(
@@ -613,7 +612,6 @@ mod test {
             &RequestParam {
                 name: name.to_string(),
                 param_type: ty,
-                required: true,
             },
         )
         .unwrap()

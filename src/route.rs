@@ -253,23 +253,21 @@ impl<State, Error> Route<State, Error> {
                     .to_string()
             })
             .collect();
-        let mut pmap = HashMap::<String, RequestParam>::new();
+        let mut params = HashMap::<String, RequestParam>::new();
         for path in paths.iter() {
             for seg in path.split('/') {
-                if seg.starts_with(':') {
-                    // TODO https://github.com/EspressoSystems/tide-disco/issues/56
-                    let ptype = RequestParamType::from_str(
+                if let Some(name) = seg.strip_prefix(':') {
+                    let param_type = RequestParamType::from_str(
                         spec[seg]
                             .as_str()
                             .ok_or(RouteParseError::InvalidTypeExpression)?,
                     )
                     .map_err(|_| RouteParseError::UnrecognizedType)?;
-                    pmap.insert(
+                    params.insert(
                         seg.to_string(),
                         RequestParam {
-                            name: seg.to_string(),
-                            param_type: ptype,
-                            required: true,
+                            name: name.to_string(),
+                            param_type,
                         },
                     );
                 }
@@ -300,28 +298,7 @@ impl<State, Error> Route<State, Error> {
                     .collect::<Result<_, _>>()?,
                 _ => return Err(RouteParseError::IncorrectPathType),
             },
-            params: spec
-                .as_table()
-                .context(RouteMustBeTableSnafu)?
-                .iter()
-                .filter_map(|(key, val)| {
-                    if !key.starts_with(':') {
-                        return None;
-                    }
-                    let ty = match val.as_str() {
-                        Some(ty) => match ty.parse() {
-                            Ok(ty) => ty,
-                            Err(_) => return Some(Err(RouteParseError::IncorrectParamType)),
-                        },
-                        None => return Some(Err(RouteParseError::IncorrectParamType)),
-                    };
-                    Some(Ok(RequestParam {
-                        name: key[1..].to_string(),
-                        param_type: ty,
-                        required: true,
-                    }))
-                })
-                .collect::<Result<_, _>>()?,
+            params: params.into_values().collect(),
             handler,
             doc: match spec.get("DOC") {
                 Some(doc) => markdown::to_html(doc.as_str().context(IncorrectDocTypeSnafu)?),
