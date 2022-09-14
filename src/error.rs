@@ -58,11 +58,11 @@ pub trait Error: std::error::Error + Serialize + DeserializeOwned + Send + Sync 
 /// You can use this to get up and running quickly if you don't want to create your own error type.
 /// However, we strongly reccommend creating a custom error type and implementing [Error] for it, so
 /// that you can provide more informative and structured error responses specific to your API.
-#[derive(Clone, Debug, Snafu, Serialize, Deserialize)]
+#[derive(Clone, Debug, Snafu, Serialize, Deserialize, PartialEq, Eq)]
 #[snafu(display("Error {}: {}", status, message))]
 pub struct ServerError {
-    status: StatusCode,
-    message: String,
+    pub status: StatusCode,
+    pub message: String,
 }
 
 impl Error for ServerError {
