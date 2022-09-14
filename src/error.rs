@@ -61,8 +61,27 @@ pub trait Error: std::error::Error + Serialize + DeserializeOwned + Send + Sync 
 #[derive(Clone, Debug, Snafu, Serialize, Deserialize, PartialEq, Eq)]
 #[snafu(display("Error {}: {}", status, message))]
 pub struct ServerError {
+    #[serde(with = "ser_status")]
     pub status: StatusCode,
     pub message: String,
+}
+
+mod ser_status {
+    //! The deserialization implementation for [StatusCode] uses `deserialize_any` unnecessarily,
+    //! which prevents it from working with [bincode].
+    use super::*;
+    use serde::{
+        de::{Deserializer, Error},
+        ser::Serializer,
+    };
+
+    pub fn serialize<S: Serializer>(status: &StatusCode, s: S) -> Result<S::Ok, S::Error> {
+        u16::from(*status).serialize(s)
+    }
+
+    pub fn deserialize<'de, D: Deserializer<'de>>(d: D) -> Result<StatusCode, D::Error> {
+        u16::deserialize(d)?.try_into().map_err(D::Error::custom)
+    }
 }
 
 impl Error for ServerError {
