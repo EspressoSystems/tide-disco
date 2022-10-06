@@ -237,7 +237,7 @@
 use crate::ApiKey::*;
 use async_std::sync::{Arc, RwLock};
 use async_std::task::sleep;
-use clap::{CommandFactory, Parser};
+use clap::{Args, CommandFactory, Parser};
 use config::{Config, ConfigError};
 use routefinder::Router;
 use serde::Deserialize;
@@ -281,7 +281,7 @@ pub const SERVER_STARTUP_RETRIES: u64 = 255;
 /// Number of milliseconds to sleep between attempts
 pub const SERVER_STARTUP_SLEEP_MS: u64 = 100;
 
-#[derive(Parser, Debug)]
+#[derive(clap::Args, Debug)]
 #[clap(author, version, about, long_about = None)]
 pub struct DiscoArgs {
     #[clap(long)]
