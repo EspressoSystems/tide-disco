@@ -1,6 +1,6 @@
 [package]
 name = "tide-disco"
-version = "0.1.0"
+version = "0.3.0"
 edition = "2021"
 authors = ["John D. Corbett <corbett@pictographer.com>"]
 description = "Discoverability for Tide"
