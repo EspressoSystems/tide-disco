@@ -544,8 +544,8 @@ fn get_cmd_line_map<Args: CommandFactory>() -> config::Environment {
         let mut cla = HashMap::new();
         let matches = Args::command().get_matches();
         for arg in Args::command().get_arguments() {
-            if let Some(value) = matches.get_one::<String>(arg.get_id()) {
-                let key = arg.get_id().replace('-', "_");
+            if let Some(value) = matches.get_one::<String>(arg.get_id().as_str()) {
+                let key = arg.get_id().as_str().replace('-', "_");
                 cla.insert(key, value.to_owned());
             }
         }
