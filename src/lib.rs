@@ -237,7 +237,7 @@
 use crate::ApiKey::*;
 use async_std::sync::{Arc, RwLock};
 use async_std::task::sleep;
-use clap::{Args, CommandFactory, Parser};
+use clap::CommandFactory;
 use config::{Config, ConfigError};
 use routefinder::Router;
 use serde::Deserialize;
