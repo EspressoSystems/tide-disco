@@ -237,7 +237,7 @@
 use crate::ApiKey::*;
 use async_std::sync::{Arc, RwLock};
 use async_std::task::sleep;
-use clap::{CommandFactory, Parser};
+use clap::CommandFactory;
 use config::{Config, ConfigError};
 use routefinder::Router;
 use serde::Deserialize;
@@ -281,7 +281,7 @@ pub const SERVER_STARTUP_RETRIES: u64 = 255;
 /// Number of milliseconds to sleep between attempts
 pub const SERVER_STARTUP_SLEEP_MS: u64 = 100;
 
-#[derive(Parser, Debug)]
+#[derive(clap::Args, Debug)]
 #[clap(author, version, about, long_about = None)]
 pub struct DiscoArgs {
     #[clap(long)]
@@ -544,8 +544,8 @@ fn get_cmd_line_map<Args: CommandFactory>() -> config::Environment {
         let mut cla = HashMap::new();
         let matches = Args::command().get_matches();
         for arg in Args::command().get_arguments() {
-            if let Some(value) = matches.get_one::<String>(arg.get_id()) {
-                let key = arg.get_id().replace('-', "_");
+            if let Some(value) = matches.get_one::<String>(arg.get_id().as_str()) {
+                let key = arg.get_id().as_str().replace('-', "_");
                 cla.insert(key, value.to_owned());
             }
         }
