@@ -20,10 +20,7 @@ use crate::{
 };
 use async_trait::async_trait;
 use derive_more::From;
-use futures::{
-    future::{BoxFuture, Future},
-    stream::BoxStream,
-};
+use futures::{future::BoxFuture, stream::BoxStream};
 use maud::{html, PreEscaped};
 use semver::Version;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
@@ -995,14 +992,13 @@ impl<State, Error> Api<State, Error> {
     ///
     /// This overrides the existing handler. If `health_check` has not yet been called, the default
     /// handler is one which simply returns `Health::default()`.
-    pub async fn with_health_check<H, F>(
+    pub fn with_health_check<H>(
         &mut self,
-        handler: impl 'static + Send + Sync + Fn(&State) -> F,
+        handler: impl 'static + Send + Sync + Fn(&State) -> BoxFuture<H>,
     ) -> &mut Self
     where
         State: 'static + Send + Sync,
-        H: HealthCheck,
-        F: 'static + Send + Future<Output = H>,
+        H: 'static + HealthCheck,
     {
         self.health_check = Some(route::health_check_handler(handler));
         self
@@ -1162,6 +1158,7 @@ where
 mod test {
     use crate::{
         error::{Error, ServerError},
+        healthcheck::HealthStatus,
         socket::Connection,
         wait_for_server, App, StatusCode, Url, SERVER_STARTUP_RETRIES, SERVER_STARTUP_SLEEP_MS,
     };
@@ -1427,5 +1424,35 @@ mod test {
             msg => panic!("expected error close frame, got {:?}", msg),
         }
         check_stream_closed(conn).await;
+    }
+
+    #[async_std::test]
+    async fn test_custom_healthcheck() {
+        let mut app = App::<_, ServerError>::with_state(HealthStatus::Available);
+        let api_toml = toml! {
+            [meta]
+            FORMAT_VERSION = "0.1.0"
+
+            [route.dummy]
+            PATH = ["/dummy"]
+        };
+        {
+            let mut api = app.module::<ServerError>("mod", api_toml).unwrap();
+            api.with_health_check(|state| async move { *state }.boxed());
+        }
+        let port = pick_unused_port().unwrap();
+        let url: Url = format!("http://localhost:{}", port).parse().unwrap();
+        spawn(app.serve(format!("0.0.0.0:{}", port)));
+        wait_for_server(&url, SERVER_STARTUP_RETRIES, SERVER_STARTUP_SLEEP_MS).await;
+
+        let mut res = surf::get(format!("http://localhost:{}/mod/healthcheck", port))
+            .send()
+            .await
+            .unwrap();
+        assert_eq!(res.status(), StatusCode::Ok);
+        assert_eq!(
+            res.body_json::<HealthStatus>().await.unwrap(),
+            HealthStatus::Available
+        );
     }
 }

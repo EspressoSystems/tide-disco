@@ -711,7 +711,7 @@ mod test {
             err => panic!("expecting MissingParam {{ nosuchparam }}, got {:?}", err),
         };
 
-        assert_eq!(req.boolean_param("boolean").unwrap(), true);
+        assert!(req.boolean_param("boolean").unwrap());
         match req.boolean_param("integer").unwrap_err() {
             RequestError::IncorrectParamType { actual, expected }
                 if actual == RequestParamType::Integer && expected == RequestParamType::Boolean => {
@@ -789,7 +789,7 @@ mod test {
             None
         );
 
-        assert_eq!(req.opt_boolean_param("boolean").unwrap().unwrap(), true);
+        assert!(req.opt_boolean_param("boolean").unwrap().unwrap());
         match req.opt_boolean_param("integer").unwrap_err() {
             RequestError::IncorrectParamType { actual, expected }
                 if actual == RequestParamType::Integer && expected == RequestParamType::Boolean => {
