@@ -1429,6 +1429,33 @@
 <span id="1429">1429</span>
 <span id="1430">1430</span>
 <span id="1431">1431</span>
+<span id="1432">1432</span>
+<span id="1433">1433</span>
+<span id="1434">1434</span>
+<span id="1435">1435</span>
+<span id="1436">1436</span>
+<span id="1437">1437</span>
+<span id="1438">1438</span>
+<span id="1439">1439</span>
+<span id="1440">1440</span>
+<span id="1441">1441</span>
+<span id="1442">1442</span>
+<span id="1443">1443</span>
+<span id="1444">1444</span>
+<span id="1445">1445</span>
+<span id="1446">1446</span>
+<span id="1447">1447</span>
+<span id="1448">1448</span>
+<span id="1449">1449</span>
+<span id="1450">1450</span>
+<span id="1451">1451</span>
+<span id="1452">1452</span>
+<span id="1453">1453</span>
+<span id="1454">1454</span>
+<span id="1455">1455</span>
+<span id="1456">1456</span>
+<span id="1457">1457</span>
+<span id="1458">1458</span>
 </pre><pre class="rust"><code><span class="comment">// COPYRIGHT100 (c) 2022 Espresso Systems (espressosys.com)</span>
 <span class="comment">//</span>
 <span class="comment">// This program is free software: you can redistribute it and/or modify it under the terms of the</span>
@@ -1451,10 +1478,7 @@
 };
 <span class="kw">use</span> <span class="ident">async_trait::async_trait</span>;
 <span class="kw">use</span> <span class="ident">derive_more::From</span>;
-<span class="kw">use</span> <span class="ident">futures</span>::{
-    <span class="ident">future</span>::{<span class="ident">BoxFuture</span>, <span class="ident">Future</span>},
-    <span class="ident">stream::BoxStream</span>,
-};
+<span class="kw">use</span> <span class="ident">futures</span>::{<span class="ident">future::BoxFuture</span>, <span class="ident">stream::BoxStream</span>};
 <span class="kw">use</span> <span class="ident">maud</span>::{<span class="ident">html</span>, <span class="ident">PreEscaped</span>};
 <span class="kw">use</span> <span class="ident">semver::Version</span>;
 <span class="kw">use</span> <span class="ident">serde</span>::{<span class="ident">de::DeserializeOwned</span>, <span class="ident">Deserialize</span>, <span class="ident">Serialize</span>};
@@ -2426,14 +2450,13 @@
     <span class="doccomment">///</span>
     <span class="doccomment">/// This overrides the existing handler. If `health_check` has not yet been called, the default</span>
     <span class="doccomment">/// handler is one which simply returns `Health::default()`.</span>
-    <span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">with_health_check</span><span class="op">&lt;</span><span class="ident">H</span>, <span class="ident">F</span><span class="op">&gt;</span>(
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">with_health_check</span><span class="op">&lt;</span><span class="ident">H</span><span class="op">&gt;</span>(
         <span class="kw-2">&amp;mut</span> <span class="self">self</span>,
-        <span class="ident">handler</span>: <span class="kw">impl</span> <span class="lifetime">&#39;static</span> <span class="op">+</span> <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Sync</span> <span class="op">+</span> <span class="ident">Fn</span>(<span class="kw-2">&amp;</span><span class="ident">State</span>) -&gt; <span class="ident">F</span>,
+        <span class="ident">handler</span>: <span class="kw">impl</span> <span class="lifetime">&#39;static</span> <span class="op">+</span> <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Sync</span> <span class="op">+</span> <span class="ident">Fn</span>(<span class="kw-2">&amp;</span><span class="ident">State</span>) -&gt; <span class="ident">BoxFuture</span><span class="op">&lt;</span><span class="ident">H</span><span class="op">&gt;</span>,
     ) -&gt; <span class="kw-2">&amp;mut</span> <span class="self">Self</span>
     <span class="kw">where</span>
         <span class="ident">State</span>: <span class="lifetime">&#39;static</span> <span class="op">+</span> <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Sync</span>,
-        <span class="ident">H</span>: <span class="ident">HealthCheck</span>,
-        <span class="ident">F</span>: <span class="lifetime">&#39;static</span> <span class="op">+</span> <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Future</span><span class="op">&lt;</span><span class="ident">Output</span> <span class="op">=</span> <span class="ident">H</span><span class="op">&gt;</span>,
+        <span class="ident">H</span>: <span class="lifetime">&#39;static</span> <span class="op">+</span> <span class="ident">HealthCheck</span>,
     {
         <span class="self">self</span>.<span class="ident">health_check</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">route::health_check_handler</span>(<span class="ident">handler</span>));
         <span class="self">self</span>
@@ -2593,6 +2616,7 @@
 <span class="kw">mod</span> <span class="ident">test</span> {
     <span class="kw">use</span> <span class="kw">crate</span>::{
         <span class="ident">error</span>::{<span class="ident">Error</span>, <span class="ident">ServerError</span>},
+        <span class="ident">healthcheck::HealthStatus</span>,
         <span class="ident">socket::Connection</span>,
         <span class="ident">wait_for_server</span>, <span class="ident">App</span>, <span class="ident">StatusCode</span>, <span class="ident">Url</span>, <span class="ident">SERVER_STARTUP_RETRIES</span>, <span class="ident">SERVER_STARTUP_SLEEP_MS</span>,
     };
@@ -2858,6 +2882,36 @@
             <span class="ident">msg</span> =&gt; <span class="macro">panic!</span>(<span class="string">&quot;expected error close frame, got {:?}&quot;</span>, <span class="ident">msg</span>),
         }
         <span class="ident">check_stream_closed</span>(<span class="ident">conn</span>).<span class="kw">await</span>;
+    }
+
+    <span class="attribute">#[<span class="ident">async_std::test</span>]</span>
+    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">test_custom_healthcheck</span>() {
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">app</span> <span class="op">=</span> <span class="ident">App</span>::<span class="op">&lt;</span><span class="kw">_</span>, <span class="ident">ServerError</span><span class="op">&gt;</span><span class="ident">::with_state</span>(<span class="ident">HealthStatus::Available</span>);
+        <span class="kw">let</span> <span class="ident">api_toml</span> <span class="op">=</span> <span class="macro">toml!</span> {
+            [<span class="ident">meta</span>]
+            <span class="ident">FORMAT_VERSION</span> <span class="op">=</span> <span class="string">&quot;0.1.0&quot;</span>
+
+            [<span class="ident">route</span>.<span class="ident">dummy</span>]
+            <span class="ident">PATH</span> <span class="op">=</span> [<span class="string">&quot;/dummy&quot;</span>]
+        };
+        {
+            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">api</span> <span class="op">=</span> <span class="ident">app</span>.<span class="ident">module</span>::<span class="op">&lt;</span><span class="ident">ServerError</span><span class="op">&gt;</span>(<span class="string">&quot;mod&quot;</span>, <span class="ident">api_toml</span>).<span class="ident">unwrap</span>();
+            <span class="ident">api</span>.<span class="ident">with_health_check</span>(<span class="op">|</span><span class="ident">state</span><span class="op">|</span> <span class="kw">async</span> <span class="kw">move</span> { <span class="kw-2">*</span><span class="ident">state</span> }.<span class="ident">boxed</span>());
+        }
+        <span class="kw">let</span> <span class="ident">port</span> <span class="op">=</span> <span class="ident">pick_unused_port</span>().<span class="ident">unwrap</span>();
+        <span class="kw">let</span> <span class="ident">url</span>: <span class="ident">Url</span> <span class="op">=</span> <span class="macro">format!</span>(<span class="string">&quot;http://localhost:{}&quot;</span>, <span class="ident">port</span>).<span class="ident">parse</span>().<span class="ident">unwrap</span>();
+        <span class="ident">spawn</span>(<span class="ident">app</span>.<span class="ident">serve</span>(<span class="macro">format!</span>(<span class="string">&quot;0.0.0.0:{}&quot;</span>, <span class="ident">port</span>)));
+        <span class="ident">wait_for_server</span>(<span class="kw-2">&amp;</span><span class="ident">url</span>, <span class="ident">SERVER_STARTUP_RETRIES</span>, <span class="ident">SERVER_STARTUP_SLEEP_MS</span>).<span class="kw">await</span>;
+
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">res</span> <span class="op">=</span> <span class="ident">surf::get</span>(<span class="macro">format!</span>(<span class="string">&quot;http://localhost:{}/mod/healthcheck&quot;</span>, <span class="ident">port</span>))
+            .<span class="ident">send</span>()
+            .<span class="kw">await</span>
+            .<span class="ident">unwrap</span>();
+        <span class="macro">assert_eq!</span>(<span class="ident">res</span>.<span class="ident">status</span>(), <span class="ident">StatusCode::Ok</span>);
+        <span class="macro">assert_eq!</span>(
+            <span class="ident">res</span>.<span class="ident">body_json</span>::<span class="op">&lt;</span><span class="ident">HealthStatus</span><span class="op">&gt;</span>().<span class="kw">await</span>.<span class="ident">unwrap</span>(),
+            <span class="ident">HealthStatus::Available</span>
+        );
     }
 }
 </code></pre></div>
