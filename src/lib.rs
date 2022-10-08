@@ -255,7 +255,6 @@ use tagged_base64::TaggedBase64;
 use tide::http::mime;
 use toml::value::Value;
 use tracing::{error, trace};
-use url::Url;
 
 pub mod api;
 pub mod app;
@@ -272,6 +271,7 @@ pub use error::Error;
 pub use method::Method;
 pub use request::{RequestError, RequestParam, RequestParamType, RequestParamValue, RequestParams};
 pub use tide::http::{self, StatusCode};
+pub use url::Url;
 
 pub type Html = maud::Markup;
 

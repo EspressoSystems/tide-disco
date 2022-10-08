@@ -8,7 +8,7 @@ use crate::{
 };
 use async_trait::async_trait;
 use derive_more::From;
-use futures::future::{BoxFuture, Future, FutureExt};
+use futures::future::{BoxFuture, FutureExt};
 use maud::{html, PreEscaped};
 use serde::Serialize;
 use snafu::{OptionExt, Snafu};
@@ -549,13 +549,12 @@ pub(crate) fn health_check_response<H: HealthCheck>(accept: &Accept, health: H) 
 ///
 /// Given a handler, this function can be used to derive a new, type-erased [HealthCheckHandler]
 /// that takes only [RequestParams] and returns a generic [tide::Response].
-pub(crate) fn health_check_handler<State, H, F>(
-    handler: impl 'static + Send + Sync + Fn(&State) -> F,
+pub(crate) fn health_check_handler<State, H>(
+    handler: impl 'static + Send + Sync + Fn(&State) -> BoxFuture<H>,
 ) -> HealthCheckHandler<State>
 where
     State: 'static + Send + Sync,
-    H: HealthCheck,
-    F: 'static + Send + Future<Output = H>,
+    H: 'static + HealthCheck,
 {
     Box::new(move |req, state| {
         let accept = req.accept().unwrap_or_else(|_| {
