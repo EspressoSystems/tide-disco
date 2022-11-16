@@ -1,6 +1,6 @@
 [package]
 name = "tide-disco"
-version = "0.3.1"
+version = "0.4.0"
 edition = "2021"
 authors = ["John D. Corbett <corbett@pictographer.com>"]
 description = "Discoverability for Tide"
@@ -12,7 +12,6 @@ name = "hello-world"
 test = true
 
 [dependencies]
-ark-serialize = "0.3.0"
 async-std = { version = "1.8.0", features = ["attributes"] }
 async-trait = "0.1.51"
 bincode = "1.3.3"
@@ -25,7 +24,6 @@ futures = "0.3.21"
 futures-util = "0.3.8"
 http = "0.2.7"
 include_dir = "0.7"
-jf-utils = { features = ["std"], git = "https://github.com/EspressoSystems/jellyfish.git", tag = "0.1.2" }
 lazy_static = "1.4.0"
 libc = "0.2.126"
 markdown = "0.3"
@@ -42,7 +40,7 @@ snafu = { version = "0.7", features = ["backtraces"] }
 strum = "0.24"
 strum_macros = "0.24"
 surf = "2.3.2"
-tagged-base64 = { git = "https://github.com/EspressoSystems/tagged-base64.git", tag = "0.2.1" }
+tagged-base64 = { git = "https://github.com/EspressoSystems/tagged-base64.git", tag = "0.2.4" }
 tide = { version = "0.16.0", default-features = false }
 tide-websockets = "0.4.0"
 toml = "0.5"

@@ -1,6 +1,4 @@
 use crate::method::Method;
-use ark_serialize::CanonicalDeserialize;
-use jf_utils::Tagged;
 use serde::{Deserialize, Serialize};
 use snafu::{OptionExt, Snafu};
 use std::any::type_name;
@@ -34,8 +32,8 @@ pub enum RequestError {
     #[snafu(display("Unable to deserialize from bincode"))]
     Bincode,
 
-    #[snafu(display("Unable to deserialize from ark format: {}", reason))]
-    ArkSerialize { reason: String },
+    #[snafu(display("Unable to deserialise from tagged base 64: {}", reason))]
+    TaggedBase64 { reason: String },
 
     #[snafu(display("Content type not specified or type not supported"))]
     UnsupportedContentType,
@@ -352,10 +350,11 @@ impl RequestParams {
     ///
     /// Like [param](Self::param), but returns [Err] if the parameter value cannot be converted to
     /// `T`.
-    pub fn blob_param<Name, T>(&self, name: &Name) -> Result<T, RequestError>
+    pub fn blob_param<'a, Name, T>(&'a self, name: &Name) -> Result<T, RequestError>
     where
         Name: ?Sized + Display,
-        T: Tagged + CanonicalDeserialize,
+        T: TryFrom<&'a TaggedBase64>,
+        <T as TryFrom<&'a TaggedBase64>>::Error: Display,
     {
         self.opt_blob_param(name)?.context(MissingParamSnafu {
             name: name.to_string(),
@@ -367,10 +366,11 @@ impl RequestParams {
     ///
     /// Like [opt_param](Self::opt_param), but returns [Err] if the parameter value cannot be
     /// converted to `T`.
-    pub fn opt_blob_param<Name, T>(&self, name: &Name) -> Result<Option<T>, RequestError>
+    pub fn opt_blob_param<'a, Name, T>(&'a self, name: &Name) -> Result<Option<T>, RequestError>
     where
         Name: ?Sized + Display,
-        T: Tagged + CanonicalDeserialize,
+        T: TryFrom<&'a TaggedBase64>,
+        <T as TryFrom<&'a TaggedBase64>>::Error: Display,
     {
         self.opt_param(name).map(|val| val.as_blob()).transpose()
     }
@@ -520,21 +520,18 @@ impl RequestParamValue {
         }
     }
 
-    pub fn as_blob<T>(&self) -> Result<T, RequestError>
+    pub fn as_blob<'a, T>(&'a self) -> Result<T, RequestError>
     where
-        T: Tagged + CanonicalDeserialize,
+        T: TryFrom<&'a TaggedBase64>,
+        <T as TryFrom<&'a TaggedBase64>>::Error: Display,
     {
         let tb64 = self.as_tagged_base64()?;
-        if tb64.tag() == T::tag() {
-            T::deserialize(&*tb64.value()).map_err(|source| RequestError::ArkSerialize {
-                reason: source.to_string(),
-            })
-        } else {
-            Err(RequestError::TagMismatch {
-                actual: tb64.tag(),
-                expected: T::tag(),
-            })
-        }
+        tb64.try_into()
+            .map_err(
+                |err: <T as TryFrom<&'a TaggedBase64>>::Error| RequestError::TaggedBase64 {
+                    reason: err.to_string(),
+                },
+            )
     }
 }
 
@@ -598,7 +595,7 @@ mod test {
     use super::*;
     use crate::StatusCode;
     use ark_serialize::*;
-    use jf_utils::tagged_blob;
+    use tagged_base64::tagged;
 
     fn default_headers() -> Headers {
         let res = tide::Response::builder(StatusCode::Ok).build();
@@ -628,7 +625,7 @@ mod test {
         }
     }
 
-    #[tagged_blob("BLOB")]
+    #[tagged("BLOB")]
     #[derive(Clone, Debug, PartialEq, Eq, CanonicalSerialize, CanonicalDeserialize)]
     struct Blob {
         data: String,
