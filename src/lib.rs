@@ -407,7 +407,7 @@ pub fn check_api(api: toml::Value) -> bool {
 
 /// Load the web API or panic
 pub fn load_api(path: &Path) -> toml::Value {
-    let messages = read_to_string(&path).unwrap_or_else(|_| panic!("Unable to read {:?}.", &path));
+    let messages = read_to_string(path).unwrap_or_else(|_| panic!("Unable to read {:?}.", &path));
     let api: toml::Value =
         toml::from_str(&messages).unwrap_or_else(|_| panic!("Unable to parse {:?}.", &path));
     if !check_api(api.clone()) {
@@ -657,7 +657,7 @@ pub fn app_api_path(org_name: &str, app_name: &str) -> PathBuf {
 pub async fn wait_for_server(url: &Url, retries: u64, sleep_ms: u64) {
     let dur = Duration::from_millis(sleep_ms);
     for _ in 0..retries {
-        if surf::connect(&url).send().await.is_ok() {
+        if surf::connect(url).send().await.is_ok() {
             return;
         }
         sleep(dur).await;
