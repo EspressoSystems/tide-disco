@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/app.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>app.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../tide_disco/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../tide_disco/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../tide_disco/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/app.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>app.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../normalize.css"><link rel="stylesheet" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../ayu.css" disabled><link rel="stylesheet" href="../../dark.css" disabled><link rel="stylesheet" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../tide_disco/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../tide_disco/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../tide_disco/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -742,749 +742,749 @@
 <span id="742">742</span>
 <span id="743">743</span>
 <span id="744">744</span>
-</pre><pre class="rust"><code><span class="comment">// COPYRIGHT100 (c) 2022 Espresso Systems (espressosys.com)</span>
-<span class="comment">//</span>
-<span class="comment">// This program is free software: you can redistribute it and/or modify it under the terms of the</span>
-<span class="comment">// GNU General Public License as published by the Free Software Foundation, either version 3 of the</span>
-<span class="comment">// License, or (at your option) any later version.</span>
-<span class="comment">//</span>
-<span class="comment">// This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without</span>
-<span class="comment">// even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU</span>
-<span class="comment">// General Public License for more details.</span>
-<span class="comment">//</span>
-<span class="comment">// You should have received a copy of the GNU General Public License along with this program. If</span>
-<span class="comment">// not, see &lt;https://www.gnu.org/licenses/&gt;.</span>
+</pre><pre class="rust"><code><span class="comment">// COPYRIGHT100 (c) 2022 Espresso Systems (espressosys.com)
+//
+// This program is free software: you can redistribute it and/or modify it under the terms of the
+// GNU General Public License as published by the Free Software Foundation, either version 3 of the
+// License, or (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
+// even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+// General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License along with this program. If
+// not, see &lt;https://www.gnu.org/licenses/&gt;.
 
-<span class="kw">use</span> <span class="kw">crate</span>::{
-    <span class="ident">api</span>::{<span class="ident">Api</span>, <span class="ident">ApiError</span>, <span class="ident">ApiVersion</span>},
-    <span class="ident">healthcheck</span>::{<span class="ident">HealthCheck</span>, <span class="ident">HealthStatus</span>},
-    <span class="ident">http</span>,
-    <span class="ident">method::Method</span>,
-    <span class="ident">request</span>::{<span class="ident">RequestParam</span>, <span class="ident">RequestParams</span>},
-    <span class="ident">route</span>::{<span class="self">self</span>, <span class="ident">health_check_response</span>, <span class="ident">respond_with</span>, <span class="ident">Handler</span>, <span class="ident">Route</span>, <span class="ident">RouteError</span>},
-    <span class="ident">socket::SocketError</span>,
-    <span class="ident">Html</span>,
+</span><span class="kw">use crate</span>::{
+    api::{Api, ApiError, ApiVersion},
+    healthcheck::{HealthCheck, HealthStatus},
+    http,
+    method::Method,
+    request::{RequestParam, RequestParams},
+    route::{<span class="self">self</span>, health_check_response, respond_with, Handler, Route, RouteError},
+    socket::SocketError,
+    Html,
 };
-<span class="kw">use</span> <span class="ident">async_std::sync::Arc</span>;
-<span class="kw">use</span> <span class="ident">futures::future::BoxFuture</span>;
-<span class="kw">use</span> <span class="ident">include_dir</span>::{<span class="ident">include_dir</span>, <span class="ident">Dir</span>};
-<span class="kw">use</span> <span class="ident">lazy_static::lazy_static</span>;
-<span class="kw">use</span> <span class="ident">maud::html</span>;
-<span class="kw">use</span> <span class="ident">semver::Version</span>;
-<span class="kw">use</span> <span class="ident">serde</span>::{<span class="ident">Deserialize</span>, <span class="ident">Serialize</span>};
-<span class="kw">use</span> <span class="ident">serde_with</span>::{<span class="ident">serde_as</span>, <span class="ident">DisplayFromStr</span>};
-<span class="kw">use</span> <span class="ident">snafu</span>::{<span class="ident">ResultExt</span>, <span class="ident">Snafu</span>};
-<span class="kw">use</span> <span class="ident">std::collections::hash_map</span>::{<span class="ident">Entry</span>, <span class="ident">HashMap</span>};
-<span class="kw">use</span> <span class="ident">std::convert::Infallible</span>;
-<span class="kw">use</span> <span class="ident">std::env</span>;
-<span class="kw">use</span> <span class="ident">std::fs</span>;
-<span class="kw">use</span> <span class="ident">std::io</span>;
-<span class="kw">use</span> <span class="ident">std::ops</span>::{<span class="ident">Deref</span>, <span class="ident">DerefMut</span>};
-<span class="kw">use</span> <span class="ident">std::path::PathBuf</span>;
-<span class="kw">use</span> <span class="ident">tide</span>::{
-    <span class="ident">http</span>::{<span class="ident">headers::HeaderValue</span>, <span class="ident">mime</span>},
-    <span class="ident">security</span>::{<span class="ident">CorsMiddleware</span>, <span class="ident">Origin</span>},
-    <span class="ident">StatusCode</span>,
+<span class="kw">use </span>async_std::sync::Arc;
+<span class="kw">use </span>futures::future::BoxFuture;
+<span class="kw">use </span>include_dir::{include_dir, Dir};
+<span class="kw">use </span>lazy_static::lazy_static;
+<span class="kw">use </span>maud::html;
+<span class="kw">use </span>semver::Version;
+<span class="kw">use </span>serde::{Deserialize, Serialize};
+<span class="kw">use </span>serde_with::{serde_as, DisplayFromStr};
+<span class="kw">use </span>snafu::{ResultExt, Snafu};
+<span class="kw">use </span>std::collections::hash_map::{Entry, HashMap};
+<span class="kw">use </span>std::convert::Infallible;
+<span class="kw">use </span>std::env;
+<span class="kw">use </span>std::fs;
+<span class="kw">use </span>std::io;
+<span class="kw">use </span>std::ops::{Deref, DerefMut};
+<span class="kw">use </span>std::path::PathBuf;
+<span class="kw">use </span>tide::{
+    http::{headers::HeaderValue, mime},
+    security::{CorsMiddleware, Origin},
+    StatusCode,
 };
-<span class="kw">use</span> <span class="ident">tide_websockets::WebSocket</span>;
+<span class="kw">use </span>tide_websockets::WebSocket;
 
-<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">tide::listener</span>::{<span class="ident">Listener</span>, <span class="ident">ToListener</span>};
+<span class="kw">pub use </span>tide::listener::{Listener, ToListener};
 
-<span class="doccomment">/// A tide-disco server application.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// An [App] is a collection of API modules, plus a global `State`. Modules can be registered by</span>
-<span class="doccomment">/// constructing an [Api] for each module and calling [App::register_module]. Once all of the</span>
-<span class="doccomment">/// desired modules are registered, the app can be converted into an asynchronous server task using</span>
-<span class="doccomment">/// [App::serve].</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">App</span><span class="op">&lt;</span><span class="ident">State</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
-    <span class="comment">// Map from base URL to module API.</span>
-    <span class="ident">apis</span>: <span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">String</span>, <span class="ident">Api</span><span class="op">&lt;</span><span class="ident">State</span>, <span class="ident">Error</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-    <span class="ident">state</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">State</span><span class="op">&gt;</span>,
-    <span class="ident">app_version</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Version</span><span class="op">&gt;</span>,
+<span class="doccomment">/// A tide-disco server application.
+///
+/// An [App] is a collection of API modules, plus a global `State`. Modules can be registered by
+/// constructing an [Api] for each module and calling [App::register_module]. Once all of the
+/// desired modules are registered, the app can be converted into an asynchronous server task using
+/// [App::serve].
+</span><span class="kw">pub struct </span>App&lt;State, Error&gt; {
+    <span class="comment">// Map from base URL to module API.
+    </span>apis: HashMap&lt;String, Api&lt;State, Error&gt;&gt;,
+    state: Arc&lt;State&gt;,
+    app_version: <span class="prelude-ty">Option</span>&lt;Version&gt;,
 }
 
-<span class="doccomment">/// An error encountered while building an [App].</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">Snafu</span>)]</span>
-<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">AppError</span> {
-    <span class="ident">Api</span> { <span class="ident">source</span>: <span class="ident">ApiError</span> },
-    <span class="ident">ModuleAlreadyExists</span>,
+<span class="doccomment">/// An error encountered while building an [App].
+</span><span class="attribute">#[derive(Clone, Debug, Snafu)]
+</span><span class="kw">pub enum </span>AppError {
+    Api { source: ApiError },
+    ModuleAlreadyExists,
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">State</span>: <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Sync</span> <span class="op">+</span> <span class="lifetime">&#39;static</span>, <span class="ident">Error</span>: <span class="lifetime">&#39;static</span><span class="op">&gt;</span> <span class="ident">App</span><span class="op">&lt;</span><span class="ident">State</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
-    <span class="doccomment">/// Create a new [App] with a given state.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">with_state</span>(<span class="ident">state</span>: <span class="ident">State</span>) -&gt; <span class="self">Self</span> {
-        <span class="self">Self</span> {
-            <span class="ident">apis</span>: <span class="ident">HashMap::new</span>(),
-            <span class="ident">state</span>: <span class="ident">Arc::new</span>(<span class="ident">state</span>),
-            <span class="ident">app_version</span>: <span class="prelude-val">None</span>,
+<span class="kw">impl</span>&lt;State: Send + Sync + <span class="lifetime">&#39;static</span>, Error: <span class="lifetime">&#39;static</span>&gt; App&lt;State, Error&gt; {
+    <span class="doccomment">/// Create a new [App] with a given state.
+    </span><span class="kw">pub fn </span>with_state(state: State) -&gt; <span class="self">Self </span>{
+        <span class="self">Self </span>{
+            apis: HashMap::new(),
+            state: Arc::new(state),
+            app_version: <span class="prelude-val">None</span>,
         }
     }
 
-    <span class="doccomment">/// Create and register an API module.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">module</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">ModuleError</span><span class="op">&gt;</span>(
-        <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="kw-2">mut</span> <span class="self">self</span>,
-        <span class="ident">base_url</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">str</span>,
-        <span class="ident">api</span>: <span class="ident">toml::Value</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Module</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">State</span>, <span class="ident">Error</span>, <span class="ident">ModuleError</span><span class="op">&gt;</span>, <span class="ident">AppError</span><span class="op">&gt;</span>
-    <span class="kw">where</span>
-        <span class="ident">Error</span>: <span class="ident">From</span><span class="op">&lt;</span><span class="ident">ModuleError</span><span class="op">&gt;</span>,
-        <span class="ident">ModuleError</span>: <span class="lifetime">&#39;static</span> <span class="op">+</span> <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Sync</span>,
+    <span class="doccomment">/// Create and register an API module.
+    </span><span class="kw">pub fn </span>module&lt;<span class="lifetime">&#39;a</span>, ModuleError&gt;(
+        <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span><span class="self">self</span>,
+        base_url: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>str,
+        api: toml::Value,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;Module&lt;<span class="lifetime">&#39;a</span>, State, Error, ModuleError&gt;, AppError&gt;
+    <span class="kw">where
+        </span>Error: From&lt;ModuleError&gt;,
+        ModuleError: <span class="lifetime">&#39;static </span>+ Send + Sync,
     {
-        <span class="kw">if</span> <span class="self">self</span>.<span class="ident">apis</span>.<span class="ident">contains_key</span>(<span class="ident">base_url</span>) {
-            <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">AppError::ModuleAlreadyExists</span>);
+        <span class="kw">if </span><span class="self">self</span>.apis.contains_key(base_url) {
+            <span class="kw">return </span><span class="prelude-val">Err</span>(AppError::ModuleAlreadyExists);
         }
 
-        <span class="prelude-val">Ok</span>(<span class="ident">Module</span> {
-            <span class="ident">app</span>: <span class="self">self</span>,
-            <span class="ident">base_url</span>,
-            <span class="ident">api</span>: <span class="prelude-val">Some</span>(<span class="ident">Api::new</span>(<span class="ident">api</span>).<span class="ident">context</span>(<span class="ident">ApiSnafu</span>)<span class="question-mark">?</span>),
+        <span class="prelude-val">Ok</span>(Module {
+            app: <span class="self">self</span>,
+            base_url,
+            api: <span class="prelude-val">Some</span>(Api::new(api).context(ApiSnafu)<span class="question-mark">?</span>),
         })
     }
 
-    <span class="doccomment">/// Register an API module.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">register_module</span><span class="op">&lt;</span><span class="ident">ModuleError</span><span class="op">&gt;</span>(
-        <span class="kw-2">&amp;mut</span> <span class="self">self</span>,
-        <span class="ident">base_url</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>,
-        <span class="ident">api</span>: <span class="ident">Api</span><span class="op">&lt;</span><span class="ident">State</span>, <span class="ident">ModuleError</span><span class="op">&gt;</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="kw-2">&amp;mut</span> <span class="self">Self</span>, <span class="ident">AppError</span><span class="op">&gt;</span>
-    <span class="kw">where</span>
-        <span class="ident">Error</span>: <span class="ident">From</span><span class="op">&lt;</span><span class="ident">ModuleError</span><span class="op">&gt;</span>,
-        <span class="ident">ModuleError</span>: <span class="lifetime">&#39;static</span> <span class="op">+</span> <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Sync</span>,
+    <span class="doccomment">/// Register an API module.
+    </span><span class="kw">pub fn </span>register_module&lt;ModuleError&gt;(
+        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
+        base_url: <span class="kw-2">&amp;</span>str,
+        api: Api&lt;State, ModuleError&gt;,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="kw-2">&amp;mut </span><span class="self">Self</span>, AppError&gt;
+    <span class="kw">where
+        </span>Error: From&lt;ModuleError&gt;,
+        ModuleError: <span class="lifetime">&#39;static </span>+ Send + Sync,
     {
-        <span class="kw">match</span> <span class="self">self</span>.<span class="ident">apis</span>.<span class="ident">entry</span>(<span class="ident">base_url</span>.<span class="ident">to_string</span>()) {
-            <span class="ident">Entry::Occupied</span>(<span class="kw">_</span>) =&gt; {
-                <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">AppError::ModuleAlreadyExists</span>);
+        <span class="kw">match </span><span class="self">self</span>.apis.entry(base_url.to_string()) {
+            Entry::Occupied(<span class="kw">_</span>) =&gt; {
+                <span class="kw">return </span><span class="prelude-val">Err</span>(AppError::ModuleAlreadyExists);
             }
-            <span class="ident">Entry::Vacant</span>(<span class="ident">e</span>) =&gt; {
-                <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">api</span> <span class="op">=</span> <span class="ident">api</span>.<span class="ident">map_err</span>(<span class="ident">Error::from</span>);
-                <span class="ident">api</span>.<span class="ident">set_name</span>(<span class="ident">base_url</span>.<span class="ident">to_string</span>());
-                <span class="ident">e</span>.<span class="ident">insert</span>(<span class="ident">api</span>);
+            Entry::Vacant(e) =&gt; {
+                <span class="kw">let </span><span class="kw-2">mut </span>api = api.map_err(Error::from);
+                api.set_name(base_url.to_string());
+                e.insert(api);
             }
         }
 
         <span class="prelude-val">Ok</span>(<span class="self">self</span>)
     }
 
-    <span class="doccomment">/// Set the application version.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// The version information will automatically be included in responses to `GET /version`.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// This is the version of the overall application, which may encompass several APIs, each with</span>
-    <span class="doccomment">/// their own version. Changes to the version of any of the APIs which make up this application</span>
-    <span class="doccomment">/// should imply a change to the application version, but the application version may also</span>
-    <span class="doccomment">/// change without changing any of the API versions.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// This version is optional, as the `/version` endpoint will automatically include the version</span>
-    <span class="doccomment">/// of each registered API, which is usually enough to uniquely identify the application. Set</span>
-    <span class="doccomment">/// this explicitly if you want to track the version of additional behavior or interfaces which</span>
-    <span class="doccomment">/// are not encompassed by the sub-modules of this application.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// If you set an application version, it is a good idea to use the version of the application</span>
-    <span class="doccomment">/// crate found in Cargo.toml. This can be automatically found at build time using the</span>
-    <span class="doccomment">/// environment variable `CARGO_PKG_VERSION` and the [env!] macro. As long as the following code</span>
-    <span class="doccomment">/// is contained in the application crate, it should result in a reasonable version:</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// ```</span>
-    <span class="doccomment">/// # fn ex(app: &amp;mut tide_disco::App&lt;(), ()&gt;) {</span>
-    <span class="doccomment">/// app.with_version(env!(&quot;CARGO_PKG_VERSION&quot;).parse().unwrap());</span>
-    <span class="doccomment">/// # }</span>
-    <span class="doccomment">/// ```</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">with_version</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">version</span>: <span class="ident">Version</span>) -&gt; <span class="kw-2">&amp;mut</span> <span class="self">Self</span> {
-        <span class="self">self</span>.<span class="ident">app_version</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">version</span>);
-        <span class="self">self</span>
-    }
+    <span class="doccomment">/// Set the application version.
+    ///
+    /// The version information will automatically be included in responses to `GET /version`.
+    ///
+    /// This is the version of the overall application, which may encompass several APIs, each with
+    /// their own version. Changes to the version of any of the APIs which make up this application
+    /// should imply a change to the application version, but the application version may also
+    /// change without changing any of the API versions.
+    ///
+    /// This version is optional, as the `/version` endpoint will automatically include the version
+    /// of each registered API, which is usually enough to uniquely identify the application. Set
+    /// this explicitly if you want to track the version of additional behavior or interfaces which
+    /// are not encompassed by the sub-modules of this application.
+    ///
+    /// If you set an application version, it is a good idea to use the version of the application
+    /// crate found in Cargo.toml. This can be automatically found at build time using the
+    /// environment variable `CARGO_PKG_VERSION` and the [env!] macro. As long as the following code
+    /// is contained in the application crate, it should result in a reasonable version:
+    ///
+    /// ```
+    /// # fn ex(app: &amp;mut tide_disco::App&lt;(), ()&gt;) {
+    /// app.with_version(env!(&quot;CARGO_PKG_VERSION&quot;).parse().unwrap());
+    /// # }
+    /// ```
+    </span><span class="kw">pub fn </span>with_version(<span class="kw-2">&amp;mut </span><span class="self">self</span>, version: Version) -&gt; <span class="kw-2">&amp;mut </span><span class="self">Self </span>{
+        <span class="self">self</span>.app_version = <span class="prelude-val">Some</span>(version);
+        <span class="self">self
+    </span>}
 
-    <span class="doccomment">/// Get the version of this application.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">version</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">AppVersion</span> {
-        <span class="ident">AppVersion</span> {
-            <span class="ident">app_version</span>: <span class="self">self</span>.<span class="ident">app_version</span>.<span class="ident">clone</span>(),
-            <span class="ident">disco_version</span>: <span class="macro">env!</span>(<span class="string">&quot;CARGO_PKG_VERSION&quot;</span>).<span class="ident">parse</span>().<span class="ident">unwrap</span>(),
-            <span class="ident">modules</span>: <span class="self">self</span>
-                .<span class="ident">apis</span>
-                .<span class="ident">iter</span>()
-                .<span class="ident">map</span>(<span class="op">|</span>(<span class="ident">name</span>, <span class="ident">api</span>)<span class="op">|</span> (<span class="ident">name</span>.<span class="ident">clone</span>(), <span class="ident">api</span>.<span class="ident">version</span>()))
-                .<span class="ident">collect</span>(),
+    <span class="doccomment">/// Get the version of this application.
+    </span><span class="kw">pub fn </span>version(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; AppVersion {
+        AppVersion {
+            app_version: <span class="self">self</span>.app_version.clone(),
+            disco_version: <span class="macro">env!</span>(<span class="string">&quot;CARGO_PKG_VERSION&quot;</span>).parse().unwrap(),
+            modules: <span class="self">self
+                </span>.apis
+                .iter()
+                .map(|(name, api)| (name.clone(), api.version()))
+                .collect(),
         }
     }
 
-    <span class="doccomment">/// Check the health of each registered module in response to a request.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// The response includes a status code for each module, which will be [StatusCode::Ok] if the</span>
-    <span class="doccomment">/// module is healthy. Detailed health status from each module is not included in the response</span>
-    <span class="doccomment">/// (due to type erasure) but can be queried using [module_health](Self::module_health) or by</span>
-    <span class="doccomment">/// hitting the endpoint `GET /:module/healthcheck`.</span>
-    <span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">health</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">req</span>: <span class="ident">RequestParams</span>, <span class="ident">state</span>: <span class="kw-2">&amp;</span><span class="ident">State</span>) -&gt; <span class="ident">AppHealth</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">modules</span> <span class="op">=</span> <span class="ident">HashMap::new</span>();
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">status</span> <span class="op">=</span> <span class="ident">HealthStatus::Available</span>;
-        <span class="kw">for</span> (<span class="ident">name</span>, <span class="ident">api</span>) <span class="kw">in</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">apis</span> {
-            <span class="kw">let</span> <span class="ident">health</span> <span class="op">=</span> <span class="ident">api</span>.<span class="ident">health</span>(<span class="ident">req</span>.<span class="ident">clone</span>(), <span class="ident">state</span>).<span class="kw">await</span>.<span class="ident">status</span>();
-            <span class="kw">if</span> <span class="ident">health</span> <span class="op">!</span><span class="op">=</span> <span class="ident">StatusCode::Ok</span> {
-                <span class="ident">status</span> <span class="op">=</span> <span class="ident">HealthStatus::Unhealthy</span>;
+    <span class="doccomment">/// Check the health of each registered module in response to a request.
+    ///
+    /// The response includes a status code for each module, which will be [StatusCode::Ok] if the
+    /// module is healthy. Detailed health status from each module is not included in the response
+    /// (due to type erasure) but can be queried using [module_health](Self::module_health) or by
+    /// hitting the endpoint `GET /:module/healthcheck`.
+    </span><span class="kw">pub async fn </span>health(<span class="kw-2">&amp;</span><span class="self">self</span>, req: RequestParams, state: <span class="kw-2">&amp;</span>State) -&gt; AppHealth {
+        <span class="kw">let </span><span class="kw-2">mut </span>modules = HashMap::new();
+        <span class="kw">let </span><span class="kw-2">mut </span>status = HealthStatus::Available;
+        <span class="kw">for </span>(name, api) <span class="kw">in </span><span class="kw-2">&amp;</span><span class="self">self</span>.apis {
+            <span class="kw">let </span>health = api.health(req.clone(), state).<span class="kw">await</span>.status();
+            <span class="kw">if </span>health != StatusCode::Ok {
+                status = HealthStatus::Unhealthy;
             }
-            <span class="ident">modules</span>.<span class="ident">insert</span>(<span class="ident">name</span>.<span class="ident">clone</span>(), <span class="ident">health</span>);
+            modules.insert(name.clone(), health);
         }
-        <span class="ident">AppHealth</span> { <span class="ident">status</span>, <span class="ident">modules</span> }
+        AppHealth { status, modules }
     }
 
-    <span class="doccomment">/// Check the health of the named module.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// The resulting [Response](tide::Response) has a status code which is [StatusCode::Ok] if the</span>
-    <span class="doccomment">/// module is healthy. The response body is constructed from the results of the module&#39;s</span>
-    <span class="doccomment">/// registered healthcheck handler. If the module does not have an explicit healthcheck</span>
-    <span class="doccomment">/// handler, the response will be a [HealthStatus].</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// If there is no module with the given name, returns [None].</span>
-    <span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">module_health</span>(
+    <span class="doccomment">/// Check the health of the named module.
+    ///
+    /// The resulting [Response](tide::Response) has a status code which is [StatusCode::Ok] if the
+    /// module is healthy. The response body is constructed from the results of the module&#39;s
+    /// registered healthcheck handler. If the module does not have an explicit healthcheck
+    /// handler, the response will be a [HealthStatus].
+    ///
+    /// If there is no module with the given name, returns [None].
+    </span><span class="kw">pub async fn </span>module_health(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">req</span>: <span class="ident">RequestParams</span>,
-        <span class="ident">state</span>: <span class="kw-2">&amp;</span><span class="ident">State</span>,
-        <span class="ident">module</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>,
-    ) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">tide::Response</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">api</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">apis</span>.<span class="ident">get</span>(<span class="ident">module</span>)<span class="question-mark">?</span>;
-        <span class="prelude-val">Some</span>(<span class="ident">api</span>.<span class="ident">health</span>(<span class="ident">req</span>, <span class="ident">state</span>).<span class="kw">await</span>)
+        req: RequestParams,
+        state: <span class="kw-2">&amp;</span>State,
+        module: <span class="kw-2">&amp;</span>str,
+    ) -&gt; <span class="prelude-ty">Option</span>&lt;tide::Response&gt; {
+        <span class="kw">let </span>api = <span class="self">self</span>.apis.get(module)<span class="question-mark">?</span>;
+        <span class="prelude-val">Some</span>(api.health(req, state).<span class="kw">await</span>)
     }
 }
 
-<span class="kw">static</span> <span class="ident">DEFAULT_PUBLIC_DIR</span>: <span class="ident">Dir</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span> <span class="op">=</span> <span class="macro">include_dir!</span>(<span class="string">&quot;$CARGO_MANIFEST_DIR/public/media&quot;</span>);
-<span class="macro">lazy_static!</span> {
-    <span class="kw">static</span> <span class="kw-2">ref</span> <span class="ident">DEFAULT_PUBLIC_PATH</span>: <span class="ident">PathBuf</span> <span class="op">=</span> {
-        <span class="comment">// The contents of the default public directory are included in the binary. The first time</span>
-        <span class="comment">// the default directory is used, if ever, we extract them to a directory on the host file</span>
-        <span class="comment">// system and return the path to that directory.</span>
-        <span class="kw">let</span> <span class="ident">path</span> <span class="op">=</span> <span class="ident">dirs::data_local_dir</span>()
-            .<span class="ident">unwrap_or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="ident">env::current_dir</span>().<span class="ident">unwrap_or_else</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">PathBuf::from</span>(<span class="string">&quot;./&quot;</span>)))
-            .<span class="ident">join</span>(<span class="string">&quot;tide-disco/public/media&quot;</span>);
-        <span class="comment">// If the path already exists, move it aside so we can update it.</span>
-        <span class="kw">let</span> <span class="kw">_</span> <span class="op">=</span> <span class="ident">fs::rename</span>(<span class="kw-2">&amp;</span><span class="ident">path</span>, <span class="ident">path</span>.<span class="ident">with_extension</span>(<span class="string">&quot;old&quot;</span>));
-        <span class="ident">DEFAULT_PUBLIC_DIR</span>.<span class="ident">extract</span>(<span class="kw-2">&amp;</span><span class="ident">path</span>).<span class="ident">unwrap</span>();
-        <span class="ident">path</span>
+<span class="kw">static </span>DEFAULT_PUBLIC_DIR: Dir&lt;<span class="lifetime">&#39;_</span>&gt; = <span class="macro">include_dir!</span>(<span class="string">&quot;$CARGO_MANIFEST_DIR/public/media&quot;</span>);
+<span class="macro">lazy_static! </span>{
+    <span class="kw">static </span><span class="kw-2">ref </span>DEFAULT_PUBLIC_PATH: PathBuf = {
+        <span class="comment">// The contents of the default public directory are included in the binary. The first time
+        // the default directory is used, if ever, we extract them to a directory on the host file
+        // system and return the path to that directory.
+        </span><span class="kw">let </span>path = dirs::data_local_dir()
+            .unwrap_or_else(|| env::current_dir().unwrap_or_else(|<span class="kw">_</span>| PathBuf::from(<span class="string">&quot;./&quot;</span>)))
+            .join(<span class="string">&quot;tide-disco/public/media&quot;</span>);
+        <span class="comment">// If the path already exists, move it aside so we can update it.
+        </span><span class="kw">let _ </span>= fs::rename(<span class="kw-2">&amp;</span>path, path.with_extension(<span class="string">&quot;old&quot;</span>));
+        DEFAULT_PUBLIC_DIR.extract(<span class="kw-2">&amp;</span>path).unwrap();
+        path
     };
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">State</span>: <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Sync</span> <span class="op">+</span> <span class="lifetime">&#39;static</span>, <span class="ident">Error</span>: <span class="lifetime">&#39;static</span> <span class="op">+</span> <span class="ident"><span class="kw">crate</span>::Error</span><span class="op">&gt;</span> <span class="ident">App</span><span class="op">&lt;</span><span class="ident">State</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
-    <span class="doccomment">/// Serve the [App] asynchronously.</span>
-    <span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">serve</span><span class="op">&lt;</span><span class="ident">L</span>: <span class="ident">ToListener</span><span class="op">&lt;</span><span class="ident">Arc</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span>(<span class="self">self</span>, <span class="ident">listener</span>: <span class="ident">L</span>) -&gt; <span class="ident">io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">state</span> <span class="op">=</span> <span class="ident">Arc::new</span>(<span class="self">self</span>);
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">server</span> <span class="op">=</span> <span class="ident">tide::Server::with_state</span>(<span class="ident">state</span>.<span class="ident">clone</span>());
-        <span class="kw">for</span> (<span class="ident">name</span>, <span class="ident">api</span>) <span class="kw">in</span> <span class="kw-2">&amp;</span><span class="ident">state</span>.<span class="ident">apis</span> {
-            <span class="comment">// Clippy complains if the only non-trivial operation in an `unwrap_or_else` closure is</span>
-            <span class="comment">// a deref, but for `lazy_static` types, deref is an effectful operation that (in this</span>
-            <span class="comment">// case) causes a directory to be renamed and another extracted. We only want to execute</span>
-            <span class="comment">// this if we need to (if `api.public()` is `None`) so we disable the lint.</span>
-            <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">clippy::unnecessary_lazy_evaluations</span>)]</span>
-            <span class="ident">server</span>
-                .<span class="ident">at</span>(<span class="string">&quot;/public&quot;</span>)
-                .<span class="ident">at</span>(<span class="ident">name</span>)
-                .<span class="ident">serve_dir</span>(<span class="ident">api</span>.<span class="ident">public</span>().<span class="ident">unwrap_or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="kw-2">&amp;</span><span class="ident">DEFAULT_PUBLIC_PATH</span>))<span class="question-mark">?</span>;
+<span class="kw">impl</span>&lt;State: Send + Sync + <span class="lifetime">&#39;static</span>, Error: <span class="lifetime">&#39;static </span>+ <span class="kw">crate</span>::Error&gt; App&lt;State, Error&gt; {
+    <span class="doccomment">/// Serve the [App] asynchronously.
+    </span><span class="kw">pub async fn </span>serve&lt;L: ToListener&lt;Arc&lt;<span class="self">Self</span>&gt;&gt;&gt;(<span class="self">self</span>, listener: L) -&gt; io::Result&lt;()&gt; {
+        <span class="kw">let </span>state = Arc::new(<span class="self">self</span>);
+        <span class="kw">let </span><span class="kw-2">mut </span>server = tide::Server::with_state(state.clone());
+        <span class="kw">for </span>(name, api) <span class="kw">in </span><span class="kw-2">&amp;</span>state.apis {
+            <span class="comment">// Clippy complains if the only non-trivial operation in an `unwrap_or_else` closure is
+            // a deref, but for `lazy_static` types, deref is an effectful operation that (in this
+            // case) causes a directory to be renamed and another extracted. We only want to execute
+            // this if we need to (if `api.public()` is `None`) so we disable the lint.
+            </span><span class="attribute">#[allow(clippy::unnecessary_lazy_evaluations)]
+            </span>server
+                .at(<span class="string">&quot;/public&quot;</span>)
+                .at(name)
+                .serve_dir(api.public().unwrap_or_else(|| <span class="kw-2">&amp;</span>DEFAULT_PUBLIC_PATH))<span class="question-mark">?</span>;
         }
-        <span class="ident">server</span>.<span class="ident">with</span>(<span class="ident">add_error_body</span>::<span class="op">&lt;</span><span class="kw">_</span>, <span class="ident">Error</span><span class="op">&gt;</span>);
-        <span class="ident">server</span>.<span class="ident">with</span>(
-            <span class="ident">CorsMiddleware::new</span>()
-                .<span class="ident">allow_methods</span>(<span class="string">&quot;GET, POST&quot;</span>.<span class="ident">parse</span>::<span class="op">&lt;</span><span class="ident">HeaderValue</span><span class="op">&gt;</span>().<span class="ident">unwrap</span>())
-                .<span class="ident">allow_headers</span>(<span class="string">&quot;*&quot;</span>.<span class="ident">parse</span>::<span class="op">&lt;</span><span class="ident">HeaderValue</span><span class="op">&gt;</span>().<span class="ident">unwrap</span>())
-                .<span class="ident">allow_origin</span>(<span class="ident">Origin::from</span>(<span class="string">&quot;*&quot;</span>))
-                .<span class="ident">allow_credentials</span>(<span class="bool-val">true</span>),
+        server.with(add_error_body::&lt;<span class="kw">_</span>, Error&gt;);
+        server.with(
+            CorsMiddleware::new()
+                .allow_methods(<span class="string">&quot;GET, POST&quot;</span>.parse::&lt;HeaderValue&gt;().unwrap())
+                .allow_headers(<span class="string">&quot;*&quot;</span>.parse::&lt;HeaderValue&gt;().unwrap())
+                .allow_origin(Origin::from(<span class="string">&quot;*&quot;</span>))
+                .allow_credentials(<span class="bool-val">true</span>),
         );
 
-        <span class="kw">for</span> (<span class="ident">prefix</span>, <span class="ident">api</span>) <span class="kw">in</span> <span class="kw-2">&amp;</span><span class="ident">state</span>.<span class="ident">apis</span> {
-            <span class="comment">// Register routes for this API.</span>
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">api_endpoint</span> <span class="op">=</span> <span class="ident">server</span>.<span class="ident">at</span>(<span class="ident">prefix</span>);
-            <span class="kw">for</span> (<span class="ident">path</span>, <span class="ident">routes</span>) <span class="kw">in</span> <span class="ident">api</span>.<span class="ident">routes_by_path</span>() {
-                <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">endpoint</span> <span class="op">=</span> <span class="ident">api_endpoint</span>.<span class="ident">at</span>(<span class="ident">path</span>);
-                <span class="kw">let</span> <span class="ident">routes</span> <span class="op">=</span> <span class="ident">routes</span>.<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span>();
-                <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">socket_route</span>) <span class="op">=</span>
-                    <span class="ident">routes</span>.<span class="ident">iter</span>().<span class="ident">find</span>(<span class="op">|</span><span class="ident">route</span><span class="op">|</span> <span class="ident">route</span>.<span class="ident">method</span>() <span class="op">==</span> <span class="ident">Method::Socket</span>)
+        <span class="kw">for </span>(prefix, api) <span class="kw">in </span><span class="kw-2">&amp;</span>state.apis {
+            <span class="comment">// Register routes for this API.
+            </span><span class="kw">let </span><span class="kw-2">mut </span>api_endpoint = server.at(prefix);
+            <span class="kw">for </span>(path, routes) <span class="kw">in </span>api.routes_by_path() {
+                <span class="kw">let </span><span class="kw-2">mut </span>endpoint = api_endpoint.at(path);
+                <span class="kw">let </span>routes = routes.collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
+                <span class="kw">if let </span><span class="prelude-val">Some</span>(socket_route) =
+                    routes.iter().find(|route| route.method() == Method::Socket)
                 {
-                    <span class="comment">// If there is a socket route with this pattern, add the socket middleware to</span>
-                    <span class="comment">// all endpoints registered under this pattern, so that any request with any</span>
-                    <span class="comment">// method that has the socket upgrade headers will trigger a WebSockets upgrade.</span>
-                    <span class="ident"><span class="self">Self</span>::register_socket</span>(<span class="ident">prefix</span>.<span class="ident">to_owned</span>(), <span class="kw-2">&amp;mut</span> <span class="ident">endpoint</span>, <span class="ident">socket_route</span>);
+                    <span class="comment">// If there is a socket route with this pattern, add the socket middleware to
+                    // all endpoints registered under this pattern, so that any request with any
+                    // method that has the socket upgrade headers will trigger a WebSockets upgrade.
+                    </span><span class="self">Self</span>::register_socket(prefix.to_owned(), <span class="kw-2">&amp;mut </span>endpoint, socket_route);
                 }
-                <span class="comment">// Register the HTTP routes.</span>
-                <span class="kw">for</span> <span class="ident">route</span> <span class="kw">in</span> <span class="ident">routes</span> {
-                    <span class="kw">if</span> <span class="kw">let</span> <span class="ident">Method::Http</span>(<span class="ident">method</span>) <span class="op">=</span> <span class="ident">route</span>.<span class="ident">method</span>() {
-                        <span class="ident"><span class="self">Self</span>::register_route</span>(<span class="ident">prefix</span>.<span class="ident">to_owned</span>(), <span class="kw-2">&amp;mut</span> <span class="ident">endpoint</span>, <span class="ident">route</span>, <span class="ident">method</span>);
+                <span class="comment">// Register the HTTP routes.
+                </span><span class="kw">for </span>route <span class="kw">in </span>routes {
+                    <span class="kw">if let </span>Method::Http(method) = route.method() {
+                        <span class="self">Self</span>::register_route(prefix.to_owned(), <span class="kw-2">&amp;mut </span>endpoint, route, method);
                     }
                 }
             }
 
-            <span class="comment">// Register automatic routes for this API: `healthcheck` and `version`.</span>
-            {
-                <span class="kw">let</span> <span class="ident">prefix</span> <span class="op">=</span> <span class="ident">prefix</span>.<span class="ident">clone</span>();
-                <span class="ident">server</span>
-                    .<span class="ident">at</span>(<span class="kw-2">&amp;</span><span class="ident">prefix</span>)
-                    .<span class="ident">at</span>(<span class="string">&quot;healthcheck&quot;</span>)
-                    .<span class="ident">get</span>(<span class="kw">move</span> <span class="op">|</span><span class="ident">req</span>: <span class="ident">tide::Request</span><span class="op">&lt;</span><span class="ident">Arc</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">|</span> {
-                        <span class="kw">let</span> <span class="ident">prefix</span> <span class="op">=</span> <span class="ident">prefix</span>.<span class="ident">clone</span>();
-                        <span class="kw">async</span> <span class="kw">move</span> {
-                            <span class="kw">let</span> <span class="ident">api</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">req</span>.<span class="ident">state</span>().<span class="ident">clone</span>().<span class="ident">apis</span>[<span class="kw-2">&amp;</span><span class="ident">prefix</span>];
-                            <span class="kw">let</span> <span class="ident">state</span> <span class="op">=</span> <span class="ident">req</span>.<span class="ident">state</span>().<span class="ident">clone</span>();
-                            <span class="prelude-val">Ok</span>(<span class="ident">api</span>
-                                .<span class="ident">health</span>(<span class="ident">request_params</span>(<span class="ident">req</span>, <span class="kw-2">&amp;</span>[]).<span class="kw">await</span><span class="question-mark">?</span>, <span class="kw-2">&amp;</span><span class="ident">state</span>.<span class="ident">state</span>)
+            <span class="comment">// Register automatic routes for this API: `healthcheck` and `version`.
+            </span>{
+                <span class="kw">let </span>prefix = prefix.clone();
+                server
+                    .at(<span class="kw-2">&amp;</span>prefix)
+                    .at(<span class="string">&quot;healthcheck&quot;</span>)
+                    .get(<span class="kw">move </span>|req: tide::Request&lt;Arc&lt;<span class="self">Self</span>&gt;&gt;| {
+                        <span class="kw">let </span>prefix = prefix.clone();
+                        <span class="kw">async move </span>{
+                            <span class="kw">let </span>api = <span class="kw-2">&amp;</span>req.state().clone().apis[<span class="kw-2">&amp;</span>prefix];
+                            <span class="kw">let </span>state = req.state().clone();
+                            <span class="prelude-val">Ok</span>(api
+                                .health(request_params(req, <span class="kw-2">&amp;</span>[]).<span class="kw">await</span><span class="question-mark">?</span>, <span class="kw-2">&amp;</span>state.state)
                                 .<span class="kw">await</span>)
                         }
                     });
             }
             {
-                <span class="kw">let</span> <span class="ident">prefix</span> <span class="op">=</span> <span class="ident">prefix</span>.<span class="ident">clone</span>();
-                <span class="ident">server</span>
-                    .<span class="ident">at</span>(<span class="kw-2">&amp;</span><span class="ident">prefix</span>)
-                    .<span class="ident">at</span>(<span class="string">&quot;version&quot;</span>)
-                    .<span class="ident">get</span>(<span class="kw">move</span> <span class="op">|</span><span class="ident">req</span>: <span class="ident">tide::Request</span><span class="op">&lt;</span><span class="ident">Arc</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">|</span> {
-                        <span class="kw">let</span> <span class="ident">prefix</span> <span class="op">=</span> <span class="ident">prefix</span>.<span class="ident">clone</span>();
-                        <span class="kw">async</span> <span class="kw">move</span> {
-                            <span class="kw">let</span> <span class="ident">api</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">req</span>.<span class="ident">state</span>().<span class="ident">apis</span>[<span class="kw-2">&amp;</span><span class="ident">prefix</span>];
-                            <span class="kw">let</span> <span class="ident">accept</span> <span class="op">=</span> <span class="ident">RequestParams::accept_from_headers</span>(<span class="kw-2">&amp;</span><span class="ident">req</span>)<span class="question-mark">?</span>;
-                            <span class="ident">respond_with</span>(<span class="kw-2">&amp;</span><span class="ident">accept</span>, <span class="ident">api</span>.<span class="ident">version</span>()).<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">err</span><span class="op">|</span> {
-                                <span class="ident">Error::from_route_error</span>::<span class="op">&lt;</span><span class="ident">Infallible</span><span class="op">&gt;</span>(<span class="ident">err</span>).<span class="ident">into_tide_error</span>()
+                <span class="kw">let </span>prefix = prefix.clone();
+                server
+                    .at(<span class="kw-2">&amp;</span>prefix)
+                    .at(<span class="string">&quot;version&quot;</span>)
+                    .get(<span class="kw">move </span>|req: tide::Request&lt;Arc&lt;<span class="self">Self</span>&gt;&gt;| {
+                        <span class="kw">let </span>prefix = prefix.clone();
+                        <span class="kw">async move </span>{
+                            <span class="kw">let </span>api = <span class="kw-2">&amp;</span>req.state().apis[<span class="kw-2">&amp;</span>prefix];
+                            <span class="kw">let </span>accept = RequestParams::accept_from_headers(<span class="kw-2">&amp;</span>req)<span class="question-mark">?</span>;
+                            respond_with(<span class="kw-2">&amp;</span>accept, api.version()).map_err(|err| {
+                                Error::from_route_error::&lt;Infallible&gt;(err).into_tide_error()
                             })
                         }
                     });
             }
         }
 
-        <span class="comment">// Register app-level automatic routes: `healthcheck` and `version`.</span>
-        <span class="ident">server</span>
-            .<span class="ident">at</span>(<span class="string">&quot;healthcheck&quot;</span>)
-            .<span class="ident">get</span>(<span class="op">|</span><span class="ident">req</span>: <span class="ident">tide::Request</span><span class="op">&lt;</span><span class="ident">Arc</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">|</span> <span class="kw">async</span> <span class="kw">move</span> {
-                <span class="kw">let</span> <span class="ident">state</span> <span class="op">=</span> <span class="ident">req</span>.<span class="ident">state</span>().<span class="ident">clone</span>();
-                <span class="kw">let</span> <span class="ident">app_state</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="ident">state</span>.<span class="ident">state</span>;
-                <span class="kw">let</span> <span class="ident">req</span> <span class="op">=</span> <span class="ident">request_params</span>(<span class="ident">req</span>, <span class="kw-2">&amp;</span>[]).<span class="kw">await</span><span class="question-mark">?</span>;
-                <span class="kw">let</span> <span class="ident">accept</span> <span class="op">=</span> <span class="ident">req</span>.<span class="ident">accept</span>()<span class="question-mark">?</span>;
-                <span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="ident">state</span>.<span class="ident">health</span>(<span class="ident">req</span>, <span class="ident">app_state</span>).<span class="kw">await</span>;
-                <span class="prelude-val">Ok</span>(<span class="ident">health_check_response</span>(<span class="kw-2">&amp;</span><span class="ident">accept</span>, <span class="ident">res</span>))
+        <span class="comment">// Register app-level automatic routes: `healthcheck` and `version`.
+        </span>server
+            .at(<span class="string">&quot;healthcheck&quot;</span>)
+            .get(|req: tide::Request&lt;Arc&lt;<span class="self">Self</span>&gt;&gt;| <span class="kw">async move </span>{
+                <span class="kw">let </span>state = req.state().clone();
+                <span class="kw">let </span>app_state = <span class="kw-2">&amp;*</span>state.state;
+                <span class="kw">let </span>req = request_params(req, <span class="kw-2">&amp;</span>[]).<span class="kw">await</span><span class="question-mark">?</span>;
+                <span class="kw">let </span>accept = req.accept()<span class="question-mark">?</span>;
+                <span class="kw">let </span>res = state.health(req, app_state).<span class="kw">await</span>;
+                <span class="prelude-val">Ok</span>(health_check_response(<span class="kw-2">&amp;</span>accept, res))
             });
-        <span class="ident">server</span>
-            .<span class="ident">at</span>(<span class="string">&quot;version&quot;</span>)
-            .<span class="ident">get</span>(<span class="op">|</span><span class="ident">req</span>: <span class="ident">tide::Request</span><span class="op">&lt;</span><span class="ident">Arc</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">|</span> <span class="kw">async</span> <span class="kw">move</span> {
-                <span class="kw">let</span> <span class="ident">accept</span> <span class="op">=</span> <span class="ident">RequestParams::accept_from_headers</span>(<span class="kw-2">&amp;</span><span class="ident">req</span>)<span class="question-mark">?</span>;
-                <span class="ident">respond_with</span>(<span class="kw-2">&amp;</span><span class="ident">accept</span>, <span class="ident">req</span>.<span class="ident">state</span>().<span class="ident">version</span>())
-                    .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">err</span><span class="op">|</span> <span class="ident">Error::from_route_error</span>::<span class="op">&lt;</span><span class="ident">Infallible</span><span class="op">&gt;</span>(<span class="ident">err</span>).<span class="ident">into_tide_error</span>())
+        server
+            .at(<span class="string">&quot;version&quot;</span>)
+            .get(|req: tide::Request&lt;Arc&lt;<span class="self">Self</span>&gt;&gt;| <span class="kw">async move </span>{
+                <span class="kw">let </span>accept = RequestParams::accept_from_headers(<span class="kw-2">&amp;</span>req)<span class="question-mark">?</span>;
+                respond_with(<span class="kw-2">&amp;</span>accept, req.state().version())
+                    .map_err(|err| Error::from_route_error::&lt;Infallible&gt;(err).into_tide_error())
             });
 
-        <span class="comment">// Register catch-all routes for discoverability</span>
-        {
-            <span class="ident">server</span>
-                .<span class="ident">at</span>(<span class="string">&quot;/&quot;</span>)
-                .<span class="ident">all</span>(<span class="kw">move</span> <span class="op">|</span><span class="ident">req</span>: <span class="ident">tide::Request</span><span class="op">&lt;</span><span class="ident">Arc</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">|</span> <span class="kw">async</span> <span class="kw">move</span> {
-                    <span class="prelude-val">Ok</span>(<span class="macro">html!</span> {
-                        <span class="string">&quot;This is a Tide Disco app composed of the following modules:&quot;</span>
-                        (<span class="ident">req</span>.<span class="ident">state</span>().<span class="ident">list_apis</span>())
+        <span class="comment">// Register catch-all routes for discoverability
+        </span>{
+            server
+                .at(<span class="string">&quot;/&quot;</span>)
+                .all(<span class="kw">move </span>|req: tide::Request&lt;Arc&lt;<span class="self">Self</span>&gt;&gt;| <span class="kw">async move </span>{
+                    <span class="prelude-val">Ok</span>(<span class="macro">html! </span>{
+                        <span class="string">&quot;This is a Tide Disco app composed of the following modules:&quot;
+                        </span>(req.state().list_apis())
                     })
                 });
         }
         {
-            <span class="ident">server</span>
-                .<span class="ident">at</span>(<span class="string">&quot;/*&quot;</span>)
-                .<span class="ident">all</span>(<span class="kw">move</span> <span class="op">|</span><span class="ident">req</span>: <span class="ident">tide::Request</span><span class="op">&lt;</span><span class="ident">Arc</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">|</span> <span class="kw">async</span> <span class="kw">move</span> {
-                    <span class="kw">let</span> <span class="ident">api_name</span> <span class="op">=</span> <span class="ident">req</span>.<span class="ident">url</span>().<span class="ident">path_segments</span>().<span class="ident">unwrap</span>().<span class="ident">next</span>().<span class="ident">unwrap</span>();
-                    <span class="kw">let</span> <span class="ident">state</span> <span class="op">=</span> <span class="ident">req</span>.<span class="ident">state</span>();
-                    <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">api</span>) <span class="op">=</span> <span class="ident">state</span>.<span class="ident">apis</span>.<span class="ident">get</span>(<span class="ident">api_name</span>) {
-                        <span class="prelude-val">Ok</span>(<span class="ident">api</span>.<span class="ident">documentation</span>())
-                    } <span class="kw">else</span> {
-                        <span class="prelude-val">Ok</span>(<span class="macro">html!</span> {
-                            <span class="string">&quot;No valid route begins with \&quot;&quot;</span> (<span class="ident">api_name</span>) <span class="string">&quot;\&quot;. Try routes beginning
-                            with one of the following API identifiers:&quot;</span>
-                            (<span class="ident">state</span>.<span class="ident">list_apis</span>())
+            server
+                .at(<span class="string">&quot;/*&quot;</span>)
+                .all(<span class="kw">move </span>|req: tide::Request&lt;Arc&lt;<span class="self">Self</span>&gt;&gt;| <span class="kw">async move </span>{
+                    <span class="kw">let </span>api_name = req.url().path_segments().unwrap().next().unwrap();
+                    <span class="kw">let </span>state = req.state();
+                    <span class="kw">if let </span><span class="prelude-val">Some</span>(api) = state.apis.get(api_name) {
+                        <span class="prelude-val">Ok</span>(api.documentation())
+                    } <span class="kw">else </span>{
+                        <span class="prelude-val">Ok</span>(<span class="macro">html! </span>{
+                            <span class="string">&quot;No valid route begins with \&quot;&quot; </span>(api_name) <span class="string">&quot;\&quot;. Try routes beginning
+                            with one of the following API identifiers:&quot;
+                            </span>(state.list_apis())
                         })
                     }
                 });
         }
 
-        <span class="ident">server</span>.<span class="ident">listen</span>(<span class="ident">listener</span>).<span class="kw">await</span>
-    }
+        server.listen(listener).<span class="kw">await
+    </span>}
 
-    <span class="kw">fn</span> <span class="ident">list_apis</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">Html</span> {
-        <span class="macro">html!</span> {
-            <span class="ident">ul</span> {
-                @<span class="kw">for</span> (<span class="ident">name</span>, <span class="ident">api</span>) <span class="kw">in</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">apis</span> {
-                    <span class="ident">li</span> {
-                        <span class="ident">a</span> <span class="ident">href</span><span class="op">=</span>(<span class="macro">format!</span>(<span class="string">&quot;/{}&quot;</span>, <span class="ident">name</span>)) {(<span class="ident">name</span>)}
-                        <span class="string">&quot; &quot;</span>
-                        (<span class="ident">api</span>.<span class="ident">description</span>())
+    <span class="kw">fn </span>list_apis(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Html {
+        <span class="macro">html! </span>{
+            ul {
+                @<span class="kw">for </span>(name, api) <span class="kw">in </span><span class="kw-2">&amp;</span><span class="self">self</span>.apis {
+                    li {
+                        a href=(<span class="macro">format!</span>(<span class="string">&quot;/{}&quot;</span>, name)) {(name)}
+                        <span class="string">&quot; &quot;
+                        </span>(api.description())
                     }
                 }
             }
         }
     }
 
-    <span class="kw">fn</span> <span class="ident">register_route</span>(
-        <span class="ident">api</span>: <span class="ident">String</span>,
-        <span class="ident">endpoint</span>: <span class="kw-2">&amp;mut</span> <span class="ident">tide::Route</span><span class="op">&lt;</span><span class="ident">Arc</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-        <span class="ident">route</span>: <span class="kw-2">&amp;</span><span class="ident">Route</span><span class="op">&lt;</span><span class="ident">State</span>, <span class="ident">Error</span><span class="op">&gt;</span>,
-        <span class="ident">method</span>: <span class="ident">http::Method</span>,
+    <span class="kw">fn </span>register_route(
+        api: String,
+        endpoint: <span class="kw-2">&amp;mut </span>tide::Route&lt;Arc&lt;<span class="self">Self</span>&gt;&gt;,
+        route: <span class="kw-2">&amp;</span>Route&lt;State, Error&gt;,
+        method: http::Method,
     ) {
-        <span class="kw">let</span> <span class="ident">name</span> <span class="op">=</span> <span class="ident">route</span>.<span class="ident">name</span>();
-        <span class="ident">endpoint</span>.<span class="ident">method</span>(<span class="ident">method</span>, <span class="kw">move</span> <span class="op">|</span><span class="ident">req</span>: <span class="ident">tide::Request</span><span class="op">&lt;</span><span class="ident">Arc</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">|</span> {
-            <span class="kw">let</span> <span class="ident">name</span> <span class="op">=</span> <span class="ident">name</span>.<span class="ident">clone</span>();
-            <span class="kw">let</span> <span class="ident">api</span> <span class="op">=</span> <span class="ident">api</span>.<span class="ident">clone</span>();
-            <span class="kw">async</span> <span class="kw">move</span> {
-                <span class="kw">let</span> <span class="ident">route</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">req</span>.<span class="ident">state</span>().<span class="ident">clone</span>().<span class="ident">apis</span>[<span class="kw-2">&amp;</span><span class="ident">api</span>][<span class="kw-2">&amp;</span><span class="ident">name</span>];
-                <span class="kw">let</span> <span class="ident">state</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="ident">req</span>.<span class="ident">state</span>().<span class="ident">clone</span>().<span class="ident">state</span>;
-                <span class="kw">let</span> <span class="ident">req</span> <span class="op">=</span> <span class="ident">request_params</span>(<span class="ident">req</span>, <span class="ident">route</span>.<span class="ident">params</span>()).<span class="kw">await</span><span class="question-mark">?</span>;
-                <span class="ident">route</span>
-                    .<span class="ident">handle</span>(<span class="ident">req</span>, <span class="ident">state</span>)
-                    .<span class="kw">await</span>
-                    .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">err</span><span class="op">|</span> <span class="kw">match</span> <span class="ident">err</span> {
-                        <span class="ident">RouteError::AppSpecific</span>(<span class="ident">err</span>) =&gt; <span class="ident">err</span>,
-                        <span class="kw">_</span> =&gt; <span class="ident">Error::from_route_error</span>(<span class="ident">err</span>),
+        <span class="kw">let </span>name = route.name();
+        endpoint.method(method, <span class="kw">move </span>|req: tide::Request&lt;Arc&lt;<span class="self">Self</span>&gt;&gt;| {
+            <span class="kw">let </span>name = name.clone();
+            <span class="kw">let </span>api = api.clone();
+            <span class="kw">async move </span>{
+                <span class="kw">let </span>route = <span class="kw-2">&amp;</span>req.state().clone().apis[<span class="kw-2">&amp;</span>api][<span class="kw-2">&amp;</span>name];
+                <span class="kw">let </span>state = <span class="kw-2">&amp;*</span>req.state().clone().state;
+                <span class="kw">let </span>req = request_params(req, route.params()).<span class="kw">await</span><span class="question-mark">?</span>;
+                route
+                    .handle(req, state)
+                    .<span class="kw">await
+                    </span>.map_err(|err| <span class="kw">match </span>err {
+                        RouteError::AppSpecific(err) =&gt; err,
+                        <span class="kw">_ </span>=&gt; Error::from_route_error(err),
                     })
-                    .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">err</span><span class="op">|</span> <span class="ident">err</span>.<span class="ident">into_tide_error</span>())
+                    .map_err(|err| err.into_tide_error())
             }
         });
     }
 
-    <span class="kw">fn</span> <span class="ident">register_socket</span>(
-        <span class="ident">api</span>: <span class="ident">String</span>,
-        <span class="ident">endpoint</span>: <span class="kw-2">&amp;mut</span> <span class="ident">tide::Route</span><span class="op">&lt;</span><span class="ident">Arc</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-        <span class="ident">route</span>: <span class="kw-2">&amp;</span><span class="ident">Route</span><span class="op">&lt;</span><span class="ident">State</span>, <span class="ident">Error</span><span class="op">&gt;</span>,
+    <span class="kw">fn </span>register_socket(
+        api: String,
+        endpoint: <span class="kw-2">&amp;mut </span>tide::Route&lt;Arc&lt;<span class="self">Self</span>&gt;&gt;,
+        route: <span class="kw-2">&amp;</span>Route&lt;State, Error&gt;,
     ) {
-        <span class="kw">let</span> <span class="ident">name</span> <span class="op">=</span> <span class="ident">route</span>.<span class="ident">name</span>();
-        <span class="kw">if</span> <span class="ident">route</span>.<span class="ident">has_handler</span>() {
-            <span class="comment">// If there is a socket handler, add the [WebSocket] middleware to the endpoint, so that</span>
-            <span class="comment">// upgrade requests will automatically upgrade to a WebSockets connection.</span>
-            <span class="kw">let</span> <span class="ident">name</span> <span class="op">=</span> <span class="ident">name</span>.<span class="ident">clone</span>();
-            <span class="kw">let</span> <span class="ident">api</span> <span class="op">=</span> <span class="ident">api</span>.<span class="ident">clone</span>();
-            <span class="ident">endpoint</span>.<span class="ident">with</span>(<span class="ident">WebSocket::new</span>(
-                <span class="kw">move</span> <span class="op">|</span><span class="ident">req</span>: <span class="ident">tide::Request</span><span class="op">&lt;</span><span class="ident">Arc</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span><span class="op">&gt;</span>, <span class="ident">conn</span><span class="op">|</span> {
-                    <span class="kw">let</span> <span class="ident">name</span> <span class="op">=</span> <span class="ident">name</span>.<span class="ident">clone</span>();
-                    <span class="kw">let</span> <span class="ident">api</span> <span class="op">=</span> <span class="ident">api</span>.<span class="ident">clone</span>();
-                    <span class="kw">async</span> <span class="kw">move</span> {
-                        <span class="kw">let</span> <span class="ident">route</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">req</span>.<span class="ident">state</span>().<span class="ident">clone</span>().<span class="ident">apis</span>[<span class="kw-2">&amp;</span><span class="ident">api</span>][<span class="kw-2">&amp;</span><span class="ident">name</span>];
-                        <span class="kw">let</span> <span class="ident">state</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="ident">req</span>.<span class="ident">state</span>().<span class="ident">clone</span>().<span class="ident">state</span>;
-                        <span class="kw">let</span> <span class="ident">req</span> <span class="op">=</span> <span class="ident">request_params</span>(<span class="ident">req</span>, <span class="ident">route</span>.<span class="ident">params</span>()).<span class="kw">await</span><span class="question-mark">?</span>;
-                        <span class="ident">route</span>
-                            .<span class="ident">handle_socket</span>(<span class="ident">req</span>, <span class="ident">conn</span>, <span class="ident">state</span>)
-                            .<span class="kw">await</span>
-                            .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">err</span><span class="op">|</span> <span class="kw">match</span> <span class="ident">err</span> {
-                                <span class="ident">SocketError::AppSpecific</span>(<span class="ident">err</span>) =&gt; <span class="ident">err</span>,
-                                <span class="kw">_</span> =&gt; <span class="ident">Error::from_socket_error</span>(<span class="ident">err</span>),
+        <span class="kw">let </span>name = route.name();
+        <span class="kw">if </span>route.has_handler() {
+            <span class="comment">// If there is a socket handler, add the [WebSocket] middleware to the endpoint, so that
+            // upgrade requests will automatically upgrade to a WebSockets connection.
+            </span><span class="kw">let </span>name = name.clone();
+            <span class="kw">let </span>api = api.clone();
+            endpoint.with(WebSocket::new(
+                <span class="kw">move </span>|req: tide::Request&lt;Arc&lt;<span class="self">Self</span>&gt;&gt;, conn| {
+                    <span class="kw">let </span>name = name.clone();
+                    <span class="kw">let </span>api = api.clone();
+                    <span class="kw">async move </span>{
+                        <span class="kw">let </span>route = <span class="kw-2">&amp;</span>req.state().clone().apis[<span class="kw-2">&amp;</span>api][<span class="kw-2">&amp;</span>name];
+                        <span class="kw">let </span>state = <span class="kw-2">&amp;*</span>req.state().clone().state;
+                        <span class="kw">let </span>req = request_params(req, route.params()).<span class="kw">await</span><span class="question-mark">?</span>;
+                        route
+                            .handle_socket(req, conn, state)
+                            .<span class="kw">await
+                            </span>.map_err(|err| <span class="kw">match </span>err {
+                                SocketError::AppSpecific(err) =&gt; err,
+                                <span class="kw">_ </span>=&gt; Error::from_socket_error(err),
                             })
-                            .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">err</span><span class="op">|</span> <span class="ident">err</span>.<span class="ident">into_tide_error</span>())
+                            .map_err(|err| err.into_tide_error())
                     }
                 },
             ));
         }
 
-        <span class="comment">// Register a catch-all HTTP handler for the route, which serves the route documentation as</span>
-        <span class="comment">// HTML. This ensures that there is at least one endpoint registered with the Tide</span>
-        <span class="comment">// dispatcher, so that the middleware actually fires on requests to this path. In addition,</span>
-        <span class="comment">// this handler will trigger for requests that are not valid WebSockets handshakes. The</span>
-        <span class="comment">// documentation should make clear that this is a WebSockets endpoint, aiding in</span>
-        <span class="comment">// discoverability. This will also trigger if there is no socket handler for this route,</span>
-        <span class="comment">// which will signal to the developer that they need to implement a socket handler for this</span>
-        <span class="comment">// route to work.</span>
-        <span class="comment">//</span>
-        <span class="comment">// We register the default handler using `all`, which makes it act as a fallback handler.</span>
-        <span class="comment">// This means if there are other, non-socket routes with this same path, we will still</span>
-        <span class="comment">// dispatch to them if the path is hit with the appropriate method.</span>
-        <span class="ident">endpoint</span>.<span class="ident">all</span>(<span class="kw">move</span> <span class="op">|</span><span class="ident">req</span>: <span class="ident">tide::Request</span><span class="op">&lt;</span><span class="ident">Arc</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">|</span> {
-            <span class="kw">let</span> <span class="ident">name</span> <span class="op">=</span> <span class="ident">name</span>.<span class="ident">clone</span>();
-            <span class="kw">let</span> <span class="ident">api</span> <span class="op">=</span> <span class="ident">api</span>.<span class="ident">clone</span>();
-            <span class="kw">async</span> <span class="kw">move</span> {
-                <span class="kw">let</span> <span class="ident">route</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">req</span>.<span class="ident">state</span>().<span class="ident">clone</span>().<span class="ident">apis</span>[<span class="kw-2">&amp;</span><span class="ident">api</span>][<span class="kw-2">&amp;</span><span class="ident">name</span>];
-                <span class="kw">let</span> <span class="ident">state</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="ident">req</span>.<span class="ident">state</span>().<span class="ident">clone</span>().<span class="ident">state</span>;
-                <span class="kw">let</span> <span class="ident">req</span> <span class="op">=</span> <span class="ident">request_params</span>(<span class="ident">req</span>, <span class="ident">route</span>.<span class="ident">params</span>()).<span class="kw">await</span><span class="question-mark">?</span>;
-                <span class="ident">route</span>
-                    .<span class="ident">default_handler</span>(<span class="ident">req</span>, <span class="ident">state</span>)
-                    .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">err</span><span class="op">|</span> <span class="kw">match</span> <span class="ident">err</span> {
-                        <span class="ident">RouteError::AppSpecific</span>(<span class="ident">err</span>) =&gt; <span class="ident">err</span>,
-                        <span class="kw">_</span> =&gt; <span class="ident">Error::from_route_error</span>(<span class="ident">err</span>),
+        <span class="comment">// Register a catch-all HTTP handler for the route, which serves the route documentation as
+        // HTML. This ensures that there is at least one endpoint registered with the Tide
+        // dispatcher, so that the middleware actually fires on requests to this path. In addition,
+        // this handler will trigger for requests that are not valid WebSockets handshakes. The
+        // documentation should make clear that this is a WebSockets endpoint, aiding in
+        // discoverability. This will also trigger if there is no socket handler for this route,
+        // which will signal to the developer that they need to implement a socket handler for this
+        // route to work.
+        //
+        // We register the default handler using `all`, which makes it act as a fallback handler.
+        // This means if there are other, non-socket routes with this same path, we will still
+        // dispatch to them if the path is hit with the appropriate method.
+        </span>endpoint.all(<span class="kw">move </span>|req: tide::Request&lt;Arc&lt;<span class="self">Self</span>&gt;&gt;| {
+            <span class="kw">let </span>name = name.clone();
+            <span class="kw">let </span>api = api.clone();
+            <span class="kw">async move </span>{
+                <span class="kw">let </span>route = <span class="kw-2">&amp;</span>req.state().clone().apis[<span class="kw-2">&amp;</span>api][<span class="kw-2">&amp;</span>name];
+                <span class="kw">let </span>state = <span class="kw-2">&amp;*</span>req.state().clone().state;
+                <span class="kw">let </span>req = request_params(req, route.params()).<span class="kw">await</span><span class="question-mark">?</span>;
+                route
+                    .default_handler(req, state)
+                    .map_err(|err| <span class="kw">match </span>err {
+                        RouteError::AppSpecific(err) =&gt; err,
+                        <span class="kw">_ </span>=&gt; Error::from_route_error(err),
                     })
-                    .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">err</span><span class="op">|</span> <span class="ident">err</span>.<span class="ident">into_tide_error</span>())
+                    .map_err(|err| err.into_tide_error())
             }
         });
     }
 }
 
-<span class="kw">async</span> <span class="kw">fn</span> <span class="ident">request_params</span><span class="op">&lt;</span><span class="ident">State</span>, <span class="ident">Error</span>: <span class="ident"><span class="kw">crate</span>::Error</span><span class="op">&gt;</span>(
-    <span class="ident">req</span>: <span class="ident">tide::Request</span><span class="op">&lt;</span><span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">App</span><span class="op">&lt;</span><span class="ident">State</span>, <span class="ident">Error</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-    <span class="ident">params</span>: <span class="kw-2">&amp;</span>[<span class="ident">RequestParam</span>],
-) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">RequestParams</span>, <span class="ident">tide::Error</span><span class="op">&gt;</span> {
-    <span class="ident">RequestParams::new</span>(<span class="ident">req</span>, <span class="ident">params</span>)
-        .<span class="kw">await</span>
-        .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">err</span><span class="op">|</span> <span class="ident">Error::from_request_error</span>(<span class="ident">err</span>).<span class="ident">into_tide_error</span>())
+<span class="kw">async fn </span>request_params&lt;State, Error: <span class="kw">crate</span>::Error&gt;(
+    req: tide::Request&lt;Arc&lt;App&lt;State, Error&gt;&gt;&gt;,
+    params: <span class="kw-2">&amp;</span>[RequestParam],
+) -&gt; <span class="prelude-ty">Result</span>&lt;RequestParams, tide::Error&gt; {
+    RequestParams::new(req, params)
+        .<span class="kw">await
+        </span>.map_err(|err| Error::from_request_error(err).into_tide_error())
 }
 
-<span class="doccomment">/// The health status of an application.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">Deserialize</span>, <span class="ident">Serialize</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">AppHealth</span> {
-    <span class="doccomment">/// The status of the overall application.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// [HealthStatus::Available] if all of the application&#39;s modules are healthy, otherwise a</span>
-    <span class="doccomment">/// [HealthStatus] variant with [status](HealthCheck::status) other than 200.</span>
-    <span class="kw">pub</span> <span class="ident">status</span>: <span class="ident">HealthStatus</span>,
-    <span class="doccomment">/// The status of each registered module.</span>
-    <span class="kw">pub</span> <span class="ident">modules</span>: <span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">String</span>, <span class="ident">StatusCode</span><span class="op">&gt;</span>,
+<span class="doccomment">/// The health status of an application.
+</span><span class="attribute">#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+</span><span class="kw">pub struct </span>AppHealth {
+    <span class="doccomment">/// The status of the overall application.
+    ///
+    /// [HealthStatus::Available] if all of the application&#39;s modules are healthy, otherwise a
+    /// [HealthStatus] variant with [status](HealthCheck::status) other than 200.
+    </span><span class="kw">pub </span>status: HealthStatus,
+    <span class="doccomment">/// The status of each registered module.
+    </span><span class="kw">pub </span>modules: HashMap&lt;String, StatusCode&gt;,
 }
 
-<span class="kw">impl</span> <span class="ident">HealthCheck</span> <span class="kw">for</span> <span class="ident">AppHealth</span> {
-    <span class="kw">fn</span> <span class="ident">status</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">StatusCode</span> {
-        <span class="self">self</span>.<span class="ident">status</span>.<span class="ident">status</span>()
+<span class="kw">impl </span>HealthCheck <span class="kw">for </span>AppHealth {
+    <span class="kw">fn </span>status(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; StatusCode {
+        <span class="self">self</span>.status.status()
     }
 }
 
-<span class="doccomment">/// Version information about an application.</span>
-<span class="attribute">#[<span class="ident">serde_as</span>]</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">Deserialize</span>, <span class="ident">Serialize</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">AppVersion</span> {
-    <span class="doccomment">/// The version of each module registered with this application.</span>
-    <span class="kw">pub</span> <span class="ident">modules</span>: <span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">String</span>, <span class="ident">ApiVersion</span><span class="op">&gt;</span>,
+<span class="doccomment">/// Version information about an application.
+</span><span class="attribute">#[serde_as]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+</span><span class="kw">pub struct </span>AppVersion {
+    <span class="doccomment">/// The version of each module registered with this application.
+    </span><span class="kw">pub </span>modules: HashMap&lt;String, ApiVersion&gt;,
 
-    <span class="doccomment">/// The version of this application.</span>
-    <span class="attribute">#[<span class="ident">serde_as</span>(<span class="kw">as</span> <span class="op">=</span> <span class="string">&quot;Option&lt;DisplayFromStr&gt;&quot;</span>)]</span>
-    <span class="kw">pub</span> <span class="ident">app_version</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Version</span><span class="op">&gt;</span>,
+    <span class="doccomment">/// The version of this application.
+    </span><span class="attribute">#[serde_as(<span class="kw">as </span>= <span class="string">&quot;Option&lt;DisplayFromStr&gt;&quot;</span>)]
+    </span><span class="kw">pub </span>app_version: <span class="prelude-ty">Option</span>&lt;Version&gt;,
 
-    <span class="doccomment">/// The version of the Tide Disco server framework.</span>
-    <span class="attribute">#[<span class="ident">serde_as</span>(<span class="kw">as</span> <span class="op">=</span> <span class="string">&quot;DisplayFromStr&quot;</span>)]</span>
-    <span class="kw">pub</span> <span class="ident">disco_version</span>: <span class="ident">Version</span>,
+    <span class="doccomment">/// The version of the Tide Disco server framework.
+    </span><span class="attribute">#[serde_as(<span class="kw">as </span>= <span class="string">&quot;DisplayFromStr&quot;</span>)]
+    </span><span class="kw">pub </span>disco_version: Version,
 }
 
-<span class="doccomment">/// Server middleware which automatically populates the body of error responses.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// If the response contains an error, the error is encoded into the [Error](crate::Error) type</span>
-<span class="doccomment">/// (either by downcasting if the server has generated an instance of [Error](crate::Error), or by</span>
-<span class="doccomment">/// converting to a [String] using [Display] if the error can not be downcasted to</span>
-<span class="doccomment">/// [Error](crate::Error)). The resulting [Error](crate::Error) is then serialized and used as the</span>
-<span class="doccomment">/// body of the response.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// If the response does not contain an error, it is passed through unchanged.</span>
-<span class="kw">fn</span> <span class="ident">add_error_body</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">Clone</span> <span class="op">+</span> <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Sync</span> <span class="op">+</span> <span class="lifetime">&#39;static</span>, <span class="ident">E</span>: <span class="ident"><span class="kw">crate</span>::Error</span><span class="op">&gt;</span>(
-    <span class="ident">req</span>: <span class="ident">tide::Request</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>,
-    <span class="ident">next</span>: <span class="ident">tide::Next</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>,
-) -&gt; <span class="ident">BoxFuture</span><span class="op">&lt;</span><span class="ident">tide::Result</span><span class="op">&gt;</span> {
-    <span class="ident">Box::pin</span>(<span class="kw">async</span> {
-        <span class="kw">let</span> <span class="ident">accept</span> <span class="op">=</span> <span class="ident">RequestParams::accept_from_headers</span>(<span class="kw-2">&amp;</span><span class="ident">req</span>)<span class="question-mark">?</span>;
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">res</span> <span class="op">=</span> <span class="ident">next</span>.<span class="ident">run</span>(<span class="ident">req</span>).<span class="kw">await</span>;
-        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">error</span>) <span class="op">=</span> <span class="ident">res</span>.<span class="ident">take_error</span>() {
-            <span class="kw">let</span> <span class="ident">error</span> <span class="op">=</span> <span class="ident">E::from_server_error</span>(<span class="ident">error</span>);
-            <span class="macro">tracing::warn!</span>(<span class="string">&quot;responding with error: {}&quot;</span>, <span class="ident">error</span>);
-            <span class="comment">// Try to add the error to the response body using a format accepted by the client. If</span>
-            <span class="comment">// we cannot do that (for example, if the client requested a format that is incompatible</span>
-            <span class="comment">// with a serialized error) just add the error as a string using plaintext.</span>
-            <span class="kw">let</span> (<span class="ident">body</span>, <span class="ident">content_type</span>) <span class="op">=</span> <span class="ident">route::response_body</span>::<span class="op">&lt;</span><span class="kw">_</span>, <span class="ident">E</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="ident">accept</span>, <span class="kw-2">&amp;</span><span class="ident">error</span>)
-                .<span class="ident">unwrap_or_else</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> (<span class="ident">error</span>.<span class="ident">to_string</span>().<span class="ident">into</span>(), <span class="ident">mime::PLAIN</span>));
-            <span class="ident">res</span>.<span class="ident">set_body</span>(<span class="ident">body</span>);
-            <span class="ident">res</span>.<span class="ident">set_content_type</span>(<span class="ident">content_type</span>);
-            <span class="prelude-val">Ok</span>(<span class="ident">res</span>)
-        } <span class="kw">else</span> {
-            <span class="prelude-val">Ok</span>(<span class="ident">res</span>)
+<span class="doccomment">/// Server middleware which automatically populates the body of error responses.
+///
+/// If the response contains an error, the error is encoded into the [Error](crate::Error) type
+/// (either by downcasting if the server has generated an instance of [Error](crate::Error), or by
+/// converting to a [String] using [Display] if the error can not be downcasted to
+/// [Error](crate::Error)). The resulting [Error](crate::Error) is then serialized and used as the
+/// body of the response.
+///
+/// If the response does not contain an error, it is passed through unchanged.
+</span><span class="kw">fn </span>add_error_body&lt;T: Clone + Send + Sync + <span class="lifetime">&#39;static</span>, E: <span class="kw">crate</span>::Error&gt;(
+    req: tide::Request&lt;T&gt;,
+    next: tide::Next&lt;T&gt;,
+) -&gt; BoxFuture&lt;tide::Result&gt; {
+    Box::pin(<span class="kw">async </span>{
+        <span class="kw">let </span>accept = RequestParams::accept_from_headers(<span class="kw-2">&amp;</span>req)<span class="question-mark">?</span>;
+        <span class="kw">let </span><span class="kw-2">mut </span>res = next.run(req).<span class="kw">await</span>;
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(error) = res.take_error() {
+            <span class="kw">let </span>error = E::from_server_error(error);
+            <span class="macro">tracing::warn!</span>(<span class="string">&quot;responding with error: {}&quot;</span>, error);
+            <span class="comment">// Try to add the error to the response body using a format accepted by the client. If
+            // we cannot do that (for example, if the client requested a format that is incompatible
+            // with a serialized error) just add the error as a string using plaintext.
+            </span><span class="kw">let </span>(body, content_type) = route::response_body::&lt;<span class="kw">_</span>, E&gt;(<span class="kw-2">&amp;</span>accept, <span class="kw-2">&amp;</span>error)
+                .unwrap_or_else(|<span class="kw">_</span>| (error.to_string().into(), mime::PLAIN));
+            res.set_body(body);
+            res.set_content_type(content_type);
+            <span class="prelude-val">Ok</span>(res)
+        } <span class="kw">else </span>{
+            <span class="prelude-val">Ok</span>(res)
         }
     })
 }
 
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Module</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">State</span>, <span class="ident">Error</span>, <span class="ident">ModuleError</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">State</span>: <span class="lifetime">&#39;static</span> <span class="op">+</span> <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Sync</span>,
-    <span class="ident">Error</span>: <span class="lifetime">&#39;static</span> <span class="op">+</span> <span class="ident">From</span><span class="op">&lt;</span><span class="ident">ModuleError</span><span class="op">&gt;</span>,
-    <span class="ident">ModuleError</span>: <span class="lifetime">&#39;static</span> <span class="op">+</span> <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Sync</span>,
+<span class="kw">pub struct </span>Module&lt;<span class="lifetime">&#39;a</span>, State, Error, ModuleError&gt;
+<span class="kw">where
+    </span>State: <span class="lifetime">&#39;static </span>+ Send + Sync,
+    Error: <span class="lifetime">&#39;static </span>+ From&lt;ModuleError&gt;,
+    ModuleError: <span class="lifetime">&#39;static </span>+ Send + Sync,
 {
-    <span class="ident">app</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="kw-2">mut</span> <span class="ident">App</span><span class="op">&lt;</span><span class="ident">State</span>, <span class="ident">Error</span><span class="op">&gt;</span>,
-    <span class="ident">base_url</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">str</span>,
-    <span class="comment">// This is only an [Option] so we can [take] out of it during [drop].</span>
-    <span class="ident">api</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Api</span><span class="op">&lt;</span><span class="ident">State</span>, <span class="ident">ModuleError</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+    app: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span>App&lt;State, Error&gt;,
+    base_url: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>str,
+    <span class="comment">// This is only an [Option] so we can [take] out of it during [drop].
+    </span>api: <span class="prelude-ty">Option</span>&lt;Api&lt;State, ModuleError&gt;&gt;,
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">State</span>, <span class="ident">Error</span>, <span class="ident">ModuleError</span><span class="op">&gt;</span> <span class="ident">Deref</span> <span class="kw">for</span> <span class="ident">Module</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">State</span>, <span class="ident">Error</span>, <span class="ident">ModuleError</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">State</span>: <span class="lifetime">&#39;static</span> <span class="op">+</span> <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Sync</span>,
-    <span class="ident">Error</span>: <span class="lifetime">&#39;static</span> <span class="op">+</span> <span class="ident">From</span><span class="op">&lt;</span><span class="ident">ModuleError</span><span class="op">&gt;</span>,
-    <span class="ident">ModuleError</span>: <span class="lifetime">&#39;static</span> <span class="op">+</span> <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Sync</span>,
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, State, Error, ModuleError&gt; Deref <span class="kw">for </span>Module&lt;<span class="lifetime">&#39;a</span>, State, Error, ModuleError&gt;
+<span class="kw">where
+    </span>State: <span class="lifetime">&#39;static </span>+ Send + Sync,
+    Error: <span class="lifetime">&#39;static </span>+ From&lt;ModuleError&gt;,
+    ModuleError: <span class="lifetime">&#39;static </span>+ Send + Sync,
 {
-    <span class="kw">type</span> <span class="ident">Target</span> <span class="op">=</span> <span class="ident">Api</span><span class="op">&lt;</span><span class="ident">State</span>, <span class="ident">ModuleError</span><span class="op">&gt;</span>;
+    <span class="kw">type </span>Target = Api&lt;State, ModuleError&gt;;
 
-    <span class="kw">fn</span> <span class="ident">deref</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="ident"><span class="self">Self</span>::Target</span> {
-        <span class="self">self</span>.<span class="ident">api</span>.<span class="ident">as_ref</span>().<span class="ident">unwrap</span>()
+    <span class="kw">fn </span>deref(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="self">Self</span>::Target {
+        <span class="self">self</span>.api.as_ref().unwrap()
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">State</span>, <span class="ident">Error</span>, <span class="ident">ModuleError</span><span class="op">&gt;</span> <span class="ident">DerefMut</span> <span class="kw">for</span> <span class="ident">Module</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">State</span>, <span class="ident">Error</span>, <span class="ident">ModuleError</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">State</span>: <span class="lifetime">&#39;static</span> <span class="op">+</span> <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Sync</span>,
-    <span class="ident">Error</span>: <span class="lifetime">&#39;static</span> <span class="op">+</span> <span class="ident">From</span><span class="op">&lt;</span><span class="ident">ModuleError</span><span class="op">&gt;</span>,
-    <span class="ident">ModuleError</span>: <span class="lifetime">&#39;static</span> <span class="op">+</span> <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Sync</span>,
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, State, Error, ModuleError&gt; DerefMut <span class="kw">for </span>Module&lt;<span class="lifetime">&#39;a</span>, State, Error, ModuleError&gt;
+<span class="kw">where
+    </span>State: <span class="lifetime">&#39;static </span>+ Send + Sync,
+    Error: <span class="lifetime">&#39;static </span>+ From&lt;ModuleError&gt;,
+    ModuleError: <span class="lifetime">&#39;static </span>+ Send + Sync,
 {
-    <span class="kw">fn</span> <span class="ident">deref_mut</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="kw-2">&amp;mut</span> <span class="ident"><span class="self">Self</span>::Target</span> {
-        <span class="self">self</span>.<span class="ident">api</span>.<span class="ident">as_mut</span>().<span class="ident">unwrap</span>()
+    <span class="kw">fn </span>deref_mut(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;mut </span><span class="self">Self</span>::Target {
+        <span class="self">self</span>.api.as_mut().unwrap()
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">State</span>, <span class="ident">Error</span>, <span class="ident">ModuleError</span><span class="op">&gt;</span> <span class="ident">Drop</span> <span class="kw">for</span> <span class="ident">Module</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">State</span>, <span class="ident">Error</span>, <span class="ident">ModuleError</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">State</span>: <span class="lifetime">&#39;static</span> <span class="op">+</span> <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Sync</span>,
-    <span class="ident">Error</span>: <span class="lifetime">&#39;static</span> <span class="op">+</span> <span class="ident">From</span><span class="op">&lt;</span><span class="ident">ModuleError</span><span class="op">&gt;</span>,
-    <span class="ident">ModuleError</span>: <span class="lifetime">&#39;static</span> <span class="op">+</span> <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Sync</span>,
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, State, Error, ModuleError&gt; Drop <span class="kw">for </span>Module&lt;<span class="lifetime">&#39;a</span>, State, Error, ModuleError&gt;
+<span class="kw">where
+    </span>State: <span class="lifetime">&#39;static </span>+ Send + Sync,
+    Error: <span class="lifetime">&#39;static </span>+ From&lt;ModuleError&gt;,
+    ModuleError: <span class="lifetime">&#39;static </span>+ Send + Sync,
 {
-    <span class="kw">fn</span> <span class="ident">drop</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) {
-        <span class="self">self</span>.<span class="ident">app</span>
-            .<span class="ident">register_module</span>(<span class="self">self</span>.<span class="ident">base_url</span>, <span class="self">self</span>.<span class="ident">api</span>.<span class="ident">take</span>().<span class="ident">unwrap</span>())
-            .<span class="ident">unwrap</span>();
+    <span class="kw">fn </span>drop(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
+        <span class="self">self</span>.app
+            .register_module(<span class="self">self</span>.base_url, <span class="self">self</span>.api.take().unwrap())
+            .unwrap();
     }
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
-<span class="kw">mod</span> <span class="ident">test</span> {
-    <span class="kw">use</span> <span class="kw">super</span>::<span class="kw-2">*</span>;
-    <span class="kw">use</span> <span class="kw">crate</span>::{
-        <span class="ident">error::ServerError</span>, <span class="ident">socket::Connection</span>, <span class="ident">wait_for_server</span>, <span class="ident">Url</span>, <span class="ident">SERVER_STARTUP_RETRIES</span>,
-        <span class="ident">SERVER_STARTUP_SLEEP_MS</span>,
+<span class="attribute">#[cfg(test)]
+</span><span class="kw">mod </span>test {
+    <span class="kw">use super</span>::<span class="kw-2">*</span>;
+    <span class="kw">use crate</span>::{
+        error::ServerError, socket::Connection, wait_for_server, Url, SERVER_STARTUP_RETRIES,
+        SERVER_STARTUP_SLEEP_MS,
     };
-    <span class="kw">use</span> <span class="ident">async_std</span>::{<span class="ident">sync::RwLock</span>, <span class="ident">task::spawn</span>};
-    <span class="kw">use</span> <span class="ident">async_tungstenite</span>::{<span class="ident">async_std::connect_async</span>, <span class="ident">tungstenite::Message</span>};
-    <span class="kw">use</span> <span class="ident">futures</span>::{<span class="ident">FutureExt</span>, <span class="ident">SinkExt</span>, <span class="ident">StreamExt</span>};
-    <span class="kw">use</span> <span class="ident">portpicker::pick_unused_port</span>;
-    <span class="kw">use</span> <span class="ident">toml::toml</span>;
+    <span class="kw">use </span>async_std::{sync::RwLock, task::spawn};
+    <span class="kw">use </span>async_tungstenite::{async_std::connect_async, tungstenite::Message};
+    <span class="kw">use </span>futures::{FutureExt, SinkExt, StreamExt};
+    <span class="kw">use </span>portpicker::pick_unused_port;
+    <span class="kw">use </span>toml::toml;
 
-    <span class="doccomment">/// Test route dispatching for routes with the same path and different methods.</span>
-    <span class="attribute">#[<span class="ident">async_std::test</span>]</span>
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">test_method_dispatch</span>() {
-        <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::http::Method</span>::<span class="kw-2">*</span>;
+    <span class="doccomment">/// Test route dispatching for routes with the same path and different methods.
+    </span><span class="attribute">#[async_std::test]
+    </span><span class="kw">async fn </span>test_method_dispatch() {
+        <span class="kw">use </span><span class="kw">crate</span>::http::Method::<span class="kw-2">*</span>;
 
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">app</span> <span class="op">=</span> <span class="ident">App</span>::<span class="op">&lt;</span><span class="kw">_</span>, <span class="ident">ServerError</span><span class="op">&gt;</span><span class="ident">::with_state</span>(<span class="ident">RwLock::new</span>(()));
-        <span class="kw">let</span> <span class="ident">api_toml</span> <span class="op">=</span> <span class="macro">toml!</span> {
-            [<span class="ident">meta</span>]
-            <span class="ident">FORMAT_VERSION</span> <span class="op">=</span> <span class="string">&quot;0.1.0&quot;</span>
+        <span class="kw">let </span><span class="kw-2">mut </span>app = App::&lt;<span class="kw">_</span>, ServerError&gt;::with_state(RwLock::new(()));
+        <span class="kw">let </span>api_toml = <span class="macro">toml! </span>{
+            [meta]
+            FORMAT_VERSION = <span class="string">&quot;0.1.0&quot;
 
-            [<span class="ident">route</span>.<span class="ident">get_test</span>]
-            <span class="ident">PATH</span> <span class="op">=</span> [<span class="string">&quot;/test&quot;</span>]
-            <span class="ident">METHOD</span> <span class="op">=</span> <span class="string">&quot;GET&quot;</span>
+            </span>[route.get_test]
+            PATH = [<span class="string">&quot;/test&quot;</span>]
+            METHOD = <span class="string">&quot;GET&quot;
 
-            [<span class="ident">route</span>.<span class="ident">post_test</span>]
-            <span class="ident">PATH</span> <span class="op">=</span> [<span class="string">&quot;/test&quot;</span>]
-            <span class="ident">METHOD</span> <span class="op">=</span> <span class="string">&quot;POST&quot;</span>
+            </span>[route.post_test]
+            PATH = [<span class="string">&quot;/test&quot;</span>]
+            METHOD = <span class="string">&quot;POST&quot;
 
-            [<span class="ident">route</span>.<span class="ident">put_test</span>]
-            <span class="ident">PATH</span> <span class="op">=</span> [<span class="string">&quot;/test&quot;</span>]
-            <span class="ident">METHOD</span> <span class="op">=</span> <span class="string">&quot;PUT&quot;</span>
+            </span>[route.put_test]
+            PATH = [<span class="string">&quot;/test&quot;</span>]
+            METHOD = <span class="string">&quot;PUT&quot;
 
-            [<span class="ident">route</span>.<span class="ident">delete_test</span>]
-            <span class="ident">PATH</span> <span class="op">=</span> [<span class="string">&quot;/test&quot;</span>]
-            <span class="ident">METHOD</span> <span class="op">=</span> <span class="string">&quot;DELETE&quot;</span>
+            </span>[route.delete_test]
+            PATH = [<span class="string">&quot;/test&quot;</span>]
+            METHOD = <span class="string">&quot;DELETE&quot;
 
-            [<span class="ident">route</span>.<span class="ident">socket_test</span>]
-            <span class="ident">PATH</span> <span class="op">=</span> [<span class="string">&quot;/test&quot;</span>]
-            <span class="ident">METHOD</span> <span class="op">=</span> <span class="string">&quot;SOCKET&quot;</span>
-        };
+            </span>[route.socket_test]
+            PATH = [<span class="string">&quot;/test&quot;</span>]
+            METHOD = <span class="string">&quot;SOCKET&quot;
+        </span>};
         {
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">api</span> <span class="op">=</span> <span class="ident">app</span>.<span class="ident">module</span>::<span class="op">&lt;</span><span class="ident">ServerError</span><span class="op">&gt;</span>(<span class="string">&quot;mod&quot;</span>, <span class="ident">api_toml</span>).<span class="ident">unwrap</span>();
-            <span class="ident">api</span>.<span class="ident">get</span>(<span class="string">&quot;get_test&quot;</span>, <span class="op">|</span><span class="ident">_req</span>, <span class="ident">_state</span><span class="op">|</span> {
-                <span class="kw">async</span> <span class="kw">move</span> { <span class="prelude-val">Ok</span>(<span class="ident">Get</span>.<span class="ident">to_string</span>()) }.<span class="ident">boxed</span>()
+            <span class="kw">let </span><span class="kw-2">mut </span>api = app.module::&lt;ServerError&gt;(<span class="string">&quot;mod&quot;</span>, api_toml).unwrap();
+            api.get(<span class="string">&quot;get_test&quot;</span>, |_req, _state| {
+                <span class="kw">async move </span>{ <span class="prelude-val">Ok</span>(Get.to_string()) }.boxed()
             })
-            .<span class="ident">unwrap</span>()
-            .<span class="ident">post</span>(<span class="string">&quot;post_test&quot;</span>, <span class="op">|</span><span class="ident">_req</span>, <span class="ident">_state</span><span class="op">|</span> {
-                <span class="kw">async</span> <span class="kw">move</span> { <span class="prelude-val">Ok</span>(<span class="ident">Post</span>.<span class="ident">to_string</span>()) }.<span class="ident">boxed</span>()
+            .unwrap()
+            .post(<span class="string">&quot;post_test&quot;</span>, |_req, _state| {
+                <span class="kw">async move </span>{ <span class="prelude-val">Ok</span>(Post.to_string()) }.boxed()
             })
-            .<span class="ident">unwrap</span>()
-            .<span class="ident">put</span>(<span class="string">&quot;put_test&quot;</span>, <span class="op">|</span><span class="ident">_req</span>, <span class="ident">_state</span><span class="op">|</span> {
-                <span class="kw">async</span> <span class="kw">move</span> { <span class="prelude-val">Ok</span>(<span class="ident">Put</span>.<span class="ident">to_string</span>()) }.<span class="ident">boxed</span>()
+            .unwrap()
+            .put(<span class="string">&quot;put_test&quot;</span>, |_req, _state| {
+                <span class="kw">async move </span>{ <span class="prelude-val">Ok</span>(Put.to_string()) }.boxed()
             })
-            .<span class="ident">unwrap</span>()
-            .<span class="ident">delete</span>(<span class="string">&quot;delete_test&quot;</span>, <span class="op">|</span><span class="ident">_req</span>, <span class="ident">_state</span><span class="op">|</span> {
-                <span class="kw">async</span> <span class="kw">move</span> { <span class="prelude-val">Ok</span>(<span class="ident">Delete</span>.<span class="ident">to_string</span>()) }.<span class="ident">boxed</span>()
+            .unwrap()
+            .delete(<span class="string">&quot;delete_test&quot;</span>, |_req, _state| {
+                <span class="kw">async move </span>{ <span class="prelude-val">Ok</span>(Delete.to_string()) }.boxed()
             })
-            .<span class="ident">unwrap</span>()
-            .<span class="ident">socket</span>(
+            .unwrap()
+            .socket(
                 <span class="string">&quot;socket_test&quot;</span>,
-                <span class="op">|</span><span class="ident">_req</span>, <span class="kw-2">mut</span> <span class="ident">conn</span>: <span class="ident">Connection</span><span class="op">&lt;</span><span class="kw">_</span>, (), <span class="kw">_</span><span class="op">&gt;</span>, <span class="ident">_state</span><span class="op">|</span> {
-                    <span class="kw">async</span> <span class="kw">move</span> {
-                        <span class="ident">conn</span>.<span class="ident">send</span>(<span class="string">&quot;SOCKET&quot;</span>).<span class="kw">await</span>.<span class="ident">unwrap</span>();
+                |_req, <span class="kw-2">mut </span>conn: Connection&lt;<span class="kw">_</span>, (), <span class="kw">_</span>&gt;, _state| {
+                    <span class="kw">async move </span>{
+                        conn.send(<span class="string">&quot;SOCKET&quot;</span>).<span class="kw">await</span>.unwrap();
                         <span class="prelude-val">Ok</span>(())
                     }
-                    .<span class="ident">boxed</span>()
+                    .boxed()
                 },
             )
-            .<span class="ident">unwrap</span>();
+            .unwrap();
         }
-        <span class="kw">let</span> <span class="ident">port</span> <span class="op">=</span> <span class="ident">pick_unused_port</span>().<span class="ident">unwrap</span>();
-        <span class="kw">let</span> <span class="ident">url</span>: <span class="ident">Url</span> <span class="op">=</span> <span class="macro">format!</span>(<span class="string">&quot;http://localhost:{}&quot;</span>, <span class="ident">port</span>).<span class="ident">parse</span>().<span class="ident">unwrap</span>();
-        <span class="ident">spawn</span>(<span class="ident">app</span>.<span class="ident">serve</span>(<span class="macro">format!</span>(<span class="string">&quot;0.0.0.0:{}&quot;</span>, <span class="ident">port</span>)));
-        <span class="ident">wait_for_server</span>(<span class="kw-2">&amp;</span><span class="ident">url</span>, <span class="ident">SERVER_STARTUP_RETRIES</span>, <span class="ident">SERVER_STARTUP_SLEEP_MS</span>).<span class="kw">await</span>;
+        <span class="kw">let </span>port = pick_unused_port().unwrap();
+        <span class="kw">let </span>url: Url = <span class="macro">format!</span>(<span class="string">&quot;http://localhost:{}&quot;</span>, port).parse().unwrap();
+        spawn(app.serve(<span class="macro">format!</span>(<span class="string">&quot;0.0.0.0:{}&quot;</span>, port)));
+        wait_for_server(<span class="kw-2">&amp;</span>url, SERVER_STARTUP_RETRIES, SERVER_STARTUP_SLEEP_MS).<span class="kw">await</span>;
 
-        <span class="kw">let</span> <span class="ident">client</span>: <span class="ident">surf::Client</span> <span class="op">=</span> <span class="ident">surf::Config::new</span>()
-            .<span class="ident">set_base_url</span>(<span class="ident">url</span>.<span class="ident">clone</span>())
-            .<span class="ident">try_into</span>()
-            .<span class="ident">unwrap</span>();
-        <span class="kw">for</span> <span class="ident">method</span> <span class="kw">in</span> [<span class="ident">Get</span>, <span class="ident">Post</span>, <span class="ident">Put</span>, <span class="ident">Delete</span>] {
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">res</span> <span class="op">=</span> <span class="ident">client</span>
-                .<span class="ident">request</span>(<span class="ident">method</span>, <span class="ident">url</span>.<span class="ident">join</span>(<span class="string">&quot;mod/test&quot;</span>).<span class="ident">unwrap</span>())
-                .<span class="ident">send</span>()
-                .<span class="kw">await</span>
-                .<span class="ident">unwrap</span>();
-            <span class="macro">assert_eq!</span>(<span class="ident">res</span>.<span class="ident">status</span>(), <span class="ident">StatusCode::Ok</span>);
-            <span class="macro">assert_eq!</span>(<span class="ident">res</span>.<span class="ident">body_json</span>::<span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>().<span class="kw">await</span>.<span class="ident">unwrap</span>(), <span class="ident">method</span>.<span class="ident">to_string</span>());
+        <span class="kw">let </span>client: surf::Client = surf::Config::new()
+            .set_base_url(url.clone())
+            .try_into()
+            .unwrap();
+        <span class="kw">for </span>method <span class="kw">in </span>[Get, Post, Put, Delete] {
+            <span class="kw">let </span><span class="kw-2">mut </span>res = client
+                .request(method, url.join(<span class="string">&quot;mod/test&quot;</span>).unwrap())
+                .send()
+                .<span class="kw">await
+                </span>.unwrap();
+            <span class="macro">assert_eq!</span>(res.status(), StatusCode::Ok);
+            <span class="macro">assert_eq!</span>(res.body_json::&lt;String&gt;().<span class="kw">await</span>.unwrap(), method.to_string());
         }
 
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">socket_url</span> <span class="op">=</span> <span class="ident">url</span>.<span class="ident">join</span>(<span class="string">&quot;mod/test&quot;</span>).<span class="ident">unwrap</span>();
-        <span class="ident">socket_url</span>.<span class="ident">set_scheme</span>(<span class="string">&quot;ws&quot;</span>).<span class="ident">unwrap</span>();
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">conn</span> <span class="op">=</span> <span class="ident">connect_async</span>(<span class="ident">socket_url</span>).<span class="kw">await</span>.<span class="ident">unwrap</span>().<span class="number">0</span>;
-        <span class="kw">let</span> <span class="ident">msg</span> <span class="op">=</span> <span class="ident">conn</span>.<span class="ident">next</span>().<span class="kw">await</span>.<span class="ident">unwrap</span>().<span class="ident">unwrap</span>();
-        <span class="kw">let</span> <span class="ident">body</span>: <span class="ident">String</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">msg</span> {
-            <span class="ident">Message::Text</span>(<span class="ident">m</span>) =&gt; <span class="ident">serde_json::from_str</span>(<span class="kw-2">&amp;</span><span class="ident">m</span>).<span class="ident">unwrap</span>(),
-            <span class="ident">Message::Binary</span>(<span class="ident">m</span>) =&gt; <span class="ident">bincode::deserialize</span>(<span class="kw-2">&amp;</span><span class="ident">m</span>).<span class="ident">unwrap</span>(),
-            <span class="ident">m</span> =&gt; <span class="macro">panic!</span>(<span class="string">&quot;expected Text or Binary message, but got {}&quot;</span>, <span class="ident">m</span>),
+        <span class="kw">let </span><span class="kw-2">mut </span>socket_url = url.join(<span class="string">&quot;mod/test&quot;</span>).unwrap();
+        socket_url.set_scheme(<span class="string">&quot;ws&quot;</span>).unwrap();
+        <span class="kw">let </span><span class="kw-2">mut </span>conn = connect_async(socket_url).<span class="kw">await</span>.unwrap().<span class="number">0</span>;
+        <span class="kw">let </span>msg = conn.next().<span class="kw">await</span>.unwrap().unwrap();
+        <span class="kw">let </span>body: String = <span class="kw">match </span>msg {
+            Message::Text(m) =&gt; serde_json::from_str(<span class="kw-2">&amp;</span>m).unwrap(),
+            Message::Binary(m) =&gt; bincode::deserialize(<span class="kw-2">&amp;</span>m).unwrap(),
+            m =&gt; <span class="macro">panic!</span>(<span class="string">&quot;expected Text or Binary message, but got {}&quot;</span>, m),
         };
-        <span class="macro">assert_eq!</span>(<span class="ident">body</span>, <span class="string">&quot;SOCKET&quot;</span>);
+        <span class="macro">assert_eq!</span>(body, <span class="string">&quot;SOCKET&quot;</span>);
     }
 
-    <span class="doccomment">/// Test route dispatching for routes with patterns containing different parmaeters</span>
-    <span class="attribute">#[<span class="ident">async_std::test</span>]</span>
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">test_param_dispatch</span>() {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">app</span> <span class="op">=</span> <span class="ident">App</span>::<span class="op">&lt;</span><span class="kw">_</span>, <span class="ident">ServerError</span><span class="op">&gt;</span><span class="ident">::with_state</span>(<span class="ident">RwLock::new</span>(()));
-        <span class="kw">let</span> <span class="ident">api_toml</span> <span class="op">=</span> <span class="macro">toml!</span> {
-            [<span class="ident">meta</span>]
-            <span class="ident">FORMAT_VERSION</span> <span class="op">=</span> <span class="string">&quot;0.1.0&quot;</span>
+    <span class="doccomment">/// Test route dispatching for routes with patterns containing different parmaeters
+    </span><span class="attribute">#[async_std::test]
+    </span><span class="kw">async fn </span>test_param_dispatch() {
+        <span class="kw">let </span><span class="kw-2">mut </span>app = App::&lt;<span class="kw">_</span>, ServerError&gt;::with_state(RwLock::new(()));
+        <span class="kw">let </span>api_toml = <span class="macro">toml! </span>{
+            [meta]
+            FORMAT_VERSION = <span class="string">&quot;0.1.0&quot;
 
-            [<span class="ident">route</span>.<span class="ident">test</span>]
-            <span class="ident">PATH</span> <span class="op">=</span> [<span class="string">&quot;/test/a/:a&quot;</span>, <span class="string">&quot;/test/b/:b&quot;</span>]
-            <span class="string">&quot;:a&quot;</span> <span class="op">=</span> <span class="string">&quot;Integer&quot;</span>
-            <span class="string">&quot;:b&quot;</span> <span class="op">=</span> <span class="string">&quot;Boolean&quot;</span>
-        };
+            </span>[route.test]
+            PATH = [<span class="string">&quot;/test/a/:a&quot;</span>, <span class="string">&quot;/test/b/:b&quot;</span>]
+            <span class="string">&quot;:a&quot; </span>= <span class="string">&quot;Integer&quot;
+            &quot;:b&quot; </span>= <span class="string">&quot;Boolean&quot;
+        </span>};
         {
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">api</span> <span class="op">=</span> <span class="ident">app</span>.<span class="ident">module</span>::<span class="op">&lt;</span><span class="ident">ServerError</span><span class="op">&gt;</span>(<span class="string">&quot;mod&quot;</span>, <span class="ident">api_toml</span>).<span class="ident">unwrap</span>();
-            <span class="ident">api</span>.<span class="ident">get</span>(<span class="string">&quot;test&quot;</span>, <span class="op">|</span><span class="ident">req</span>, <span class="ident">_state</span><span class="op">|</span> {
-                <span class="kw">async</span> <span class="kw">move</span> {
-                    <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">a</span>) <span class="op">=</span> <span class="ident">req</span>.<span class="ident">opt_integer_param</span>::<span class="op">&lt;</span><span class="kw">_</span>, <span class="ident">i32</span><span class="op">&gt;</span>(<span class="string">&quot;a&quot;</span>)<span class="question-mark">?</span> {
-                        <span class="prelude-val">Ok</span>((<span class="string">&quot;a&quot;</span>, <span class="ident">a</span>.<span class="ident">to_string</span>()))
-                    } <span class="kw">else</span> {
-                        <span class="prelude-val">Ok</span>((<span class="string">&quot;b&quot;</span>, <span class="ident">req</span>.<span class="ident">boolean_param</span>(<span class="string">&quot;b&quot;</span>)<span class="question-mark">?</span>.<span class="ident">to_string</span>()))
+            <span class="kw">let </span><span class="kw-2">mut </span>api = app.module::&lt;ServerError&gt;(<span class="string">&quot;mod&quot;</span>, api_toml).unwrap();
+            api.get(<span class="string">&quot;test&quot;</span>, |req, _state| {
+                <span class="kw">async move </span>{
+                    <span class="kw">if let </span><span class="prelude-val">Some</span>(a) = req.opt_integer_param::&lt;<span class="kw">_</span>, i32&gt;(<span class="string">&quot;a&quot;</span>)<span class="question-mark">? </span>{
+                        <span class="prelude-val">Ok</span>((<span class="string">&quot;a&quot;</span>, a.to_string()))
+                    } <span class="kw">else </span>{
+                        <span class="prelude-val">Ok</span>((<span class="string">&quot;b&quot;</span>, req.boolean_param(<span class="string">&quot;b&quot;</span>)<span class="question-mark">?</span>.to_string()))
                     }
                 }
-                .<span class="ident">boxed</span>()
+                .boxed()
             })
-            .<span class="ident">unwrap</span>();
+            .unwrap();
         }
-        <span class="kw">let</span> <span class="ident">port</span> <span class="op">=</span> <span class="ident">pick_unused_port</span>().<span class="ident">unwrap</span>();
-        <span class="kw">let</span> <span class="ident">url</span>: <span class="ident">Url</span> <span class="op">=</span> <span class="macro">format!</span>(<span class="string">&quot;http://localhost:{}&quot;</span>, <span class="ident">port</span>).<span class="ident">parse</span>().<span class="ident">unwrap</span>();
-        <span class="ident">spawn</span>(<span class="ident">app</span>.<span class="ident">serve</span>(<span class="macro">format!</span>(<span class="string">&quot;0.0.0.0:{}&quot;</span>, <span class="ident">port</span>)));
-        <span class="ident">wait_for_server</span>(<span class="kw-2">&amp;</span><span class="ident">url</span>, <span class="ident">SERVER_STARTUP_RETRIES</span>, <span class="ident">SERVER_STARTUP_SLEEP_MS</span>).<span class="kw">await</span>;
+        <span class="kw">let </span>port = pick_unused_port().unwrap();
+        <span class="kw">let </span>url: Url = <span class="macro">format!</span>(<span class="string">&quot;http://localhost:{}&quot;</span>, port).parse().unwrap();
+        spawn(app.serve(<span class="macro">format!</span>(<span class="string">&quot;0.0.0.0:{}&quot;</span>, port)));
+        wait_for_server(<span class="kw-2">&amp;</span>url, SERVER_STARTUP_RETRIES, SERVER_STARTUP_SLEEP_MS).<span class="kw">await</span>;
 
-        <span class="kw">let</span> <span class="ident">client</span>: <span class="ident">surf::Client</span> <span class="op">=</span> <span class="ident">surf::Config::new</span>()
-            .<span class="ident">set_base_url</span>(<span class="ident">url</span>.<span class="ident">clone</span>())
-            .<span class="ident">try_into</span>()
-            .<span class="ident">unwrap</span>();
+        <span class="kw">let </span>client: surf::Client = surf::Config::new()
+            .set_base_url(url.clone())
+            .try_into()
+            .unwrap();
 
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">res</span> <span class="op">=</span> <span class="ident">client</span>
-            .<span class="ident">get</span>(<span class="ident">url</span>.<span class="ident">join</span>(<span class="string">&quot;mod/test/a/42&quot;</span>).<span class="ident">unwrap</span>())
-            .<span class="ident">send</span>()
-            .<span class="kw">await</span>
-            .<span class="ident">unwrap</span>();
-        <span class="macro">assert_eq!</span>(<span class="ident">res</span>.<span class="ident">status</span>(), <span class="ident">StatusCode::Ok</span>);
+        <span class="kw">let </span><span class="kw-2">mut </span>res = client
+            .get(url.join(<span class="string">&quot;mod/test/a/42&quot;</span>).unwrap())
+            .send()
+            .<span class="kw">await
+            </span>.unwrap();
+        <span class="macro">assert_eq!</span>(res.status(), StatusCode::Ok);
         <span class="macro">assert_eq!</span>(
-            <span class="ident">res</span>.<span class="ident">body_json</span>::<span class="op">&lt;</span>(<span class="ident">String</span>, <span class="ident">String</span>)<span class="op">&gt;</span>().<span class="kw">await</span>.<span class="ident">unwrap</span>(),
-            (<span class="string">&quot;a&quot;</span>.<span class="ident">to_string</span>(), <span class="string">&quot;42&quot;</span>.<span class="ident">to_string</span>())
+            res.body_json::&lt;(String, String)&gt;().<span class="kw">await</span>.unwrap(),
+            (<span class="string">&quot;a&quot;</span>.to_string(), <span class="string">&quot;42&quot;</span>.to_string())
         );
 
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">res</span> <span class="op">=</span> <span class="ident">client</span>
-            .<span class="ident">get</span>(<span class="ident">url</span>.<span class="ident">join</span>(<span class="string">&quot;mod/test/b/true&quot;</span>).<span class="ident">unwrap</span>())
-            .<span class="ident">send</span>()
-            .<span class="kw">await</span>
-            .<span class="ident">unwrap</span>();
-        <span class="macro">assert_eq!</span>(<span class="ident">res</span>.<span class="ident">status</span>(), <span class="ident">StatusCode::Ok</span>);
+        <span class="kw">let </span><span class="kw-2">mut </span>res = client
+            .get(url.join(<span class="string">&quot;mod/test/b/true&quot;</span>).unwrap())
+            .send()
+            .<span class="kw">await
+            </span>.unwrap();
+        <span class="macro">assert_eq!</span>(res.status(), StatusCode::Ok);
         <span class="macro">assert_eq!</span>(
-            <span class="ident">res</span>.<span class="ident">body_json</span>::<span class="op">&lt;</span>(<span class="ident">String</span>, <span class="ident">String</span>)<span class="op">&gt;</span>().<span class="kw">await</span>.<span class="ident">unwrap</span>(),
-            (<span class="string">&quot;b&quot;</span>.<span class="ident">to_string</span>(), <span class="string">&quot;true&quot;</span>.<span class="ident">to_string</span>())
+            res.body_json::&lt;(String, String)&gt;().<span class="kw">await</span>.unwrap(),
+            (<span class="string">&quot;b&quot;</span>.to_string(), <span class="string">&quot;true&quot;</span>.to_string())
         );
     }
 }
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="tide_disco" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.64.0 (a55dd71d5 2022-09-19)" ></div></body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="tide_disco" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0 (897e37553 2022-11-02)" ></div></body></html>

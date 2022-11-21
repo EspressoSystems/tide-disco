@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/healthcheck.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>healthcheck.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../tide_disco/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../tide_disco/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../tide_disco/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/healthcheck.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>healthcheck.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../normalize.css"><link rel="stylesheet" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../ayu.css" disabled><link rel="stylesheet" href="../../dark.css" disabled><link rel="stylesheet" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../tide_disco/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../tide_disco/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../tide_disco/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -49,56 +49,56 @@
 <span id="49">49</span>
 <span id="50">50</span>
 <span id="51">51</span>
-</pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">serde</span>::{<span class="ident">Deserialize</span>, <span class="ident">Serialize</span>};
-<span class="kw">use</span> <span class="ident">tide::StatusCode</span>;
+</pre><pre class="rust"><code><span class="kw">use </span>serde::{Deserialize, Serialize};
+<span class="kw">use </span>tide::StatusCode;
 
-<span class="doccomment">/// A response to a healthcheck endpoint.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// A type implementing [HealthCheck] may be returned from a healthcheck endpoint itself (via its</span>
-<span class="doccomment">/// [Serialize] implementation) as well as incorporated automatically into the global healthcheck</span>
-<span class="doccomment">/// endpoint for an app. The global healthcheck will fail if any of the module healthchecks return</span>
-<span class="doccomment">/// an implementation `h` of [HealthCheck] where `h.status() != StatusCode::Ok`.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// We provide a standard implementation [HealthStatus] which has variants for common states an</span>
-<span class="doccomment">/// application might encounter. We recommend using this implementation as a standard, although it</span>
-<span class="doccomment">/// is possible to implement the [HealthCheck] trait yourself if you desire more information in</span>
-<span class="doccomment">/// your healthcheck response.</span>
-<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">HealthCheck</span>: <span class="ident">Serialize</span> {
-    <span class="doccomment">/// The status of this health check.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Should return [StatusCode::Ok] if the status is considered healthy, and some other status</span>
-    <span class="doccomment">/// code if it is not.</span>
-    <span class="kw">fn</span> <span class="ident">status</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">StatusCode</span>;
+<span class="doccomment">/// A response to a healthcheck endpoint.
+///
+/// A type implementing [HealthCheck] may be returned from a healthcheck endpoint itself (via its
+/// [Serialize] implementation) as well as incorporated automatically into the global healthcheck
+/// endpoint for an app. The global healthcheck will fail if any of the module healthchecks return
+/// an implementation `h` of [HealthCheck] where `h.status() != StatusCode::Ok`.
+///
+/// We provide a standard implementation [HealthStatus] which has variants for common states an
+/// application might encounter. We recommend using this implementation as a standard, although it
+/// is possible to implement the [HealthCheck] trait yourself if you desire more information in
+/// your healthcheck response.
+</span><span class="kw">pub trait </span>HealthCheck: Serialize {
+    <span class="doccomment">/// The status of this health check.
+    ///
+    /// Should return [StatusCode::Ok] if the status is considered healthy, and some other status
+    /// code if it is not.
+    </span><span class="kw">fn </span>status(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; StatusCode;
 }
 
-<span class="doccomment">/// Common health statuses of an application.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Copy</span>, <span class="ident">Debug</span>, <span class="ident">Deserialize</span>, <span class="ident">Serialize</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>)]</span>
-<span class="attribute">#[<span class="ident">serde</span>(<span class="ident">rename_all</span> <span class="op">=</span> <span class="string">&quot;snake_case&quot;</span>)]</span>
-<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">HealthStatus</span> {
-    <span class="ident">Initializing</span>,
-    <span class="ident">Available</span>,
-    <span class="ident">Unavailabale</span>,
-    <span class="ident">TemporarilyUnavailable</span>,
-    <span class="ident">Unhealthy</span>,
-    <span class="ident">ShuttingDown</span>,
+<span class="doccomment">/// Common health statuses of an application.
+</span><span class="attribute">#[derive(Clone, Copy, Debug, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(rename_all = <span class="string">&quot;snake_case&quot;</span>)]
+</span><span class="kw">pub enum </span>HealthStatus {
+    Initializing,
+    Available,
+    Unavailabale,
+    TemporarilyUnavailable,
+    Unhealthy,
+    ShuttingDown,
 }
 
-<span class="kw">impl</span> <span class="ident">Default</span> <span class="kw">for</span> <span class="ident">HealthStatus</span> {
-    <span class="kw">fn</span> <span class="ident">default</span>() -&gt; <span class="self">Self</span> {
-        <span class="ident"><span class="self">Self</span>::Available</span>
+<span class="kw">impl </span>Default <span class="kw">for </span>HealthStatus {
+    <span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
+        <span class="self">Self</span>::Available
     }
 }
 
-<span class="kw">impl</span> <span class="ident">HealthCheck</span> <span class="kw">for</span> <span class="ident">HealthStatus</span> {
-    <span class="kw">fn</span> <span class="ident">status</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">StatusCode</span> {
-        <span class="kw">match</span> <span class="self">self</span> {
-            <span class="comment">// Return healthy in normal states even if the state is not `Available`, so that load</span>
-            <span class="comment">// balances and health monitors don&#39;t kill the service while it is starting up or</span>
-            <span class="comment">// gracefully shutting down.</span>
-            <span class="ident"><span class="self">Self</span>::Available</span> <span class="op">|</span> <span class="ident"><span class="self">Self</span>::Initializing</span> <span class="op">|</span> <span class="ident"><span class="self">Self</span>::ShuttingDown</span> =&gt; <span class="ident">StatusCode::Ok</span>,
-            <span class="kw">_</span> =&gt; <span class="ident">StatusCode::ServiceUnavailable</span>,
+<span class="kw">impl </span>HealthCheck <span class="kw">for </span>HealthStatus {
+    <span class="kw">fn </span>status(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; StatusCode {
+        <span class="kw">match </span><span class="self">self </span>{
+            <span class="comment">// Return healthy in normal states even if the state is not `Available`, so that load
+            // balances and health monitors don&#39;t kill the service while it is starting up or
+            // gracefully shutting down.
+            </span><span class="self">Self</span>::Available | <span class="self">Self</span>::Initializing | <span class="self">Self</span>::ShuttingDown =&gt; StatusCode::Ok,
+            <span class="kw">_ </span>=&gt; StatusCode::ServiceUnavailable,
         }
     }
 }
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="tide_disco" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.64.0 (a55dd71d5 2022-09-19)" ></div></body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="tide_disco" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0 (897e37553 2022-11-02)" ></div></body></html>

@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/route.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>route.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../tide_disco/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../tide_disco/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../tide_disco/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/route.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>route.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../normalize.css"><link rel="stylesheet" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../ayu.css" disabled><link rel="stylesheet" href="../../dark.css" disabled><link rel="stylesheet" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../tide_disco/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../tide_disco/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../tide_disco/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -599,606 +599,606 @@
 <span id="599">599</span>
 <span id="600">600</span>
 <span id="601">601</span>
-</pre><pre class="rust"><code><span class="kw">use</span> <span class="kw">crate</span>::{
-    <span class="ident">api::ApiMetadata</span>,
-    <span class="ident">healthcheck::HealthCheck</span>,
-    <span class="ident">method::Method</span>,
-    <span class="ident">request</span>::{<span class="ident">best_response_type</span>, <span class="ident">RequestError</span>, <span class="ident">RequestParam</span>, <span class="ident">RequestParamType</span>, <span class="ident">RequestParams</span>},
-    <span class="ident">socket</span>::{<span class="self">self</span>, <span class="ident">SocketError</span>},
-    <span class="ident">Html</span>,
+</pre><pre class="rust"><code><span class="kw">use crate</span>::{
+    api::ApiMetadata,
+    healthcheck::HealthCheck,
+    method::Method,
+    request::{best_response_type, RequestError, RequestParam, RequestParamType, RequestParams},
+    socket::{<span class="self">self</span>, SocketError},
+    Html,
 };
-<span class="kw">use</span> <span class="ident">async_trait::async_trait</span>;
-<span class="kw">use</span> <span class="ident">derive_more::From</span>;
-<span class="kw">use</span> <span class="ident">futures::future</span>::{<span class="ident">BoxFuture</span>, <span class="ident">FutureExt</span>};
-<span class="kw">use</span> <span class="ident">maud</span>::{<span class="ident">html</span>, <span class="ident">PreEscaped</span>};
-<span class="kw">use</span> <span class="ident">serde::Serialize</span>;
-<span class="kw">use</span> <span class="ident">snafu</span>::{<span class="ident">OptionExt</span>, <span class="ident">Snafu</span>};
-<span class="kw">use</span> <span class="ident">std::collections::HashMap</span>;
-<span class="kw">use</span> <span class="ident">std::convert::Infallible</span>;
-<span class="kw">use</span> <span class="ident">std::fmt</span>::{<span class="self">self</span>, <span class="ident">Display</span>, <span class="ident">Formatter</span>};
-<span class="kw">use</span> <span class="ident">std::marker::PhantomData</span>;
-<span class="kw">use</span> <span class="ident">std::str::FromStr</span>;
-<span class="kw">use</span> <span class="ident">tide</span>::{
-    <span class="ident">http</span>::{
+<span class="kw">use </span>async_trait::async_trait;
+<span class="kw">use </span>derive_more::From;
+<span class="kw">use </span>futures::future::{BoxFuture, FutureExt};
+<span class="kw">use </span>maud::{html, PreEscaped};
+<span class="kw">use </span>serde::Serialize;
+<span class="kw">use </span>snafu::{OptionExt, Snafu};
+<span class="kw">use </span>std::collections::HashMap;
+<span class="kw">use </span>std::convert::Infallible;
+<span class="kw">use </span>std::fmt::{<span class="self">self</span>, Display, Formatter};
+<span class="kw">use </span>std::marker::PhantomData;
+<span class="kw">use </span>std::str::FromStr;
+<span class="kw">use </span>tide::{
+    http::{
         <span class="self">self</span>,
-        <span class="ident">content::Accept</span>,
-        <span class="ident">mime</span>::{<span class="self">self</span>, <span class="ident">Mime</span>},
-        <span class="ident">StatusCode</span>,
+        content::Accept,
+        mime::{<span class="self">self</span>, Mime},
+        StatusCode,
     },
-    <span class="ident">Body</span>,
+    Body,
 };
-<span class="kw">use</span> <span class="ident">tide_websockets::WebSocketConnection</span>;
+<span class="kw">use </span>tide_websockets::WebSocketConnection;
 
-<span class="doccomment">/// An error returned by a route handler.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// [RouteError] encapsulates application specific errors `E` returned by the user-installed handler</span>
-<span class="doccomment">/// itself. It also includes errors in the route dispatching logic, such as failures to turn the</span>
-<span class="doccomment">/// result of the user-installed handler into an HTTP response.</span>
-<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">RouteError</span><span class="op">&lt;</span><span class="ident">E</span><span class="op">&gt;</span> {
-    <span class="ident">AppSpecific</span>(<span class="ident">E</span>),
-    <span class="ident">Request</span>(<span class="ident">RequestError</span>),
-    <span class="ident">UnsupportedContentType</span>,
-    <span class="ident">Bincode</span>(<span class="ident">bincode::Error</span>),
-    <span class="ident">Json</span>(<span class="ident">serde_json::Error</span>),
-    <span class="ident">Tide</span>(<span class="ident">tide::Error</span>),
-    <span class="ident">IncorrectMethod</span> { <span class="ident">expected</span>: <span class="ident">Method</span> },
+<span class="doccomment">/// An error returned by a route handler.
+///
+/// [RouteError] encapsulates application specific errors `E` returned by the user-installed handler
+/// itself. It also includes errors in the route dispatching logic, such as failures to turn the
+/// result of the user-installed handler into an HTTP response.
+</span><span class="kw">pub enum </span>RouteError&lt;E&gt; {
+    AppSpecific(E),
+    Request(RequestError),
+    UnsupportedContentType,
+    Bincode(bincode::Error),
+    Json(serde_json::Error),
+    Tide(tide::Error),
+    IncorrectMethod { expected: Method },
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">E</span>: <span class="ident">Display</span><span class="op">&gt;</span> <span class="ident">Display</span> <span class="kw">for</span> <span class="ident">RouteError</span><span class="op">&lt;</span><span class="ident">E</span><span class="op">&gt;</span> {
-    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;mut</span> <span class="ident">Formatter</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) -&gt; <span class="ident">fmt::Result</span> {
-        <span class="kw">match</span> <span class="self">self</span> {
-            <span class="ident"><span class="self">Self</span>::AppSpecific</span>(<span class="ident">err</span>) =&gt; <span class="macro">write!</span>(<span class="ident">f</span>, <span class="string">&quot;{}&quot;</span>, <span class="ident">err</span>),
-            <span class="ident"><span class="self">Self</span>::Request</span>(<span class="ident">err</span>) =&gt; <span class="macro">write!</span>(<span class="ident">f</span>, <span class="string">&quot;{}&quot;</span>, <span class="ident">err</span>),
-            <span class="ident"><span class="self">Self</span>::UnsupportedContentType</span> =&gt; <span class="macro">write!</span>(<span class="ident">f</span>, <span class="string">&quot;requested content type is not supported&quot;</span>),
-            <span class="ident"><span class="self">Self</span>::Bincode</span>(<span class="ident">err</span>) =&gt; <span class="macro">write!</span>(<span class="ident">f</span>, <span class="string">&quot;error creating byte stream: {}&quot;</span>, <span class="ident">err</span>),
-            <span class="ident"><span class="self">Self</span>::Json</span>(<span class="ident">err</span>) =&gt; <span class="macro">write!</span>(<span class="ident">f</span>, <span class="string">&quot;error creating JSON response: {}&quot;</span>, <span class="ident">err</span>),
-            <span class="ident"><span class="self">Self</span>::Tide</span>(<span class="ident">err</span>) =&gt; <span class="macro">write!</span>(<span class="ident">f</span>, <span class="string">&quot;{}&quot;</span>, <span class="ident">err</span>),
-            <span class="ident"><span class="self">Self</span>::IncorrectMethod</span> { <span class="ident">expected</span> } =&gt; {
-                <span class="macro">write!</span>(<span class="ident">f</span>, <span class="string">&quot;route may only be called as {}&quot;</span>, <span class="ident">expected</span>)
+<span class="kw">impl</span>&lt;E: Display&gt; Display <span class="kw">for </span>RouteError&lt;E&gt; {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result {
+        <span class="kw">match </span><span class="self">self </span>{
+            <span class="self">Self</span>::AppSpecific(err) =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;{}&quot;</span>, err),
+            <span class="self">Self</span>::Request(err) =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;{}&quot;</span>, err),
+            <span class="self">Self</span>::UnsupportedContentType =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;requested content type is not supported&quot;</span>),
+            <span class="self">Self</span>::Bincode(err) =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;error creating byte stream: {}&quot;</span>, err),
+            <span class="self">Self</span>::Json(err) =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;error creating JSON response: {}&quot;</span>, err),
+            <span class="self">Self</span>::Tide(err) =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;{}&quot;</span>, err),
+            <span class="self">Self</span>::IncorrectMethod { expected } =&gt; {
+                <span class="macro">write!</span>(f, <span class="string">&quot;route may only be called as {}&quot;</span>, expected)
             }
         }
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">E</span><span class="op">&gt;</span> <span class="ident">RouteError</span><span class="op">&lt;</span><span class="ident">E</span><span class="op">&gt;</span> {
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">status</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">StatusCode</span> {
-        <span class="kw">match</span> <span class="self">self</span> {
-            <span class="ident"><span class="self">Self</span>::Request</span>(<span class="kw">_</span>) <span class="op">|</span> <span class="ident"><span class="self">Self</span>::UnsupportedContentType</span> <span class="op">|</span> <span class="ident"><span class="self">Self</span>::IncorrectMethod</span> { .. } =&gt; {
-                <span class="ident">StatusCode::BadRequest</span>
+<span class="kw">impl</span>&lt;E&gt; RouteError&lt;E&gt; {
+    <span class="kw">pub fn </span>status(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; StatusCode {
+        <span class="kw">match </span><span class="self">self </span>{
+            <span class="self">Self</span>::Request(<span class="kw">_</span>) | <span class="self">Self</span>::UnsupportedContentType | <span class="self">Self</span>::IncorrectMethod { .. } =&gt; {
+                StatusCode::BadRequest
             }
-            <span class="kw">_</span> =&gt; <span class="ident">StatusCode::InternalServerError</span>,
+            <span class="kw">_ </span>=&gt; StatusCode::InternalServerError,
         }
     }
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">map_app_specific</span><span class="op">&lt;</span><span class="ident">E2</span><span class="op">&gt;</span>(<span class="self">self</span>, <span class="ident">f</span>: <span class="kw">impl</span> <span class="ident">Fn</span>(<span class="ident">E</span>) -&gt; <span class="ident">E2</span>) -&gt; <span class="ident">RouteError</span><span class="op">&lt;</span><span class="ident">E2</span><span class="op">&gt;</span> {
-        <span class="kw">match</span> <span class="self">self</span> {
-            <span class="ident">RouteError::AppSpecific</span>(<span class="ident">e</span>) =&gt; <span class="ident">RouteError::AppSpecific</span>(<span class="ident">f</span>(<span class="ident">e</span>)),
-            <span class="ident">RouteError::Request</span>(<span class="ident">e</span>) =&gt; <span class="ident">RouteError::Request</span>(<span class="ident">e</span>),
-            <span class="ident">RouteError::UnsupportedContentType</span> =&gt; <span class="ident">RouteError::UnsupportedContentType</span>,
-            <span class="ident">RouteError::Bincode</span>(<span class="ident">err</span>) =&gt; <span class="ident">RouteError::Bincode</span>(<span class="ident">err</span>),
-            <span class="ident">RouteError::Json</span>(<span class="ident">err</span>) =&gt; <span class="ident">RouteError::Json</span>(<span class="ident">err</span>),
-            <span class="ident">RouteError::Tide</span>(<span class="ident">err</span>) =&gt; <span class="ident">RouteError::Tide</span>(<span class="ident">err</span>),
-            <span class="ident"><span class="self">Self</span>::IncorrectMethod</span> { <span class="ident">expected</span> } =&gt; <span class="ident">RouteError::IncorrectMethod</span> { <span class="ident">expected</span> },
+    <span class="kw">pub fn </span>map_app_specific&lt;E2&gt;(<span class="self">self</span>, f: <span class="kw">impl </span>Fn(E) -&gt; E2) -&gt; RouteError&lt;E2&gt; {
+        <span class="kw">match </span><span class="self">self </span>{
+            RouteError::AppSpecific(e) =&gt; RouteError::AppSpecific(f(e)),
+            RouteError::Request(e) =&gt; RouteError::Request(e),
+            RouteError::UnsupportedContentType =&gt; RouteError::UnsupportedContentType,
+            RouteError::Bincode(err) =&gt; RouteError::Bincode(err),
+            RouteError::Json(err) =&gt; RouteError::Json(err),
+            RouteError::Tide(err) =&gt; RouteError::Tide(err),
+            <span class="self">Self</span>::IncorrectMethod { expected } =&gt; RouteError::IncorrectMethod { expected },
         }
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">E</span><span class="op">&gt;</span> <span class="ident">From</span><span class="op">&lt;</span><span class="ident">RequestError</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">RouteError</span><span class="op">&lt;</span><span class="ident">E</span><span class="op">&gt;</span> {
-    <span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">err</span>: <span class="ident">RequestError</span>) -&gt; <span class="self">Self</span> {
-        <span class="ident"><span class="self">Self</span>::Request</span>(<span class="ident">err</span>)
+<span class="kw">impl</span>&lt;E&gt; From&lt;RequestError&gt; <span class="kw">for </span>RouteError&lt;E&gt; {
+    <span class="kw">fn </span>from(err: RequestError) -&gt; <span class="self">Self </span>{
+        <span class="self">Self</span>::Request(err)
     }
 }
 
-<span class="doccomment">/// A route handler.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// The [Handler] trait defines the interface required of route handlers -- they must be able to</span>
-<span class="doccomment">/// take [RequestParams] and produce either a response or an appropriately typed error.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Implementations of this trait are provided for handler functions returning a serializable</span>
-<span class="doccomment">/// response ([FnHandler]), for boxed handlers, and for the [MapErr] type which can be used to</span>
-<span class="doccomment">/// transform the `Error` type of a [Handler]. This trait is usually used as</span>
-<span class="doccomment">/// `Box&lt;dyn Handler&lt;State, Error&gt;&gt;`, in order to type-erase route-specific details such as the</span>
-<span class="doccomment">/// return type of a handler function. The types which are preserved, `State` and `Error`, should be</span>
-<span class="doccomment">/// the same for all handlers in an API module.</span>
-<span class="attribute">#[<span class="ident">async_trait</span>]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">trait</span> <span class="ident">Handler</span><span class="op">&lt;</span><span class="ident">State</span>, <span class="ident">Error</span><span class="op">&gt;</span>: <span class="lifetime">&#39;static</span> <span class="op">+</span> <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Sync</span> {
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">handle</span>(
+<span class="doccomment">/// A route handler.
+///
+/// The [Handler] trait defines the interface required of route handlers -- they must be able to
+/// take [RequestParams] and produce either a response or an appropriately typed error.
+///
+/// Implementations of this trait are provided for handler functions returning a serializable
+/// response ([FnHandler]), for boxed handlers, and for the [MapErr] type which can be used to
+/// transform the `Error` type of a [Handler]. This trait is usually used as
+/// `Box&lt;dyn Handler&lt;State, Error&gt;&gt;`, in order to type-erase route-specific details such as the
+/// return type of a handler function. The types which are preserved, `State` and `Error`, should be
+/// the same for all handlers in an API module.
+</span><span class="attribute">#[async_trait]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">trait </span>Handler&lt;State, Error&gt;: <span class="lifetime">&#39;static </span>+ Send + Sync {
+    <span class="kw">async fn </span>handle(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">req</span>: <span class="ident">RequestParams</span>,
-        <span class="ident">state</span>: <span class="kw-2">&amp;</span><span class="ident">State</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">tide::Response</span>, <span class="ident">RouteError</span><span class="op">&lt;</span><span class="ident">Error</span><span class="op">&gt;</span><span class="op">&gt;</span>;
+        req: RequestParams,
+        state: <span class="kw-2">&amp;</span>State,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;tide::Response, RouteError&lt;Error&gt;&gt;;
 }
 
-<span class="doccomment">/// A [Handler] which delegates to an async function.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// The function type `F` should be callable as</span>
-<span class="doccomment">/// `async fn(RequestParams&lt;State&gt;) -&gt; Result&lt;R, Error&gt;`. The [Handler] implementation will</span>
-<span class="doccomment">/// automatically convert the result `R` to a [tide::Response] by serializing it, or the error</span>
-<span class="doccomment">/// `Error` to a [RouteError] using [RouteError::AppSpecific]. Note that the format used for</span>
-<span class="doccomment">/// serializing the response is flexible. This implementation will use the [Accept] header of the</span>
-<span class="doccomment">/// incoming request to try to provide a format that the client expects. Supported formats are</span>
-<span class="doccomment">/// `application/json` (using [serde_json]) and `application/octet-stream` (using [bincode]).</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// # Limitations</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// [Like many function parameters](crate#boxed-futures) in [tide_disco](crate), the handler</span>
-<span class="doccomment">/// function is required to return a [BoxFuture].</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">From</span>)]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct</span> <span class="ident">FnHandler</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span>(<span class="ident">F</span>);
+<span class="doccomment">/// A [Handler] which delegates to an async function.
+///
+/// The function type `F` should be callable as
+/// `async fn(RequestParams&lt;State&gt;) -&gt; Result&lt;R, Error&gt;`. The [Handler] implementation will
+/// automatically convert the result `R` to a [tide::Response] by serializing it, or the error
+/// `Error` to a [RouteError] using [RouteError::AppSpecific]. Note that the format used for
+/// serializing the response is flexible. This implementation will use the [Accept] header of the
+/// incoming request to try to provide a format that the client expects. Supported formats are
+/// `application/json` (using [serde_json]) and `application/octet-stream` (using [bincode]).
+///
+/// # Limitations
+///
+/// [Like many function parameters](crate#boxed-futures) in [tide_disco](crate), the handler
+/// function is required to return a [BoxFuture].
+</span><span class="attribute">#[derive(From)]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>FnHandler&lt;F&gt;(F);
 
-<span class="attribute">#[<span class="ident">async_trait</span>]</span>
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">F</span>, <span class="ident">T</span>, <span class="ident">State</span>, <span class="ident">Error</span><span class="op">&gt;</span> <span class="ident">Handler</span><span class="op">&lt;</span><span class="ident">State</span>, <span class="ident">Error</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">FnHandler</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">F</span>: <span class="lifetime">&#39;static</span> <span class="op">+</span> <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Sync</span> <span class="op">+</span> <span class="ident">Fn</span>(<span class="ident">RequestParams</span>, <span class="kw-2">&amp;</span><span class="ident">State</span>) -&gt; <span class="ident">BoxFuture</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span>, <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">Error</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-    <span class="ident">T</span>: <span class="ident">Serialize</span>,
-    <span class="ident">State</span>: <span class="lifetime">&#39;static</span> <span class="op">+</span> <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Sync</span>,
+<span class="attribute">#[async_trait]
+</span><span class="kw">impl</span>&lt;F, T, State, Error&gt; Handler&lt;State, Error&gt; <span class="kw">for </span>FnHandler&lt;F&gt;
+<span class="kw">where
+    </span>F: <span class="lifetime">&#39;static </span>+ Send + Sync + Fn(RequestParams, <span class="kw-2">&amp;</span>State) -&gt; BoxFuture&lt;<span class="lifetime">&#39;_</span>, <span class="prelude-ty">Result</span>&lt;T, Error&gt;&gt;,
+    T: Serialize,
+    State: <span class="lifetime">&#39;static </span>+ Send + Sync,
 {
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">handle</span>(
+    <span class="kw">async fn </span>handle(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">req</span>: <span class="ident">RequestParams</span>,
-        <span class="ident">state</span>: <span class="kw-2">&amp;</span><span class="ident">State</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">tide::Response</span>, <span class="ident">RouteError</span><span class="op">&lt;</span><span class="ident">Error</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">accept</span> <span class="op">=</span> <span class="ident">req</span>.<span class="ident">accept</span>()<span class="question-mark">?</span>;
-        <span class="ident">response_from_result</span>(<span class="kw-2">&amp;</span><span class="ident">accept</span>, (<span class="self">self</span>.<span class="number">0</span>)(<span class="ident">req</span>, <span class="ident">state</span>).<span class="kw">await</span>)
+        req: RequestParams,
+        state: <span class="kw-2">&amp;</span>State,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;tide::Response, RouteError&lt;Error&gt;&gt; {
+        <span class="kw">let </span>accept = req.accept()<span class="question-mark">?</span>;
+        response_from_result(<span class="kw-2">&amp;</span>accept, (<span class="self">self</span>.<span class="number">0</span>)(req, state).<span class="kw">await</span>)
     }
 }
 
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">response_from_result</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">Serialize</span>, <span class="ident">Error</span><span class="op">&gt;</span>(
-    <span class="ident">accept</span>: <span class="kw-2">&amp;</span><span class="ident">Accept</span>,
-    <span class="ident">res</span>: <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">Error</span><span class="op">&gt;</span>,
-) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">tide::Response</span>, <span class="ident">RouteError</span><span class="op">&lt;</span><span class="ident">Error</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-    <span class="ident">res</span>.<span class="ident">map_err</span>(<span class="ident">RouteError::AppSpecific</span>)
-        .<span class="ident">and_then</span>(<span class="op">|</span><span class="ident">res</span><span class="op">|</span> <span class="ident">respond_with</span>(<span class="ident">accept</span>, <span class="kw-2">&amp;</span><span class="ident">res</span>))
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>response_from_result&lt;T: Serialize, Error&gt;(
+    accept: <span class="kw-2">&amp;</span>Accept,
+    res: <span class="prelude-ty">Result</span>&lt;T, Error&gt;,
+) -&gt; <span class="prelude-ty">Result</span>&lt;tide::Response, RouteError&lt;Error&gt;&gt; {
+    res.map_err(RouteError::AppSpecific)
+        .and_then(|res| respond_with(accept, <span class="kw-2">&amp;</span>res))
 }
 
-<span class="attribute">#[<span class="ident">async_trait</span>]</span>
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">H</span>: <span class="question-mark">?</span><span class="ident">Sized</span> <span class="op">+</span> <span class="ident">Handler</span><span class="op">&lt;</span><span class="ident">State</span>, <span class="ident">Error</span><span class="op">&gt;</span>, <span class="ident">State</span>: <span class="lifetime">&#39;static</span> <span class="op">+</span> <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Sync</span>, <span class="ident">Error</span><span class="op">&gt;</span> <span class="ident">Handler</span><span class="op">&lt;</span><span class="ident">State</span>, <span class="ident">Error</span><span class="op">&gt;</span>
-    <span class="kw">for</span> <span class="ident">Box</span><span class="op">&lt;</span><span class="ident">H</span><span class="op">&gt;</span>
+<span class="attribute">#[async_trait]
+</span><span class="kw">impl</span>&lt;H: <span class="question-mark">?</span>Sized + Handler&lt;State, Error&gt;, State: <span class="lifetime">&#39;static </span>+ Send + Sync, Error&gt; Handler&lt;State, Error&gt;
+    <span class="kw">for </span>Box&lt;H&gt;
 {
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">handle</span>(
+    <span class="kw">async fn </span>handle(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">req</span>: <span class="ident">RequestParams</span>,
-        <span class="ident">state</span>: <span class="kw-2">&amp;</span><span class="ident">State</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">tide::Response</span>, <span class="ident">RouteError</span><span class="op">&lt;</span><span class="ident">Error</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-        (<span class="kw-2">*</span><span class="kw-2">*</span><span class="self">self</span>).<span class="ident">handle</span>(<span class="ident">req</span>, <span class="ident">state</span>).<span class="kw">await</span>
-    }
+        req: RequestParams,
+        state: <span class="kw-2">&amp;</span>State,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;tide::Response, RouteError&lt;Error&gt;&gt; {
+        (<span class="kw-2">**</span><span class="self">self</span>).handle(req, state).<span class="kw">await
+    </span>}
 }
 
-<span class="kw">enum</span> <span class="ident">RouteImplementation</span><span class="op">&lt;</span><span class="ident">State</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
-    <span class="ident">Http</span> {
-        <span class="ident">method</span>: <span class="ident">http::Method</span>,
-        <span class="ident">handler</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">Handler</span><span class="op">&lt;</span><span class="ident">State</span>, <span class="ident">Error</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+<span class="kw">enum </span>RouteImplementation&lt;State, Error&gt; {
+    Http {
+        method: http::Method,
+        handler: <span class="prelude-ty">Option</span>&lt;Box&lt;<span class="kw">dyn </span>Handler&lt;State, Error&gt;&gt;&gt;,
     },
-    <span class="ident">Socket</span> {
-        <span class="ident">handler</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">socket::Handler</span><span class="op">&lt;</span><span class="ident">State</span>, <span class="ident">Error</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+    Socket {
+        handler: <span class="prelude-ty">Option</span>&lt;socket::Handler&lt;State, Error&gt;&gt;,
     },
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">State</span>, <span class="ident">Error</span><span class="op">&gt;</span> <span class="ident">RouteImplementation</span><span class="op">&lt;</span><span class="ident">State</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
-    <span class="kw">fn</span> <span class="ident">map_err</span><span class="op">&lt;</span><span class="ident">Error2</span><span class="op">&gt;</span>(
+<span class="kw">impl</span>&lt;State, Error&gt; RouteImplementation&lt;State, Error&gt; {
+    <span class="kw">fn </span>map_err&lt;Error2&gt;(
         <span class="self">self</span>,
-        <span class="ident">f</span>: <span class="kw">impl</span> <span class="lifetime">&#39;static</span> <span class="op">+</span> <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Sync</span> <span class="op">+</span> <span class="ident">Fn</span>(<span class="ident">Error</span>) -&gt; <span class="ident">Error2</span>,
-    ) -&gt; <span class="ident">RouteImplementation</span><span class="op">&lt;</span><span class="ident">State</span>, <span class="ident">Error2</span><span class="op">&gt;</span>
-    <span class="kw">where</span>
-        <span class="ident">State</span>: <span class="lifetime">&#39;static</span> <span class="op">+</span> <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Sync</span>,
-        <span class="ident">Error</span>: <span class="lifetime">&#39;static</span> <span class="op">+</span> <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Sync</span>,
-        <span class="ident">Error2</span>: <span class="lifetime">&#39;static</span>,
+        f: <span class="kw">impl </span><span class="lifetime">&#39;static </span>+ Send + Sync + Fn(Error) -&gt; Error2,
+    ) -&gt; RouteImplementation&lt;State, Error2&gt;
+    <span class="kw">where
+        </span>State: <span class="lifetime">&#39;static </span>+ Send + Sync,
+        Error: <span class="lifetime">&#39;static </span>+ Send + Sync,
+        Error2: <span class="lifetime">&#39;static</span>,
     {
-        <span class="kw">match</span> <span class="self">self</span> {
-            <span class="ident"><span class="self">Self</span>::Http</span> { <span class="ident">method</span>, <span class="ident">handler</span> } =&gt; <span class="ident">RouteImplementation::Http</span> {
-                <span class="ident">method</span>,
-                <span class="ident">handler</span>: <span class="ident">handler</span>.<span class="ident">map</span>(<span class="op">|</span><span class="ident">h</span><span class="op">|</span> {
-                    <span class="kw">let</span> <span class="ident">h</span>: <span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">Handler</span><span class="op">&lt;</span><span class="ident">State</span>, <span class="ident">Error2</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">=</span>
-                        <span class="ident">Box::new</span>(<span class="ident">MapErr</span>::<span class="op">&lt;</span><span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">Handler</span><span class="op">&lt;</span><span class="ident">State</span>, <span class="ident">Error</span><span class="op">&gt;</span><span class="op">&gt;</span>, <span class="kw">_</span>, <span class="ident">Error</span><span class="op">&gt;</span><span class="ident">::new</span>(
-                            <span class="ident">h</span>, <span class="ident">f</span>,
+        <span class="kw">match </span><span class="self">self </span>{
+            <span class="self">Self</span>::Http { method, handler } =&gt; RouteImplementation::Http {
+                method,
+                handler: handler.map(|h| {
+                    <span class="kw">let </span>h: Box&lt;<span class="kw">dyn </span>Handler&lt;State, Error2&gt;&gt; =
+                        Box::new(MapErr::&lt;Box&lt;<span class="kw">dyn </span>Handler&lt;State, Error&gt;&gt;, <span class="kw">_</span>, Error&gt;::new(
+                            h, f,
                         ));
-                    <span class="ident">h</span>
+                    h
                 }),
             },
-            <span class="ident"><span class="self">Self</span>::Socket</span> { <span class="ident">handler</span> } =&gt; <span class="ident">RouteImplementation::Socket</span> {
-                <span class="ident">handler</span>: <span class="ident">handler</span>.<span class="ident">map</span>(<span class="op">|</span><span class="ident">h</span><span class="op">|</span> <span class="ident">socket::map_err</span>(<span class="ident">h</span>, <span class="ident">f</span>)),
+            <span class="self">Self</span>::Socket { handler } =&gt; RouteImplementation::Socket {
+                handler: handler.map(|h| socket::map_err(h, f)),
             },
         }
     }
 }
 
-<span class="doccomment">/// All the information we need to parse, typecheck, and dispatch a request.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// A [Route] is a structured representation of a route specification from an `api.toml` API spec.</span>
-<span class="doccomment">/// It can be parsed from a TOML specification, and it also includes an optional handler function</span>
-<span class="doccomment">/// which the Rust server can register. Routes with no handler will use a default handler that</span>
-<span class="doccomment">/// simply returns information about the route.</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Route</span><span class="op">&lt;</span><span class="ident">State</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
-    <span class="ident">name</span>: <span class="ident">String</span>,
-    <span class="ident">patterns</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>,
-    <span class="ident">params</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">RequestParam</span><span class="op">&gt;</span>,
-    <span class="ident">doc</span>: <span class="ident">String</span>,
-    <span class="ident">handler</span>: <span class="ident">RouteImplementation</span><span class="op">&lt;</span><span class="ident">State</span>, <span class="ident">Error</span><span class="op">&gt;</span>,
+<span class="doccomment">/// All the information we need to parse, typecheck, and dispatch a request.
+///
+/// A [Route] is a structured representation of a route specification from an `api.toml` API spec.
+/// It can be parsed from a TOML specification, and it also includes an optional handler function
+/// which the Rust server can register. Routes with no handler will use a default handler that
+/// simply returns information about the route.
+</span><span class="kw">pub struct </span>Route&lt;State, Error&gt; {
+    name: String,
+    patterns: Vec&lt;String&gt;,
+    params: Vec&lt;RequestParam&gt;,
+    doc: String,
+    handler: RouteImplementation&lt;State, Error&gt;,
 }
 
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">Snafu</span>)]</span>
-<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">RouteParseError</span> {
-    <span class="ident">MissingPathArray</span>,
-    <span class="ident">PathElementError</span>,
-    <span class="ident">InvalidTypeExpression</span>,
-    <span class="ident">UnrecognizedType</span>,
-    <span class="ident">MethodMustBeString</span>,
-    <span class="ident">InvalidMethod</span>,
-    <span class="ident">MissingPath</span>,
-    <span class="ident">IncorrectPathType</span>,
-    <span class="ident">IncorrectParamType</span>,
-    <span class="ident">IncorrectDocType</span>,
-    <span class="ident">RouteMustBeTable</span>,
+<span class="attribute">#[derive(Clone, Debug, Snafu)]
+</span><span class="kw">pub enum </span>RouteParseError {
+    MissingPathArray,
+    PathElementError,
+    InvalidTypeExpression,
+    UnrecognizedType,
+    MethodMustBeString,
+    InvalidMethod,
+    MissingPath,
+    IncorrectPathType,
+    IncorrectParamType,
+    IncorrectDocType,
+    RouteMustBeTable,
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">State</span>, <span class="ident">Error</span><span class="op">&gt;</span> <span class="ident">Route</span><span class="op">&lt;</span><span class="ident">State</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
-    <span class="doccomment">/// Parse a [Route] from a TOML specification.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// The specification must be a table containing at least the following keys:</span>
-    <span class="doccomment">/// * `PATH`: an array of patterns for this route</span>
-    <span class="doccomment">/// * for each route parameter (route segment starting with `:`), a key with the same name as</span>
-    <span class="doccomment">///   the parameter (including the `:`) whose value is the type of the parameter</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// In addition, the following optional keys may be specified:</span>
-    <span class="doccomment">/// * `METHOD`: the method to use to dispatch the route (default `GET`)</span>
-    <span class="doccomment">/// * `DOC`: Markdown description of the route</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">name</span>: <span class="ident">String</span>, <span class="ident">spec</span>: <span class="kw-2">&amp;</span><span class="ident">toml::Value</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">RouteParseError</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">paths</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">spec</span>[<span class="string">&quot;PATH&quot;</span>]
-            .<span class="ident">as_array</span>()
-            .<span class="ident">ok_or</span>(<span class="ident">RouteParseError::MissingPathArray</span>)<span class="question-mark">?</span>
-            .<span class="ident">iter</span>()
-            .<span class="ident">map</span>(<span class="op">|</span><span class="ident">v</span><span class="op">|</span> {
-                <span class="ident">v</span>.<span class="ident">as_str</span>()
-                    .<span class="ident">ok_or</span>(<span class="ident">RouteParseError::PathElementError</span>)
-                    .<span class="ident">unwrap</span>()
-                    .<span class="ident">to_string</span>()
+<span class="kw">impl</span>&lt;State, Error&gt; Route&lt;State, Error&gt; {
+    <span class="doccomment">/// Parse a [Route] from a TOML specification.
+    ///
+    /// The specification must be a table containing at least the following keys:
+    /// * `PATH`: an array of patterns for this route
+    /// * for each route parameter (route segment starting with `:`), a key with the same name as
+    ///   the parameter (including the `:`) whose value is the type of the parameter
+    ///
+    /// In addition, the following optional keys may be specified:
+    /// * `METHOD`: the method to use to dispatch the route (default `GET`)
+    /// * `DOC`: Markdown description of the route
+    </span><span class="kw">pub fn </span>new(name: String, spec: <span class="kw-2">&amp;</span>toml::Value) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, RouteParseError&gt; {
+        <span class="kw">let </span>paths: Vec&lt;String&gt; = spec[<span class="string">&quot;PATH&quot;</span>]
+            .as_array()
+            .ok_or(RouteParseError::MissingPathArray)<span class="question-mark">?
+            </span>.iter()
+            .map(|v| {
+                v.as_str()
+                    .ok_or(RouteParseError::PathElementError)
+                    .unwrap()
+                    .to_string()
             })
-            .<span class="ident">collect</span>();
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">params</span> <span class="op">=</span> <span class="ident">HashMap</span>::<span class="op">&lt;</span><span class="ident">String</span>, <span class="ident">RequestParam</span><span class="op">&gt;</span><span class="ident">::new</span>();
-        <span class="kw">for</span> <span class="ident">path</span> <span class="kw">in</span> <span class="ident">paths</span>.<span class="ident">iter</span>() {
-            <span class="kw">for</span> <span class="ident">seg</span> <span class="kw">in</span> <span class="ident">path</span>.<span class="ident">split</span>(<span class="string">&#39;/&#39;</span>) {
-                <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">name</span>) <span class="op">=</span> <span class="ident">seg</span>.<span class="ident">strip_prefix</span>(<span class="string">&#39;:&#39;</span>) {
-                    <span class="kw">let</span> <span class="ident">param_type</span> <span class="op">=</span> <span class="ident">RequestParamType::from_str</span>(
-                        <span class="ident">spec</span>[<span class="ident">seg</span>]
-                            .<span class="ident">as_str</span>()
-                            .<span class="ident">ok_or</span>(<span class="ident">RouteParseError::InvalidTypeExpression</span>)<span class="question-mark">?</span>,
+            .collect();
+        <span class="kw">let </span><span class="kw-2">mut </span>params = HashMap::&lt;String, RequestParam&gt;::new();
+        <span class="kw">for </span>path <span class="kw">in </span>paths.iter() {
+            <span class="kw">for </span>seg <span class="kw">in </span>path.split(<span class="string">&#39;/&#39;</span>) {
+                <span class="kw">if let </span><span class="prelude-val">Some</span>(name) = seg.strip_prefix(<span class="string">&#39;:&#39;</span>) {
+                    <span class="kw">let </span>param_type = RequestParamType::from_str(
+                        spec[seg]
+                            .as_str()
+                            .ok_or(RouteParseError::InvalidTypeExpression)<span class="question-mark">?</span>,
                     )
-                    .<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">RouteParseError::UnrecognizedType</span>)<span class="question-mark">?</span>;
-                    <span class="ident">params</span>.<span class="ident">insert</span>(
-                        <span class="ident">seg</span>.<span class="ident">to_string</span>(),
-                        <span class="ident">RequestParam</span> {
-                            <span class="ident">name</span>: <span class="ident">name</span>.<span class="ident">to_string</span>(),
-                            <span class="ident">param_type</span>,
+                    .map_err(|<span class="kw">_</span>| RouteParseError::UnrecognizedType)<span class="question-mark">?</span>;
+                    params.insert(
+                        seg.to_string(),
+                        RequestParam {
+                            name: name.to_string(),
+                            param_type,
                         },
                     );
                 }
             }
         }
-        <span class="kw">let</span> <span class="ident">method</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">spec</span>.<span class="ident">get</span>(<span class="string">&quot;METHOD&quot;</span>) {
-            <span class="prelude-val">Some</span>(<span class="ident">val</span>) =&gt; <span class="ident">val</span>
-                .<span class="ident">as_str</span>()
-                .<span class="ident">context</span>(<span class="ident">MethodMustBeStringSnafu</span>)<span class="question-mark">?</span>
-                .<span class="ident">parse</span>()
-                .<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">RouteParseError::InvalidMethod</span>)<span class="question-mark">?</span>,
-            <span class="prelude-val">None</span> =&gt; <span class="ident">Method::get</span>(),
+        <span class="kw">let </span>method = <span class="kw">match </span>spec.get(<span class="string">&quot;METHOD&quot;</span>) {
+            <span class="prelude-val">Some</span>(val) =&gt; val
+                .as_str()
+                .context(MethodMustBeStringSnafu)<span class="question-mark">?
+                </span>.parse()
+                .map_err(|<span class="kw">_</span>| RouteParseError::InvalidMethod)<span class="question-mark">?</span>,
+            <span class="prelude-val">None </span>=&gt; Method::get(),
         };
-        <span class="kw">let</span> <span class="ident">handler</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">method</span> {
-            <span class="ident">Method::Http</span>(<span class="ident">method</span>) =&gt; <span class="ident">RouteImplementation::Http</span> {
-                <span class="ident">method</span>,
-                <span class="ident">handler</span>: <span class="prelude-val">None</span>,
+        <span class="kw">let </span>handler = <span class="kw">match </span>method {
+            Method::Http(method) =&gt; RouteImplementation::Http {
+                method,
+                handler: <span class="prelude-val">None</span>,
             },
-            <span class="ident">Method::Socket</span> =&gt; <span class="ident">RouteImplementation::Socket</span> { <span class="ident">handler</span>: <span class="prelude-val">None</span> },
+            Method::Socket =&gt; RouteImplementation::Socket { handler: <span class="prelude-val">None </span>},
         };
-        <span class="prelude-val">Ok</span>(<span class="ident">Route</span> {
-            <span class="ident">name</span>,
-            <span class="ident">patterns</span>: <span class="kw">match</span> <span class="ident">spec</span>.<span class="ident">get</span>(<span class="string">&quot;PATH&quot;</span>).<span class="ident">context</span>(<span class="ident">MissingPathSnafu</span>)<span class="question-mark">?</span> {
-                <span class="ident">toml::Value::String</span>(<span class="ident">s</span>) =&gt; <span class="macro">vec!</span>[<span class="ident">s</span>.<span class="ident">clone</span>()],
-                <span class="ident">toml::Value::Array</span>(<span class="ident">paths</span>) =&gt; <span class="ident">paths</span>
-                    .<span class="ident">iter</span>()
-                    .<span class="ident">map</span>(<span class="op">|</span><span class="ident">path</span><span class="op">|</span> <span class="prelude-val">Ok</span>(<span class="ident">path</span>.<span class="ident">as_str</span>().<span class="ident">context</span>(<span class="ident">IncorrectPathTypeSnafu</span>)<span class="question-mark">?</span>.<span class="ident">to_string</span>()))
-                    .<span class="ident">collect</span>::<span class="op">&lt;</span><span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="kw">_</span>, <span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span>()<span class="question-mark">?</span>,
-                <span class="kw">_</span> =&gt; <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">RouteParseError::IncorrectPathType</span>),
+        <span class="prelude-val">Ok</span>(Route {
+            name,
+            patterns: <span class="kw">match </span>spec.get(<span class="string">&quot;PATH&quot;</span>).context(MissingPathSnafu)<span class="question-mark">? </span>{
+                toml::Value::String(s) =&gt; <span class="macro">vec!</span>[s.clone()],
+                toml::Value::Array(paths) =&gt; paths
+                    .iter()
+                    .map(|path| <span class="prelude-val">Ok</span>(path.as_str().context(IncorrectPathTypeSnafu)<span class="question-mark">?</span>.to_string()))
+                    .collect::&lt;<span class="prelude-ty">Result</span>&lt;<span class="kw">_</span>, <span class="kw">_</span>&gt;&gt;()<span class="question-mark">?</span>,
+                <span class="kw">_ </span>=&gt; <span class="kw">return </span><span class="prelude-val">Err</span>(RouteParseError::IncorrectPathType),
             },
-            <span class="ident">params</span>: <span class="ident">params</span>.<span class="ident">into_values</span>().<span class="ident">collect</span>(),
-            <span class="ident">handler</span>,
-            <span class="ident">doc</span>: <span class="kw">match</span> <span class="ident">spec</span>.<span class="ident">get</span>(<span class="string">&quot;DOC&quot;</span>) {
-                <span class="prelude-val">Some</span>(<span class="ident">doc</span>) =&gt; <span class="ident">markdown::to_html</span>(<span class="ident">doc</span>.<span class="ident">as_str</span>().<span class="ident">context</span>(<span class="ident">IncorrectDocTypeSnafu</span>)<span class="question-mark">?</span>),
-                <span class="prelude-val">None</span> =&gt; <span class="ident">String::new</span>(),
+            params: params.into_values().collect(),
+            handler,
+            doc: <span class="kw">match </span>spec.get(<span class="string">&quot;DOC&quot;</span>) {
+                <span class="prelude-val">Some</span>(doc) =&gt; markdown::to_html(doc.as_str().context(IncorrectDocTypeSnafu)<span class="question-mark">?</span>),
+                <span class="prelude-val">None </span>=&gt; String::new(),
             },
         })
     }
 
-    <span class="doccomment">/// The name of the route.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// This is the name used to identify the route when binding a handler. It is also the first</span>
-    <span class="doccomment">/// segment of all of the URL patterns for this route.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">name</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">String</span> {
-        <span class="self">self</span>.<span class="ident">name</span>.<span class="ident">clone</span>()
+    <span class="doccomment">/// The name of the route.
+    ///
+    /// This is the name used to identify the route when binding a handler. It is also the first
+    /// segment of all of the URL patterns for this route.
+    </span><span class="kw">pub fn </span>name(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; String {
+        <span class="self">self</span>.name.clone()
     }
 
-    <span class="doccomment">/// Iterate over route patterns.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">patterns</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw">impl</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">String</span><span class="op">&gt;</span> {
-        <span class="self">self</span>.<span class="ident">patterns</span>.<span class="ident">iter</span>()
+    <span class="doccomment">/// Iterate over route patterns.
+    </span><span class="kw">pub fn </span>patterns(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw">impl </span>Iterator&lt;Item = <span class="kw-2">&amp;</span>String&gt; {
+        <span class="self">self</span>.patterns.iter()
     }
 
-    <span class="doccomment">/// The HTTP method of the route.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">method</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">Method</span> {
-        <span class="kw">match</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">handler</span> {
-            <span class="ident">RouteImplementation::Http</span> { <span class="ident">method</span>, .. } =&gt; (<span class="kw-2">*</span><span class="ident">method</span>).<span class="ident">into</span>(),
-            <span class="ident">RouteImplementation::Socket</span> { .. } =&gt; <span class="ident">Method::socket</span>(),
+    <span class="doccomment">/// The HTTP method of the route.
+    </span><span class="kw">pub fn </span>method(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Method {
+        <span class="kw">match </span><span class="kw-2">&amp;</span><span class="self">self</span>.handler {
+            RouteImplementation::Http { method, .. } =&gt; (<span class="kw-2">*</span>method).into(),
+            RouteImplementation::Socket { .. } =&gt; Method::socket(),
         }
     }
 
-    <span class="doccomment">/// Whether a non-default handler has been bound to this route.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">has_handler</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">bool</span> {
-        <span class="kw">match</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">handler</span> {
-            <span class="ident">RouteImplementation::Http</span> { <span class="ident">handler</span>, .. } =&gt; <span class="ident">handler</span>.<span class="ident">is_some</span>(),
-            <span class="ident">RouteImplementation::Socket</span> { <span class="ident">handler</span>, .. } =&gt; <span class="ident">handler</span>.<span class="ident">is_some</span>(),
+    <span class="doccomment">/// Whether a non-default handler has been bound to this route.
+    </span><span class="kw">pub fn </span>has_handler(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
+        <span class="kw">match </span><span class="kw-2">&amp;</span><span class="self">self</span>.handler {
+            RouteImplementation::Http { handler, .. } =&gt; handler.is_some(),
+            RouteImplementation::Socket { handler, .. } =&gt; handler.is_some(),
         }
     }
 
-    <span class="doccomment">/// Get all formal parameters.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">params</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>[<span class="ident">RequestParam</span>] {
-        <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">params</span>
+    <span class="doccomment">/// Get all formal parameters.
+    </span><span class="kw">pub fn </span>params(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>[RequestParam] {
+        <span class="kw-2">&amp;</span><span class="self">self</span>.params
     }
 
-    <span class="doccomment">/// Create a new route with a modified error type.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">map_err</span><span class="op">&lt;</span><span class="ident">Error2</span><span class="op">&gt;</span>(
+    <span class="doccomment">/// Create a new route with a modified error type.
+    </span><span class="kw">pub fn </span>map_err&lt;Error2&gt;(
         <span class="self">self</span>,
-        <span class="ident">f</span>: <span class="kw">impl</span> <span class="lifetime">&#39;static</span> <span class="op">+</span> <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Sync</span> <span class="op">+</span> <span class="ident">Fn</span>(<span class="ident">Error</span>) -&gt; <span class="ident">Error2</span>,
-    ) -&gt; <span class="ident">Route</span><span class="op">&lt;</span><span class="ident">State</span>, <span class="ident">Error2</span><span class="op">&gt;</span>
-    <span class="kw">where</span>
-        <span class="ident">State</span>: <span class="lifetime">&#39;static</span> <span class="op">+</span> <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Sync</span>,
-        <span class="ident">Error</span>: <span class="lifetime">&#39;static</span> <span class="op">+</span> <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Sync</span>,
-        <span class="ident">Error2</span>: <span class="lifetime">&#39;static</span>,
+        f: <span class="kw">impl </span><span class="lifetime">&#39;static </span>+ Send + Sync + Fn(Error) -&gt; Error2,
+    ) -&gt; Route&lt;State, Error2&gt;
+    <span class="kw">where
+        </span>State: <span class="lifetime">&#39;static </span>+ Send + Sync,
+        Error: <span class="lifetime">&#39;static </span>+ Send + Sync,
+        Error2: <span class="lifetime">&#39;static</span>,
     {
-        <span class="ident">Route</span> {
-            <span class="ident">handler</span>: <span class="self">self</span>.<span class="ident">handler</span>.<span class="ident">map_err</span>(<span class="ident">f</span>),
-            <span class="ident">name</span>: <span class="self">self</span>.<span class="ident">name</span>,
-            <span class="ident">patterns</span>: <span class="self">self</span>.<span class="ident">patterns</span>,
-            <span class="ident">params</span>: <span class="self">self</span>.<span class="ident">params</span>,
-            <span class="ident">doc</span>: <span class="self">self</span>.<span class="ident">doc</span>,
+        Route {
+            handler: <span class="self">self</span>.handler.map_err(f),
+            name: <span class="self">self</span>.name,
+            patterns: <span class="self">self</span>.patterns,
+            params: <span class="self">self</span>.params,
+            doc: <span class="self">self</span>.doc,
         }
     }
 
-    <span class="doccomment">/// Compose an HTML fragment documenting all the variations on this route.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">documentation</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">meta</span>: <span class="kw-2">&amp;</span><span class="ident">ApiMetadata</span>) -&gt; <span class="ident">Html</span> {
-        <span class="macro">html!</span> {
-            (<span class="ident">PreEscaped</span>(<span class="ident">meta</span>.<span class="ident">heading_entry</span>
-                .<span class="ident">replace</span>(<span class="string">&quot;{{METHOD}}&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">method</span>().<span class="ident">to_string</span>())
-                .<span class="ident">replace</span>(<span class="string">&quot;{{NAME}}&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">name</span>())))
-            (<span class="ident">PreEscaped</span>(<span class="kw-2">&amp;</span><span class="ident">meta</span>.<span class="ident">heading_routes</span>))
-            @<span class="kw">for</span> <span class="ident">path</span> <span class="kw">in</span> <span class="self">self</span>.<span class="ident">patterns</span>() {
-                (<span class="ident">PreEscaped</span>(<span class="ident">meta</span>.<span class="ident">route_path</span>.<span class="ident">replace</span>(<span class="string">&quot;{{PATH}}&quot;</span>, <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;/{}/{}&quot;</span>, <span class="ident">meta</span>.<span class="ident">name</span>, <span class="ident">path</span>))))
+    <span class="doccomment">/// Compose an HTML fragment documenting all the variations on this route.
+    </span><span class="kw">pub fn </span>documentation(<span class="kw-2">&amp;</span><span class="self">self</span>, meta: <span class="kw-2">&amp;</span>ApiMetadata) -&gt; Html {
+        <span class="macro">html! </span>{
+            (PreEscaped(meta.heading_entry
+                .replace(<span class="string">&quot;{{METHOD}}&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.method().to_string())
+                .replace(<span class="string">&quot;{{NAME}}&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.name())))
+            (PreEscaped(<span class="kw-2">&amp;</span>meta.heading_routes))
+            @<span class="kw">for </span>path <span class="kw">in </span><span class="self">self</span>.patterns() {
+                (PreEscaped(meta.route_path.replace(<span class="string">&quot;{{PATH}}&quot;</span>, <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;/{}/{}&quot;</span>, meta.name, path))))
             }
-            (<span class="ident">PreEscaped</span>(<span class="kw-2">&amp;</span><span class="ident">meta</span>.<span class="ident">heading_parameters</span>))
-            (<span class="ident">PreEscaped</span>(<span class="kw-2">&amp;</span><span class="ident">meta</span>.<span class="ident">parameter_table_open</span>))
-            @<span class="kw">for</span> <span class="ident">param</span> <span class="kw">in</span> <span class="self">self</span>.<span class="ident">params</span>() {
-                (<span class="ident">PreEscaped</span>(<span class="ident">meta</span>.<span class="ident">parameter_row</span>
-                    .<span class="ident">replace</span>(<span class="string">&quot;{{NAME}}&quot;</span>, <span class="kw-2">&amp;</span><span class="ident">param</span>.<span class="ident">name</span>)
-                    .<span class="ident">replace</span>(<span class="string">&quot;{{TYPE}}&quot;</span>, <span class="kw-2">&amp;</span><span class="ident">param</span>.<span class="ident">param_type</span>.<span class="ident">to_string</span>())))
+            (PreEscaped(<span class="kw-2">&amp;</span>meta.heading_parameters))
+            (PreEscaped(<span class="kw-2">&amp;</span>meta.parameter_table_open))
+            @<span class="kw">for </span>param <span class="kw">in </span><span class="self">self</span>.params() {
+                (PreEscaped(meta.parameter_row
+                    .replace(<span class="string">&quot;{{NAME}}&quot;</span>, <span class="kw-2">&amp;</span>param.name)
+                    .replace(<span class="string">&quot;{{TYPE}}&quot;</span>, <span class="kw-2">&amp;</span>param.param_type.to_string())))
             }
-            @<span class="kw">if</span> <span class="self">self</span>.<span class="ident">params</span>().<span class="ident">is_empty</span>() {
-                (<span class="ident">PreEscaped</span>(<span class="kw-2">&amp;</span><span class="ident">meta</span>.<span class="ident">parameter_none</span>))
+            @<span class="kw">if </span><span class="self">self</span>.params().is_empty() {
+                (PreEscaped(<span class="kw-2">&amp;</span>meta.parameter_none))
             }
-            (<span class="ident">PreEscaped</span>(<span class="kw-2">&amp;</span><span class="ident">meta</span>.<span class="ident">parameter_table_close</span>))
-            (<span class="ident">PreEscaped</span>(<span class="kw-2">&amp;</span><span class="ident">meta</span>.<span class="ident">heading_description</span>))
-            (<span class="ident">PreEscaped</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">doc</span>))
+            (PreEscaped(<span class="kw-2">&amp;</span>meta.parameter_table_close))
+            (PreEscaped(<span class="kw-2">&amp;</span>meta.heading_description))
+            (PreEscaped(<span class="kw-2">&amp;</span><span class="self">self</span>.doc))
         }
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">State</span>, <span class="ident">Error</span><span class="op">&gt;</span> <span class="ident">Route</span><span class="op">&lt;</span><span class="ident">State</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">set_handler</span>(
-        <span class="kw-2">&amp;mut</span> <span class="self">self</span>,
-        <span class="ident">h</span>: <span class="kw">impl</span> <span class="ident">Handler</span><span class="op">&lt;</span><span class="ident">State</span>, <span class="ident">Error</span><span class="op">&gt;</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">RouteError</span><span class="op">&lt;</span><span class="ident">Error</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-        <span class="kw">match</span> <span class="kw-2">&amp;mut</span> <span class="self">self</span>.<span class="ident">handler</span> {
-            <span class="ident">RouteImplementation::Http</span> { <span class="ident">handler</span>, .. } =&gt; {
-                <span class="kw-2">*</span><span class="ident">handler</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">Box::new</span>(<span class="ident">h</span>));
+<span class="kw">impl</span>&lt;State, Error&gt; Route&lt;State, Error&gt; {
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>set_handler(
+        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
+        h: <span class="kw">impl </span>Handler&lt;State, Error&gt;,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), RouteError&lt;Error&gt;&gt; {
+        <span class="kw">match </span><span class="kw-2">&amp;mut </span><span class="self">self</span>.handler {
+            RouteImplementation::Http { handler, .. } =&gt; {
+                <span class="kw-2">*</span>handler = <span class="prelude-val">Some</span>(Box::new(h));
                 <span class="prelude-val">Ok</span>(())
             }
-            <span class="ident">RouteImplementation::Socket</span> { .. } =&gt; <span class="prelude-val">Err</span>(<span class="ident">RouteError::IncorrectMethod</span> {
-                <span class="ident">expected</span>: <span class="self">self</span>.<span class="ident">method</span>(),
+            RouteImplementation::Socket { .. } =&gt; <span class="prelude-val">Err</span>(RouteError::IncorrectMethod {
+                expected: <span class="self">self</span>.method(),
             }),
         }
     }
 
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">set_fn_handler</span><span class="op">&lt;</span><span class="ident">F</span>, <span class="ident">T</span><span class="op">&gt;</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">handler</span>: <span class="ident">F</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">RouteError</span><span class="op">&lt;</span><span class="ident">Error</span><span class="op">&gt;</span><span class="op">&gt;</span>
-    <span class="kw">where</span>
-        <span class="ident">F</span>: <span class="lifetime">&#39;static</span> <span class="op">+</span> <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Sync</span> <span class="op">+</span> <span class="ident">Fn</span>(<span class="ident">RequestParams</span>, <span class="kw-2">&amp;</span><span class="ident">State</span>) -&gt; <span class="ident">BoxFuture</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span>, <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">Error</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-        <span class="ident">T</span>: <span class="ident">Serialize</span>,
-        <span class="ident">State</span>: <span class="lifetime">&#39;static</span> <span class="op">+</span> <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Sync</span>,
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>set_fn_handler&lt;F, T&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, handler: F) -&gt; <span class="prelude-ty">Result</span>&lt;(), RouteError&lt;Error&gt;&gt;
+    <span class="kw">where
+        </span>F: <span class="lifetime">&#39;static </span>+ Send + Sync + Fn(RequestParams, <span class="kw-2">&amp;</span>State) -&gt; BoxFuture&lt;<span class="lifetime">&#39;_</span>, <span class="prelude-ty">Result</span>&lt;T, Error&gt;&gt;,
+        T: Serialize,
+        State: <span class="lifetime">&#39;static </span>+ Send + Sync,
     {
-        <span class="self">self</span>.<span class="ident">set_handler</span>(<span class="ident">FnHandler::from</span>(<span class="ident">handler</span>))
+        <span class="self">self</span>.set_handler(FnHandler::from(handler))
     }
 
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">set_socket_handler</span>(
-        <span class="kw-2">&amp;mut</span> <span class="self">self</span>,
-        <span class="ident">h</span>: <span class="ident">socket::Handler</span><span class="op">&lt;</span><span class="ident">State</span>, <span class="ident">Error</span><span class="op">&gt;</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">RouteError</span><span class="op">&lt;</span><span class="ident">Error</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-        <span class="kw">match</span> <span class="kw-2">&amp;mut</span> <span class="self">self</span>.<span class="ident">handler</span> {
-            <span class="ident">RouteImplementation::Socket</span> { <span class="ident">handler</span>, .. } =&gt; {
-                <span class="kw-2">*</span><span class="ident">handler</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">h</span>);
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>set_socket_handler(
+        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
+        h: socket::Handler&lt;State, Error&gt;,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), RouteError&lt;Error&gt;&gt; {
+        <span class="kw">match </span><span class="kw-2">&amp;mut </span><span class="self">self</span>.handler {
+            RouteImplementation::Socket { handler, .. } =&gt; {
+                <span class="kw-2">*</span>handler = <span class="prelude-val">Some</span>(h);
                 <span class="prelude-val">Ok</span>(())
             }
-            <span class="ident">RouteImplementation::Http</span> { .. } =&gt; <span class="prelude-val">Err</span>(<span class="ident">RouteError::IncorrectMethod</span> {
-                <span class="ident">expected</span>: <span class="self">self</span>.<span class="ident">method</span>(),
+            RouteImplementation::Http { .. } =&gt; <span class="prelude-val">Err</span>(RouteError::IncorrectMethod {
+                expected: <span class="self">self</span>.method(),
             }),
         }
     }
 
-    <span class="doccomment">/// Print documentation about the route, to aid the developer when the route is not yet</span>
-    <span class="doccomment">/// implemented.</span>
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">default_handler</span>(
+    <span class="doccomment">/// Print documentation about the route, to aid the developer when the route is not yet
+    /// implemented.
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>default_handler(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">_req</span>: <span class="ident">RequestParams</span>,
-        <span class="ident">_state</span>: <span class="kw-2">&amp;</span><span class="ident">State</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">tide::Response</span>, <span class="ident">RouteError</span><span class="op">&lt;</span><span class="ident">Error</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+        _req: RequestParams,
+        _state: <span class="kw-2">&amp;</span>State,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;tide::Response, RouteError&lt;Error&gt;&gt; {
         <span class="macro">unimplemented!</span>()
     }
 
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">handle_socket</span>(
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">async fn </span>handle_socket(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">req</span>: <span class="ident">RequestParams</span>,
-        <span class="ident">conn</span>: <span class="ident">WebSocketConnection</span>,
-        <span class="ident">state</span>: <span class="kw-2">&amp;</span><span class="ident">State</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">SocketError</span><span class="op">&lt;</span><span class="ident">Error</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-        <span class="kw">match</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">handler</span> {
-            <span class="ident">RouteImplementation::Socket</span> { <span class="ident">handler</span>, .. } =&gt; <span class="kw">match</span> <span class="ident">handler</span> {
-                <span class="prelude-val">Some</span>(<span class="ident">handler</span>) =&gt; <span class="ident">handler</span>(<span class="ident">req</span>, <span class="ident">conn</span>, <span class="ident">state</span>).<span class="kw">await</span>,
-                <span class="comment">// If there is no socket handler registered, the top-level app should register the</span>
-                <span class="comment">// route in such a way that the socket upgrade request is rejected and the route</span>
-                <span class="comment">// instead displays a simple HTML page with the documentation for the route. That</span>
-                <span class="comment">// means that we should not get here.</span>
-                <span class="prelude-val">None</span> =&gt; <span class="macro">unreachable!</span>(),
+        req: RequestParams,
+        conn: WebSocketConnection,
+        state: <span class="kw-2">&amp;</span>State,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), SocketError&lt;Error&gt;&gt; {
+        <span class="kw">match </span><span class="kw-2">&amp;</span><span class="self">self</span>.handler {
+            RouteImplementation::Socket { handler, .. } =&gt; <span class="kw">match </span>handler {
+                <span class="prelude-val">Some</span>(handler) =&gt; handler(req, conn, state).<span class="kw">await</span>,
+                <span class="comment">// If there is no socket handler registered, the top-level app should register the
+                // route in such a way that the socket upgrade request is rejected and the route
+                // instead displays a simple HTML page with the documentation for the route. That
+                // means that we should not get here.
+                </span><span class="prelude-val">None </span>=&gt; <span class="macro">unreachable!</span>(),
             },
-            <span class="ident">RouteImplementation::Http</span> { .. } =&gt; <span class="prelude-val">Err</span>(<span class="ident">SocketError::IncorrectMethod</span> {
-                <span class="ident">expected</span>: <span class="self">self</span>.<span class="ident">method</span>(),
-                <span class="ident">actual</span>: <span class="ident">req</span>.<span class="ident">method</span>(),
+            RouteImplementation::Http { .. } =&gt; <span class="prelude-val">Err</span>(SocketError::IncorrectMethod {
+                expected: <span class="self">self</span>.method(),
+                actual: req.method(),
             }),
         }
     }
 }
 
-<span class="attribute">#[<span class="ident">async_trait</span>]</span>
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">State</span>, <span class="ident">Error</span><span class="op">&gt;</span> <span class="ident">Handler</span><span class="op">&lt;</span><span class="ident">State</span>, <span class="ident">Error</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">Route</span><span class="op">&lt;</span><span class="ident">State</span>, <span class="ident">Error</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">Error</span>: <span class="lifetime">&#39;static</span>,
-    <span class="ident">State</span>: <span class="lifetime">&#39;static</span> <span class="op">+</span> <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Sync</span>,
+<span class="attribute">#[async_trait]
+</span><span class="kw">impl</span>&lt;State, Error&gt; Handler&lt;State, Error&gt; <span class="kw">for </span>Route&lt;State, Error&gt;
+<span class="kw">where
+    </span>Error: <span class="lifetime">&#39;static</span>,
+    State: <span class="lifetime">&#39;static </span>+ Send + Sync,
 {
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">handle</span>(
+    <span class="kw">async fn </span>handle(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">req</span>: <span class="ident">RequestParams</span>,
-        <span class="ident">state</span>: <span class="kw-2">&amp;</span><span class="ident">State</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">tide::Response</span>, <span class="ident">RouteError</span><span class="op">&lt;</span><span class="ident">Error</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-        <span class="kw">match</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">handler</span> {
-            <span class="ident">RouteImplementation::Http</span> { <span class="ident">handler</span>, .. } =&gt; <span class="kw">match</span> <span class="ident">handler</span> {
-                <span class="prelude-val">Some</span>(<span class="ident">handler</span>) =&gt; <span class="ident">handler</span>.<span class="ident">handle</span>(<span class="ident">req</span>, <span class="ident">state</span>).<span class="kw">await</span>,
-                <span class="prelude-val">None</span> =&gt; <span class="self">self</span>.<span class="ident">default_handler</span>(<span class="ident">req</span>, <span class="ident">state</span>),
+        req: RequestParams,
+        state: <span class="kw-2">&amp;</span>State,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;tide::Response, RouteError&lt;Error&gt;&gt; {
+        <span class="kw">match </span><span class="kw-2">&amp;</span><span class="self">self</span>.handler {
+            RouteImplementation::Http { handler, .. } =&gt; <span class="kw">match </span>handler {
+                <span class="prelude-val">Some</span>(handler) =&gt; handler.handle(req, state).<span class="kw">await</span>,
+                <span class="prelude-val">None </span>=&gt; <span class="self">self</span>.default_handler(req, state),
             },
-            <span class="ident">RouteImplementation::Socket</span> { .. } =&gt; <span class="prelude-val">Err</span>(<span class="ident">RouteError::IncorrectMethod</span> {
-                <span class="ident">expected</span>: <span class="self">self</span>.<span class="ident">method</span>(),
+            RouteImplementation::Socket { .. } =&gt; <span class="prelude-val">Err</span>(RouteError::IncorrectMethod {
+                expected: <span class="self">self</span>.method(),
             }),
         }
     }
 }
 
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">MapErr</span><span class="op">&lt;</span><span class="ident">H</span>, <span class="ident">F</span>, <span class="ident">E</span><span class="op">&gt;</span> {
-    <span class="ident">handler</span>: <span class="ident">H</span>,
-    <span class="ident">map</span>: <span class="ident">F</span>,
-    <span class="ident">_phantom</span>: <span class="ident">PhantomData</span><span class="op">&lt;</span><span class="ident">E</span><span class="op">&gt;</span>,
+<span class="kw">pub struct </span>MapErr&lt;H, F, E&gt; {
+    handler: H,
+    map: F,
+    _phantom: PhantomData&lt;E&gt;,
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">H</span>, <span class="ident">F</span>, <span class="ident">E</span><span class="op">&gt;</span> <span class="ident">MapErr</span><span class="op">&lt;</span><span class="ident">H</span>, <span class="ident">F</span>, <span class="ident">E</span><span class="op">&gt;</span> {
-    <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">handler</span>: <span class="ident">H</span>, <span class="ident">map</span>: <span class="ident">F</span>) -&gt; <span class="self">Self</span> {
-        <span class="self">Self</span> {
-            <span class="ident">handler</span>,
-            <span class="ident">map</span>,
-            <span class="ident">_phantom</span>: <span class="ident">Default::default</span>(),
+<span class="kw">impl</span>&lt;H, F, E&gt; MapErr&lt;H, F, E&gt; {
+    <span class="kw">fn </span>new(handler: H, map: F) -&gt; <span class="self">Self </span>{
+        <span class="self">Self </span>{
+            handler,
+            map,
+            _phantom: Default::default(),
         }
     }
 }
 
-<span class="attribute">#[<span class="ident">async_trait</span>]</span>
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">H</span>, <span class="ident">F</span>, <span class="ident">State</span>, <span class="ident">Error1</span>, <span class="ident">Error2</span><span class="op">&gt;</span> <span class="ident">Handler</span><span class="op">&lt;</span><span class="ident">State</span>, <span class="ident">Error2</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">MapErr</span><span class="op">&lt;</span><span class="ident">H</span>, <span class="ident">F</span>, <span class="ident">Error1</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">H</span>: <span class="ident">Handler</span><span class="op">&lt;</span><span class="ident">State</span>, <span class="ident">Error1</span><span class="op">&gt;</span>,
-    <span class="ident">F</span>: <span class="lifetime">&#39;static</span> <span class="op">+</span> <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Sync</span> <span class="op">+</span> <span class="ident">Fn</span>(<span class="ident">Error1</span>) -&gt; <span class="ident">Error2</span>,
-    <span class="ident">State</span>: <span class="lifetime">&#39;static</span> <span class="op">+</span> <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Sync</span>,
-    <span class="ident">Error1</span>: <span class="lifetime">&#39;static</span> <span class="op">+</span> <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Sync</span>,
-    <span class="ident">Error2</span>: <span class="lifetime">&#39;static</span>,
+<span class="attribute">#[async_trait]
+</span><span class="kw">impl</span>&lt;H, F, State, Error1, Error2&gt; Handler&lt;State, Error2&gt; <span class="kw">for </span>MapErr&lt;H, F, Error1&gt;
+<span class="kw">where
+    </span>H: Handler&lt;State, Error1&gt;,
+    F: <span class="lifetime">&#39;static </span>+ Send + Sync + Fn(Error1) -&gt; Error2,
+    State: <span class="lifetime">&#39;static </span>+ Send + Sync,
+    Error1: <span class="lifetime">&#39;static </span>+ Send + Sync,
+    Error2: <span class="lifetime">&#39;static</span>,
 {
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">handle</span>(
+    <span class="kw">async fn </span>handle(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">req</span>: <span class="ident">RequestParams</span>,
-        <span class="ident">state</span>: <span class="kw-2">&amp;</span><span class="ident">State</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">tide::Response</span>, <span class="ident">RouteError</span><span class="op">&lt;</span><span class="ident">Error2</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-        <span class="self">self</span>.<span class="ident">handler</span>
-            .<span class="ident">handle</span>(<span class="ident">req</span>, <span class="ident">state</span>)
-            .<span class="kw">await</span>
-            .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">err</span><span class="op">|</span> <span class="ident">err</span>.<span class="ident">map_app_specific</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">map</span>))
+        req: RequestParams,
+        state: <span class="kw-2">&amp;</span>State,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;tide::Response, RouteError&lt;Error2&gt;&gt; {
+        <span class="self">self</span>.handler
+            .handle(req, state)
+            .<span class="kw">await
+            </span>.map_err(|err| err.map_app_specific(<span class="kw-2">&amp;</span><span class="self">self</span>.map))
     }
 }
 
-<span class="doccomment">/// A special kind of route handler representing a health check.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// In order to type-erase the implementation of `HealthCheck` that the handler actually returns,</span>
-<span class="doccomment">/// we store the healthcheck handler in a wrapper that converts the `HealthCheck` to a</span>
-<span class="doccomment">/// `tide::Response`. The status code of the response will be the status code of the `HealthCheck`</span>
-<span class="doccomment">/// implementation returned by the underlying handler.</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">type</span> <span class="ident">HealthCheckHandler</span><span class="op">&lt;</span><span class="ident">State</span><span class="op">&gt;</span> <span class="op">=</span>
-    <span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="lifetime">&#39;static</span> <span class="op">+</span> <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Sync</span> <span class="op">+</span> <span class="ident">Fn</span>(<span class="ident">RequestParams</span>, <span class="kw-2">&amp;</span><span class="ident">State</span>) -&gt; <span class="ident">BoxFuture</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span>, <span class="ident">tide::Response</span><span class="op">&gt;</span><span class="op">&gt;</span>;
+<span class="doccomment">/// A special kind of route handler representing a health check.
+///
+/// In order to type-erase the implementation of `HealthCheck` that the handler actually returns,
+/// we store the healthcheck handler in a wrapper that converts the `HealthCheck` to a
+/// `tide::Response`. The status code of the response will be the status code of the `HealthCheck`
+/// implementation returned by the underlying handler.
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">type </span>HealthCheckHandler&lt;State&gt; =
+    Box&lt;<span class="kw">dyn </span><span class="lifetime">&#39;static </span>+ Send + Sync + Fn(RequestParams, <span class="kw-2">&amp;</span>State) -&gt; BoxFuture&lt;<span class="lifetime">&#39;_</span>, tide::Response&gt;&gt;;
 
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">health_check_response</span><span class="op">&lt;</span><span class="ident">H</span>: <span class="ident">HealthCheck</span><span class="op">&gt;</span>(<span class="ident">accept</span>: <span class="kw-2">&amp;</span><span class="ident">Accept</span>, <span class="ident">health</span>: <span class="ident">H</span>) -&gt; <span class="ident">tide::Response</span> {
-    <span class="kw">let</span> <span class="ident">status</span> <span class="op">=</span> <span class="ident">health</span>.<span class="ident">status</span>();
-    <span class="kw">let</span> (<span class="ident">body</span>, <span class="ident">content_type</span>) <span class="op">=</span>
-        <span class="ident">response_body</span>::<span class="op">&lt;</span><span class="ident">H</span>, <span class="ident">Infallible</span><span class="op">&gt;</span>(<span class="ident">accept</span>, <span class="ident">health</span>).<span class="ident">unwrap_or_else</span>(<span class="op">|</span><span class="ident">err</span><span class="op">|</span> {
-            <span class="kw">let</span> <span class="ident">msg</span> <span class="op">=</span> <span class="macro">format!</span>(
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>health_check_response&lt;H: HealthCheck&gt;(accept: <span class="kw-2">&amp;</span>Accept, health: H) -&gt; tide::Response {
+    <span class="kw">let </span>status = health.status();
+    <span class="kw">let </span>(body, content_type) =
+        response_body::&lt;H, Infallible&gt;(accept, health).unwrap_or_else(|err| {
+            <span class="kw">let </span>msg = <span class="macro">format!</span>(
                 <span class="string">&quot;health status was {}, but there was an error generating the response: {}&quot;</span>,
-                <span class="ident">status</span>, <span class="ident">err</span>
+                status, err
             );
-            (<span class="ident">msg</span>.<span class="ident">into</span>(), <span class="ident">mime::PLAIN</span>)
+            (msg.into(), mime::PLAIN)
         });
-    <span class="ident">tide::Response::builder</span>(<span class="ident">status</span>)
-        .<span class="ident">content_type</span>(<span class="ident">content_type</span>)
-        .<span class="ident">body</span>(<span class="ident">body</span>)
-        .<span class="ident">build</span>()
+    tide::Response::builder(status)
+        .content_type(content_type)
+        .body(body)
+        .build()
 }
 
-<span class="doccomment">/// A type-erasing wrapper for healthcheck handlers.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Given a handler, this function can be used to derive a new, type-erased [HealthCheckHandler]</span>
-<span class="doccomment">/// that takes only [RequestParams] and returns a generic [tide::Response].</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">health_check_handler</span><span class="op">&lt;</span><span class="ident">State</span>, <span class="ident">H</span><span class="op">&gt;</span>(
-    <span class="ident">handler</span>: <span class="kw">impl</span> <span class="lifetime">&#39;static</span> <span class="op">+</span> <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Sync</span> <span class="op">+</span> <span class="ident">Fn</span>(<span class="kw-2">&amp;</span><span class="ident">State</span>) -&gt; <span class="ident">BoxFuture</span><span class="op">&lt;</span><span class="ident">H</span><span class="op">&gt;</span>,
-) -&gt; <span class="ident">HealthCheckHandler</span><span class="op">&lt;</span><span class="ident">State</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">State</span>: <span class="lifetime">&#39;static</span> <span class="op">+</span> <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Sync</span>,
-    <span class="ident">H</span>: <span class="lifetime">&#39;static</span> <span class="op">+</span> <span class="ident">HealthCheck</span>,
+<span class="doccomment">/// A type-erasing wrapper for healthcheck handlers.
+///
+/// Given a handler, this function can be used to derive a new, type-erased [HealthCheckHandler]
+/// that takes only [RequestParams] and returns a generic [tide::Response].
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>health_check_handler&lt;State, H&gt;(
+    handler: <span class="kw">impl </span><span class="lifetime">&#39;static </span>+ Send + Sync + Fn(<span class="kw-2">&amp;</span>State) -&gt; BoxFuture&lt;H&gt;,
+) -&gt; HealthCheckHandler&lt;State&gt;
+<span class="kw">where
+    </span>State: <span class="lifetime">&#39;static </span>+ Send + Sync,
+    H: <span class="lifetime">&#39;static </span>+ HealthCheck,
 {
-    <span class="ident">Box::new</span>(<span class="kw">move</span> <span class="op">|</span><span class="ident">req</span>, <span class="ident">state</span><span class="op">|</span> {
-        <span class="kw">let</span> <span class="ident">accept</span> <span class="op">=</span> <span class="ident">req</span>.<span class="ident">accept</span>().<span class="ident">unwrap_or_else</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> {
-            <span class="comment">// The healthcheck endpoint is not allowed to fail, so just use the default content</span>
-            <span class="comment">// type if we can&#39;t parse the Accept header.</span>
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">accept</span> <span class="op">=</span> <span class="ident">Accept::new</span>();
-            <span class="ident">accept</span>.<span class="ident">set_wildcard</span>(<span class="bool-val">true</span>);
-            <span class="ident">accept</span>
+    Box::new(<span class="kw">move </span>|req, state| {
+        <span class="kw">let </span>accept = req.accept().unwrap_or_else(|<span class="kw">_</span>| {
+            <span class="comment">// The healthcheck endpoint is not allowed to fail, so just use the default content
+            // type if we can&#39;t parse the Accept header.
+            </span><span class="kw">let </span><span class="kw-2">mut </span>accept = Accept::new();
+            accept.set_wildcard(<span class="bool-val">true</span>);
+            accept
         });
-        <span class="kw">let</span> <span class="ident">future</span> <span class="op">=</span> <span class="ident">handler</span>(<span class="ident">state</span>);
-        <span class="kw">async</span> <span class="kw">move</span> {
-            <span class="kw">let</span> <span class="ident">health</span> <span class="op">=</span> <span class="ident">future</span>.<span class="kw">await</span>;
-            <span class="ident">health_check_response</span>(<span class="kw-2">&amp;</span><span class="ident">accept</span>, <span class="ident">health</span>)
+        <span class="kw">let </span>future = handler(state);
+        <span class="kw">async move </span>{
+            <span class="kw">let </span>health = future.<span class="kw">await</span>;
+            health_check_response(<span class="kw-2">&amp;</span>accept, health)
         }
-        .<span class="ident">boxed</span>()
+        .boxed()
     })
 }
 
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">response_body</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">Serialize</span>, <span class="ident">E</span><span class="op">&gt;</span>(
-    <span class="ident">accept</span>: <span class="kw-2">&amp;</span><span class="ident">Accept</span>,
-    <span class="ident">body</span>: <span class="ident">T</span>,
-) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(<span class="ident">Body</span>, <span class="ident">Mime</span>), <span class="ident">RouteError</span><span class="op">&lt;</span><span class="ident">E</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-    <span class="kw">let</span> <span class="ident">ty</span> <span class="op">=</span> <span class="ident">best_response_type</span>(<span class="ident">accept</span>, <span class="kw-2">&amp;</span>[<span class="ident">mime::JSON</span>, <span class="ident">mime::BYTE_STREAM</span>])<span class="question-mark">?</span>;
-    <span class="kw">if</span> <span class="ident">ty</span> <span class="op">==</span> <span class="ident">mime::BYTE_STREAM</span> {
-        <span class="kw">let</span> <span class="ident">bytes</span> <span class="op">=</span> <span class="ident">bincode::serialize</span>(<span class="kw-2">&amp;</span><span class="ident">body</span>).<span class="ident">map_err</span>(<span class="ident">RouteError::Bincode</span>)<span class="question-mark">?</span>;
-        <span class="prelude-val">Ok</span>((<span class="ident">bytes</span>.<span class="ident">into</span>(), <span class="ident">mime::BYTE_STREAM</span>))
-    } <span class="kw">else</span> <span class="kw">if</span> <span class="ident">ty</span> <span class="op">==</span> <span class="ident">mime::JSON</span> {
-        <span class="kw">let</span> <span class="ident">json</span> <span class="op">=</span> <span class="ident">serde_json::to_string</span>(<span class="kw-2">&amp;</span><span class="ident">body</span>).<span class="ident">map_err</span>(<span class="ident">RouteError::Json</span>)<span class="question-mark">?</span>;
-        <span class="prelude-val">Ok</span>((<span class="ident">json</span>.<span class="ident">into</span>(), <span class="ident">mime::JSON</span>))
-    } <span class="kw">else</span> {
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>response_body&lt;T: Serialize, E&gt;(
+    accept: <span class="kw-2">&amp;</span>Accept,
+    body: T,
+) -&gt; <span class="prelude-ty">Result</span>&lt;(Body, Mime), RouteError&lt;E&gt;&gt; {
+    <span class="kw">let </span>ty = best_response_type(accept, <span class="kw-2">&amp;</span>[mime::JSON, mime::BYTE_STREAM])<span class="question-mark">?</span>;
+    <span class="kw">if </span>ty == mime::BYTE_STREAM {
+        <span class="kw">let </span>bytes = bincode::serialize(<span class="kw-2">&amp;</span>body).map_err(RouteError::Bincode)<span class="question-mark">?</span>;
+        <span class="prelude-val">Ok</span>((bytes.into(), mime::BYTE_STREAM))
+    } <span class="kw">else if </span>ty == mime::JSON {
+        <span class="kw">let </span>json = serde_json::to_string(<span class="kw-2">&amp;</span>body).map_err(RouteError::Json)<span class="question-mark">?</span>;
+        <span class="prelude-val">Ok</span>((json.into(), mime::JSON))
+    } <span class="kw">else </span>{
         <span class="macro">unreachable!</span>()
     }
 }
 
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">respond_with</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">Serialize</span>, <span class="ident">E</span><span class="op">&gt;</span>(
-    <span class="ident">accept</span>: <span class="kw-2">&amp;</span><span class="ident">Accept</span>,
-    <span class="ident">body</span>: <span class="ident">T</span>,
-) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">tide::Response</span>, <span class="ident">RouteError</span><span class="op">&lt;</span><span class="ident">E</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-    <span class="kw">let</span> (<span class="ident">body</span>, <span class="ident">content_type</span>) <span class="op">=</span> <span class="ident">response_body</span>(<span class="ident">accept</span>, <span class="ident">body</span>)<span class="question-mark">?</span>;
-    <span class="prelude-val">Ok</span>(<span class="ident">tide::Response::builder</span>(<span class="ident">StatusCode::Ok</span>)
-        .<span class="ident">body</span>(<span class="ident">body</span>)
-        .<span class="ident">content_type</span>(<span class="ident">content_type</span>)
-        .<span class="ident">build</span>())
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>respond_with&lt;T: Serialize, E&gt;(
+    accept: <span class="kw-2">&amp;</span>Accept,
+    body: T,
+) -&gt; <span class="prelude-ty">Result</span>&lt;tide::Response, RouteError&lt;E&gt;&gt; {
+    <span class="kw">let </span>(body, content_type) = response_body(accept, body)<span class="question-mark">?</span>;
+    <span class="prelude-val">Ok</span>(tide::Response::builder(StatusCode::Ok)
+        .body(body)
+        .content_type(content_type)
+        .build())
 }
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="tide_disco" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.64.0 (a55dd71d5 2022-09-19)" ></div></body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="tide_disco" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0 (897e37553 2022-11-02)" ></div></body></html>

@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/lib.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>lib.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../tide_disco/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../tide_disco/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../tide_disco/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/lib.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>lib.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../normalize.css"><link rel="stylesheet" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../ayu.css" disabled><link rel="stylesheet" href="../../dark.css" disabled><link rel="stylesheet" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../tide_disco/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../tide_disco/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../tide_disco/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -667,674 +667,674 @@
 <span id="667">667</span>
 <span id="668">668</span>
 <span id="669">669</span>
-</pre><pre class="rust"><code><span class="doccomment">//! _Tide Disco is a web server framework with built-in discoverability support for</span>
-<span class="doccomment">//! [Tide](https://github.com/http-rs/tide)_</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! # Overview</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! We say a system is _discoverable_ if guesses and mistakes regarding usage are rewarded with</span>
-<span class="doccomment">//! relevant documentation and assistance at producing correct requests. To offer this capability in</span>
-<span class="doccomment">//! a practical way, it is helpful to specify the API in data files, rather than code, so that all</span>
-<span class="doccomment">//! relevant text can be edited in one concise readable specification.</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! Tide Disco leverages TOML to specify</span>
-<span class="doccomment">//! - Routes with typed parameters</span>
-<span class="doccomment">//! - Route documentation</span>
-<span class="doccomment">//! - Route error messages</span>
-<span class="doccomment">//! - General documentation</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! ## Goals</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! - Context-sensitive help</span>
-<span class="doccomment">//! - Spelling suggestions</span>
-<span class="doccomment">//! - Reference documentation assembled from route documentation</span>
-<span class="doccomment">//! - Forms and other user interfaces to aid in the construction of correct inputs</span>
-<span class="doccomment">//! - Localization</span>
-<span class="doccomment">//! - Novice and expert help</span>
-<span class="doccomment">//! - Flexible route parsing, e.g. named parameters rather than positional parameters</span>
-<span class="doccomment">//! - API fuzz testing automation based on parameter types</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! ## Future work</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! - WebSocket support</span>
-<span class="doccomment">//! - Runtime control over logging</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! # Getting started</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! A Tide Disco app is composed of one or more _API modules_. An API module consists of a TOML</span>
-<span class="doccomment">//! specification and a set of route handlers -- Rust functions -- to provide the behavior of the</span>
-<span class="doccomment">//! routes defined in the TOML. You can learn the format of the TOML file by looking at the examples</span>
-<span class="doccomment">//! in this crate. Once you have it, you can load it into an API description using [Api::new]:</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! ```no_run</span>
-<span class="doccomment">//! # fn main() -&gt; Result&lt;(), tide_disco::api::ApiError&gt; {</span>
-<span class="doccomment">//! use tide_disco::Api;</span>
-<span class="doccomment">//! use tide_disco::error::ServerError;</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! type State = ();</span>
-<span class="doccomment">//! type Error = ServerError;</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! let spec = toml::from_slice(&amp;std::fs::read(&quot;/path/to/api.toml&quot;).unwrap()).unwrap();</span>
-<span class="doccomment">//! let mut api = Api::&lt;State, Error&gt;::new(spec)?;</span>
-<span class="doccomment">//! # Ok(())</span>
-<span class="doccomment">//! # }</span>
-<span class="doccomment">//! ```</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! Once you have an [Api], you can define route handlers for any routes in your TOML specification.</span>
-<span class="doccomment">//! Suppose you have the following route definition:</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! ```toml</span>
-<span class="doccomment">//! [route.hello]</span>
-<span class="doccomment">//! PATH = [&quot;hello&quot;]</span>
-<span class="doccomment">//! METHOD = &quot;GET&quot;</span>
-<span class="doccomment">//! ```</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! Register a handler for it like this:</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! ```no_run</span>
-<span class="doccomment">//! # use tide_disco::Api;</span>
-<span class="doccomment">//! # fn main() -&gt; Result&lt;(), tide_disco::api::ApiError&gt; {</span>
-<span class="doccomment">//! # let spec = toml::from_slice(&amp;std::fs::read(&quot;/path/to/api.toml&quot;).unwrap()).unwrap();</span>
-<span class="doccomment">//! # let mut api = Api::&lt;(), tide_disco::error::ServerError&gt;::new(spec)?;</span>
-<span class="doccomment">//! use futures::FutureExt;</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! api.get(&quot;hello&quot;, |req, state| async move { Ok(&quot;Hello, world!&quot;) }.boxed())?;</span>
-<span class="doccomment">//! # Ok(())</span>
-<span class="doccomment">//! # }</span>
-<span class="doccomment">//! ```</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! See [the API reference](Api) for more details on what you can do to create an [Api].</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! Once you have registered all of your route handlers, you need to register your [Api] module with</span>
-<span class="doccomment">//! an [App]:</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! ```no_run</span>
-<span class="doccomment">//! # type State = ();</span>
-<span class="doccomment">//! # type Error = tide_disco::error::ServerError;</span>
-<span class="doccomment">//! # #[async_std::main] async fn main() {</span>
-<span class="doccomment">//! # let spec = toml::from_slice(&amp;std::fs::read(&quot;/path/to/api.toml&quot;).unwrap()).unwrap();</span>
-<span class="doccomment">//! # let api = tide_disco::Api::&lt;State, Error&gt;::new(spec).unwrap();</span>
-<span class="doccomment">//! use tide_disco::App;</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! let mut app = App::&lt;State, Error&gt;::with_state(());</span>
-<span class="doccomment">//! app.register_module(&quot;api&quot;, api);</span>
-<span class="doccomment">//! app.serve(&quot;http://localhost:8080&quot;).await;</span>
-<span class="doccomment">//! # }</span>
-<span class="doccomment">//! ```</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! Then you can use your application:</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! ```text</span>
-<span class="doccomment">//! curl http://localhost:8080/api/hello</span>
-<span class="doccomment">//! ```</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! # Boxed futures</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! As a web server framework, Tide Disco naturally includes many interfaces that take functions as</span>
-<span class="doccomment">//! arguments. For example, route handlers are registered by passing a handler function to an [Api]</span>
-<span class="doccomment">//! object. Also naturally, many of these function parameters are async, which of course just means</span>
-<span class="doccomment">//! that they are regular functions returning some type `F` that implements the</span>
-<span class="doccomment">//! [Future](futures::Future) trait. This is all perfectly usual, but throughout the interfaces in</span>
-<span class="doccomment">//! this crate, you may notice something that is a bit unusual: many of these functions are required</span>
-<span class="doccomment">//! to return not just any [Future](futures::Future), but a</span>
-<span class="doccomment">//! [BoxFuture](futures::future::BoxFuture). This is due to a limitation that currently exists</span>
-<span class="doccomment">//! in the Rust compiler.</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! The problem arises with functions where the returned future is not `&#39;static`, but rather borrows</span>
-<span class="doccomment">//! from the function parameters. Consider the following route definition, for example:</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! ```ignore</span>
-<span class="doccomment">//! type State = RwLock&lt;u64&gt;;</span>
-<span class="doccomment">//! type Error = ();</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! api.at(&quot;someroute&quot;, |_req, state: &amp;State| async {</span>
-<span class="doccomment">//!     Ok(*state.read().await)</span>
-<span class="doccomment">//! })</span>
-<span class="doccomment">//! ```</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! The `async` block in the route handler uses the `state` reference, so the resulting future is</span>
-<span class="doccomment">//! only valid for as long as the reference `state` is valid. We could write the signature of the</span>
-<span class="doccomment">//! route handler like this:</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! ```</span>
-<span class="doccomment">//! use futures::Future;</span>
-<span class="doccomment">//! use tide_disco::RequestParams;</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! type State = async_std::sync::RwLock&lt;u64&gt;;</span>
-<span class="doccomment">//! type Error = ();</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! fn handler&lt;&#39;a&gt;(</span>
-<span class="doccomment">//!     req: RequestParams,</span>
-<span class="doccomment">//!     state: &amp;&#39;a State,</span>
-<span class="doccomment">//! ) -&gt; impl &#39;a + Future&lt;Output = Result&lt;u64, Error&gt;&gt; {</span>
-<span class="doccomment">//!     // ...</span>
-<span class="doccomment">//!     # async { Ok(*state.read().await) }</span>
-<span class="doccomment">//! }</span>
-<span class="doccomment">//! ```</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! Notice how we explicitly constrain the future type by the lifetime `&#39;a` using `impl` syntax.</span>
-<span class="doccomment">//! Unfortunately, while we can write a function signature like this, we cannot write a type bound</span>
-<span class="doccomment">//! that uses the [Fn] trait and represents the equivalent function signature. This is a problem,</span>
-<span class="doccomment">//! since interfaces like [at](Api::at) would like to consume any function-like object which</span>
-<span class="doccomment">//! implements [Fn], not just static function pointers. Here is what we would _like_ to write:</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! ```ignore</span>
-<span class="doccomment">//! impl&lt;State, Error&gt; Api&lt;State, Error&gt; {</span>
-<span class="doccomment">//!     pub fn at&lt;F, T&gt;(&amp;mut self, route: &amp;str, handler: F)</span>
-<span class="doccomment">//!     where</span>
-<span class="doccomment">//!         F: for&lt;&#39;a&gt; Fn&lt;(RequestParams, &amp;&#39;a State)&gt;,</span>
-<span class="doccomment">//!         for&lt;&#39;a&gt; &lt;F as Fn&lt;(RequestParams, &amp;&#39;a State)&gt;&gt;::Output:</span>
-<span class="doccomment">//!             &#39;a + Future&lt;Output = Result&lt;T, Error&gt;&gt;,</span>
-<span class="doccomment">//!     {...}</span>
-<span class="doccomment">//! }</span>
-<span class="doccomment">//! ```</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! Here we are using a higher-rank trait bound on the associated type `Output` of the [Fn]</span>
-<span class="doccomment">//! implementation for `F` in order to constrain the future by the lifetime `&#39;a`, which is the</span>
-<span class="doccomment">//! lifetime of the `State` reference. It is actually possible to write this function signature</span>
-<span class="doccomment">//! today in unstable Rust (using the raw [Fn] trait as a bound is unstable), but even then, no</span>
-<span class="doccomment">//! associated type will be able to implement the HRTB due to a bug in the compiler. This limitation</span>
-<span class="doccomment">//! is described in detail in</span>
-<span class="doccomment">//! [this post](https://users.rust-lang.org/t/trait-bounds-for-fn-returning-a-future-that-forwards-the-lifetime-of-the-fn-s-arguments/63275/7).</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! As a workaround until this is fixed, we require the function `F` to return a concrete future</span>
-<span class="doccomment">//! type with an explicit lifetime parameter: [BoxFuture](futures::future::BoxFuture). This allows</span>
-<span class="doccomment">//! us to specify the lifetime constraint within the HRTB on `F` itself, rather than resorting to a</span>
-<span class="doccomment">//! separate HRTB on the associated type `Output` in order to be able to name the return type of</span>
-<span class="doccomment">//! `F`. Here is the actual (partial) signature of [at](Api::at):</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! ```ignore</span>
-<span class="doccomment">//! impl&lt;State, Error&gt; Api&lt;State, Error&gt; {</span>
-<span class="doccomment">//!     pub fn at&lt;F, T&gt;(&amp;mut self, route: &amp;str, handler: F)</span>
-<span class="doccomment">//!     where</span>
-<span class="doccomment">//!         F: for&lt;&#39;a&gt; Fn(RequestParams, &amp;&#39;a State) -&gt; BoxFuture&lt;&#39;a, Result&lt;T, Error&gt;&gt;,</span>
-<span class="doccomment">//!     {...}</span>
-<span class="doccomment">//! }</span>
-<span class="doccomment">//! ```</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! What this means for your code is that functions you pass to the Tide Disco framework must return</span>
-<span class="doccomment">//! a boxed future. When passing a closure, you can simply add `.boxed()` to your `async` block,</span>
-<span class="doccomment">//! like this:</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! ```</span>
-<span class="doccomment">//! use async_std::sync::RwLock;</span>
-<span class="doccomment">//! use futures::FutureExt;</span>
-<span class="doccomment">//! use tide_disco::Api;</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! type State = RwLock&lt;u64&gt;;</span>
-<span class="doccomment">//! type Error = ();</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! fn define_routes(api: &amp;mut Api&lt;State, Error&gt;) {</span>
-<span class="doccomment">//!     api.at(&quot;someroute&quot;, |_req, state: &amp;State| async {</span>
-<span class="doccomment">//!         Ok(*state.read().await)</span>
-<span class="doccomment">//!     }.boxed());</span>
-<span class="doccomment">//! }</span>
-<span class="doccomment">//! ```</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! This also means that you cannot pass the name of an `async fn` directly, since `async` functions</span>
-<span class="doccomment">//! declared with the `async fn` syntax do not return a boxed future. Instead, you can wrap the</span>
-<span class="doccomment">//! function in a closure:</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! ```</span>
-<span class="doccomment">//! use async_std::sync::RwLock;</span>
-<span class="doccomment">//! use futures::FutureExt;</span>
-<span class="doccomment">//! use tide_disco::{Api, RequestParams};</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! type State = RwLock&lt;u64&gt;;</span>
-<span class="doccomment">//! type Error = ();</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! async fn handler(_req: RequestParams, state: &amp;State) -&gt; Result&lt;u64, Error&gt; {</span>
-<span class="doccomment">//!     Ok(*state.read().await)</span>
-<span class="doccomment">//! }</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! fn register(api: &amp;mut Api&lt;State, Error&gt;) {</span>
-<span class="doccomment">//!     api.at(&quot;someroute&quot;, |req, state: &amp;State| handler(req, state).boxed());</span>
-<span class="doccomment">//! }</span>
-<span class="doccomment">//! ```</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! In the future, we may create an attribute macro which can rewrite an `async fn` to return a</span>
-<span class="doccomment">//! boxed future directly, like</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! ```ignore</span>
-<span class="doccomment">//! #[boxed_future]</span>
-<span class="doccomment">//! async fn handler(_req: RequestParams, state: &amp;State) -&gt; Result&lt;u64, Error&gt; {</span>
-<span class="doccomment">//!     Ok(*state.read().await)</span>
-<span class="doccomment">//! }</span>
-<span class="doccomment">//! ```</span>
-<span class="doccomment">//!</span>
+</pre><pre class="rust"><code><span class="doccomment">//! _Tide Disco is a web server framework with built-in discoverability support for
+//! [Tide](https://github.com/http-rs/tide)_
+//!
+//! # Overview
+//!
+//! We say a system is _discoverable_ if guesses and mistakes regarding usage are rewarded with
+//! relevant documentation and assistance at producing correct requests. To offer this capability in
+//! a practical way, it is helpful to specify the API in data files, rather than code, so that all
+//! relevant text can be edited in one concise readable specification.
+//!
+//! Tide Disco leverages TOML to specify
+//! - Routes with typed parameters
+//! - Route documentation
+//! - Route error messages
+//! - General documentation
+//!
+//! ## Goals
+//!
+//! - Context-sensitive help
+//! - Spelling suggestions
+//! - Reference documentation assembled from route documentation
+//! - Forms and other user interfaces to aid in the construction of correct inputs
+//! - Localization
+//! - Novice and expert help
+//! - Flexible route parsing, e.g. named parameters rather than positional parameters
+//! - API fuzz testing automation based on parameter types
+//!
+//! ## Future work
+//!
+//! - WebSocket support
+//! - Runtime control over logging
+//!
+//! # Getting started
+//!
+//! A Tide Disco app is composed of one or more _API modules_. An API module consists of a TOML
+//! specification and a set of route handlers -- Rust functions -- to provide the behavior of the
+//! routes defined in the TOML. You can learn the format of the TOML file by looking at the examples
+//! in this crate. Once you have it, you can load it into an API description using [Api::new]:
+//!
+//! ```no_run
+//! # fn main() -&gt; Result&lt;(), tide_disco::api::ApiError&gt; {
+//! use tide_disco::Api;
+//! use tide_disco::error::ServerError;
+//!
+//! type State = ();
+//! type Error = ServerError;
+//!
+//! let spec = toml::from_slice(&amp;std::fs::read(&quot;/path/to/api.toml&quot;).unwrap()).unwrap();
+//! let mut api = Api::&lt;State, Error&gt;::new(spec)?;
+//! # Ok(())
+//! # }
+//! ```
+//!
+//! Once you have an [Api], you can define route handlers for any routes in your TOML specification.
+//! Suppose you have the following route definition:
+//!
+//! ```toml
+//! [route.hello]
+//! PATH = [&quot;hello&quot;]
+//! METHOD = &quot;GET&quot;
+//! ```
+//!
+//! Register a handler for it like this:
+//!
+//! ```no_run
+//! # use tide_disco::Api;
+//! # fn main() -&gt; Result&lt;(), tide_disco::api::ApiError&gt; {
+//! # let spec = toml::from_slice(&amp;std::fs::read(&quot;/path/to/api.toml&quot;).unwrap()).unwrap();
+//! # let mut api = Api::&lt;(), tide_disco::error::ServerError&gt;::new(spec)?;
+//! use futures::FutureExt;
+//!
+//! api.get(&quot;hello&quot;, |req, state| async move { Ok(&quot;Hello, world!&quot;) }.boxed())?;
+//! # Ok(())
+//! # }
+//! ```
+//!
+//! See [the API reference](Api) for more details on what you can do to create an [Api].
+//!
+//! Once you have registered all of your route handlers, you need to register your [Api] module with
+//! an [App]:
+//!
+//! ```no_run
+//! # type State = ();
+//! # type Error = tide_disco::error::ServerError;
+//! # #[async_std::main] async fn main() {
+//! # let spec = toml::from_slice(&amp;std::fs::read(&quot;/path/to/api.toml&quot;).unwrap()).unwrap();
+//! # let api = tide_disco::Api::&lt;State, Error&gt;::new(spec).unwrap();
+//! use tide_disco::App;
+//!
+//! let mut app = App::&lt;State, Error&gt;::with_state(());
+//! app.register_module(&quot;api&quot;, api);
+//! app.serve(&quot;http://localhost:8080&quot;).await;
+//! # }
+//! ```
+//!
+//! Then you can use your application:
+//!
+//! ```text
+//! curl http://localhost:8080/api/hello
+//! ```
+//!
+//! # Boxed futures
+//!
+//! As a web server framework, Tide Disco naturally includes many interfaces that take functions as
+//! arguments. For example, route handlers are registered by passing a handler function to an [Api]
+//! object. Also naturally, many of these function parameters are async, which of course just means
+//! that they are regular functions returning some type `F` that implements the
+//! [Future](futures::Future) trait. This is all perfectly usual, but throughout the interfaces in
+//! this crate, you may notice something that is a bit unusual: many of these functions are required
+//! to return not just any [Future](futures::Future), but a
+//! [BoxFuture](futures::future::BoxFuture). This is due to a limitation that currently exists
+//! in the Rust compiler.
+//!
+//! The problem arises with functions where the returned future is not `&#39;static`, but rather borrows
+//! from the function parameters. Consider the following route definition, for example:
+//!
+//! ```ignore
+//! type State = RwLock&lt;u64&gt;;
+//! type Error = ();
+//!
+//! api.at(&quot;someroute&quot;, |_req, state: &amp;State| async {
+//!     Ok(*state.read().await)
+//! })
+//! ```
+//!
+//! The `async` block in the route handler uses the `state` reference, so the resulting future is
+//! only valid for as long as the reference `state` is valid. We could write the signature of the
+//! route handler like this:
+//!
+//! ```
+//! use futures::Future;
+//! use tide_disco::RequestParams;
+//!
+//! type State = async_std::sync::RwLock&lt;u64&gt;;
+//! type Error = ();
+//!
+//! fn handler&lt;&#39;a&gt;(
+//!     req: RequestParams,
+//!     state: &amp;&#39;a State,
+//! ) -&gt; impl &#39;a + Future&lt;Output = Result&lt;u64, Error&gt;&gt; {
+//!     // ...
+//!     # async { Ok(*state.read().await) }
+//! }
+//! ```
+//!
+//! Notice how we explicitly constrain the future type by the lifetime `&#39;a` using `impl` syntax.
+//! Unfortunately, while we can write a function signature like this, we cannot write a type bound
+//! that uses the [Fn] trait and represents the equivalent function signature. This is a problem,
+//! since interfaces like [at](Api::at) would like to consume any function-like object which
+//! implements [Fn], not just static function pointers. Here is what we would _like_ to write:
+//!
+//! ```ignore
+//! impl&lt;State, Error&gt; Api&lt;State, Error&gt; {
+//!     pub fn at&lt;F, T&gt;(&amp;mut self, route: &amp;str, handler: F)
+//!     where
+//!         F: for&lt;&#39;a&gt; Fn&lt;(RequestParams, &amp;&#39;a State)&gt;,
+//!         for&lt;&#39;a&gt; &lt;F as Fn&lt;(RequestParams, &amp;&#39;a State)&gt;&gt;::Output:
+//!             &#39;a + Future&lt;Output = Result&lt;T, Error&gt;&gt;,
+//!     {...}
+//! }
+//! ```
+//!
+//! Here we are using a higher-rank trait bound on the associated type `Output` of the [Fn]
+//! implementation for `F` in order to constrain the future by the lifetime `&#39;a`, which is the
+//! lifetime of the `State` reference. It is actually possible to write this function signature
+//! today in unstable Rust (using the raw [Fn] trait as a bound is unstable), but even then, no
+//! associated type will be able to implement the HRTB due to a bug in the compiler. This limitation
+//! is described in detail in
+//! [this post](https://users.rust-lang.org/t/trait-bounds-for-fn-returning-a-future-that-forwards-the-lifetime-of-the-fn-s-arguments/63275/7).
+//!
+//! As a workaround until this is fixed, we require the function `F` to return a concrete future
+//! type with an explicit lifetime parameter: [BoxFuture](futures::future::BoxFuture). This allows
+//! us to specify the lifetime constraint within the HRTB on `F` itself, rather than resorting to a
+//! separate HRTB on the associated type `Output` in order to be able to name the return type of
+//! `F`. Here is the actual (partial) signature of [at](Api::at):
+//!
+//! ```ignore
+//! impl&lt;State, Error&gt; Api&lt;State, Error&gt; {
+//!     pub fn at&lt;F, T&gt;(&amp;mut self, route: &amp;str, handler: F)
+//!     where
+//!         F: for&lt;&#39;a&gt; Fn(RequestParams, &amp;&#39;a State) -&gt; BoxFuture&lt;&#39;a, Result&lt;T, Error&gt;&gt;,
+//!     {...}
+//! }
+//! ```
+//!
+//! What this means for your code is that functions you pass to the Tide Disco framework must return
+//! a boxed future. When passing a closure, you can simply add `.boxed()` to your `async` block,
+//! like this:
+//!
+//! ```
+//! use async_std::sync::RwLock;
+//! use futures::FutureExt;
+//! use tide_disco::Api;
+//!
+//! type State = RwLock&lt;u64&gt;;
+//! type Error = ();
+//!
+//! fn define_routes(api: &amp;mut Api&lt;State, Error&gt;) {
+//!     api.at(&quot;someroute&quot;, |_req, state: &amp;State| async {
+//!         Ok(*state.read().await)
+//!     }.boxed());
+//! }
+//! ```
+//!
+//! This also means that you cannot pass the name of an `async fn` directly, since `async` functions
+//! declared with the `async fn` syntax do not return a boxed future. Instead, you can wrap the
+//! function in a closure:
+//!
+//! ```
+//! use async_std::sync::RwLock;
+//! use futures::FutureExt;
+//! use tide_disco::{Api, RequestParams};
+//!
+//! type State = RwLock&lt;u64&gt;;
+//! type Error = ();
+//!
+//! async fn handler(_req: RequestParams, state: &amp;State) -&gt; Result&lt;u64, Error&gt; {
+//!     Ok(*state.read().await)
+//! }
+//!
+//! fn register(api: &amp;mut Api&lt;State, Error&gt;) {
+//!     api.at(&quot;someroute&quot;, |req, state: &amp;State| handler(req, state).boxed());
+//! }
+//! ```
+//!
+//! In the future, we may create an attribute macro which can rewrite an `async fn` to return a
+//! boxed future directly, like
+//!
+//! ```ignore
+//! #[boxed_future]
+//! async fn handler(_req: RequestParams, state: &amp;State) -&gt; Result&lt;u64, Error&gt; {
+//!     Ok(*state.read().await)
+//! }
+//! ```
+//!
 
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::ApiKey</span>::<span class="kw-2">*</span>;
-<span class="kw">use</span> <span class="ident">async_std::sync</span>::{<span class="ident">Arc</span>, <span class="ident">RwLock</span>};
-<span class="kw">use</span> <span class="ident">async_std::task::sleep</span>;
-<span class="kw">use</span> <span class="ident">clap::CommandFactory</span>;
-<span class="kw">use</span> <span class="ident">config</span>::{<span class="ident">Config</span>, <span class="ident">ConfigError</span>};
-<span class="kw">use</span> <span class="ident">routefinder::Router</span>;
-<span class="kw">use</span> <span class="ident">serde::Deserialize</span>;
-<span class="kw">use</span> <span class="ident">std::fs</span>::{<span class="ident">read_to_string</span>, <span class="ident">OpenOptions</span>};
-<span class="kw">use</span> <span class="ident">std::io::Write</span>;
-<span class="kw">use</span> <span class="ident">std::str::FromStr</span>;
-<span class="kw">use</span> <span class="ident">std::time::Duration</span>;
-<span class="kw">use</span> <span class="ident">std</span>::{
-    <span class="ident">collections::HashMap</span>,
-    <span class="ident">env</span>,
-    <span class="ident">path</span>::{<span class="ident">Path</span>, <span class="ident">PathBuf</span>},
+</span><span class="kw">use </span><span class="kw">crate</span>::ApiKey::<span class="kw-2">*</span>;
+<span class="kw">use </span>async_std::sync::{Arc, RwLock};
+<span class="kw">use </span>async_std::task::sleep;
+<span class="kw">use </span>clap::CommandFactory;
+<span class="kw">use </span>config::{Config, ConfigError};
+<span class="kw">use </span>routefinder::Router;
+<span class="kw">use </span>serde::Deserialize;
+<span class="kw">use </span>std::fs::{read_to_string, OpenOptions};
+<span class="kw">use </span>std::io::Write;
+<span class="kw">use </span>std::str::FromStr;
+<span class="kw">use </span>std::time::Duration;
+<span class="kw">use </span>std::{
+    collections::HashMap,
+    env,
+    path::{Path, PathBuf},
 };
-<span class="kw">use</span> <span class="ident">strum_macros</span>::{<span class="ident">AsRefStr</span>, <span class="ident">EnumString</span>};
-<span class="kw">use</span> <span class="ident">tagged_base64::TaggedBase64</span>;
-<span class="kw">use</span> <span class="ident">tide::http::mime</span>;
-<span class="kw">use</span> <span class="ident">toml::value::Value</span>;
-<span class="kw">use</span> <span class="ident">tracing</span>::{<span class="ident">error</span>, <span class="ident">trace</span>};
+<span class="kw">use </span>strum_macros::{AsRefStr, EnumString};
+<span class="kw">use </span>tagged_base64::TaggedBase64;
+<span class="kw">use </span>tide::http::mime;
+<span class="kw">use </span>toml::value::Value;
+<span class="kw">use </span>tracing::{error, trace};
 
-<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">api</span>;
-<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">app</span>;
-<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">error</span>;
-<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">healthcheck</span>;
-<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">method</span>;
-<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">request</span>;
-<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">route</span>;
-<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">socket</span>;
+<span class="kw">pub mod </span>api;
+<span class="kw">pub mod </span>app;
+<span class="kw">pub mod </span>error;
+<span class="kw">pub mod </span>healthcheck;
+<span class="kw">pub mod </span>method;
+<span class="kw">pub mod </span>request;
+<span class="kw">pub mod </span>route;
+<span class="kw">pub mod </span>socket;
 
-<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">api::Api</span>;
-<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">app::App</span>;
-<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">error::Error</span>;
-<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">method::Method</span>;
-<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">request</span>::{<span class="ident">RequestError</span>, <span class="ident">RequestParam</span>, <span class="ident">RequestParamType</span>, <span class="ident">RequestParamValue</span>, <span class="ident">RequestParams</span>};
-<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">tide::http</span>::{<span class="self">self</span>, <span class="ident">StatusCode</span>};
-<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">url::Url</span>;
+<span class="kw">pub use </span>api::Api;
+<span class="kw">pub use </span>app::App;
+<span class="kw">pub use </span>error::Error;
+<span class="kw">pub use </span>method::Method;
+<span class="kw">pub use </span>request::{RequestError, RequestParam, RequestParamType, RequestParamValue, RequestParams};
+<span class="kw">pub use </span>tide::http::{<span class="self">self</span>, StatusCode};
+<span class="kw">pub use </span>url::Url;
 
-<span class="kw">pub</span> <span class="kw">type</span> <span class="ident">Html</span> <span class="op">=</span> <span class="ident">maud::Markup</span>;
+<span class="kw">pub type </span>Html = maud::Markup;
 
-<span class="doccomment">/// Number of times to poll before failing</span>
-<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">SERVER_STARTUP_RETRIES</span>: <span class="ident">u64</span> <span class="op">=</span> <span class="number">255</span>;
+<span class="doccomment">/// Number of times to poll before failing
+</span><span class="kw">pub const </span>SERVER_STARTUP_RETRIES: u64 = <span class="number">255</span>;
 
-<span class="doccomment">/// Number of milliseconds to sleep between attempts</span>
-<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">SERVER_STARTUP_SLEEP_MS</span>: <span class="ident">u64</span> <span class="op">=</span> <span class="number">100</span>;
+<span class="doccomment">/// Number of milliseconds to sleep between attempts
+</span><span class="kw">pub const </span>SERVER_STARTUP_SLEEP_MS: u64 = <span class="number">100</span>;
 
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">clap::Args</span>, <span class="ident">Debug</span>)]</span>
-<span class="attribute">#[<span class="ident">clap</span>(<span class="ident">author</span>, <span class="ident">version</span>, <span class="ident">about</span>, <span class="ident">long_about</span> <span class="op">=</span> <span class="prelude-val">None</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">DiscoArgs</span> {
-    <span class="attribute">#[<span class="ident">clap</span>(<span class="ident">long</span>)]</span>
-    <span class="doccomment">/// Server address</span>
-    <span class="kw">pub</span> <span class="ident">base_url</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Url</span><span class="op">&gt;</span>,
-    <span class="attribute">#[<span class="ident">clap</span>(<span class="ident">long</span>)]</span>
-    <span class="doccomment">/// HTTP routes</span>
-    <span class="kw">pub</span> <span class="ident">api_toml</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">PathBuf</span><span class="op">&gt;</span>,
-    <span class="doccomment">/// If true, log in color. Otherwise, no color.</span>
-    <span class="attribute">#[<span class="ident">clap</span>(<span class="ident">long</span>)]</span>
-    <span class="kw">pub</span> <span class="ident">ansi_color</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">bool</span><span class="op">&gt;</span>,
+<span class="attribute">#[derive(clap::Args, Debug)]
+#[clap(author, version, about, long_about = <span class="prelude-val">None</span>)]
+</span><span class="kw">pub struct </span>DiscoArgs {
+    <span class="attribute">#[clap(long)]
+    </span><span class="doccomment">/// Server address
+    </span><span class="kw">pub </span>base_url: <span class="prelude-ty">Option</span>&lt;Url&gt;,
+    <span class="attribute">#[clap(long)]
+    </span><span class="doccomment">/// HTTP routes
+    </span><span class="kw">pub </span>api_toml: <span class="prelude-ty">Option</span>&lt;PathBuf&gt;,
+    <span class="doccomment">/// If true, log in color. Otherwise, no color.
+    </span><span class="attribute">#[clap(long)]
+    </span><span class="kw">pub </span>ansi_color: <span class="prelude-ty">Option</span>&lt;bool&gt;,
 }
 
-<span class="doccomment">/// Configuration keys for Tide Disco settings</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// The application is expected to define additional keys. Note, string literals could be used</span>
-<span class="doccomment">/// directly, but defining an enum allows the compiler to catch typos.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">AsRefStr</span>, <span class="ident">Debug</span>)]</span>
-<span class="attribute">#[<span class="ident">allow</span>(<span class="ident">non_camel_case_types</span>)]</span>
-<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">DiscoKey</span> {
-    <span class="ident">ansi_color</span>,
-    <span class="ident">api_toml</span>,
-    <span class="ident">app_toml</span>,
-    <span class="ident">base_url</span>,
-    <span class="ident">disco_toml</span>,
+<span class="doccomment">/// Configuration keys for Tide Disco settings
+///
+/// The application is expected to define additional keys. Note, string literals could be used
+/// directly, but defining an enum allows the compiler to catch typos.
+</span><span class="attribute">#[derive(AsRefStr, Debug)]
+#[allow(non_camel_case_types)]
+</span><span class="kw">pub enum </span>DiscoKey {
+    ansi_color,
+    api_toml,
+    app_toml,
+    base_url,
+    disco_toml,
 }
 
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">AsRefStr</span>, <span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">Deserialize</span>, <span class="ident">strum_macros::Display</span>)]</span>
-<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">HealthStatus</span> {
-    <span class="ident">Starting</span>,
-    <span class="ident">Available</span>,
-    <span class="ident">Stopping</span>,
+<span class="attribute">#[derive(AsRefStr, Clone, Debug, Deserialize, strum_macros::Display)]
+</span><span class="kw">pub enum </span>HealthStatus {
+    Starting,
+    Available,
+    Stopping,
 }
 
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">ServerState</span><span class="op">&lt;</span><span class="ident">AppState</span><span class="op">&gt;</span> {
-    <span class="kw">pub</span> <span class="ident">health_status</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">RwLock</span><span class="op">&lt;</span><span class="ident">HealthStatus</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-    <span class="kw">pub</span> <span class="ident">app_state</span>: <span class="ident">AppState</span>,
-    <span class="kw">pub</span> <span class="ident">router</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">Router</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+<span class="attribute">#[derive(Clone)]
+</span><span class="kw">pub struct </span>ServerState&lt;AppState&gt; {
+    <span class="kw">pub </span>health_status: Arc&lt;RwLock&lt;HealthStatus&gt;&gt;,
+    <span class="kw">pub </span>app_state: AppState,
+    <span class="kw">pub </span>router: Arc&lt;Router&lt;usize&gt;&gt;,
 }
 
-<span class="kw">pub</span> <span class="kw">type</span> <span class="ident">AppState</span> <span class="op">=</span> <span class="ident">Value</span>;
+<span class="kw">pub type </span>AppState = Value;
 
-<span class="kw">pub</span> <span class="kw">type</span> <span class="ident">AppServerState</span> <span class="op">=</span> <span class="ident">ServerState</span><span class="op">&lt;</span><span class="ident">AppState</span><span class="op">&gt;</span>;
+<span class="kw">pub type </span>AppServerState = ServerState&lt;AppState&gt;;
 
-<span class="attribute">#[<span class="ident">allow</span>(<span class="ident">non_camel_case_types</span>, <span class="ident">clippy::upper_case_acronyms</span>)]</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">AsRefStr</span>, <span class="ident">Debug</span>)]</span>
-<span class="kw">enum</span> <span class="ident">ApiKey</span> {
-    <span class="ident">DOC</span>,
-    <span class="ident">METHOD</span>,
-    <span class="ident">PATH</span>,
-    <span class="attribute">#[<span class="ident">strum</span>(<span class="ident">serialize</span> <span class="op">=</span> <span class="string">&quot;route&quot;</span>)]</span>
-    <span class="ident">ROUTE</span>,
+<span class="attribute">#[allow(non_camel_case_types, clippy::upper_case_acronyms)]
+#[derive(AsRefStr, Debug)]
+</span><span class="kw">enum </span>ApiKey {
+    DOC,
+    METHOD,
+    PATH,
+    <span class="attribute">#[strum(serialize = <span class="string">&quot;route&quot;</span>)]
+    </span>ROUTE,
 }
 
-<span class="doccomment">/// Check api.toml for schema compliance errors</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Checks</span>
-<span class="doccomment">/// - Unsupported request method</span>
-<span class="doccomment">/// - Missing DOC string</span>
-<span class="doccomment">/// - Route paths missing or not an array</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">check_api</span>(<span class="ident">api</span>: <span class="ident">toml::Value</span>) -&gt; <span class="ident">bool</span> {
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">error_count</span> <span class="op">=</span> <span class="number">0</span>;
-    <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">api_map</span>) <span class="op">=</span> <span class="ident">api</span>[<span class="ident">ROUTE</span>.<span class="ident">as_ref</span>()].<span class="ident">as_table</span>() {
-        <span class="kw">let</span> <span class="ident">methods</span> <span class="op">=</span> <span class="macro">vec!</span>[<span class="string">&quot;GET&quot;</span>, <span class="string">&quot;POST&quot;</span>];
-        <span class="ident">api_map</span>.<span class="ident">values</span>().<span class="ident">for_each</span>(<span class="op">|</span><span class="ident">entry</span><span class="op">|</span> {
-            <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">paths</span>) <span class="op">=</span> <span class="ident">entry</span>[<span class="ident">PATH</span>.<span class="ident">as_ref</span>()].<span class="ident">as_array</span>() {
-                <span class="kw">let</span> <span class="ident">first_segment</span> <span class="op">=</span> <span class="ident">get_first_segment</span>(<span class="ident">vs</span>(<span class="kw-2">&amp;</span><span class="ident">paths</span>[<span class="number">0</span>]));
+<span class="doccomment">/// Check api.toml for schema compliance errors
+///
+/// Checks
+/// - Unsupported request method
+/// - Missing DOC string
+/// - Route paths missing or not an array
+</span><span class="kw">pub fn </span>check_api(api: toml::Value) -&gt; bool {
+    <span class="kw">let </span><span class="kw-2">mut </span>error_count = <span class="number">0</span>;
+    <span class="kw">if let </span><span class="prelude-val">Some</span>(api_map) = api[ROUTE.as_ref()].as_table() {
+        <span class="kw">let </span>methods = <span class="macro">vec!</span>[<span class="string">&quot;GET&quot;</span>, <span class="string">&quot;POST&quot;</span>];
+        api_map.values().for_each(|entry| {
+            <span class="kw">if let </span><span class="prelude-val">Some</span>(paths) = entry[PATH.as_ref()].as_array() {
+                <span class="kw">let </span>first_segment = get_first_segment(vs(<span class="kw-2">&amp;</span>paths[<span class="number">0</span>]));
 
-                <span class="comment">// Check the method is GET or PUT.</span>
-                <span class="kw">let</span> <span class="ident">method</span> <span class="op">=</span> <span class="ident">vk</span>(<span class="ident">entry</span>, <span class="ident">METHOD</span>.<span class="ident">as_ref</span>());
-                <span class="kw">if</span> <span class="op">!</span><span class="ident">methods</span>.<span class="ident">contains</span>(<span class="kw-2">&amp;</span><span class="ident">method</span>.<span class="ident">as_str</span>()) {
+                <span class="comment">// Check the method is GET or PUT.
+                </span><span class="kw">let </span>method = vk(entry, METHOD.as_ref());
+                <span class="kw">if </span>!methods.contains(<span class="kw-2">&amp;</span>method.as_str()) {
                     <span class="macro">error!</span>(
                         <span class="string">&quot;Route: /{}: Unsupported method: {}. Expected one of: {:?}&quot;</span>,
-                        <span class="kw-2">&amp;</span><span class="ident">first_segment</span>, <span class="kw-2">&amp;</span><span class="ident">method</span>, <span class="kw-2">&amp;</span><span class="ident">methods</span>
+                        <span class="kw-2">&amp;</span>first_segment, <span class="kw-2">&amp;</span>method, <span class="kw-2">&amp;</span>methods
                     );
-                    <span class="ident">error_count</span> <span class="op">+</span><span class="op">=</span> <span class="number">1</span>;
+                    error_count += <span class="number">1</span>;
                 }
 
-                <span class="comment">// Check for DOC string.</span>
-                <span class="kw">if</span> <span class="ident">entry</span>.<span class="ident">get</span>(<span class="ident">DOC</span>.<span class="ident">as_ref</span>()).<span class="ident">is_none</span>() <span class="op">|</span><span class="op">|</span> <span class="ident">entry</span>[<span class="ident">DOC</span>.<span class="ident">as_ref</span>()].<span class="ident">as_str</span>().<span class="ident">is_none</span>() {
-                    <span class="macro">error!</span>(<span class="string">&quot;Route: /{}: Missing DOC string.&quot;</span>, <span class="kw-2">&amp;</span><span class="ident">first_segment</span>);
-                    <span class="ident">error_count</span> <span class="op">+</span><span class="op">=</span> <span class="number">1</span>;
+                <span class="comment">// Check for DOC string.
+                </span><span class="kw">if </span>entry.get(DOC.as_ref()).is_none() || entry[DOC.as_ref()].as_str().is_none() {
+                    <span class="macro">error!</span>(<span class="string">&quot;Route: /{}: Missing DOC string.&quot;</span>, <span class="kw-2">&amp;</span>first_segment);
+                    error_count += <span class="number">1</span>;
                 }
 
-                <span class="comment">// Every URL segment pattern must have a valid type. For example,</span>
-                <span class="comment">// if a segment `:amount` might have type UrlSegment::Integer</span>
-                <span class="comment">// indicated by</span>
-                <span class="comment">//    &quot;:amount&quot; = &quot;Integer&quot;</span>
-                <span class="comment">// in the TOML.</span>
-                <span class="kw">let</span> <span class="ident">paths</span> <span class="op">=</span> <span class="ident">entry</span>[<span class="ident">PATH</span>.<span class="ident">as_ref</span>()]
-                    .<span class="ident">as_array</span>()
-                    .<span class="ident">expect</span>(<span class="string">&quot;Expecting TOML array.&quot;</span>);
-                <span class="kw">for</span> <span class="ident">path</span> <span class="kw">in</span> <span class="ident">paths</span> {
-                    <span class="kw">if</span> <span class="ident">path</span>.<span class="ident">is_str</span>() {
-                        <span class="kw">for</span> <span class="ident">segment</span> <span class="kw">in</span> <span class="ident">path</span>.<span class="ident">as_str</span>().<span class="ident">unwrap</span>().<span class="ident">split</span>(<span class="string">&#39;/&#39;</span>) {
-                            <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">parameter</span>) <span class="op">=</span> <span class="ident">segment</span>.<span class="ident">strip_prefix</span>(<span class="string">&#39;:&#39;</span>) {
-                                <span class="kw">let</span> <span class="ident">stype</span> <span class="op">=</span> <span class="ident">vk</span>(<span class="ident">entry</span>, <span class="ident">segment</span>);
-                                <span class="kw">if</span> <span class="ident">UrlSegment::from_str</span>(<span class="kw-2">&amp;</span><span class="ident">stype</span>).<span class="ident">is_err</span>() {
+                <span class="comment">// Every URL segment pattern must have a valid type. For example,
+                // if a segment `:amount` might have type UrlSegment::Integer
+                // indicated by
+                //    &quot;:amount&quot; = &quot;Integer&quot;
+                // in the TOML.
+                </span><span class="kw">let </span>paths = entry[PATH.as_ref()]
+                    .as_array()
+                    .expect(<span class="string">&quot;Expecting TOML array.&quot;</span>);
+                <span class="kw">for </span>path <span class="kw">in </span>paths {
+                    <span class="kw">if </span>path.is_str() {
+                        <span class="kw">for </span>segment <span class="kw">in </span>path.as_str().unwrap().split(<span class="string">&#39;/&#39;</span>) {
+                            <span class="kw">if let </span><span class="prelude-val">Some</span>(parameter) = segment.strip_prefix(<span class="string">&#39;:&#39;</span>) {
+                                <span class="kw">let </span>stype = vk(entry, segment);
+                                <span class="kw">if </span>UrlSegment::from_str(<span class="kw-2">&amp;</span>stype).is_err() {
                                     <span class="macro">error!</span>(
                                         <span class="string">&quot;Route /{}: Unrecognized type {} for pattern {}.&quot;</span>,
-                                        <span class="kw-2">&amp;</span><span class="ident">first_segment</span>, <span class="ident">stype</span>, <span class="kw-2">&amp;</span><span class="ident">parameter</span>
+                                        <span class="kw-2">&amp;</span>first_segment, stype, <span class="kw-2">&amp;</span>parameter
                                     );
-                                    <span class="ident">error_count</span> <span class="op">+</span><span class="op">=</span> <span class="number">1</span>;
+                                    error_count += <span class="number">1</span>;
                                 }
                             }
                         }
-                    } <span class="kw">else</span> {
+                    } <span class="kw">else </span>{
                         <span class="macro">error!</span>(
                             <span class="string">&quot;Route /{}: Found path &#39;{:?}&#39; but expecting a string.&quot;</span>,
-                            <span class="kw-2">&amp;</span><span class="ident">first_segment</span>, <span class="ident">path</span>
+                            <span class="kw-2">&amp;</span>first_segment, path
                         );
                     }
                 }
-            } <span class="kw">else</span> {
-                <span class="macro">error!</span>(<span class="string">&quot;Expecting TOML array for {:?}.&quot;</span>, <span class="kw-2">&amp;</span><span class="ident">entry</span>[<span class="ident">PATH</span>.<span class="ident">as_ref</span>()]);
-                <span class="ident">error_count</span> <span class="op">+</span><span class="op">=</span> <span class="number">1</span>;
+            } <span class="kw">else </span>{
+                <span class="macro">error!</span>(<span class="string">&quot;Expecting TOML array for {:?}.&quot;</span>, <span class="kw-2">&amp;</span>entry[PATH.as_ref()]);
+                error_count += <span class="number">1</span>;
             }
         })
     }
-    <span class="ident">error_count</span> <span class="op">==</span> <span class="number">0</span>
-}
+    error_count == <span class="number">0
+</span>}
 
-<span class="doccomment">/// Load the web API or panic</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">load_api</span>(<span class="ident">path</span>: <span class="kw-2">&amp;</span><span class="ident">Path</span>) -&gt; <span class="ident">toml::Value</span> {
-    <span class="kw">let</span> <span class="ident">messages</span> <span class="op">=</span> <span class="ident">read_to_string</span>(<span class="kw-2">&amp;</span><span class="ident">path</span>).<span class="ident">unwrap_or_else</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="macro">panic!</span>(<span class="string">&quot;Unable to read {:?}.&quot;</span>, <span class="kw-2">&amp;</span><span class="ident">path</span>));
-    <span class="kw">let</span> <span class="ident">api</span>: <span class="ident">toml::Value</span> <span class="op">=</span>
-        <span class="ident">toml::from_str</span>(<span class="kw-2">&amp;</span><span class="ident">messages</span>).<span class="ident">unwrap_or_else</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="macro">panic!</span>(<span class="string">&quot;Unable to parse {:?}.&quot;</span>, <span class="kw-2">&amp;</span><span class="ident">path</span>));
-    <span class="kw">if</span> <span class="op">!</span><span class="ident">check_api</span>(<span class="ident">api</span>.<span class="ident">clone</span>()) {
+<span class="doccomment">/// Load the web API or panic
+</span><span class="kw">pub fn </span>load_api(path: <span class="kw-2">&amp;</span>Path) -&gt; toml::Value {
+    <span class="kw">let </span>messages = read_to_string(path).unwrap_or_else(|<span class="kw">_</span>| <span class="macro">panic!</span>(<span class="string">&quot;Unable to read {:?}.&quot;</span>, <span class="kw-2">&amp;</span>path));
+    <span class="kw">let </span>api: toml::Value =
+        toml::from_str(<span class="kw-2">&amp;</span>messages).unwrap_or_else(|<span class="kw">_</span>| <span class="macro">panic!</span>(<span class="string">&quot;Unable to parse {:?}.&quot;</span>, <span class="kw-2">&amp;</span>path));
+    <span class="kw">if </span>!check_api(api.clone()) {
         <span class="macro">panic!</span>(<span class="string">&quot;API specification has errors.&quot;</span>,);
     }
-    <span class="ident">api</span>
+    api
 }
 
-<span class="doccomment">/// Add routes from api.toml to the routefinder instance in tide-disco</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">configure_router</span>(<span class="ident">api</span>: <span class="kw-2">&amp;</span><span class="ident">toml::Value</span>) -&gt; <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">Router</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">router</span> <span class="op">=</span> <span class="ident">Router::new</span>();
-    <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">api_map</span>) <span class="op">=</span> <span class="ident">api</span>[<span class="ident">ROUTE</span>.<span class="ident">as_ref</span>()].<span class="ident">as_table</span>() {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">index</span> <span class="op">=</span> <span class="number">0usize</span>;
-        <span class="ident">api_map</span>.<span class="ident">values</span>().<span class="ident">for_each</span>(<span class="op">|</span><span class="ident">entry</span><span class="op">|</span> {
-            <span class="kw">let</span> <span class="ident">paths</span> <span class="op">=</span> <span class="ident">entry</span>[<span class="ident">PATH</span>.<span class="ident">as_ref</span>()]
-                .<span class="ident">as_array</span>()
-                .<span class="ident">expect</span>(<span class="string">&quot;Expecting TOML array.&quot;</span>);
-            <span class="kw">for</span> <span class="ident">path</span> <span class="kw">in</span> <span class="ident">paths</span> {
-                <span class="macro">trace!</span>(<span class="string">&quot;adding path: {:?}&quot;</span>, <span class="ident">path</span>);
-                <span class="ident">index</span> <span class="op">+</span><span class="op">=</span> <span class="number">1</span>;
-                <span class="ident">router</span>
-                    .<span class="ident">add</span>(<span class="ident">path</span>.<span class="ident">as_str</span>().<span class="ident">expect</span>(<span class="string">&quot;Expecting a path string.&quot;</span>), <span class="ident">index</span>)
-                    .<span class="ident">unwrap</span>();
+<span class="doccomment">/// Add routes from api.toml to the routefinder instance in tide-disco
+</span><span class="kw">pub fn </span>configure_router(api: <span class="kw-2">&amp;</span>toml::Value) -&gt; Arc&lt;Router&lt;usize&gt;&gt; {
+    <span class="kw">let </span><span class="kw-2">mut </span>router = Router::new();
+    <span class="kw">if let </span><span class="prelude-val">Some</span>(api_map) = api[ROUTE.as_ref()].as_table() {
+        <span class="kw">let </span><span class="kw-2">mut </span>index = <span class="number">0usize</span>;
+        api_map.values().for_each(|entry| {
+            <span class="kw">let </span>paths = entry[PATH.as_ref()]
+                .as_array()
+                .expect(<span class="string">&quot;Expecting TOML array.&quot;</span>);
+            <span class="kw">for </span>path <span class="kw">in </span>paths {
+                <span class="macro">trace!</span>(<span class="string">&quot;adding path: {:?}&quot;</span>, path);
+                index += <span class="number">1</span>;
+                router
+                    .add(path.as_str().expect(<span class="string">&quot;Expecting a path string.&quot;</span>), index)
+                    .unwrap();
             }
         })
     }
-    <span class="ident">Arc::new</span>(<span class="ident">router</span>)
+    Arc::new(router)
 }
 
-<span class="doccomment">/// Return a JSON expression with status 200 indicating the server</span>
-<span class="doccomment">/// is up and running. The JSON expression is normally</span>
-<span class="doccomment">///    {&quot;status&quot;: &quot;Available&quot;}</span>
-<span class="doccomment">/// When the server is running but unable to process requests</span>
-<span class="doccomment">/// normally, a response with status 503 and payload {&quot;status&quot;:</span>
-<span class="doccomment">/// &quot;unavailable&quot;} should be added.</span>
-<span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">healthcheck</span>(
-    <span class="ident">req</span>: <span class="ident">tide::Request</span><span class="op">&lt;</span><span class="ident">AppServerState</span><span class="op">&gt;</span>,
-) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">tide::Response</span>, <span class="ident">tide::Error</span><span class="op">&gt;</span> {
-    <span class="kw">let</span> <span class="ident">status</span> <span class="op">=</span> <span class="ident">req</span>.<span class="ident">state</span>().<span class="ident">health_status</span>.<span class="ident">read</span>().<span class="kw">await</span>;
-    <span class="prelude-val">Ok</span>(<span class="ident">tide::Response::builder</span>(<span class="ident">StatusCode::Ok</span>)
-        .<span class="ident">content_type</span>(<span class="ident">mime::JSON</span>)
-        .<span class="ident">body</span>(<span class="macro">tide::prelude::json!</span>({<span class="string">&quot;status&quot;</span>: <span class="ident">status</span>.<span class="ident">as_ref</span>() }))
-        .<span class="ident">build</span>())
+<span class="doccomment">/// Return a JSON expression with status 200 indicating the server
+/// is up and running. The JSON expression is normally
+///    {&quot;status&quot;: &quot;Available&quot;}
+/// When the server is running but unable to process requests
+/// normally, a response with status 503 and payload {&quot;status&quot;:
+/// &quot;unavailable&quot;} should be added.
+</span><span class="kw">pub async fn </span>healthcheck(
+    req: tide::Request&lt;AppServerState&gt;,
+) -&gt; <span class="prelude-ty">Result</span>&lt;tide::Response, tide::Error&gt; {
+    <span class="kw">let </span>status = req.state().health_status.read().<span class="kw">await</span>;
+    <span class="prelude-val">Ok</span>(tide::Response::builder(StatusCode::Ok)
+        .content_type(mime::JSON)
+        .body(<span class="macro">tide::prelude::json!</span>({<span class="string">&quot;status&quot;</span>: status.as_ref() }))
+        .build())
 }
 
-<span class="comment">// Get a string from a toml::Value or panic.</span>
-<span class="kw">fn</span> <span class="ident">vs</span>(<span class="ident">v</span>: <span class="kw-2">&amp;</span><span class="ident">Value</span>) -&gt; <span class="kw-2">&amp;</span><span class="ident">str</span> {
-    <span class="ident">v</span>.<span class="ident">as_str</span>().<span class="ident">unwrap_or_else</span>(<span class="op">|</span><span class="op">|</span> {
+<span class="comment">// Get a string from a toml::Value or panic.
+</span><span class="kw">fn </span>vs(v: <span class="kw-2">&amp;</span>Value) -&gt; <span class="kw-2">&amp;</span>str {
+    v.as_str().unwrap_or_else(|| {
         <span class="macro">panic!</span>(
             <span class="string">&quot;Expecting TOML string, but found type {}: {:?}&quot;</span>,
-            <span class="ident">v</span>.<span class="ident">type_str</span>(),
-            <span class="ident">v</span>
+            v.type_str(),
+            v
         )
     })
 }
 
-<span class="comment">// Get a string from an array toml::Value or panic.</span>
-<span class="kw">fn</span> <span class="ident">vk</span>(<span class="ident">v</span>: <span class="kw-2">&amp;</span><span class="ident">Value</span>, <span class="ident">key</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) -&gt; <span class="ident">String</span> {
-    <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">vv</span>) <span class="op">=</span> <span class="ident">v</span>.<span class="ident">get</span>(<span class="ident">key</span>) {
-        <span class="ident">vv</span>.<span class="ident">as_str</span>()
-            .<span class="ident">unwrap_or_else</span>(<span class="op">|</span><span class="op">|</span> {
+<span class="comment">// Get a string from an array toml::Value or panic.
+</span><span class="kw">fn </span>vk(v: <span class="kw-2">&amp;</span>Value, key: <span class="kw-2">&amp;</span>str) -&gt; String {
+    <span class="kw">if let </span><span class="prelude-val">Some</span>(vv) = v.get(key) {
+        vv.as_str()
+            .unwrap_or_else(|| {
                 <span class="macro">panic!</span>(
                     <span class="string">&quot;Expecting TOML string for {}, but found type {}&quot;</span>,
-                    <span class="ident">key</span>,
-                    <span class="ident">v</span>[<span class="ident">key</span>].<span class="ident">type_str</span>()
+                    key,
+                    v[key].type_str()
                 )
             })
-            .<span class="ident">to_string</span>()
-    } <span class="kw">else</span> {
-        <span class="macro">error!</span>(<span class="string">&quot;No value for key {}&quot;</span>, <span class="ident">key</span>);
-        <span class="string">&quot;&lt;missing&gt;&quot;</span>.<span class="ident">to_string</span>()
+            .to_string()
+    } <span class="kw">else </span>{
+        <span class="macro">error!</span>(<span class="string">&quot;No value for key {}&quot;</span>, key);
+        <span class="string">&quot;&lt;missing&gt;&quot;</span>.to_string()
     }
 }
 
-<span class="comment">// Given a string delimited by slashes, get the first non-empty</span>
-<span class="comment">// segment.</span>
-<span class="comment">//</span>
-<span class="comment">// For example,</span>
-<span class="comment">// - get_first_segment(&quot;/foo/bar&quot;) -&gt; &quot;foo&quot;</span>
-<span class="comment">// - get_first_segment(&quot;first/second&quot;) -&gt; &quot;first&quot;</span>
-<span class="kw">fn</span> <span class="ident">get_first_segment</span>(<span class="ident">s</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) -&gt; <span class="ident">String</span> {
-    <span class="kw">let</span> <span class="ident">first_path</span> <span class="op">=</span> <span class="ident">s</span>.<span class="ident">strip_prefix</span>(<span class="string">&#39;/&#39;</span>).<span class="ident">unwrap_or</span>(<span class="ident">s</span>);
-    <span class="ident">first_path</span>
-        .<span class="ident">split_once</span>(<span class="string">&#39;/&#39;</span>)
-        .<span class="ident">unwrap_or</span>((<span class="ident">first_path</span>, <span class="string">&quot;&quot;</span>))
-        .<span class="number">0</span>
-        .<span class="ident">to_string</span>()
+<span class="comment">// Given a string delimited by slashes, get the first non-empty
+// segment.
+//
+// For example,
+// - get_first_segment(&quot;/foo/bar&quot;) -&gt; &quot;foo&quot;
+// - get_first_segment(&quot;first/second&quot;) -&gt; &quot;first&quot;
+</span><span class="kw">fn </span>get_first_segment(s: <span class="kw-2">&amp;</span>str) -&gt; String {
+    <span class="kw">let </span>first_path = s.strip_prefix(<span class="string">&#39;/&#39;</span>).unwrap_or(s);
+    first_path
+        .split_once(<span class="string">&#39;/&#39;</span>)
+        .unwrap_or((first_path, <span class="string">&quot;&quot;</span>))
+        .<span class="number">0
+        </span>.to_string()
 }
 
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">EnumString</span>)]</span>
-<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">UrlSegment</span> {
-    <span class="ident">Boolean</span>(<span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">bool</span><span class="op">&gt;</span>),
-    <span class="ident">Hexadecimal</span>(<span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">u128</span><span class="op">&gt;</span>),
-    <span class="ident">Integer</span>(<span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">u128</span><span class="op">&gt;</span>),
-    <span class="ident">TaggedBase64</span>(<span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">TaggedBase64</span><span class="op">&gt;</span>),
-    <span class="ident">Literal</span>(<span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>),
+<span class="attribute">#[derive(Clone, Debug, EnumString)]
+</span><span class="kw">pub enum </span>UrlSegment {
+    Boolean(<span class="prelude-ty">Option</span>&lt;bool&gt;),
+    Hexadecimal(<span class="prelude-ty">Option</span>&lt;u128&gt;),
+    Integer(<span class="prelude-ty">Option</span>&lt;u128&gt;),
+    TaggedBase64(<span class="prelude-ty">Option</span>&lt;TaggedBase64&gt;),
+    Literal(<span class="prelude-ty">Option</span>&lt;String&gt;),
 }
 
-<span class="kw">impl</span> <span class="ident">UrlSegment</span> {
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">value</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>, <span class="ident">vtype</span>: <span class="ident">UrlSegment</span>) -&gt; <span class="ident">UrlSegment</span> {
-        <span class="kw">match</span> <span class="ident">vtype</span> {
-            <span class="ident">UrlSegment::Boolean</span>(<span class="kw">_</span>) =&gt; <span class="ident">UrlSegment::Boolean</span>(<span class="ident">value</span>.<span class="ident">parse</span>::<span class="op">&lt;</span><span class="ident">bool</span><span class="op">&gt;</span>().<span class="ident">ok</span>()),
-            <span class="ident">UrlSegment::Hexadecimal</span>(<span class="kw">_</span>) =&gt; {
-                <span class="ident">UrlSegment::Hexadecimal</span>(<span class="ident">u128::from_str_radix</span>(<span class="ident">value</span>, <span class="number">16</span>).<span class="ident">ok</span>())
+<span class="kw">impl </span>UrlSegment {
+    <span class="kw">pub fn </span>new(value: <span class="kw-2">&amp;</span>str, vtype: UrlSegment) -&gt; UrlSegment {
+        <span class="kw">match </span>vtype {
+            UrlSegment::Boolean(<span class="kw">_</span>) =&gt; UrlSegment::Boolean(value.parse::&lt;bool&gt;().ok()),
+            UrlSegment::Hexadecimal(<span class="kw">_</span>) =&gt; {
+                UrlSegment::Hexadecimal(u128::from_str_radix(value, <span class="number">16</span>).ok())
             }
-            <span class="ident">UrlSegment::Integer</span>(<span class="kw">_</span>) =&gt; <span class="ident">UrlSegment::Integer</span>(<span class="ident">value</span>.<span class="ident">parse</span>().<span class="ident">ok</span>()),
-            <span class="ident">UrlSegment::TaggedBase64</span>(<span class="kw">_</span>) =&gt; {
-                <span class="ident">UrlSegment::TaggedBase64</span>(<span class="ident">TaggedBase64::parse</span>(<span class="ident">value</span>).<span class="ident">ok</span>())
+            UrlSegment::Integer(<span class="kw">_</span>) =&gt; UrlSegment::Integer(value.parse().ok()),
+            UrlSegment::TaggedBase64(<span class="kw">_</span>) =&gt; {
+                UrlSegment::TaggedBase64(TaggedBase64::parse(value).ok())
             }
-            <span class="ident">UrlSegment::Literal</span>(<span class="kw">_</span>) =&gt; <span class="ident">UrlSegment::Literal</span>(<span class="prelude-val">Some</span>(<span class="ident">value</span>.<span class="ident">to_string</span>())),
+            UrlSegment::Literal(<span class="kw">_</span>) =&gt; UrlSegment::Literal(<span class="prelude-val">Some</span>(value.to_string())),
         }
     }
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_bound</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">bool</span> {
-        <span class="kw">match</span> <span class="self">self</span> {
-            <span class="ident">UrlSegment::Boolean</span>(<span class="ident">v</span>) =&gt; <span class="ident">v</span>.<span class="ident">is_some</span>(),
-            <span class="ident">UrlSegment::Hexadecimal</span>(<span class="ident">v</span>) =&gt; <span class="ident">v</span>.<span class="ident">is_some</span>(),
-            <span class="ident">UrlSegment::Integer</span>(<span class="ident">v</span>) =&gt; <span class="ident">v</span>.<span class="ident">is_some</span>(),
-            <span class="ident">UrlSegment::TaggedBase64</span>(<span class="ident">v</span>) =&gt; <span class="ident">v</span>.<span class="ident">is_some</span>(),
-            <span class="ident">UrlSegment::Literal</span>(<span class="ident">v</span>) =&gt; <span class="ident">v</span>.<span class="ident">is_some</span>(),
+    <span class="kw">pub fn </span>is_bound(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
+        <span class="kw">match </span><span class="self">self </span>{
+            UrlSegment::Boolean(v) =&gt; v.is_some(),
+            UrlSegment::Hexadecimal(v) =&gt; v.is_some(),
+            UrlSegment::Integer(v) =&gt; v.is_some(),
+            UrlSegment::TaggedBase64(v) =&gt; v.is_some(),
+            UrlSegment::Literal(v) =&gt; v.is_some(),
         }
     }
 }
 
-<span class="doccomment">/// Get the path to `api.toml`</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">get_api_path</span>(<span class="ident">api_toml</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) -&gt; <span class="ident">PathBuf</span> {
-    [<span class="ident">env::current_dir</span>().<span class="ident">unwrap</span>(), <span class="ident">api_toml</span>.<span class="ident">into</span>()]
-        .<span class="ident">iter</span>()
-        .<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">PathBuf</span><span class="op">&gt;</span>()
+<span class="doccomment">/// Get the path to `api.toml`
+</span><span class="kw">pub fn </span>get_api_path(api_toml: <span class="kw-2">&amp;</span>str) -&gt; PathBuf {
+    [env::current_dir().unwrap(), api_toml.into()]
+        .iter()
+        .collect::&lt;PathBuf&gt;()
 }
 
-<span class="doccomment">/// Convert the command line arguments for the config-rs crate</span>
-<span class="kw">fn</span> <span class="ident">get_cmd_line_map</span><span class="op">&lt;</span><span class="ident">Args</span>: <span class="ident">CommandFactory</span><span class="op">&gt;</span>() -&gt; <span class="ident">config::Environment</span> {
-    <span class="ident">config::Environment::default</span>().<span class="ident">source</span>(<span class="prelude-val">Some</span>({
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">cla</span> <span class="op">=</span> <span class="ident">HashMap::new</span>();
-        <span class="kw">let</span> <span class="ident">matches</span> <span class="op">=</span> <span class="ident">Args::command</span>().<span class="ident">get_matches</span>();
-        <span class="kw">for</span> <span class="ident">arg</span> <span class="kw">in</span> <span class="ident">Args::command</span>().<span class="ident">get_arguments</span>() {
-            <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">value</span>) <span class="op">=</span> <span class="ident">matches</span>.<span class="ident">get_one</span>::<span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>(<span class="ident">arg</span>.<span class="ident">get_id</span>().<span class="ident">as_str</span>()) {
-                <span class="kw">let</span> <span class="ident">key</span> <span class="op">=</span> <span class="ident">arg</span>.<span class="ident">get_id</span>().<span class="ident">as_str</span>().<span class="ident">replace</span>(<span class="string">&#39;-&#39;</span>, <span class="string">&quot;_&quot;</span>);
-                <span class="ident">cla</span>.<span class="ident">insert</span>(<span class="ident">key</span>, <span class="ident">value</span>.<span class="ident">to_owned</span>());
+<span class="doccomment">/// Convert the command line arguments for the config-rs crate
+</span><span class="kw">fn </span>get_cmd_line_map&lt;Args: CommandFactory&gt;() -&gt; config::Environment {
+    config::Environment::default().source(<span class="prelude-val">Some</span>({
+        <span class="kw">let </span><span class="kw-2">mut </span>cla = HashMap::new();
+        <span class="kw">let </span>matches = Args::command().get_matches();
+        <span class="kw">for </span>arg <span class="kw">in </span>Args::command().get_arguments() {
+            <span class="kw">if let </span><span class="prelude-val">Some</span>(value) = matches.get_one::&lt;String&gt;(arg.get_id().as_str()) {
+                <span class="kw">let </span>key = arg.get_id().as_str().replace(<span class="string">&#39;-&#39;</span>, <span class="string">&quot;_&quot;</span>);
+                cla.insert(key, value.to_owned());
             }
         }
-        <span class="ident">cla</span>
+        cla
     }))
 }
 
-<span class="doccomment">/// Compose the path to the application&#39;s configuration file</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">compose_config_path</span>(<span class="ident">org_dir_name</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>, <span class="ident">app_name</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) -&gt; <span class="ident">PathBuf</span> {
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">app_config_path</span> <span class="op">=</span> <span class="ident">org_data_path</span>(<span class="ident">org_dir_name</span>);
-    <span class="ident">app_config_path</span> <span class="op">=</span> <span class="ident">app_config_path</span>.<span class="ident">join</span>(<span class="ident">app_name</span>).<span class="ident">join</span>(<span class="ident">app_name</span>);
-    <span class="ident">app_config_path</span>.<span class="ident">set_extension</span>(<span class="string">&quot;toml&quot;</span>);
-    <span class="ident">app_config_path</span>
+<span class="doccomment">/// Compose the path to the application&#39;s configuration file
+</span><span class="kw">pub fn </span>compose_config_path(org_dir_name: <span class="kw-2">&amp;</span>str, app_name: <span class="kw-2">&amp;</span>str) -&gt; PathBuf {
+    <span class="kw">let </span><span class="kw-2">mut </span>app_config_path = org_data_path(org_dir_name);
+    app_config_path = app_config_path.join(app_name).join(app_name);
+    app_config_path.set_extension(<span class="string">&quot;toml&quot;</span>);
+    app_config_path
 }
 
-<span class="doccomment">/// Get the application configuration</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Build the configuration from</span>
-<span class="doccomment">/// - Defaults in the tide-disco source</span>
-<span class="doccomment">/// - Defaults passed from the app</span>
-<span class="doccomment">/// - A configuration file from the app</span>
-<span class="doccomment">/// - Command line arguments</span>
-<span class="doccomment">/// - Environment variables</span>
-<span class="doccomment">/// Last one wins.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Environment variables have a prefix of the given app_name in upper case with hyphens converted</span>
-<span class="doccomment">/// to underscores. Hyphens are illegal in environment variables in bash, et.al..</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">compose_settings</span><span class="op">&lt;</span><span class="ident">Args</span>: <span class="ident">CommandFactory</span><span class="op">&gt;</span>(
-    <span class="ident">org_name</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>,
-    <span class="ident">app_name</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>,
-    <span class="ident">app_defaults</span>: <span class="kw-2">&amp;</span>[(<span class="kw-2">&amp;</span><span class="ident">str</span>, <span class="kw-2">&amp;</span><span class="ident">str</span>)],
-) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Config</span>, <span class="ident">ConfigError</span><span class="op">&gt;</span> {
-    <span class="kw">let</span> <span class="ident">app_config_file</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">compose_config_path</span>(<span class="ident">org_name</span>, <span class="ident">app_name</span>);
+<span class="doccomment">/// Get the application configuration
+///
+/// Build the configuration from
+/// - Defaults in the tide-disco source
+/// - Defaults passed from the app
+/// - A configuration file from the app
+/// - Command line arguments
+/// - Environment variables
+/// Last one wins.
+///
+/// Environment variables have a prefix of the given app_name in upper case with hyphens converted
+/// to underscores. Hyphens are illegal in environment variables in bash, et.al..
+</span><span class="kw">pub fn </span>compose_settings&lt;Args: CommandFactory&gt;(
+    org_name: <span class="kw-2">&amp;</span>str,
+    app_name: <span class="kw-2">&amp;</span>str,
+    app_defaults: <span class="kw-2">&amp;</span>[(<span class="kw-2">&amp;</span>str, <span class="kw-2">&amp;</span>str)],
+) -&gt; <span class="prelude-ty">Result</span>&lt;Config, ConfigError&gt; {
+    <span class="kw">let </span>app_config_file = <span class="kw-2">&amp;</span>compose_config_path(org_name, app_name);
     {
-        <span class="kw">let</span> <span class="ident">app_config</span> <span class="op">=</span> <span class="ident">OpenOptions::new</span>()
-            .<span class="ident">write</span>(<span class="bool-val">true</span>)
-            .<span class="ident">create_new</span>(<span class="bool-val">true</span>)
-            .<span class="ident">open</span>(<span class="ident">app_config_file</span>);
-        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Ok</span>(<span class="kw-2">mut</span> <span class="ident">app_config</span>) <span class="op">=</span> <span class="ident">app_config</span> {
+        <span class="kw">let </span>app_config = OpenOptions::new()
+            .write(<span class="bool-val">true</span>)
+            .create_new(<span class="bool-val">true</span>)
+            .open(app_config_file);
+        <span class="kw">if let </span><span class="prelude-val">Ok</span>(<span class="kw-2">mut </span>app_config) = app_config {
             <span class="macro">write!</span>(
-                <span class="ident">app_config</span>,
+                app_config,
                 <span class="string">&quot;# {app_name} configuration\n\n\
-                 # Note: keys must be lower case.\n\n&quot;</span>
-            )
-            .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">ConfigError::Foreign</span>(<span class="ident">e</span>.<span class="ident">into</span>()))<span class="question-mark">?</span>;
-            <span class="kw">for</span> (<span class="ident">k</span>, <span class="ident">v</span>) <span class="kw">in</span> <span class="ident">app_defaults</span> {
-                <span class="macro">writeln!</span>(<span class="ident">app_config</span>, <span class="string">&quot;{k} = \&quot;{v}\&quot;&quot;</span>)
-                    .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">ConfigError::Foreign</span>(<span class="ident">e</span>.<span class="ident">into</span>()))<span class="question-mark">?</span>;
+                 # Note: keys must be lower case.\n\n&quot;
+            </span>)
+            .map_err(|e| ConfigError::Foreign(e.into()))<span class="question-mark">?</span>;
+            <span class="kw">for </span>(k, v) <span class="kw">in </span>app_defaults {
+                <span class="macro">writeln!</span>(app_config, <span class="string">&quot;{k} = \&quot;{v}\&quot;&quot;</span>)
+                    .map_err(|e| ConfigError::Foreign(e.into()))<span class="question-mark">?</span>;
             }
         }
-        <span class="comment">// app_config file handle gets closed exiting this scope so</span>
-        <span class="comment">// Config can read it.</span>
-    }
-    <span class="kw">let</span> <span class="ident">env_var_prefix</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">app_name</span>.<span class="ident">replace</span>(<span class="string">&#39;-&#39;</span>, <span class="string">&quot;_&quot;</span>);
-    <span class="kw">let</span> <span class="ident">org_config_file</span> <span class="op">=</span> <span class="ident">org_data_path</span>(<span class="ident">org_name</span>).<span class="ident">join</span>(<span class="string">&quot;org.toml&quot;</span>);
-    <span class="comment">// In the config-rs crate, environment variable names are converted to lower case, but keys in</span>
-    <span class="comment">// files are not, so if we want environment variables to override file value, we must make file</span>
-    <span class="comment">// keys lower case. This is a config-rs bug. See https://github.com/mehcode/config-rs/issues/340</span>
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">builder</span> <span class="op">=</span> <span class="ident">Config::builder</span>()
-        .<span class="ident">set_default</span>(<span class="ident">DiscoKey::base_url</span>.<span class="ident">as_ref</span>(), <span class="string">&quot;http://localhost:65535&quot;</span>)<span class="question-mark">?</span>
-        .<span class="ident">set_default</span>(<span class="ident">DiscoKey::disco_toml</span>.<span class="ident">as_ref</span>(), <span class="string">&quot;disco.toml&quot;</span>)<span class="question-mark">?</span>
-        .<span class="ident">set_default</span>(
-            <span class="ident">DiscoKey::app_toml</span>.<span class="ident">as_ref</span>(),
-            <span class="ident">app_api_path</span>(<span class="ident">org_name</span>, <span class="ident">app_name</span>)
-                .<span class="ident">to_str</span>()
-                .<span class="ident">expect</span>(<span class="string">&quot;Invalid api path&quot;</span>),
-        )<span class="question-mark">?</span>
-        .<span class="ident">set_default</span>(<span class="ident">DiscoKey::ansi_color</span>.<span class="ident">as_ref</span>(), <span class="bool-val">false</span>)<span class="question-mark">?</span>
-        .<span class="ident">add_source</span>(<span class="ident">config::File::with_name</span>(<span class="string">&quot;config/default.toml&quot;</span>))
-        .<span class="ident">add_source</span>(<span class="ident">config::File::with_name</span>(
-            <span class="ident">org_config_file</span>
-                .<span class="ident">to_str</span>()
-                .<span class="ident">expect</span>(<span class="string">&quot;Invalid organization configuration file path&quot;</span>),
+        <span class="comment">// app_config file handle gets closed exiting this scope so
+        // Config can read it.
+    </span>}
+    <span class="kw">let </span>env_var_prefix = <span class="kw-2">&amp;</span>app_name.replace(<span class="string">&#39;-&#39;</span>, <span class="string">&quot;_&quot;</span>);
+    <span class="kw">let </span>org_config_file = org_data_path(org_name).join(<span class="string">&quot;org.toml&quot;</span>);
+    <span class="comment">// In the config-rs crate, environment variable names are converted to lower case, but keys in
+    // files are not, so if we want environment variables to override file value, we must make file
+    // keys lower case. This is a config-rs bug. See https://github.com/mehcode/config-rs/issues/340
+    </span><span class="kw">let </span><span class="kw-2">mut </span>builder = Config::builder()
+        .set_default(DiscoKey::base_url.as_ref(), <span class="string">&quot;http://localhost:65535&quot;</span>)<span class="question-mark">?
+        </span>.set_default(DiscoKey::disco_toml.as_ref(), <span class="string">&quot;disco.toml&quot;</span>)<span class="question-mark">?
+        </span>.set_default(
+            DiscoKey::app_toml.as_ref(),
+            app_api_path(org_name, app_name)
+                .to_str()
+                .expect(<span class="string">&quot;Invalid api path&quot;</span>),
+        )<span class="question-mark">?
+        </span>.set_default(DiscoKey::ansi_color.as_ref(), <span class="bool-val">false</span>)<span class="question-mark">?
+        </span>.add_source(config::File::with_name(<span class="string">&quot;config/default.toml&quot;</span>))
+        .add_source(config::File::with_name(
+            org_config_file
+                .to_str()
+                .expect(<span class="string">&quot;Invalid organization configuration file path&quot;</span>),
         ))
-        .<span class="ident">add_source</span>(<span class="ident">config::File::with_name</span>(
-            <span class="ident">app_config_file</span>
-                .<span class="ident">to_str</span>()
-                .<span class="ident">expect</span>(<span class="string">&quot;Invalid application configuration file path&quot;</span>),
+        .add_source(config::File::with_name(
+            app_config_file
+                .to_str()
+                .expect(<span class="string">&quot;Invalid application configuration file path&quot;</span>),
         ))
-        .<span class="ident">add_source</span>(<span class="ident">get_cmd_line_map</span>::<span class="op">&lt;</span><span class="ident">Args</span><span class="op">&gt;</span>())
-        .<span class="ident">add_source</span>(<span class="ident">config::Environment::with_prefix</span>(<span class="ident">env_var_prefix</span>)); <span class="comment">// No hyphens allowed</span>
-    <span class="kw">for</span> (<span class="ident">k</span>, <span class="ident">v</span>) <span class="kw">in</span> <span class="ident">app_defaults</span> {
-        <span class="ident">builder</span> <span class="op">=</span> <span class="ident">builder</span>.<span class="ident">set_default</span>(<span class="kw-2">*</span><span class="ident">k</span>, <span class="kw-2">*</span><span class="ident">v</span>).<span class="ident">expect</span>(<span class="string">&quot;Failed to set default&quot;</span>);
+        .add_source(get_cmd_line_map::&lt;Args&gt;())
+        .add_source(config::Environment::with_prefix(env_var_prefix)); <span class="comment">// No hyphens allowed
+    </span><span class="kw">for </span>(k, v) <span class="kw">in </span>app_defaults {
+        builder = builder.set_default(<span class="kw-2">*</span>k, <span class="kw-2">*</span>v).expect(<span class="string">&quot;Failed to set default&quot;</span>);
     }
-    <span class="ident">builder</span>.<span class="ident">build</span>()
+    builder.build()
 }
 
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">init_logging</span>(<span class="ident">want_color</span>: <span class="ident">bool</span>) {
-    <span class="ident">tracing_subscriber::fmt</span>()
-        .<span class="ident">with_env_filter</span>(<span class="ident">tracing_subscriber::EnvFilter::from_default_env</span>())
-        .<span class="ident">with_ansi</span>(<span class="ident">want_color</span>)
-        .<span class="ident">init</span>();
+<span class="kw">pub fn </span>init_logging(want_color: bool) {
+    tracing_subscriber::fmt()
+        .with_env_filter(tracing_subscriber::EnvFilter::from_default_env())
+        .with_ansi(want_color)
+        .init();
 }
 
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">org_data_path</span>(<span class="ident">org_name</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) -&gt; <span class="ident">PathBuf</span> {
-    <span class="ident">dirs::data_local_dir</span>()
-        .<span class="ident">unwrap_or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="ident">env::current_dir</span>().<span class="ident">unwrap_or_else</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">PathBuf::from</span>(<span class="string">&quot;./&quot;</span>)))
-        .<span class="ident">join</span>(<span class="ident">org_name</span>)
+<span class="kw">pub fn </span>org_data_path(org_name: <span class="kw-2">&amp;</span>str) -&gt; PathBuf {
+    dirs::data_local_dir()
+        .unwrap_or_else(|| env::current_dir().unwrap_or_else(|<span class="kw">_</span>| PathBuf::from(<span class="string">&quot;./&quot;</span>)))
+        .join(org_name)
 }
 
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">app_api_path</span>(<span class="ident">org_name</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>, <span class="ident">app_name</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) -&gt; <span class="ident">PathBuf</span> {
-    <span class="ident">org_data_path</span>(<span class="ident">org_name</span>).<span class="ident">join</span>(<span class="ident">app_name</span>).<span class="ident">join</span>(<span class="string">&quot;api.toml&quot;</span>)
+<span class="kw">pub fn </span>app_api_path(org_name: <span class="kw-2">&amp;</span>str, app_name: <span class="kw-2">&amp;</span>str) -&gt; PathBuf {
+    org_data_path(org_name).join(app_name).join(<span class="string">&quot;api.toml&quot;</span>)
 }
 
-<span class="doccomment">/// Wait for the server to respond to a connection request</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// This is useful for tests for which it doesn&#39;t make sense to send requests until the server has</span>
-<span class="doccomment">/// started.</span>
-<span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">wait_for_server</span>(<span class="ident">url</span>: <span class="kw-2">&amp;</span><span class="ident">Url</span>, <span class="ident">retries</span>: <span class="ident">u64</span>, <span class="ident">sleep_ms</span>: <span class="ident">u64</span>) {
-    <span class="kw">let</span> <span class="ident">dur</span> <span class="op">=</span> <span class="ident">Duration::from_millis</span>(<span class="ident">sleep_ms</span>);
-    <span class="kw">for</span> <span class="kw">_</span> <span class="kw">in</span> <span class="number">0</span>..<span class="ident">retries</span> {
-        <span class="kw">if</span> <span class="ident">surf::connect</span>(<span class="kw-2">&amp;</span><span class="ident">url</span>).<span class="ident">send</span>().<span class="kw">await</span>.<span class="ident">is_ok</span>() {
+<span class="doccomment">/// Wait for the server to respond to a connection request
+///
+/// This is useful for tests for which it doesn&#39;t make sense to send requests until the server has
+/// started.
+</span><span class="kw">pub async fn </span>wait_for_server(url: <span class="kw-2">&amp;</span>Url, retries: u64, sleep_ms: u64) {
+    <span class="kw">let </span>dur = Duration::from_millis(sleep_ms);
+    <span class="kw">for _ in </span><span class="number">0</span>..retries {
+        <span class="kw">if </span>surf::connect(url).send().<span class="kw">await</span>.is_ok() {
             <span class="kw">return</span>;
         }
-        <span class="ident">sleep</span>(<span class="ident">dur</span>).<span class="kw">await</span>;
+        sleep(dur).<span class="kw">await</span>;
     }
     <span class="macro">panic!</span>(
         <span class="string">&quot;Server did not start in {:?} milliseconds&quot;</span>,
-        <span class="ident">sleep_ms</span> <span class="op">*</span> <span class="ident">SERVER_STARTUP_RETRIES</span>
+        sleep_ms * SERVER_STARTUP_RETRIES
     );
 }
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="tide_disco" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.64.0 (a55dd71d5 2022-09-19)" ></div></body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="tide_disco" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0 (897e37553 2022-11-02)" ></div></body></html>

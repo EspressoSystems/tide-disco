@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/request.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>request.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../tide_disco/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../tide_disco/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../tide_disco/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/request.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>request.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../normalize.css"><link rel="stylesheet" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../ayu.css" disabled><link rel="stylesheet" href="../../dark.css" disabled><link rel="stylesheet" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../tide_disco/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../tide_disco/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../tide_disco/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -831,844 +831,838 @@
 <span id="831">831</span>
 <span id="832">832</span>
 <span id="833">833</span>
-<span id="834">834</span>
-<span id="835">835</span>
-<span id="836">836</span>
-</pre><pre class="rust"><code><span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::method::Method</span>;
-<span class="kw">use</span> <span class="ident">ark_serialize::CanonicalDeserialize</span>;
-<span class="kw">use</span> <span class="ident">jf_utils::Tagged</span>;
-<span class="kw">use</span> <span class="ident">serde</span>::{<span class="ident">Deserialize</span>, <span class="ident">Serialize</span>};
-<span class="kw">use</span> <span class="ident">snafu</span>::{<span class="ident">OptionExt</span>, <span class="ident">Snafu</span>};
-<span class="kw">use</span> <span class="ident">std::any::type_name</span>;
-<span class="kw">use</span> <span class="ident">std::collections::HashMap</span>;
-<span class="kw">use</span> <span class="ident">std::fmt::Display</span>;
-<span class="kw">use</span> <span class="ident">strum_macros::EnumString</span>;
-<span class="kw">use</span> <span class="ident">tagged_base64::TaggedBase64</span>;
-<span class="kw">use</span> <span class="ident">tide::http</span>::{<span class="ident">content::Accept</span>, <span class="ident">mime::Mime</span>, <span class="ident">Headers</span>};
+</pre><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::method::Method;
+<span class="kw">use </span>serde::{Deserialize, Serialize};
+<span class="kw">use </span>snafu::{OptionExt, Snafu};
+<span class="kw">use </span>std::any::type_name;
+<span class="kw">use </span>std::collections::HashMap;
+<span class="kw">use </span>std::fmt::Display;
+<span class="kw">use </span>strum_macros::EnumString;
+<span class="kw">use </span>tagged_base64::TaggedBase64;
+<span class="kw">use </span>tide::http::{content::Accept, mime::Mime, Headers};
 
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">Snafu</span>, <span class="ident">Deserialize</span>, <span class="ident">Serialize</span>)]</span>
-<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">RequestError</span> {
-    <span class="attribute">#[<span class="ident">snafu</span>(<span class="ident">display</span>(<span class="string">&quot;missing required parameter: {}&quot;</span>, <span class="ident">name</span>))]</span>
-    <span class="ident">MissingParam</span> { <span class="ident">name</span>: <span class="ident">String</span> },
+<span class="attribute">#[derive(Clone, Debug, Snafu, Deserialize, Serialize)]
+</span><span class="kw">pub enum </span>RequestError {
+    <span class="attribute">#[snafu(display(<span class="string">&quot;missing required parameter: {}&quot;</span>, name))]
+    </span>MissingParam { name: String },
 
-    <span class="attribute">#[<span class="ident">snafu</span>(<span class="ident">display</span>(
+    <span class="attribute">#[snafu(display(
         <span class="string">&quot;incorrect parameter type: {} cannot be converted to {}&quot;</span>,
-        <span class="ident">actual</span>,
-        <span class="ident">expected</span>
-    ))]</span>
-    <span class="ident">IncorrectParamType</span> {
-        <span class="ident">actual</span>: <span class="ident">RequestParamType</span>,
-        <span class="ident">expected</span>: <span class="ident">RequestParamType</span>,
+        actual,
+        expected
+    ))]
+    </span>IncorrectParamType {
+        actual: RequestParamType,
+        expected: RequestParamType,
     },
 
-    <span class="attribute">#[<span class="ident">snafu</span>(<span class="ident">display</span>(<span class="string">&quot;value {} is too large for type {}&quot;</span>, <span class="ident">value</span>, <span class="ident">expected</span>))]</span>
-    <span class="ident">IntegerOverflow</span> { <span class="ident">value</span>: <span class="ident">u128</span>, <span class="ident">expected</span>: <span class="ident">String</span> },
+    <span class="attribute">#[snafu(display(<span class="string">&quot;value {} is too large for type {}&quot;</span>, value, expected))]
+    </span>IntegerOverflow { value: u128, expected: String },
 
-    <span class="attribute">#[<span class="ident">snafu</span>(<span class="ident">display</span>(<span class="string">&quot;Unable to deserialize from JSON&quot;</span>))]</span>
-    <span class="ident">Json</span>,
+    <span class="attribute">#[snafu(display(<span class="string">&quot;Unable to deserialize from JSON&quot;</span>))]
+    </span>Json,
 
-    <span class="attribute">#[<span class="ident">snafu</span>(<span class="ident">display</span>(<span class="string">&quot;Unable to deserialize from bincode&quot;</span>))]</span>
-    <span class="ident">Bincode</span>,
+    <span class="attribute">#[snafu(display(<span class="string">&quot;Unable to deserialize from bincode&quot;</span>))]
+    </span>Bincode,
 
-    <span class="attribute">#[<span class="ident">snafu</span>(<span class="ident">display</span>(<span class="string">&quot;Unable to deserialize from ark format: {}&quot;</span>, <span class="ident">reason</span>))]</span>
-    <span class="ident">ArkSerialize</span> { <span class="ident">reason</span>: <span class="ident">String</span> },
+    <span class="attribute">#[snafu(display(<span class="string">&quot;Unable to deserialise from tagged base 64: {}&quot;</span>, reason))]
+    </span>TaggedBase64 { reason: String },
 
-    <span class="attribute">#[<span class="ident">snafu</span>(<span class="ident">display</span>(<span class="string">&quot;Content type not specified or type not supported&quot;</span>))]</span>
-    <span class="ident">UnsupportedContentType</span>,
+    <span class="attribute">#[snafu(display(<span class="string">&quot;Content type not specified or type not supported&quot;</span>))]
+    </span>UnsupportedContentType,
 
-    <span class="attribute">#[<span class="ident">snafu</span>(<span class="ident">display</span>(<span class="string">&quot;HTTP protocol error: {}&quot;</span>, <span class="ident">reason</span>))]</span>
-    <span class="ident">Http</span> { <span class="ident">reason</span>: <span class="ident">String</span> },
+    <span class="attribute">#[snafu(display(<span class="string">&quot;HTTP protocol error: {}&quot;</span>, reason))]
+    </span>Http { reason: String },
 
-    <span class="attribute">#[<span class="ident">snafu</span>(<span class="ident">display</span>(<span class="string">&quot;error parsing {} parameter: {}&quot;</span>, <span class="ident">param_type</span>, <span class="ident">reason</span>))]</span>
-    <span class="ident">InvalidParam</span> { <span class="ident">param_type</span>: <span class="ident">String</span>, <span class="ident">reason</span>: <span class="ident">String</span> },
+    <span class="attribute">#[snafu(display(<span class="string">&quot;error parsing {} parameter: {}&quot;</span>, param_type, reason))]
+    </span>InvalidParam { param_type: String, reason: String },
 
-    <span class="attribute">#[<span class="ident">snafu</span>(<span class="ident">display</span>(<span class="string">&quot;unexpected tag in TaggedBase64: {} (expected {})&quot;</span>, <span class="ident">actual</span>, <span class="ident">expected</span>))]</span>
-    <span class="ident">TagMismatch</span> { <span class="ident">actual</span>: <span class="ident">String</span>, <span class="ident">expected</span>: <span class="ident">String</span> },
+    <span class="attribute">#[snafu(display(<span class="string">&quot;unexpected tag in TaggedBase64: {} (expected {})&quot;</span>, actual, expected))]
+    </span>TagMismatch { actual: String, expected: String },
 }
 
-<span class="doccomment">/// Parameters passed to a route handler.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// These parameters describe the incoming request and the current server state.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">RequestParams</span> {
-    <span class="ident">headers</span>: <span class="ident">Headers</span>,
-    <span class="ident">post_data</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>,
-    <span class="ident">params</span>: <span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">String</span>, <span class="ident">RequestParamValue</span><span class="op">&gt;</span>,
-    <span class="ident">method</span>: <span class="ident">Method</span>,
+<span class="doccomment">/// Parameters passed to a route handler.
+///
+/// These parameters describe the incoming request and the current server state.
+</span><span class="attribute">#[derive(Clone, Debug)]
+</span><span class="kw">pub struct </span>RequestParams {
+    headers: Headers,
+    post_data: Vec&lt;u8&gt;,
+    params: HashMap&lt;String, RequestParamValue&gt;,
+    method: Method,
 }
 
-<span class="kw">impl</span> <span class="ident">RequestParams</span> {
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">new</span><span class="op">&lt;</span><span class="ident">S</span><span class="op">&gt;</span>(
-        <span class="kw-2">mut</span> <span class="ident">req</span>: <span class="ident">tide::Request</span><span class="op">&lt;</span><span class="ident">S</span><span class="op">&gt;</span>,
-        <span class="ident">formal_params</span>: <span class="kw-2">&amp;</span>[<span class="ident">RequestParam</span>],
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">RequestError</span><span class="op">&gt;</span> {
-        <span class="prelude-val">Ok</span>(<span class="self">Self</span> {
-            <span class="ident">headers</span>: <span class="ident">AsRef</span>::<span class="op">&lt;</span><span class="ident">Headers</span><span class="op">&gt;</span><span class="ident">::as_ref</span>(<span class="kw-2">&amp;</span><span class="ident">req</span>).<span class="ident">clone</span>(),
-            <span class="ident">post_data</span>: <span class="ident">req</span>.<span class="ident">body_bytes</span>().<span class="kw">await</span>.<span class="ident">unwrap</span>(),
-            <span class="ident">params</span>: <span class="ident">formal_params</span>
-                .<span class="ident">iter</span>()
-                .<span class="ident">filter_map</span>(<span class="op">|</span><span class="ident">param</span><span class="op">|</span> <span class="kw">match</span> <span class="ident">RequestParamValue::new</span>(<span class="kw-2">&amp;</span><span class="ident">req</span>, <span class="ident">param</span>) {
+<span class="kw">impl </span>RequestParams {
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">async fn </span>new&lt;S&gt;(
+        <span class="kw-2">mut </span>req: tide::Request&lt;S&gt;,
+        formal_params: <span class="kw-2">&amp;</span>[RequestParam],
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, RequestError&gt; {
+        <span class="prelude-val">Ok</span>(<span class="self">Self </span>{
+            headers: AsRef::&lt;Headers&gt;::as_ref(<span class="kw-2">&amp;</span>req).clone(),
+            post_data: req.body_bytes().<span class="kw">await</span>.unwrap(),
+            params: formal_params
+                .iter()
+                .filter_map(|param| <span class="kw">match </span>RequestParamValue::new(<span class="kw-2">&amp;</span>req, param) {
                     <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>) =&gt; <span class="prelude-val">None</span>,
-                    <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="ident">value</span>)) =&gt; <span class="prelude-val">Some</span>(<span class="prelude-val">Ok</span>((<span class="ident">param</span>.<span class="ident">name</span>.<span class="ident">clone</span>(), <span class="ident">value</span>))),
-                    <span class="prelude-val">Err</span>(<span class="ident">err</span>) =&gt; <span class="prelude-val">Some</span>(<span class="prelude-val">Err</span>(<span class="ident">err</span>)),
+                    <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(value)) =&gt; <span class="prelude-val">Some</span>(<span class="prelude-val">Ok</span>((param.name.clone(), value))),
+                    <span class="prelude-val">Err</span>(err) =&gt; <span class="prelude-val">Some</span>(<span class="prelude-val">Err</span>(err)),
                 })
-                .<span class="ident">collect</span>::<span class="op">&lt;</span><span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="kw">_</span>, <span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span>()<span class="question-mark">?</span>,
-            <span class="ident">method</span>: <span class="ident">req</span>.<span class="ident">method</span>().<span class="ident">into</span>(),
+                .collect::&lt;<span class="prelude-ty">Result</span>&lt;<span class="kw">_</span>, <span class="kw">_</span>&gt;&gt;()<span class="question-mark">?</span>,
+            method: req.method().into(),
         })
     }
 
-    <span class="doccomment">/// The [Method] used to dispatch the request.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">method</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">Method</span> {
-        <span class="self">self</span>.<span class="ident">method</span>
+    <span class="doccomment">/// The [Method] used to dispatch the request.
+    </span><span class="kw">pub fn </span>method(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Method {
+        <span class="self">self</span>.method
     }
 
-    <span class="doccomment">/// The headers of the incoming request.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">headers</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="ident">Headers</span> {
-        <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">headers</span>
+    <span class="doccomment">/// The headers of the incoming request.
+    </span><span class="kw">pub fn </span>headers(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>Headers {
+        <span class="kw-2">&amp;</span><span class="self">self</span>.headers
     }
 
-    <span class="doccomment">/// The [Accept] header of this request.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// The media type proposals in the resulting header are sorted in order of decreasing weight.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// If no [Accept] header was explicitly set, defaults to the wildcard `Accept: *`.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// # Error</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Returns [RequestError::Http] if the [Accept] header is malformed.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">accept</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Accept</span>, <span class="ident">RequestError</span><span class="op">&gt;</span> {
-        <span class="ident"><span class="self">Self</span>::accept_from_headers</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">headers</span>)
+    <span class="doccomment">/// The [Accept] header of this request.
+    ///
+    /// The media type proposals in the resulting header are sorted in order of decreasing weight.
+    ///
+    /// If no [Accept] header was explicitly set, defaults to the wildcard `Accept: *`.
+    ///
+    /// # Error
+    ///
+    /// Returns [RequestError::Http] if the [Accept] header is malformed.
+    </span><span class="kw">pub fn </span>accept(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Accept, RequestError&gt; {
+        <span class="self">Self</span>::accept_from_headers(<span class="kw-2">&amp;</span><span class="self">self</span>.headers)
     }
 
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">accept_from_headers</span>(
-        <span class="ident">headers</span>: <span class="kw">impl</span> <span class="ident">AsRef</span><span class="op">&lt;</span><span class="ident">Headers</span><span class="op">&gt;</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Accept</span>, <span class="ident">RequestError</span><span class="op">&gt;</span> {
-        <span class="kw">match</span> <span class="ident">Accept::from_headers</span>(<span class="ident">headers</span>).<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">err</span><span class="op">|</span> <span class="ident">RequestError::Http</span> {
-            <span class="ident">reason</span>: <span class="ident">err</span>.<span class="ident">to_string</span>(),
-        })<span class="question-mark">?</span> {
-            <span class="prelude-val">Some</span>(<span class="kw-2">mut</span> <span class="ident">accept</span>) =&gt; {
-                <span class="ident">accept</span>.<span class="ident">sort</span>();
-                <span class="prelude-val">Ok</span>(<span class="ident">accept</span>)
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>accept_from_headers(
+        headers: <span class="kw">impl </span>AsRef&lt;Headers&gt;,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;Accept, RequestError&gt; {
+        <span class="kw">match </span>Accept::from_headers(headers).map_err(|err| RequestError::Http {
+            reason: err.to_string(),
+        })<span class="question-mark">? </span>{
+            <span class="prelude-val">Some</span>(<span class="kw-2">mut </span>accept) =&gt; {
+                accept.sort();
+                <span class="prelude-val">Ok</span>(accept)
             }
-            <span class="prelude-val">None</span> =&gt; {
-                <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">accept</span> <span class="op">=</span> <span class="ident">Accept::new</span>();
-                <span class="ident">accept</span>.<span class="ident">set_wildcard</span>(<span class="bool-val">true</span>);
-                <span class="prelude-val">Ok</span>(<span class="ident">accept</span>)
+            <span class="prelude-val">None </span>=&gt; {
+                <span class="kw">let </span><span class="kw-2">mut </span>accept = Accept::new();
+                accept.set_wildcard(<span class="bool-val">true</span>);
+                <span class="prelude-val">Ok</span>(accept)
             }
         }
     }
 
-    <span class="doccomment">/// Get the value of a named parameter.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// The name of the parameter can be given by any type that implements [Display]. Of course, the</span>
-    <span class="doccomment">/// simplest option is to use [str] or [String], as in</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// ```</span>
-    <span class="doccomment">/// # use tide_disco::*;</span>
-    <span class="doccomment">/// # fn ex(req: &amp;RequestParams) {</span>
-    <span class="doccomment">/// req.param(&quot;foo&quot;)</span>
-    <span class="doccomment">/// # ;}</span>
-    <span class="doccomment">/// ```</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// However, you have the option of defining a statically typed enum representing the possible</span>
-    <span class="doccomment">/// parameters of a given route and using enum variants as parameter names. Among other</span>
-    <span class="doccomment">/// benefits, this allows you to change the client-facing parameter names just by tweaking the</span>
-    <span class="doccomment">/// [Display] implementation of your enum, without changing other code.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// ```</span>
-    <span class="doccomment">/// use std::fmt::{self, Display, Formatter};</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// enum RouteParams {</span>
-    <span class="doccomment">///     Param1,</span>
-    <span class="doccomment">///     Param2,</span>
-    <span class="doccomment">/// }</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// impl Display for RouteParams {</span>
-    <span class="doccomment">///     fn fmt(&amp;self, f: &amp;mut Formatter&lt;&#39;_&gt;) -&gt; fmt::Result {</span>
-    <span class="doccomment">///         let name = match self {</span>
-    <span class="doccomment">///             Self::Param1 =&gt; &quot;param1&quot;,</span>
-    <span class="doccomment">///             Self::Param2 =&gt; &quot;param2&quot;,</span>
-    <span class="doccomment">///         };</span>
-    <span class="doccomment">///         write!(f, &quot;{}&quot;, name)</span>
-    <span class="doccomment">///     }</span>
-    <span class="doccomment">/// }</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// # use tide_disco::*;</span>
-    <span class="doccomment">/// # fn ex(req: &amp;RequestParams) {</span>
-    <span class="doccomment">/// req.param(&amp;RouteParams::Param1)</span>
-    <span class="doccomment">/// # ;}</span>
-    <span class="doccomment">/// ```</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// You can also use [strum_macros] to automatically derive the [Display] implementation, so you</span>
-    <span class="doccomment">/// only have to specify the client-facing names of each parameter:</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// ```</span>
-    <span class="doccomment">/// #[derive(strum_macros::Display)]</span>
-    <span class="doccomment">/// enum RouteParams {</span>
-    <span class="doccomment">///     #[strum(serialize = &quot;param1&quot;)]</span>
-    <span class="doccomment">///     Param1,</span>
-    <span class="doccomment">///     #[strum(serialize = &quot;param2&quot;)]</span>
-    <span class="doccomment">///     Param2,</span>
-    <span class="doccomment">/// }</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// # use tide_disco::*;</span>
-    <span class="doccomment">/// # fn ex(req: &amp;RequestParams) {</span>
-    <span class="doccomment">/// req.param(&amp;RouteParams::Param1)</span>
-    <span class="doccomment">/// # ;}</span>
-    <span class="doccomment">/// ```</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// # Errors</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Returns [RequestError::MissingParam] if a parameter called `name` was not provided with the</span>
-    <span class="doccomment">/// request.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// It is recommended to implement `From&lt;RequestError&gt;` for the error type for your API, so that</span>
-    <span class="doccomment">/// you can use `?` with this function in a route handler. If your error type implements</span>
-    <span class="doccomment">/// [Error](crate::Error), you can easily use the [catch_all](crate::Error::catch_all)</span>
-    <span class="doccomment">/// constructor to do this:</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// ```</span>
-    <span class="doccomment">/// use serde::{Deserialize, Serialize};</span>
-    <span class="doccomment">/// use snafu::Snafu;</span>
-    <span class="doccomment">/// use tide_disco::{Error, RequestError, RequestParams, StatusCode};</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// type ApiState = ();</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// #[derive(Debug, Snafu, Deserialize, Serialize)]</span>
-    <span class="doccomment">/// struct ApiError {</span>
-    <span class="doccomment">///     status: StatusCode,</span>
-    <span class="doccomment">///     msg: String,</span>
-    <span class="doccomment">/// }</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// impl Error for ApiError {</span>
-    <span class="doccomment">///     fn catch_all(status: StatusCode, msg: String) -&gt; Self {</span>
-    <span class="doccomment">///         Self { status, msg }</span>
-    <span class="doccomment">///     }</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">///     fn status(&amp;self) -&gt; StatusCode {</span>
-    <span class="doccomment">///         self.status</span>
-    <span class="doccomment">///     }</span>
-    <span class="doccomment">/// }</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// impl From&lt;RequestError&gt; for ApiError {</span>
-    <span class="doccomment">///     fn from(err: RequestError) -&gt; Self {</span>
-    <span class="doccomment">///         Self::catch_all(StatusCode::BadRequest, err.to_string())</span>
-    <span class="doccomment">///     }</span>
-    <span class="doccomment">/// }</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// async fn my_route_handler(req: RequestParams, _state: &amp;ApiState) -&gt; Result&lt;(), ApiError&gt; {</span>
-    <span class="doccomment">///     let param = req.param(&quot;my_param&quot;)?;</span>
-    <span class="doccomment">///     Ok(())</span>
-    <span class="doccomment">/// }</span>
-    <span class="doccomment">/// ```</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">param</span><span class="op">&lt;</span><span class="ident">Name</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">name</span>: <span class="kw-2">&amp;</span><span class="ident">Name</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">RequestParamValue</span>, <span class="ident">RequestError</span><span class="op">&gt;</span>
-    <span class="kw">where</span>
-        <span class="ident">Name</span>: <span class="question-mark">?</span><span class="ident">Sized</span> <span class="op">+</span> <span class="ident">Display</span>,
+    <span class="doccomment">/// Get the value of a named parameter.
+    ///
+    /// The name of the parameter can be given by any type that implements [Display]. Of course, the
+    /// simplest option is to use [str] or [String], as in
+    ///
+    /// ```
+    /// # use tide_disco::*;
+    /// # fn ex(req: &amp;RequestParams) {
+    /// req.param(&quot;foo&quot;)
+    /// # ;}
+    /// ```
+    ///
+    /// However, you have the option of defining a statically typed enum representing the possible
+    /// parameters of a given route and using enum variants as parameter names. Among other
+    /// benefits, this allows you to change the client-facing parameter names just by tweaking the
+    /// [Display] implementation of your enum, without changing other code.
+    ///
+    /// ```
+    /// use std::fmt::{self, Display, Formatter};
+    ///
+    /// enum RouteParams {
+    ///     Param1,
+    ///     Param2,
+    /// }
+    ///
+    /// impl Display for RouteParams {
+    ///     fn fmt(&amp;self, f: &amp;mut Formatter&lt;&#39;_&gt;) -&gt; fmt::Result {
+    ///         let name = match self {
+    ///             Self::Param1 =&gt; &quot;param1&quot;,
+    ///             Self::Param2 =&gt; &quot;param2&quot;,
+    ///         };
+    ///         write!(f, &quot;{}&quot;, name)
+    ///     }
+    /// }
+    ///
+    /// # use tide_disco::*;
+    /// # fn ex(req: &amp;RequestParams) {
+    /// req.param(&amp;RouteParams::Param1)
+    /// # ;}
+    /// ```
+    ///
+    /// You can also use [strum_macros] to automatically derive the [Display] implementation, so you
+    /// only have to specify the client-facing names of each parameter:
+    ///
+    /// ```
+    /// #[derive(strum_macros::Display)]
+    /// enum RouteParams {
+    ///     #[strum(serialize = &quot;param1&quot;)]
+    ///     Param1,
+    ///     #[strum(serialize = &quot;param2&quot;)]
+    ///     Param2,
+    /// }
+    ///
+    /// # use tide_disco::*;
+    /// # fn ex(req: &amp;RequestParams) {
+    /// req.param(&amp;RouteParams::Param1)
+    /// # ;}
+    /// ```
+    ///
+    /// # Errors
+    ///
+    /// Returns [RequestError::MissingParam] if a parameter called `name` was not provided with the
+    /// request.
+    ///
+    /// It is recommended to implement `From&lt;RequestError&gt;` for the error type for your API, so that
+    /// you can use `?` with this function in a route handler. If your error type implements
+    /// [Error](crate::Error), you can easily use the [catch_all](crate::Error::catch_all)
+    /// constructor to do this:
+    ///
+    /// ```
+    /// use serde::{Deserialize, Serialize};
+    /// use snafu::Snafu;
+    /// use tide_disco::{Error, RequestError, RequestParams, StatusCode};
+    ///
+    /// type ApiState = ();
+    ///
+    /// #[derive(Debug, Snafu, Deserialize, Serialize)]
+    /// struct ApiError {
+    ///     status: StatusCode,
+    ///     msg: String,
+    /// }
+    ///
+    /// impl Error for ApiError {
+    ///     fn catch_all(status: StatusCode, msg: String) -&gt; Self {
+    ///         Self { status, msg }
+    ///     }
+    ///
+    ///     fn status(&amp;self) -&gt; StatusCode {
+    ///         self.status
+    ///     }
+    /// }
+    ///
+    /// impl From&lt;RequestError&gt; for ApiError {
+    ///     fn from(err: RequestError) -&gt; Self {
+    ///         Self::catch_all(StatusCode::BadRequest, err.to_string())
+    ///     }
+    /// }
+    ///
+    /// async fn my_route_handler(req: RequestParams, _state: &amp;ApiState) -&gt; Result&lt;(), ApiError&gt; {
+    ///     let param = req.param(&quot;my_param&quot;)?;
+    ///     Ok(())
+    /// }
+    /// ```
+    </span><span class="kw">pub fn </span>param&lt;Name&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, name: <span class="kw-2">&amp;</span>Name) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="kw-2">&amp;</span>RequestParamValue, RequestError&gt;
+    <span class="kw">where
+        </span>Name: <span class="question-mark">?</span>Sized + Display,
     {
-        <span class="self">self</span>.<span class="ident">opt_param</span>(<span class="ident">name</span>).<span class="ident">context</span>(<span class="ident">MissingParamSnafu</span> {
-            <span class="ident">name</span>: <span class="ident">name</span>.<span class="ident">to_string</span>(),
+        <span class="self">self</span>.opt_param(name).context(MissingParamSnafu {
+            name: name.to_string(),
         })
     }
 
-    <span class="doccomment">/// Get the value of a named optional parameter.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Like [param](Self::param), but returns [None] instead of [Err] if the parametre is missing.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">opt_param</span><span class="op">&lt;</span><span class="ident">Name</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">name</span>: <span class="kw-2">&amp;</span><span class="ident">Name</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">RequestParamValue</span><span class="op">&gt;</span>
-    <span class="kw">where</span>
-        <span class="ident">Name</span>: <span class="question-mark">?</span><span class="ident">Sized</span> <span class="op">+</span> <span class="ident">Display</span>,
+    <span class="doccomment">/// Get the value of a named optional parameter.
+    ///
+    /// Like [param](Self::param), but returns [None] instead of [Err] if the parametre is missing.
+    </span><span class="kw">pub fn </span>opt_param&lt;Name&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, name: <span class="kw-2">&amp;</span>Name) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>RequestParamValue&gt;
+    <span class="kw">where
+        </span>Name: <span class="question-mark">?</span>Sized + Display,
     {
-        <span class="self">self</span>.<span class="ident">params</span>.<span class="ident">get</span>(<span class="kw-2">&amp;</span><span class="ident">name</span>.<span class="ident">to_string</span>())
+        <span class="self">self</span>.params.get(<span class="kw-2">&amp;</span>name.to_string())
     }
 
-    <span class="doccomment">/// Get the value of a named parameter and convert it to an integer.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Like [param](Self::param), but returns [Err] if the parameter value cannot be converted to</span>
-    <span class="doccomment">/// an integer of the desired size.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">integer_param</span><span class="op">&lt;</span><span class="ident">Name</span>, <span class="ident">T</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">name</span>: <span class="kw-2">&amp;</span><span class="ident">Name</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">RequestError</span><span class="op">&gt;</span>
-    <span class="kw">where</span>
-        <span class="ident">Name</span>: <span class="question-mark">?</span><span class="ident">Sized</span> <span class="op">+</span> <span class="ident">Display</span>,
-        <span class="ident">T</span>: <span class="ident">TryFrom</span><span class="op">&lt;</span><span class="ident">u128</span><span class="op">&gt;</span>,
+    <span class="doccomment">/// Get the value of a named parameter and convert it to an integer.
+    ///
+    /// Like [param](Self::param), but returns [Err] if the parameter value cannot be converted to
+    /// an integer of the desired size.
+    </span><span class="kw">pub fn </span>integer_param&lt;Name, T&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, name: <span class="kw-2">&amp;</span>Name) -&gt; <span class="prelude-ty">Result</span>&lt;T, RequestError&gt;
+    <span class="kw">where
+        </span>Name: <span class="question-mark">?</span>Sized + Display,
+        T: TryFrom&lt;u128&gt;,
     {
-        <span class="self">self</span>.<span class="ident">opt_integer_param</span>(<span class="ident">name</span>)<span class="question-mark">?</span>.<span class="ident">context</span>(<span class="ident">MissingParamSnafu</span> {
-            <span class="ident">name</span>: <span class="ident">name</span>.<span class="ident">to_string</span>(),
+        <span class="self">self</span>.opt_integer_param(name)<span class="question-mark">?</span>.context(MissingParamSnafu {
+            name: name.to_string(),
         })
     }
 
-    <span class="doccomment">/// Get the value of a named optional parameter and convert it to an integer.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Like [opt_param](Self::opt_param), but returns [Err] if the parameter value cannot be</span>
-    <span class="doccomment">/// converted to an integer of the desired size.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">opt_integer_param</span><span class="op">&lt;</span><span class="ident">Name</span>, <span class="ident">T</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">name</span>: <span class="kw-2">&amp;</span><span class="ident">Name</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>, <span class="ident">RequestError</span><span class="op">&gt;</span>
-    <span class="kw">where</span>
-        <span class="ident">Name</span>: <span class="question-mark">?</span><span class="ident">Sized</span> <span class="op">+</span> <span class="ident">Display</span>,
-        <span class="ident">T</span>: <span class="ident">TryFrom</span><span class="op">&lt;</span><span class="ident">u128</span><span class="op">&gt;</span>,
+    <span class="doccomment">/// Get the value of a named optional parameter and convert it to an integer.
+    ///
+    /// Like [opt_param](Self::opt_param), but returns [Err] if the parameter value cannot be
+    /// converted to an integer of the desired size.
+    </span><span class="kw">pub fn </span>opt_integer_param&lt;Name, T&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, name: <span class="kw-2">&amp;</span>Name) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;T&gt;, RequestError&gt;
+    <span class="kw">where
+        </span>Name: <span class="question-mark">?</span>Sized + Display,
+        T: TryFrom&lt;u128&gt;,
     {
-        <span class="self">self</span>.<span class="ident">opt_param</span>(<span class="ident">name</span>).<span class="ident">map</span>(<span class="op">|</span><span class="ident">val</span><span class="op">|</span> <span class="ident">val</span>.<span class="ident">as_integer</span>()).<span class="ident">transpose</span>()
+        <span class="self">self</span>.opt_param(name).map(|val| val.as_integer()).transpose()
     }
 
-    <span class="doccomment">/// Get the value of a named parameter and convert it to a [bool].</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Like [param](Self::param), but returns [Err] if the parameter value cannot be converted to</span>
-    <span class="doccomment">/// a [bool].</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">boolean_param</span><span class="op">&lt;</span><span class="ident">Name</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">name</span>: <span class="kw-2">&amp;</span><span class="ident">Name</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">bool</span>, <span class="ident">RequestError</span><span class="op">&gt;</span>
-    <span class="kw">where</span>
-        <span class="ident">Name</span>: <span class="question-mark">?</span><span class="ident">Sized</span> <span class="op">+</span> <span class="ident">Display</span>,
+    <span class="doccomment">/// Get the value of a named parameter and convert it to a [bool].
+    ///
+    /// Like [param](Self::param), but returns [Err] if the parameter value cannot be converted to
+    /// a [bool].
+    </span><span class="kw">pub fn </span>boolean_param&lt;Name&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, name: <span class="kw-2">&amp;</span>Name) -&gt; <span class="prelude-ty">Result</span>&lt;bool, RequestError&gt;
+    <span class="kw">where
+        </span>Name: <span class="question-mark">?</span>Sized + Display,
     {
-        <span class="self">self</span>.<span class="ident">opt_boolean_param</span>(<span class="ident">name</span>)<span class="question-mark">?</span>.<span class="ident">context</span>(<span class="ident">MissingParamSnafu</span> {
-            <span class="ident">name</span>: <span class="ident">name</span>.<span class="ident">to_string</span>(),
+        <span class="self">self</span>.opt_boolean_param(name)<span class="question-mark">?</span>.context(MissingParamSnafu {
+            name: name.to_string(),
         })
     }
 
-    <span class="doccomment">/// Get the value of a named optional parameter and convert it to a [bool].</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Like [opt_param](Self::opt_param), but returns [Err] if the parameter value cannot be</span>
-    <span class="doccomment">/// converted to a [bool].</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">opt_boolean_param</span><span class="op">&lt;</span><span class="ident">Name</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">name</span>: <span class="kw-2">&amp;</span><span class="ident">Name</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">bool</span><span class="op">&gt;</span>, <span class="ident">RequestError</span><span class="op">&gt;</span>
-    <span class="kw">where</span>
-        <span class="ident">Name</span>: <span class="question-mark">?</span><span class="ident">Sized</span> <span class="op">+</span> <span class="ident">Display</span>,
+    <span class="doccomment">/// Get the value of a named optional parameter and convert it to a [bool].
+    ///
+    /// Like [opt_param](Self::opt_param), but returns [Err] if the parameter value cannot be
+    /// converted to a [bool].
+    </span><span class="kw">pub fn </span>opt_boolean_param&lt;Name&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, name: <span class="kw-2">&amp;</span>Name) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;bool&gt;, RequestError&gt;
+    <span class="kw">where
+        </span>Name: <span class="question-mark">?</span>Sized + Display,
     {
-        <span class="self">self</span>.<span class="ident">opt_param</span>(<span class="ident">name</span>).<span class="ident">map</span>(<span class="op">|</span><span class="ident">val</span><span class="op">|</span> <span class="ident">val</span>.<span class="ident">as_boolean</span>()).<span class="ident">transpose</span>()
+        <span class="self">self</span>.opt_param(name).map(|val| val.as_boolean()).transpose()
     }
 
-    <span class="doccomment">/// Get the value of a named parameter and convert it to a string.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Like [param](Self::param), but returns [Err] if the parameter value cannot be converted to</span>
-    <span class="doccomment">/// a [String].</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">string_param</span><span class="op">&lt;</span><span class="ident">Name</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">name</span>: <span class="kw-2">&amp;</span><span class="ident">Name</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">str</span>, <span class="ident">RequestError</span><span class="op">&gt;</span>
-    <span class="kw">where</span>
-        <span class="ident">Name</span>: <span class="question-mark">?</span><span class="ident">Sized</span> <span class="op">+</span> <span class="ident">Display</span>,
+    <span class="doccomment">/// Get the value of a named parameter and convert it to a string.
+    ///
+    /// Like [param](Self::param), but returns [Err] if the parameter value cannot be converted to
+    /// a [String].
+    </span><span class="kw">pub fn </span>string_param&lt;Name&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, name: <span class="kw-2">&amp;</span>Name) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="kw-2">&amp;</span>str, RequestError&gt;
+    <span class="kw">where
+        </span>Name: <span class="question-mark">?</span>Sized + Display,
     {
-        <span class="self">self</span>.<span class="ident">opt_string_param</span>(<span class="ident">name</span>)<span class="question-mark">?</span>.<span class="ident">context</span>(<span class="ident">MissingParamSnafu</span> {
-            <span class="ident">name</span>: <span class="ident">name</span>.<span class="ident">to_string</span>(),
+        <span class="self">self</span>.opt_string_param(name)<span class="question-mark">?</span>.context(MissingParamSnafu {
+            name: name.to_string(),
         })
     }
 
-    <span class="doccomment">/// Get the value of a named optional parameter and convert it to a string.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Like [opt_param](Self::opt_param), but returns [Err] if the parameter value cannot be</span>
-    <span class="doccomment">/// converted to a [String].</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">opt_string_param</span><span class="op">&lt;</span><span class="ident">Name</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">name</span>: <span class="kw-2">&amp;</span><span class="ident">Name</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">str</span><span class="op">&gt;</span>, <span class="ident">RequestError</span><span class="op">&gt;</span>
-    <span class="kw">where</span>
-        <span class="ident">Name</span>: <span class="question-mark">?</span><span class="ident">Sized</span> <span class="op">+</span> <span class="ident">Display</span>,
+    <span class="doccomment">/// Get the value of a named optional parameter and convert it to a string.
+    ///
+    /// Like [opt_param](Self::opt_param), but returns [Err] if the parameter value cannot be
+    /// converted to a [String].
+    </span><span class="kw">pub fn </span>opt_string_param&lt;Name&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, name: <span class="kw-2">&amp;</span>Name) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>str&gt;, RequestError&gt;
+    <span class="kw">where
+        </span>Name: <span class="question-mark">?</span>Sized + Display,
     {
-        <span class="self">self</span>.<span class="ident">opt_param</span>(<span class="ident">name</span>).<span class="ident">map</span>(<span class="op">|</span><span class="ident">val</span><span class="op">|</span> <span class="ident">val</span>.<span class="ident">as_string</span>()).<span class="ident">transpose</span>()
+        <span class="self">self</span>.opt_param(name).map(|val| val.as_string()).transpose()
     }
 
-    <span class="doccomment">/// Get the value of a named parameter and convert it to [TaggedBase64].</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Like [param](Self::param), but returns [Err] if the parameter value cannot be converted to</span>
-    <span class="doccomment">/// [TaggedBase64].</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">tagged_base64_param</span><span class="op">&lt;</span><span class="ident">Name</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">name</span>: <span class="kw-2">&amp;</span><span class="ident">Name</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">TaggedBase64</span>, <span class="ident">RequestError</span><span class="op">&gt;</span>
-    <span class="kw">where</span>
-        <span class="ident">Name</span>: <span class="question-mark">?</span><span class="ident">Sized</span> <span class="op">+</span> <span class="ident">Display</span>,
+    <span class="doccomment">/// Get the value of a named parameter and convert it to [TaggedBase64].
+    ///
+    /// Like [param](Self::param), but returns [Err] if the parameter value cannot be converted to
+    /// [TaggedBase64].
+    </span><span class="kw">pub fn </span>tagged_base64_param&lt;Name&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, name: <span class="kw-2">&amp;</span>Name) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="kw-2">&amp;</span>TaggedBase64, RequestError&gt;
+    <span class="kw">where
+        </span>Name: <span class="question-mark">?</span>Sized + Display,
     {
-        <span class="self">self</span>.<span class="ident">opt_tagged_base64_param</span>(<span class="ident">name</span>)<span class="question-mark">?</span>
-            .<span class="ident">context</span>(<span class="ident">MissingParamSnafu</span> {
-                <span class="ident">name</span>: <span class="ident">name</span>.<span class="ident">to_string</span>(),
+        <span class="self">self</span>.opt_tagged_base64_param(name)<span class="question-mark">?
+            </span>.context(MissingParamSnafu {
+                name: name.to_string(),
             })
     }
 
-    <span class="doccomment">/// Get the value of a named optional parameter and convert it to [TaggedBase64].</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Like [opt_param](Self::opt_param), but returns [Err] if the parameter value cannot be</span>
-    <span class="doccomment">/// converted to [TaggedBase64].</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">opt_tagged_base64_param</span><span class="op">&lt;</span><span class="ident">Name</span><span class="op">&gt;</span>(
+    <span class="doccomment">/// Get the value of a named optional parameter and convert it to [TaggedBase64].
+    ///
+    /// Like [opt_param](Self::opt_param), but returns [Err] if the parameter value cannot be
+    /// converted to [TaggedBase64].
+    </span><span class="kw">pub fn </span>opt_tagged_base64_param&lt;Name&gt;(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">name</span>: <span class="kw-2">&amp;</span><span class="ident">Name</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">TaggedBase64</span><span class="op">&gt;</span>, <span class="ident">RequestError</span><span class="op">&gt;</span>
-    <span class="kw">where</span>
-        <span class="ident">Name</span>: <span class="question-mark">?</span><span class="ident">Sized</span> <span class="op">+</span> <span class="ident">Display</span>,
+        name: <span class="kw-2">&amp;</span>Name,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>TaggedBase64&gt;, RequestError&gt;
+    <span class="kw">where
+        </span>Name: <span class="question-mark">?</span>Sized + Display,
     {
-        <span class="self">self</span>.<span class="ident">opt_param</span>(<span class="ident">name</span>)
-            .<span class="ident">map</span>(<span class="op">|</span><span class="ident">val</span><span class="op">|</span> <span class="ident">val</span>.<span class="ident">as_tagged_base64</span>())
-            .<span class="ident">transpose</span>()
+        <span class="self">self</span>.opt_param(name)
+            .map(|val| val.as_tagged_base64())
+            .transpose()
     }
 
-    <span class="doccomment">/// Get the value of a named parameter and convert it to a custom type through [TaggedBase64].</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Like [param](Self::param), but returns [Err] if the parameter value cannot be converted to</span>
-    <span class="doccomment">/// `T`.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">blob_param</span><span class="op">&lt;</span><span class="ident">Name</span>, <span class="ident">T</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">name</span>: <span class="kw-2">&amp;</span><span class="ident">Name</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">RequestError</span><span class="op">&gt;</span>
-    <span class="kw">where</span>
-        <span class="ident">Name</span>: <span class="question-mark">?</span><span class="ident">Sized</span> <span class="op">+</span> <span class="ident">Display</span>,
-        <span class="ident">T</span>: <span class="ident">Tagged</span> <span class="op">+</span> <span class="ident">CanonicalDeserialize</span>,
+    <span class="doccomment">/// Get the value of a named parameter and convert it to a custom type through [TaggedBase64].
+    ///
+    /// Like [param](Self::param), but returns [Err] if the parameter value cannot be converted to
+    /// `T`.
+    </span><span class="kw">pub fn </span>blob_param&lt;<span class="lifetime">&#39;a</span>, Name, T&gt;(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="self">self</span>, name: <span class="kw-2">&amp;</span>Name) -&gt; <span class="prelude-ty">Result</span>&lt;T, RequestError&gt;
+    <span class="kw">where
+        </span>Name: <span class="question-mark">?</span>Sized + Display,
+        T: TryFrom&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>TaggedBase64&gt;,
+        &lt;T <span class="kw">as </span>TryFrom&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>TaggedBase64&gt;&gt;::Error: Display,
     {
-        <span class="self">self</span>.<span class="ident">opt_blob_param</span>(<span class="ident">name</span>)<span class="question-mark">?</span>.<span class="ident">context</span>(<span class="ident">MissingParamSnafu</span> {
-            <span class="ident">name</span>: <span class="ident">name</span>.<span class="ident">to_string</span>(),
+        <span class="self">self</span>.opt_blob_param(name)<span class="question-mark">?</span>.context(MissingParamSnafu {
+            name: name.to_string(),
         })
     }
 
-    <span class="doccomment">/// Get the value of a named optional parameter and convert it to a custom type through</span>
-    <span class="doccomment">/// [TaggedBase64].</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Like [opt_param](Self::opt_param), but returns [Err] if the parameter value cannot be</span>
-    <span class="doccomment">/// converted to `T`.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">opt_blob_param</span><span class="op">&lt;</span><span class="ident">Name</span>, <span class="ident">T</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">name</span>: <span class="kw-2">&amp;</span><span class="ident">Name</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>, <span class="ident">RequestError</span><span class="op">&gt;</span>
-    <span class="kw">where</span>
-        <span class="ident">Name</span>: <span class="question-mark">?</span><span class="ident">Sized</span> <span class="op">+</span> <span class="ident">Display</span>,
-        <span class="ident">T</span>: <span class="ident">Tagged</span> <span class="op">+</span> <span class="ident">CanonicalDeserialize</span>,
+    <span class="doccomment">/// Get the value of a named optional parameter and convert it to a custom type through
+    /// [TaggedBase64].
+    ///
+    /// Like [opt_param](Self::opt_param), but returns [Err] if the parameter value cannot be
+    /// converted to `T`.
+    </span><span class="kw">pub fn </span>opt_blob_param&lt;<span class="lifetime">&#39;a</span>, Name, T&gt;(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="self">self</span>, name: <span class="kw-2">&amp;</span>Name) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;T&gt;, RequestError&gt;
+    <span class="kw">where
+        </span>Name: <span class="question-mark">?</span>Sized + Display,
+        T: TryFrom&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>TaggedBase64&gt;,
+        &lt;T <span class="kw">as </span>TryFrom&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>TaggedBase64&gt;&gt;::Error: Display,
     {
-        <span class="self">self</span>.<span class="ident">opt_param</span>(<span class="ident">name</span>).<span class="ident">map</span>(<span class="op">|</span><span class="ident">val</span><span class="op">|</span> <span class="ident">val</span>.<span class="ident">as_blob</span>()).<span class="ident">transpose</span>()
+        <span class="self">self</span>.opt_param(name).map(|val| val.as_blob()).transpose()
     }
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">body_bytes</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span> {
-        <span class="self">self</span>.<span class="ident">post_data</span>.<span class="ident">clone</span>()
+    <span class="kw">pub fn </span>body_bytes(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Vec&lt;u8&gt; {
+        <span class="self">self</span>.post_data.clone()
     }
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">body_json</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">RequestError</span><span class="op">&gt;</span>
-    <span class="kw">where</span>
-        <span class="ident">T</span>: <span class="ident">serde::de::DeserializeOwned</span>,
+    <span class="kw">pub fn </span>body_json&lt;T&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;T, RequestError&gt;
+    <span class="kw">where
+        </span>T: serde::de::DeserializeOwned,
     {
-        <span class="ident">serde_json::from_slice</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">post_data</span>.<span class="ident">clone</span>()).<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">RequestError::Json</span> {})
+        serde_json::from_slice(<span class="kw-2">&amp;</span><span class="self">self</span>.post_data.clone()).map_err(|<span class="kw">_</span>| RequestError::Json {})
     }
 
-    <span class="doccomment">/// Deserialize the body of a request.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// The Content-Type header is used to determine the serialization format.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">body_auto</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">RequestError</span><span class="op">&gt;</span>
-    <span class="kw">where</span>
-        <span class="ident">T</span>: <span class="ident">serde::de::DeserializeOwned</span>,
+    <span class="doccomment">/// Deserialize the body of a request.
+    ///
+    /// The Content-Type header is used to determine the serialization format.
+    </span><span class="kw">pub fn </span>body_auto&lt;T&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;T, RequestError&gt;
+    <span class="kw">where
+        </span>T: serde::de::DeserializeOwned,
     {
-        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">content_type</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">headers</span>.<span class="ident">get</span>(<span class="string">&quot;Content-Type&quot;</span>) {
-            <span class="kw">match</span> <span class="ident">content_type</span>.<span class="ident">as_str</span>() {
-                <span class="string">&quot;application/json&quot;</span> =&gt; <span class="self">self</span>.<span class="ident">body_json</span>(),
-                <span class="string">&quot;application/octet-stream&quot;</span> =&gt; {
-                    <span class="kw">let</span> <span class="ident">bytes</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">body_bytes</span>();
-                    <span class="ident">bincode::deserialize</span>(<span class="kw-2">&amp;</span><span class="ident">bytes</span>).<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">_err</span><span class="op">|</span> <span class="ident">RequestError::Bincode</span> {})
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(content_type) = <span class="self">self</span>.headers.get(<span class="string">&quot;Content-Type&quot;</span>) {
+            <span class="kw">match </span>content_type.as_str() {
+                <span class="string">&quot;application/json&quot; </span>=&gt; <span class="self">self</span>.body_json(),
+                <span class="string">&quot;application/octet-stream&quot; </span>=&gt; {
+                    <span class="kw">let </span>bytes = <span class="self">self</span>.body_bytes();
+                    bincode::deserialize(<span class="kw-2">&amp;</span>bytes).map_err(|_err| RequestError::Bincode {})
                 }
-                <span class="ident">_content_type</span> =&gt; <span class="prelude-val">Err</span>(<span class="ident">RequestError::UnsupportedContentType</span> {}),
+                _content_type =&gt; <span class="prelude-val">Err</span>(RequestError::UnsupportedContentType {}),
             }
-        } <span class="kw">else</span> {
-            <span class="prelude-val">Err</span>(<span class="ident">RequestError::UnsupportedContentType</span> {})
+        } <span class="kw">else </span>{
+            <span class="prelude-val">Err</span>(RequestError::UnsupportedContentType {})
         }
     }
 }
 
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>)]</span>
-<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">RequestParamValue</span> {
-    <span class="ident">Boolean</span>(<span class="ident">bool</span>),
-    <span class="ident">Hexadecimal</span>(<span class="ident">u128</span>),
-    <span class="ident">Integer</span>(<span class="ident">u128</span>),
-    <span class="ident">TaggedBase64</span>(<span class="ident">TaggedBase64</span>),
-    <span class="ident">Literal</span>(<span class="ident">String</span>),
+<span class="attribute">#[derive(Clone, Debug, PartialEq, Eq)]
+</span><span class="kw">pub enum </span>RequestParamValue {
+    Boolean(bool),
+    Hexadecimal(u128),
+    Integer(u128),
+    TaggedBase64(TaggedBase64),
+    Literal(String),
 }
 
-<span class="kw">impl</span> <span class="ident">RequestParamValue</span> {
-    <span class="doccomment">/// Parse a parameter from a [Request](tide::Request).</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Returns `Ok(Some(value))` if the parameter is present and well-formed according to `formal`,</span>
-    <span class="doccomment">/// `Ok(None)` if the parameter is optional and not present, or an error if the request is</span>
-    <span class="doccomment">/// required and not present, or present and malformed.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span><span class="op">&lt;</span><span class="ident">S</span><span class="op">&gt;</span>(
-        <span class="ident">req</span>: <span class="kw-2">&amp;</span><span class="ident">tide::Request</span><span class="op">&lt;</span><span class="ident">S</span><span class="op">&gt;</span>,
-        <span class="ident">formal</span>: <span class="kw-2">&amp;</span><span class="ident">RequestParam</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span>, <span class="ident">RequestError</span><span class="op">&gt;</span> {
-        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Ok</span>(<span class="ident">param</span>) <span class="op">=</span> <span class="ident">req</span>.<span class="ident">param</span>(<span class="kw-2">&amp;</span><span class="ident">formal</span>.<span class="ident">name</span>) {
-            <span class="ident"><span class="self">Self</span>::parse</span>(<span class="ident">param</span>, <span class="ident">formal</span>).<span class="ident">map</span>(<span class="prelude-val">Some</span>)
-        } <span class="kw">else</span> {
+<span class="kw">impl </span>RequestParamValue {
+    <span class="doccomment">/// Parse a parameter from a [Request](tide::Request).
+    ///
+    /// Returns `Ok(Some(value))` if the parameter is present and well-formed according to `formal`,
+    /// `Ok(None)` if the parameter is optional and not present, or an error if the request is
+    /// required and not present, or present and malformed.
+    </span><span class="kw">pub fn </span>new&lt;S&gt;(
+        req: <span class="kw-2">&amp;</span>tide::Request&lt;S&gt;,
+        formal: <span class="kw-2">&amp;</span>RequestParam,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>&gt;, RequestError&gt; {
+        <span class="kw">if let </span><span class="prelude-val">Ok</span>(param) = req.param(<span class="kw-2">&amp;</span>formal.name) {
+            <span class="self">Self</span>::parse(param, formal).map(<span class="prelude-val">Some</span>)
+        } <span class="kw">else </span>{
             <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>)
         }
     }
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">parse</span>(<span class="ident">s</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>, <span class="ident">formal</span>: <span class="kw-2">&amp;</span><span class="ident">RequestParam</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">RequestError</span><span class="op">&gt;</span> {
-        <span class="kw">match</span> <span class="ident">formal</span>.<span class="ident">param_type</span> {
-            <span class="ident">RequestParamType::Literal</span> =&gt; <span class="prelude-val">Ok</span>(<span class="ident">RequestParamValue::Literal</span>(<span class="ident">s</span>.<span class="ident">to_string</span>())),
-            <span class="ident">RequestParamType::Boolean</span> =&gt; <span class="prelude-val">Ok</span>(<span class="ident">RequestParamValue::Boolean</span>(<span class="ident">s</span>.<span class="ident">parse</span>().<span class="ident">map_err</span>(
-                <span class="op">|</span><span class="ident">err</span>: <span class="ident">std::str::ParseBoolError</span><span class="op">|</span> <span class="ident">RequestError::InvalidParam</span> {
-                    <span class="ident">param_type</span>: <span class="string">&quot;Boolean&quot;</span>.<span class="ident">to_string</span>(),
-                    <span class="ident">reason</span>: <span class="ident">err</span>.<span class="ident">to_string</span>(),
+    <span class="kw">pub fn </span>parse(s: <span class="kw-2">&amp;</span>str, formal: <span class="kw-2">&amp;</span>RequestParam) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, RequestError&gt; {
+        <span class="kw">match </span>formal.param_type {
+            RequestParamType::Literal =&gt; <span class="prelude-val">Ok</span>(RequestParamValue::Literal(s.to_string())),
+            RequestParamType::Boolean =&gt; <span class="prelude-val">Ok</span>(RequestParamValue::Boolean(s.parse().map_err(
+                |err: std::str::ParseBoolError| RequestError::InvalidParam {
+                    param_type: <span class="string">&quot;Boolean&quot;</span>.to_string(),
+                    reason: err.to_string(),
                 },
             )<span class="question-mark">?</span>)),
-            <span class="ident">RequestParamType::Integer</span> =&gt; <span class="prelude-val">Ok</span>(<span class="ident">RequestParamValue::Integer</span>(<span class="ident">s</span>.<span class="ident">parse</span>().<span class="ident">map_err</span>(
-                <span class="op">|</span><span class="ident">err</span>: <span class="ident">std::num::ParseIntError</span><span class="op">|</span> <span class="ident">RequestError::InvalidParam</span> {
-                    <span class="ident">param_type</span>: <span class="string">&quot;Integer&quot;</span>.<span class="ident">to_string</span>(),
-                    <span class="ident">reason</span>: <span class="ident">err</span>.<span class="ident">to_string</span>(),
+            RequestParamType::Integer =&gt; <span class="prelude-val">Ok</span>(RequestParamValue::Integer(s.parse().map_err(
+                |err: std::num::ParseIntError| RequestError::InvalidParam {
+                    param_type: <span class="string">&quot;Integer&quot;</span>.to_string(),
+                    reason: err.to_string(),
                 },
             )<span class="question-mark">?</span>)),
-            <span class="ident">RequestParamType::Hexadecimal</span> =&gt; <span class="prelude-val">Ok</span>(<span class="ident">RequestParamValue::Hexadecimal</span>(
-                <span class="ident">s</span>.<span class="ident">parse</span>()
-                    .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">err</span>: <span class="ident">std::num::ParseIntError</span><span class="op">|</span> <span class="ident">RequestError::InvalidParam</span> {
-                        <span class="ident">param_type</span>: <span class="string">&quot;Hexadecimal&quot;</span>.<span class="ident">to_string</span>(),
-                        <span class="ident">reason</span>: <span class="ident">err</span>.<span class="ident">to_string</span>(),
+            RequestParamType::Hexadecimal =&gt; <span class="prelude-val">Ok</span>(RequestParamValue::Hexadecimal(
+                s.parse()
+                    .map_err(|err: std::num::ParseIntError| RequestError::InvalidParam {
+                        param_type: <span class="string">&quot;Hexadecimal&quot;</span>.to_string(),
+                        reason: err.to_string(),
                     })<span class="question-mark">?</span>,
             )),
-            <span class="ident">RequestParamType::TaggedBase64</span> =&gt; <span class="prelude-val">Ok</span>(<span class="ident">RequestParamValue::TaggedBase64</span>(
-                <span class="ident">TaggedBase64::parse</span>(<span class="ident">s</span>).<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">err</span><span class="op">|</span> <span class="ident">RequestError::InvalidParam</span> {
-                    <span class="ident">param_type</span>: <span class="string">&quot;TaggedBase64&quot;</span>.<span class="ident">to_string</span>(),
-                    <span class="ident">reason</span>: <span class="ident">err</span>.<span class="ident">to_string</span>(),
+            RequestParamType::TaggedBase64 =&gt; <span class="prelude-val">Ok</span>(RequestParamValue::TaggedBase64(
+                TaggedBase64::parse(s).map_err(|err| RequestError::InvalidParam {
+                    param_type: <span class="string">&quot;TaggedBase64&quot;</span>.to_string(),
+                    reason: err.to_string(),
                 })<span class="question-mark">?</span>,
             )),
         }
     }
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">param_type</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">RequestParamType</span> {
-        <span class="kw">match</span> <span class="self">self</span> {
-            <span class="ident"><span class="self">Self</span>::Boolean</span>(<span class="kw">_</span>) =&gt; <span class="ident">RequestParamType::Boolean</span>,
-            <span class="ident"><span class="self">Self</span>::Hexadecimal</span>(<span class="kw">_</span>) =&gt; <span class="ident">RequestParamType::Hexadecimal</span>,
-            <span class="ident"><span class="self">Self</span>::Integer</span>(<span class="kw">_</span>) =&gt; <span class="ident">RequestParamType::Integer</span>,
-            <span class="ident"><span class="self">Self</span>::TaggedBase64</span>(<span class="kw">_</span>) =&gt; <span class="ident">RequestParamType::TaggedBase64</span>,
-            <span class="ident"><span class="self">Self</span>::Literal</span>(<span class="kw">_</span>) =&gt; <span class="ident">RequestParamType::Literal</span>,
+    <span class="kw">pub fn </span>param_type(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; RequestParamType {
+        <span class="kw">match </span><span class="self">self </span>{
+            <span class="self">Self</span>::Boolean(<span class="kw">_</span>) =&gt; RequestParamType::Boolean,
+            <span class="self">Self</span>::Hexadecimal(<span class="kw">_</span>) =&gt; RequestParamType::Hexadecimal,
+            <span class="self">Self</span>::Integer(<span class="kw">_</span>) =&gt; RequestParamType::Integer,
+            <span class="self">Self</span>::TaggedBase64(<span class="kw">_</span>) =&gt; RequestParamType::TaggedBase64,
+            <span class="self">Self</span>::Literal(<span class="kw">_</span>) =&gt; RequestParamType::Literal,
         }
     }
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">as_string</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">str</span>, <span class="ident">RequestError</span><span class="op">&gt;</span> {
-        <span class="kw">match</span> <span class="self">self</span> {
-            <span class="ident"><span class="self">Self</span>::Literal</span>(<span class="ident">s</span>) =&gt; <span class="prelude-val">Ok</span>(<span class="ident">s</span>),
-            <span class="kw">_</span> =&gt; <span class="prelude-val">Err</span>(<span class="ident">RequestError::IncorrectParamType</span> {
-                <span class="ident">expected</span>: <span class="ident">RequestParamType::Literal</span>,
-                <span class="ident">actual</span>: <span class="self">self</span>.<span class="ident">param_type</span>(),
+    <span class="kw">pub fn </span>as_string(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="kw-2">&amp;</span>str, RequestError&gt; {
+        <span class="kw">match </span><span class="self">self </span>{
+            <span class="self">Self</span>::Literal(s) =&gt; <span class="prelude-val">Ok</span>(s),
+            <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(RequestError::IncorrectParamType {
+                expected: RequestParamType::Literal,
+                actual: <span class="self">self</span>.param_type(),
             }),
         }
     }
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">as_integer</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">TryFrom</span><span class="op">&lt;</span><span class="ident">u128</span><span class="op">&gt;</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">RequestError</span><span class="op">&gt;</span> {
-        <span class="kw">match</span> <span class="self">self</span> {
-            <span class="ident"><span class="self">Self</span>::Integer</span>(<span class="ident">x</span>) <span class="op">|</span> <span class="ident"><span class="self">Self</span>::Hexadecimal</span>(<span class="ident">x</span>) =&gt; {
-                <span class="ident">T::try_from</span>(<span class="kw-2">*</span><span class="ident">x</span>).<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">RequestError::IntegerOverflow</span> {
-                    <span class="ident">value</span>: <span class="kw-2">*</span><span class="ident">x</span>,
-                    <span class="ident">expected</span>: <span class="ident">type_name</span>::<span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>().<span class="ident">to_string</span>(),
+    <span class="kw">pub fn </span>as_integer&lt;T: TryFrom&lt;u128&gt;&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;T, RequestError&gt; {
+        <span class="kw">match </span><span class="self">self </span>{
+            <span class="self">Self</span>::Integer(x) | <span class="self">Self</span>::Hexadecimal(x) =&gt; {
+                T::try_from(<span class="kw-2">*</span>x).map_err(|<span class="kw">_</span>| RequestError::IntegerOverflow {
+                    value: <span class="kw-2">*</span>x,
+                    expected: type_name::&lt;T&gt;().to_string(),
                 })
             }
-            <span class="kw">_</span> =&gt; <span class="prelude-val">Err</span>(<span class="ident">RequestError::IncorrectParamType</span> {
-                <span class="ident">expected</span>: <span class="ident">RequestParamType::Integer</span>,
-                <span class="ident">actual</span>: <span class="self">self</span>.<span class="ident">param_type</span>(),
+            <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(RequestError::IncorrectParamType {
+                expected: RequestParamType::Integer,
+                actual: <span class="self">self</span>.param_type(),
             }),
         }
     }
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">as_boolean</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">bool</span>, <span class="ident">RequestError</span><span class="op">&gt;</span> {
-        <span class="kw">match</span> <span class="self">self</span> {
-            <span class="ident"><span class="self">Self</span>::Boolean</span>(<span class="ident">x</span>) =&gt; <span class="prelude-val">Ok</span>(<span class="kw-2">*</span><span class="ident">x</span>),
-            <span class="kw">_</span> =&gt; <span class="prelude-val">Err</span>(<span class="ident">RequestError::IncorrectParamType</span> {
-                <span class="ident">expected</span>: <span class="ident">RequestParamType::Boolean</span>,
-                <span class="ident">actual</span>: <span class="self">self</span>.<span class="ident">param_type</span>(),
+    <span class="kw">pub fn </span>as_boolean(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;bool, RequestError&gt; {
+        <span class="kw">match </span><span class="self">self </span>{
+            <span class="self">Self</span>::Boolean(x) =&gt; <span class="prelude-val">Ok</span>(<span class="kw-2">*</span>x),
+            <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(RequestError::IncorrectParamType {
+                expected: RequestParamType::Boolean,
+                actual: <span class="self">self</span>.param_type(),
             }),
         }
     }
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">as_tagged_base64</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">TaggedBase64</span>, <span class="ident">RequestError</span><span class="op">&gt;</span> {
-        <span class="kw">match</span> <span class="self">self</span> {
-            <span class="ident"><span class="self">Self</span>::TaggedBase64</span>(<span class="ident">x</span>) =&gt; <span class="prelude-val">Ok</span>(<span class="ident">x</span>),
-            <span class="kw">_</span> =&gt; <span class="prelude-val">Err</span>(<span class="ident">RequestError::IncorrectParamType</span> {
-                <span class="ident">expected</span>: <span class="ident">RequestParamType::TaggedBase64</span>,
-                <span class="ident">actual</span>: <span class="self">self</span>.<span class="ident">param_type</span>(),
+    <span class="kw">pub fn </span>as_tagged_base64(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="kw-2">&amp;</span>TaggedBase64, RequestError&gt; {
+        <span class="kw">match </span><span class="self">self </span>{
+            <span class="self">Self</span>::TaggedBase64(x) =&gt; <span class="prelude-val">Ok</span>(x),
+            <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(RequestError::IncorrectParamType {
+                expected: RequestParamType::TaggedBase64,
+                actual: <span class="self">self</span>.param_type(),
             }),
         }
     }
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">as_blob</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">RequestError</span><span class="op">&gt;</span>
-    <span class="kw">where</span>
-        <span class="ident">T</span>: <span class="ident">Tagged</span> <span class="op">+</span> <span class="ident">CanonicalDeserialize</span>,
+    <span class="kw">pub fn </span>as_blob&lt;<span class="lifetime">&#39;a</span>, T&gt;(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;T, RequestError&gt;
+    <span class="kw">where
+        </span>T: TryFrom&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>TaggedBase64&gt;,
+        &lt;T <span class="kw">as </span>TryFrom&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>TaggedBase64&gt;&gt;::Error: Display,
     {
-        <span class="kw">let</span> <span class="ident">tb64</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">as_tagged_base64</span>()<span class="question-mark">?</span>;
-        <span class="kw">if</span> <span class="ident">tb64</span>.<span class="ident">tag</span>() <span class="op">==</span> <span class="ident">T::tag</span>() {
-            <span class="ident">T::deserialize</span>(<span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="ident">tb64</span>.<span class="ident">value</span>()).<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">source</span><span class="op">|</span> <span class="ident">RequestError::ArkSerialize</span> {
-                <span class="ident">reason</span>: <span class="ident">source</span>.<span class="ident">to_string</span>(),
-            })
-        } <span class="kw">else</span> {
-            <span class="prelude-val">Err</span>(<span class="ident">RequestError::TagMismatch</span> {
-                <span class="ident">actual</span>: <span class="ident">tb64</span>.<span class="ident">tag</span>(),
-                <span class="ident">expected</span>: <span class="ident">T::tag</span>(),
-            })
-        }
+        <span class="kw">let </span>tb64 = <span class="self">self</span>.as_tagged_base64()<span class="question-mark">?</span>;
+        tb64.try_into()
+            .map_err(
+                |err: &lt;T <span class="kw">as </span>TryFrom&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>TaggedBase64&gt;&gt;::Error| RequestError::TaggedBase64 {
+                    reason: err.to_string(),
+                },
+            )
     }
 }
 
-<span class="attribute">#[<span class="ident">derive</span>(
-    <span class="ident">Clone</span>, <span class="ident">Copy</span>, <span class="ident">Debug</span>, <span class="ident">EnumString</span>, <span class="ident">strum_macros::Display</span>, <span class="ident">Deserialize</span>, <span class="ident">Serialize</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>,
-)]</span>
-<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">RequestParamType</span> {
-    <span class="ident">Boolean</span>,
-    <span class="ident">Hexadecimal</span>,
-    <span class="ident">Integer</span>,
-    <span class="ident">TaggedBase64</span>,
-    <span class="ident">Literal</span>,
+<span class="attribute">#[derive(
+    Clone, Copy, Debug, EnumString, strum_macros::Display, Deserialize, Serialize, PartialEq, Eq,
+)]
+</span><span class="kw">pub enum </span>RequestParamType {
+    Boolean,
+    Hexadecimal,
+    Integer,
+    TaggedBase64,
+    Literal,
 }
 
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">RequestParam</span> {
-    <span class="kw">pub</span> <span class="ident">name</span>: <span class="ident">String</span>,
-    <span class="kw">pub</span> <span class="ident">param_type</span>: <span class="ident">RequestParamType</span>,
+<span class="attribute">#[derive(Clone, Debug)]
+</span><span class="kw">pub struct </span>RequestParam {
+    <span class="kw">pub </span>name: String,
+    <span class="kw">pub </span>param_type: RequestParamType,
 }
 
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">best_response_type</span>(
-    <span class="ident">accept</span>: <span class="kw-2">&amp;</span><span class="ident">Accept</span>,
-    <span class="ident">available</span>: <span class="kw-2">&amp;</span>[<span class="ident">Mime</span>],
-) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Mime</span>, <span class="ident">RequestError</span><span class="op">&gt;</span> {
-    <span class="comment">// The Accept type has a `negotiate` method, but it doesn&#39;t properly handle wildcards. It</span>
-    <span class="comment">// handles * but not */* and basetype/*, because for content type proposals like */* and</span>
-    <span class="comment">// basetype/*, it looks for a literal match in `available`, it does not perform pattern</span>
-    <span class="comment">// matching. So, we implement negotiation ourselves. Go through each proposed content type, in</span>
-    <span class="comment">// the order specified by the client, and match them against our available types, respecting</span>
-    <span class="comment">// wildcards.</span>
-    <span class="kw">for</span> <span class="ident">proposed</span> <span class="kw">in</span> <span class="ident">accept</span>.<span class="ident">iter</span>() {
-        <span class="kw">if</span> <span class="ident">proposed</span>.<span class="ident">basetype</span>() <span class="op">==</span> <span class="string">&quot;*&quot;</span> {
-            <span class="comment">// The only acceptable Accept value with a basetype of * is */*, therefore this will</span>
-            <span class="comment">// match any available type.</span>
-            <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="ident">available</span>[<span class="number">0</span>].<span class="ident">clone</span>());
-        } <span class="kw">else</span> <span class="kw">if</span> <span class="ident">proposed</span>.<span class="ident">subtype</span>() <span class="op">==</span> <span class="string">&quot;*&quot;</span> {
-            <span class="comment">// If the subtype is * but the basetype is not, look for a proposed type with a matching</span>
-            <span class="comment">// basetype and any subtype.</span>
-            <span class="kw">for</span> <span class="ident">mime</span> <span class="kw">in</span> <span class="ident">available</span> {
-                <span class="kw">if</span> <span class="ident">mime</span>.<span class="ident">basetype</span>() <span class="op">==</span> <span class="ident">proposed</span>.<span class="ident">basetype</span>() {
-                    <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="ident">mime</span>.<span class="ident">clone</span>());
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>best_response_type(
+    accept: <span class="kw-2">&amp;</span>Accept,
+    available: <span class="kw-2">&amp;</span>[Mime],
+) -&gt; <span class="prelude-ty">Result</span>&lt;Mime, RequestError&gt; {
+    <span class="comment">// The Accept type has a `negotiate` method, but it doesn&#39;t properly handle wildcards. It
+    // handles * but not */* and basetype/*, because for content type proposals like */* and
+    // basetype/*, it looks for a literal match in `available`, it does not perform pattern
+    // matching. So, we implement negotiation ourselves. Go through each proposed content type, in
+    // the order specified by the client, and match them against our available types, respecting
+    // wildcards.
+    </span><span class="kw">for </span>proposed <span class="kw">in </span>accept.iter() {
+        <span class="kw">if </span>proposed.basetype() == <span class="string">&quot;*&quot; </span>{
+            <span class="comment">// The only acceptable Accept value with a basetype of * is */*, therefore this will
+            // match any available type.
+            </span><span class="kw">return </span><span class="prelude-val">Ok</span>(available[<span class="number">0</span>].clone());
+        } <span class="kw">else if </span>proposed.subtype() == <span class="string">&quot;*&quot; </span>{
+            <span class="comment">// If the subtype is * but the basetype is not, look for a proposed type with a matching
+            // basetype and any subtype.
+            </span><span class="kw">for </span>mime <span class="kw">in </span>available {
+                <span class="kw">if </span>mime.basetype() == proposed.basetype() {
+                    <span class="kw">return </span><span class="prelude-val">Ok</span>(mime.clone());
                 }
             }
-        } <span class="kw">else</span> <span class="kw">if</span> <span class="ident">available</span>.<span class="ident">contains</span>(<span class="ident">proposed</span>) {
-            <span class="comment">// If neither part of the proposal is a wildcard, look for a literal match.</span>
-            <span class="kw">return</span> <span class="prelude-val">Ok</span>((<span class="kw-2">*</span><span class="kw-2">*</span><span class="ident">proposed</span>).<span class="ident">clone</span>());
+        } <span class="kw">else if </span>available.contains(proposed) {
+            <span class="comment">// If neither part of the proposal is a wildcard, look for a literal match.
+            </span><span class="kw">return </span><span class="prelude-val">Ok</span>((<span class="kw-2">**</span>proposed).clone());
         }
     }
 
-    <span class="kw">if</span> <span class="ident">accept</span>.<span class="ident">wildcard</span>() {
-        <span class="comment">// If no proposals are available but a wildcard flag * was given, return any available</span>
-        <span class="comment">// content type.</span>
-        <span class="prelude-val">Ok</span>(<span class="ident">available</span>[<span class="number">0</span>].<span class="ident">clone</span>())
-    } <span class="kw">else</span> {
-        <span class="prelude-val">Err</span>(<span class="ident">RequestError::UnsupportedContentType</span>)
+    <span class="kw">if </span>accept.wildcard() {
+        <span class="comment">// If no proposals are available but a wildcard flag * was given, return any available
+        // content type.
+        </span><span class="prelude-val">Ok</span>(available[<span class="number">0</span>].clone())
+    } <span class="kw">else </span>{
+        <span class="prelude-val">Err</span>(RequestError::UnsupportedContentType)
     }
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
-<span class="kw">mod</span> <span class="ident">test</span> {
-    <span class="kw">use</span> <span class="kw">super</span>::<span class="kw-2">*</span>;
-    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::StatusCode</span>;
-    <span class="kw">use</span> <span class="ident">ark_serialize</span>::<span class="kw-2">*</span>;
-    <span class="kw">use</span> <span class="ident">jf_utils::tagged_blob</span>;
+<span class="attribute">#[cfg(test)]
+</span><span class="kw">mod </span>test {
+    <span class="kw">use super</span>::<span class="kw-2">*</span>;
+    <span class="kw">use </span><span class="kw">crate</span>::StatusCode;
+    <span class="kw">use </span>ark_serialize::<span class="kw-2">*</span>;
+    <span class="kw">use </span>tagged_base64::tagged;
 
-    <span class="kw">fn</span> <span class="ident">default_headers</span>() -&gt; <span class="ident">Headers</span> {
-        <span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="ident">tide::Response::builder</span>(<span class="ident">StatusCode::Ok</span>).<span class="ident">build</span>();
-        <span class="kw">let</span> <span class="ident">h</span>: <span class="kw-2">&amp;</span><span class="ident">Headers</span> <span class="op">=</span> <span class="ident">res</span>.<span class="ident">as_ref</span>();
-        <span class="ident">h</span>.<span class="ident">clone</span>()
+    <span class="kw">fn </span>default_headers() -&gt; Headers {
+        <span class="kw">let </span>res = tide::Response::builder(StatusCode::Ok).build();
+        <span class="kw">let </span>h: <span class="kw-2">&amp;</span>Headers = res.as_ref();
+        h.clone()
     }
 
-    <span class="kw">fn</span> <span class="ident">param</span>(<span class="ident">ty</span>: <span class="ident">RequestParamType</span>, <span class="ident">name</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>, <span class="ident">val</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) -&gt; <span class="ident">RequestParamValue</span> {
-        <span class="ident">RequestParamValue::parse</span>(
-            <span class="ident">val</span>,
-            <span class="kw-2">&amp;</span><span class="ident">RequestParam</span> {
-                <span class="ident">name</span>: <span class="ident">name</span>.<span class="ident">to_string</span>(),
-                <span class="ident">param_type</span>: <span class="ident">ty</span>,
+    <span class="kw">fn </span>param(ty: RequestParamType, name: <span class="kw-2">&amp;</span>str, val: <span class="kw-2">&amp;</span>str) -&gt; RequestParamValue {
+        RequestParamValue::parse(
+            val,
+            <span class="kw-2">&amp;</span>RequestParam {
+                name: name.to_string(),
+                param_type: ty,
             },
         )
-        .<span class="ident">unwrap</span>()
+        .unwrap()
     }
 
-    <span class="kw">fn</span> <span class="ident">request_from_params</span>(
-        <span class="ident">params</span>: <span class="kw">impl</span> <span class="ident">IntoIterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> (<span class="ident">String</span>, <span class="ident">RequestParamValue</span>)<span class="op">&gt;</span>,
-    ) -&gt; <span class="ident">RequestParams</span> {
-        <span class="ident">RequestParams</span> {
-            <span class="ident">headers</span>: <span class="ident">default_headers</span>(),
-            <span class="ident">post_data</span>: <span class="ident">Default::default</span>(),
-            <span class="ident">params</span>: <span class="ident">params</span>.<span class="ident">into_iter</span>().<span class="ident">collect</span>(),
-            <span class="ident">method</span>: <span class="ident">Method::get</span>(),
+    <span class="kw">fn </span>request_from_params(
+        params: <span class="kw">impl </span>IntoIterator&lt;Item = (String, RequestParamValue)&gt;,
+    ) -&gt; RequestParams {
+        RequestParams {
+            headers: default_headers(),
+            post_data: Default::default(),
+            params: params.into_iter().collect(),
+            method: Method::get(),
         }
     }
 
-    <span class="attribute">#[<span class="ident">tagged_blob</span>(<span class="string">&quot;BLOB&quot;</span>)]</span>
-    <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>, <span class="ident">CanonicalSerialize</span>, <span class="ident">CanonicalDeserialize</span>)]</span>
-    <span class="kw">struct</span> <span class="ident">Blob</span> {
-        <span class="ident">data</span>: <span class="ident">String</span>,
+    <span class="attribute">#[tagged(<span class="string">&quot;BLOB&quot;</span>)]
+    #[derive(Clone, Debug, PartialEq, Eq, CanonicalSerialize, CanonicalDeserialize)]
+    </span><span class="kw">struct </span>Blob {
+        data: String,
     }
 
-    <span class="attribute">#[<span class="ident">test</span>]</span>
-    <span class="kw">fn</span> <span class="ident">test_params</span>() {
-        <span class="kw">let</span> <span class="ident">tb64</span> <span class="op">=</span> <span class="ident">TaggedBase64::new</span>(<span class="string">&quot;TAG&quot;</span>, <span class="kw-2">&amp;</span>[<span class="number">0</span>; <span class="number">20</span>]).<span class="ident">unwrap</span>();
-        <span class="kw">let</span> <span class="ident">blob</span> <span class="op">=</span> <span class="ident">Blob</span> {
-            <span class="ident">data</span>: <span class="string">&quot;blob&quot;</span>.<span class="ident">to_string</span>(),
+    <span class="attribute">#[test]
+    </span><span class="kw">fn </span>test_params() {
+        <span class="kw">let </span>tb64 = TaggedBase64::new(<span class="string">&quot;TAG&quot;</span>, <span class="kw-2">&amp;</span>[<span class="number">0</span>; <span class="number">20</span>]).unwrap();
+        <span class="kw">let </span>blob = Blob {
+            data: <span class="string">&quot;blob&quot;</span>.to_string(),
         };
-        <span class="kw">let</span> <span class="ident">string_param</span> <span class="op">=</span> <span class="ident">param</span>(<span class="ident">RequestParamType::Literal</span>, <span class="string">&quot;string&quot;</span>, <span class="string">&quot;hello&quot;</span>);
-        <span class="kw">let</span> <span class="ident">integer_param</span> <span class="op">=</span> <span class="ident">param</span>(<span class="ident">RequestParamType::Integer</span>, <span class="string">&quot;integer&quot;</span>, <span class="string">&quot;42&quot;</span>);
-        <span class="kw">let</span> <span class="ident">boolean_param</span> <span class="op">=</span> <span class="ident">param</span>(<span class="ident">RequestParamType::Boolean</span>, <span class="string">&quot;boolean&quot;</span>, <span class="string">&quot;true&quot;</span>);
-        <span class="kw">let</span> <span class="ident">tagged_base64_param</span> <span class="op">=</span> <span class="ident">param</span>(
-            <span class="ident">RequestParamType::TaggedBase64</span>,
+        <span class="kw">let </span>string_param = param(RequestParamType::Literal, <span class="string">&quot;string&quot;</span>, <span class="string">&quot;hello&quot;</span>);
+        <span class="kw">let </span>integer_param = param(RequestParamType::Integer, <span class="string">&quot;integer&quot;</span>, <span class="string">&quot;42&quot;</span>);
+        <span class="kw">let </span>boolean_param = param(RequestParamType::Boolean, <span class="string">&quot;boolean&quot;</span>, <span class="string">&quot;true&quot;</span>);
+        <span class="kw">let </span>tagged_base64_param = param(
+            RequestParamType::TaggedBase64,
             <span class="string">&quot;tagged_base64&quot;</span>,
-            <span class="kw-2">&amp;</span><span class="ident">tb64</span>.<span class="ident">to_string</span>(),
+            <span class="kw-2">&amp;</span>tb64.to_string(),
         );
-        <span class="kw">let</span> <span class="ident">blob_param</span> <span class="op">=</span> <span class="ident">param</span>(<span class="ident">RequestParamType::TaggedBase64</span>, <span class="string">&quot;blob&quot;</span>, <span class="kw-2">&amp;</span><span class="ident">blob</span>.<span class="ident">to_string</span>());
-        <span class="kw">let</span> <span class="ident">params</span> <span class="op">=</span> <span class="macro">vec!</span>[
-            (<span class="string">&quot;string&quot;</span>.<span class="ident">to_string</span>(), <span class="ident">string_param</span>.<span class="ident">clone</span>()),
-            (<span class="string">&quot;integer&quot;</span>.<span class="ident">to_string</span>(), <span class="ident">integer_param</span>.<span class="ident">clone</span>()),
-            (<span class="string">&quot;boolean&quot;</span>.<span class="ident">to_string</span>(), <span class="ident">boolean_param</span>.<span class="ident">clone</span>()),
-            (<span class="string">&quot;tagged_base64&quot;</span>.<span class="ident">to_string</span>(), <span class="ident">tagged_base64_param</span>.<span class="ident">clone</span>()),
-            (<span class="string">&quot;blob&quot;</span>.<span class="ident">to_string</span>(), <span class="ident">blob_param</span>.<span class="ident">clone</span>()),
+        <span class="kw">let </span>blob_param = param(RequestParamType::TaggedBase64, <span class="string">&quot;blob&quot;</span>, <span class="kw-2">&amp;</span>blob.to_string());
+        <span class="kw">let </span>params = <span class="macro">vec!</span>[
+            (<span class="string">&quot;string&quot;</span>.to_string(), string_param.clone()),
+            (<span class="string">&quot;integer&quot;</span>.to_string(), integer_param.clone()),
+            (<span class="string">&quot;boolean&quot;</span>.to_string(), boolean_param.clone()),
+            (<span class="string">&quot;tagged_base64&quot;</span>.to_string(), tagged_base64_param.clone()),
+            (<span class="string">&quot;blob&quot;</span>.to_string(), blob_param.clone()),
         ];
-        <span class="kw">let</span> <span class="ident">req</span> <span class="op">=</span> <span class="ident">request_from_params</span>(<span class="ident">params</span>);
+        <span class="kw">let </span>req = request_from_params(params);
 
-        <span class="comment">// Check untyped param.</span>
-        <span class="macro">assert_eq!</span>(<span class="kw-2">*</span><span class="ident">req</span>.<span class="ident">param</span>(<span class="string">&quot;string&quot;</span>).<span class="ident">unwrap</span>(), <span class="ident">string_param</span>);
-        <span class="macro">assert_eq!</span>(<span class="kw-2">*</span><span class="ident">req</span>.<span class="ident">param</span>(<span class="string">&quot;integer&quot;</span>).<span class="ident">unwrap</span>(), <span class="ident">integer_param</span>);
-        <span class="macro">assert_eq!</span>(<span class="kw-2">*</span><span class="ident">req</span>.<span class="ident">param</span>(<span class="string">&quot;boolean&quot;</span>).<span class="ident">unwrap</span>(), <span class="ident">boolean_param</span>);
-        <span class="macro">assert_eq!</span>(<span class="kw-2">*</span><span class="ident">req</span>.<span class="ident">param</span>(<span class="string">&quot;tagged_base64&quot;</span>).<span class="ident">unwrap</span>(), <span class="ident">tagged_base64_param</span>);
-        <span class="macro">assert_eq!</span>(<span class="kw-2">*</span><span class="ident">req</span>.<span class="ident">param</span>(<span class="string">&quot;blob&quot;</span>).<span class="ident">unwrap</span>(), <span class="ident">blob_param</span>);
-        <span class="kw">match</span> <span class="ident">req</span>.<span class="ident">param</span>(<span class="string">&quot;nosuchparam&quot;</span>).<span class="ident">unwrap_err</span>() {
-            <span class="ident">RequestError::MissingParam</span> { <span class="ident">name</span> } <span class="kw">if</span> <span class="ident">name</span> <span class="op">==</span> <span class="string">&quot;nosuchparam&quot;</span> =&gt; {}
-            <span class="ident">err</span> =&gt; <span class="macro">panic!</span>(<span class="string">&quot;expecting MissingParam {{ nosuchparam }}, got {:?}&quot;</span>, <span class="ident">err</span>),
+        <span class="comment">// Check untyped param.
+        </span><span class="macro">assert_eq!</span>(<span class="kw-2">*</span>req.param(<span class="string">&quot;string&quot;</span>).unwrap(), string_param);
+        <span class="macro">assert_eq!</span>(<span class="kw-2">*</span>req.param(<span class="string">&quot;integer&quot;</span>).unwrap(), integer_param);
+        <span class="macro">assert_eq!</span>(<span class="kw-2">*</span>req.param(<span class="string">&quot;boolean&quot;</span>).unwrap(), boolean_param);
+        <span class="macro">assert_eq!</span>(<span class="kw-2">*</span>req.param(<span class="string">&quot;tagged_base64&quot;</span>).unwrap(), tagged_base64_param);
+        <span class="macro">assert_eq!</span>(<span class="kw-2">*</span>req.param(<span class="string">&quot;blob&quot;</span>).unwrap(), blob_param);
+        <span class="kw">match </span>req.param(<span class="string">&quot;nosuchparam&quot;</span>).unwrap_err() {
+            RequestError::MissingParam { name } <span class="kw">if </span>name == <span class="string">&quot;nosuchparam&quot; </span>=&gt; {}
+            err =&gt; <span class="macro">panic!</span>(<span class="string">&quot;expecting MissingParam {{ nosuchparam }}, got {:?}&quot;</span>, err),
         }
 
-        <span class="comment">// Check untyped optional param.</span>
-        <span class="macro">assert_eq!</span>(<span class="kw-2">*</span><span class="ident">req</span>.<span class="ident">opt_param</span>(<span class="string">&quot;string&quot;</span>).<span class="ident">unwrap</span>(), <span class="ident">string_param</span>);
-        <span class="macro">assert_eq!</span>(<span class="kw-2">*</span><span class="ident">req</span>.<span class="ident">opt_param</span>(<span class="string">&quot;integer&quot;</span>).<span class="ident">unwrap</span>(), <span class="ident">integer_param</span>);
-        <span class="macro">assert_eq!</span>(<span class="kw-2">*</span><span class="ident">req</span>.<span class="ident">opt_param</span>(<span class="string">&quot;boolean&quot;</span>).<span class="ident">unwrap</span>(), <span class="ident">boolean_param</span>);
+        <span class="comment">// Check untyped optional param.
+        </span><span class="macro">assert_eq!</span>(<span class="kw-2">*</span>req.opt_param(<span class="string">&quot;string&quot;</span>).unwrap(), string_param);
+        <span class="macro">assert_eq!</span>(<span class="kw-2">*</span>req.opt_param(<span class="string">&quot;integer&quot;</span>).unwrap(), integer_param);
+        <span class="macro">assert_eq!</span>(<span class="kw-2">*</span>req.opt_param(<span class="string">&quot;boolean&quot;</span>).unwrap(), boolean_param);
         <span class="macro">assert_eq!</span>(
-            <span class="kw-2">*</span><span class="ident">req</span>.<span class="ident">opt_param</span>(<span class="string">&quot;tagged_base64&quot;</span>).<span class="ident">unwrap</span>(),
-            <span class="ident">tagged_base64_param</span>
+            <span class="kw-2">*</span>req.opt_param(<span class="string">&quot;tagged_base64&quot;</span>).unwrap(),
+            tagged_base64_param
         );
-        <span class="macro">assert_eq!</span>(<span class="kw-2">*</span><span class="ident">req</span>.<span class="ident">opt_param</span>(<span class="string">&quot;blob&quot;</span>).<span class="ident">unwrap</span>(), <span class="ident">blob_param</span>);
-        <span class="macro">assert_eq!</span>(<span class="ident">req</span>.<span class="ident">opt_param</span>(<span class="string">&quot;nosuchparam&quot;</span>), <span class="prelude-val">None</span>);
+        <span class="macro">assert_eq!</span>(<span class="kw-2">*</span>req.opt_param(<span class="string">&quot;blob&quot;</span>).unwrap(), blob_param);
+        <span class="macro">assert_eq!</span>(req.opt_param(<span class="string">&quot;nosuchparam&quot;</span>), <span class="prelude-val">None</span>);
 
-        <span class="comment">// Check typed params: correct type, incorrect type, and missing cases.</span>
-        <span class="macro">assert_eq!</span>(<span class="ident">req</span>.<span class="ident">string_param</span>(<span class="string">&quot;string&quot;</span>).<span class="ident">unwrap</span>(), <span class="string">&quot;hello&quot;</span>);
-        <span class="kw">match</span> <span class="ident">req</span>.<span class="ident">string_param</span>(<span class="string">&quot;integer&quot;</span>).<span class="ident">unwrap_err</span>() {
-            <span class="ident">RequestError::IncorrectParamType</span> { <span class="ident">actual</span>, <span class="ident">expected</span> }
-                <span class="kw">if</span> <span class="ident">actual</span> <span class="op">==</span> <span class="ident">RequestParamType::Integer</span> <span class="op">&amp;&amp;</span> <span class="ident">expected</span> <span class="op">==</span> <span class="ident">RequestParamType::Literal</span> =&gt; {
+        <span class="comment">// Check typed params: correct type, incorrect type, and missing cases.
+        </span><span class="macro">assert_eq!</span>(req.string_param(<span class="string">&quot;string&quot;</span>).unwrap(), <span class="string">&quot;hello&quot;</span>);
+        <span class="kw">match </span>req.string_param(<span class="string">&quot;integer&quot;</span>).unwrap_err() {
+            RequestError::IncorrectParamType { actual, expected }
+                <span class="kw">if </span>actual == RequestParamType::Integer &amp;&amp; expected == RequestParamType::Literal =&gt; {
             }
-            <span class="ident">err</span> =&gt; <span class="macro">panic!</span>(
+            err =&gt; <span class="macro">panic!</span>(
                 <span class="string">&quot;expecting IncorrectParamType {{ Integer, String }}, got {:?}&quot;</span>,
-                <span class="ident">err</span>
+                err
             ),
         }
-        <span class="kw">match</span> <span class="ident">req</span>.<span class="ident">string_param</span>(<span class="string">&quot;nosuchparam&quot;</span>).<span class="ident">unwrap_err</span>() {
-            <span class="ident">RequestError::MissingParam</span> { <span class="ident">name</span> } <span class="kw">if</span> <span class="ident">name</span> <span class="op">==</span> <span class="string">&quot;nosuchparam&quot;</span> =&gt; {}
-            <span class="ident">err</span> =&gt; <span class="macro">panic!</span>(<span class="string">&quot;expecting MissingParam {{ nosuchparam }}, got {:?}&quot;</span>, <span class="ident">err</span>),
+        <span class="kw">match </span>req.string_param(<span class="string">&quot;nosuchparam&quot;</span>).unwrap_err() {
+            RequestError::MissingParam { name } <span class="kw">if </span>name == <span class="string">&quot;nosuchparam&quot; </span>=&gt; {}
+            err =&gt; <span class="macro">panic!</span>(<span class="string">&quot;expecting MissingParam {{ nosuchparam }}, got {:?}&quot;</span>, err),
         };
 
-        <span class="macro">assert_eq!</span>(<span class="ident">req</span>.<span class="ident">integer_param</span>::<span class="op">&lt;</span><span class="kw">_</span>, <span class="ident">usize</span><span class="op">&gt;</span>(<span class="string">&quot;integer&quot;</span>).<span class="ident">unwrap</span>(), <span class="number">42</span>);
-        <span class="kw">match</span> <span class="ident">req</span>.<span class="ident">integer_param</span>::<span class="op">&lt;</span><span class="kw">_</span>, <span class="ident">usize</span><span class="op">&gt;</span>(<span class="string">&quot;string&quot;</span>).<span class="ident">unwrap_err</span>() {
-            <span class="ident">RequestError::IncorrectParamType</span> { <span class="ident">actual</span>, <span class="ident">expected</span> }
-                <span class="kw">if</span> <span class="ident">actual</span> <span class="op">==</span> <span class="ident">RequestParamType::Literal</span> <span class="op">&amp;&amp;</span> <span class="ident">expected</span> <span class="op">==</span> <span class="ident">RequestParamType::Integer</span> =&gt; {
+        <span class="macro">assert_eq!</span>(req.integer_param::&lt;<span class="kw">_</span>, usize&gt;(<span class="string">&quot;integer&quot;</span>).unwrap(), <span class="number">42</span>);
+        <span class="kw">match </span>req.integer_param::&lt;<span class="kw">_</span>, usize&gt;(<span class="string">&quot;string&quot;</span>).unwrap_err() {
+            RequestError::IncorrectParamType { actual, expected }
+                <span class="kw">if </span>actual == RequestParamType::Literal &amp;&amp; expected == RequestParamType::Integer =&gt; {
             }
-            <span class="ident">err</span> =&gt; <span class="macro">panic!</span>(
+            err =&gt; <span class="macro">panic!</span>(
                 <span class="string">&quot;expecting IncorrectParamType {{ Literal, Integer }}, got {:?}&quot;</span>,
-                <span class="ident">err</span>
+                err
             ),
         }
-        <span class="kw">match</span> <span class="ident">req</span>.<span class="ident">integer_param</span>::<span class="op">&lt;</span><span class="kw">_</span>, <span class="ident">usize</span><span class="op">&gt;</span>(<span class="string">&quot;nosuchparam&quot;</span>).<span class="ident">unwrap_err</span>() {
-            <span class="ident">RequestError::MissingParam</span> { <span class="ident">name</span> } <span class="kw">if</span> <span class="ident">name</span> <span class="op">==</span> <span class="string">&quot;nosuchparam&quot;</span> =&gt; {}
-            <span class="ident">err</span> =&gt; <span class="macro">panic!</span>(<span class="string">&quot;expecting MissingParam {{ nosuchparam }}, got {:?}&quot;</span>, <span class="ident">err</span>),
+        <span class="kw">match </span>req.integer_param::&lt;<span class="kw">_</span>, usize&gt;(<span class="string">&quot;nosuchparam&quot;</span>).unwrap_err() {
+            RequestError::MissingParam { name } <span class="kw">if </span>name == <span class="string">&quot;nosuchparam&quot; </span>=&gt; {}
+            err =&gt; <span class="macro">panic!</span>(<span class="string">&quot;expecting MissingParam {{ nosuchparam }}, got {:?}&quot;</span>, err),
         };
 
-        <span class="macro">assert!</span>(<span class="ident">req</span>.<span class="ident">boolean_param</span>(<span class="string">&quot;boolean&quot;</span>).<span class="ident">unwrap</span>());
-        <span class="kw">match</span> <span class="ident">req</span>.<span class="ident">boolean_param</span>(<span class="string">&quot;integer&quot;</span>).<span class="ident">unwrap_err</span>() {
-            <span class="ident">RequestError::IncorrectParamType</span> { <span class="ident">actual</span>, <span class="ident">expected</span> }
-                <span class="kw">if</span> <span class="ident">actual</span> <span class="op">==</span> <span class="ident">RequestParamType::Integer</span> <span class="op">&amp;&amp;</span> <span class="ident">expected</span> <span class="op">==</span> <span class="ident">RequestParamType::Boolean</span> =&gt; {
+        <span class="macro">assert!</span>(req.boolean_param(<span class="string">&quot;boolean&quot;</span>).unwrap());
+        <span class="kw">match </span>req.boolean_param(<span class="string">&quot;integer&quot;</span>).unwrap_err() {
+            RequestError::IncorrectParamType { actual, expected }
+                <span class="kw">if </span>actual == RequestParamType::Integer &amp;&amp; expected == RequestParamType::Boolean =&gt; {
             }
-            <span class="ident">err</span> =&gt; <span class="macro">panic!</span>(
+            err =&gt; <span class="macro">panic!</span>(
                 <span class="string">&quot;expecting IncorrectParamType {{ Integer, Boolean }}, got {:?}&quot;</span>,
-                <span class="ident">err</span>
+                err
             ),
         }
-        <span class="kw">match</span> <span class="ident">req</span>.<span class="ident">boolean_param</span>(<span class="string">&quot;nosuchparam&quot;</span>).<span class="ident">unwrap_err</span>() {
-            <span class="ident">RequestError::MissingParam</span> { <span class="ident">name</span> } <span class="kw">if</span> <span class="ident">name</span> <span class="op">==</span> <span class="string">&quot;nosuchparam&quot;</span> =&gt; {}
-            <span class="ident">err</span> =&gt; <span class="macro">panic!</span>(<span class="string">&quot;expecting MissingParam {{ nosuchparam }}, got {:?}&quot;</span>, <span class="ident">err</span>),
+        <span class="kw">match </span>req.boolean_param(<span class="string">&quot;nosuchparam&quot;</span>).unwrap_err() {
+            RequestError::MissingParam { name } <span class="kw">if </span>name == <span class="string">&quot;nosuchparam&quot; </span>=&gt; {}
+            err =&gt; <span class="macro">panic!</span>(<span class="string">&quot;expecting MissingParam {{ nosuchparam }}, got {:?}&quot;</span>, err),
         };
 
-        <span class="macro">assert_eq!</span>(<span class="kw-2">*</span><span class="ident">req</span>.<span class="ident">tagged_base64_param</span>(<span class="string">&quot;tagged_base64&quot;</span>).<span class="ident">unwrap</span>(), <span class="ident">tb64</span>);
-        <span class="kw">match</span> <span class="ident">req</span>.<span class="ident">tagged_base64_param</span>(<span class="string">&quot;integer&quot;</span>).<span class="ident">unwrap_err</span>() {
-            <span class="ident">RequestError::IncorrectParamType</span> { <span class="ident">actual</span>, <span class="ident">expected</span> }
-                <span class="kw">if</span> <span class="ident">actual</span> <span class="op">==</span> <span class="ident">RequestParamType::Integer</span>
-                    <span class="op">&amp;&amp;</span> <span class="ident">expected</span> <span class="op">==</span> <span class="ident">RequestParamType::TaggedBase64</span> =&gt; {}
-            <span class="ident">err</span> =&gt; <span class="macro">panic!</span>(
+        <span class="macro">assert_eq!</span>(<span class="kw-2">*</span>req.tagged_base64_param(<span class="string">&quot;tagged_base64&quot;</span>).unwrap(), tb64);
+        <span class="kw">match </span>req.tagged_base64_param(<span class="string">&quot;integer&quot;</span>).unwrap_err() {
+            RequestError::IncorrectParamType { actual, expected }
+                <span class="kw">if </span>actual == RequestParamType::Integer
+                    &amp;&amp; expected == RequestParamType::TaggedBase64 =&gt; {}
+            err =&gt; <span class="macro">panic!</span>(
                 <span class="string">&quot;expecting IncorrectParamType {{ Integer, TaggedBase64 }}, got {:?}&quot;</span>,
-                <span class="ident">err</span>
+                err
             ),
         }
-        <span class="kw">match</span> <span class="ident">req</span>.<span class="ident">tagged_base64_param</span>(<span class="string">&quot;nosuchparam&quot;</span>).<span class="ident">unwrap_err</span>() {
-            <span class="ident">RequestError::MissingParam</span> { <span class="ident">name</span> } <span class="kw">if</span> <span class="ident">name</span> <span class="op">==</span> <span class="string">&quot;nosuchparam&quot;</span> =&gt; {}
-            <span class="ident">err</span> =&gt; <span class="macro">panic!</span>(<span class="string">&quot;expecting MissingParam {{ nosuchparam }}, got {:?}&quot;</span>, <span class="ident">err</span>),
+        <span class="kw">match </span>req.tagged_base64_param(<span class="string">&quot;nosuchparam&quot;</span>).unwrap_err() {
+            RequestError::MissingParam { name } <span class="kw">if </span>name == <span class="string">&quot;nosuchparam&quot; </span>=&gt; {}
+            err =&gt; <span class="macro">panic!</span>(<span class="string">&quot;expecting MissingParam {{ nosuchparam }}, got {:?}&quot;</span>, err),
         };
 
-        <span class="macro">assert_eq!</span>(<span class="ident">req</span>.<span class="ident">blob_param</span>::<span class="op">&lt;</span><span class="kw">_</span>, <span class="ident">Blob</span><span class="op">&gt;</span>(<span class="string">&quot;blob&quot;</span>).<span class="ident">unwrap</span>(), <span class="ident">blob</span>);
-        <span class="kw">match</span> <span class="ident">req</span>.<span class="ident">tagged_base64_param</span>(<span class="string">&quot;integer&quot;</span>).<span class="ident">unwrap_err</span>() {
-            <span class="ident">RequestError::IncorrectParamType</span> { <span class="ident">actual</span>, <span class="ident">expected</span> }
-                <span class="kw">if</span> <span class="ident">actual</span> <span class="op">==</span> <span class="ident">RequestParamType::Integer</span>
-                    <span class="op">&amp;&amp;</span> <span class="ident">expected</span> <span class="op">==</span> <span class="ident">RequestParamType::TaggedBase64</span> =&gt; {}
-            <span class="ident">err</span> =&gt; <span class="macro">panic!</span>(
+        <span class="macro">assert_eq!</span>(req.blob_param::&lt;<span class="kw">_</span>, Blob&gt;(<span class="string">&quot;blob&quot;</span>).unwrap(), blob);
+        <span class="kw">match </span>req.tagged_base64_param(<span class="string">&quot;integer&quot;</span>).unwrap_err() {
+            RequestError::IncorrectParamType { actual, expected }
+                <span class="kw">if </span>actual == RequestParamType::Integer
+                    &amp;&amp; expected == RequestParamType::TaggedBase64 =&gt; {}
+            err =&gt; <span class="macro">panic!</span>(
                 <span class="string">&quot;expecting IncorrectParamType {{ Integer, TaggedBase64 }}, got {:?}&quot;</span>,
-                <span class="ident">err</span>
+                err
             ),
         }
-        <span class="kw">match</span> <span class="ident">req</span>.<span class="ident">tagged_base64_param</span>(<span class="string">&quot;nosuchparam&quot;</span>).<span class="ident">unwrap_err</span>() {
-            <span class="ident">RequestError::MissingParam</span> { <span class="ident">name</span> } <span class="kw">if</span> <span class="ident">name</span> <span class="op">==</span> <span class="string">&quot;nosuchparam&quot;</span> =&gt; {}
-            <span class="ident">err</span> =&gt; <span class="macro">panic!</span>(<span class="string">&quot;expecting MissingParam {{ nosuchparam }}, got {:?}&quot;</span>, <span class="ident">err</span>),
+        <span class="kw">match </span>req.tagged_base64_param(<span class="string">&quot;nosuchparam&quot;</span>).unwrap_err() {
+            RequestError::MissingParam { name } <span class="kw">if </span>name == <span class="string">&quot;nosuchparam&quot; </span>=&gt; {}
+            err =&gt; <span class="macro">panic!</span>(<span class="string">&quot;expecting MissingParam {{ nosuchparam }}, got {:?}&quot;</span>, err),
         };
 
-        <span class="comment">// Check typed optional params: correct type, incorrect type, and missing cases.</span>
-        <span class="macro">assert_eq!</span>(<span class="ident">req</span>.<span class="ident">opt_string_param</span>(<span class="string">&quot;string&quot;</span>).<span class="ident">unwrap</span>().<span class="ident">unwrap</span>(), <span class="string">&quot;hello&quot;</span>);
-        <span class="kw">match</span> <span class="ident">req</span>.<span class="ident">opt_string_param</span>(<span class="string">&quot;integer&quot;</span>).<span class="ident">unwrap_err</span>() {
-            <span class="ident">RequestError::IncorrectParamType</span> { <span class="ident">actual</span>, <span class="ident">expected</span> }
-                <span class="kw">if</span> <span class="ident">actual</span> <span class="op">==</span> <span class="ident">RequestParamType::Integer</span> <span class="op">&amp;&amp;</span> <span class="ident">expected</span> <span class="op">==</span> <span class="ident">RequestParamType::Literal</span> =&gt; {
+        <span class="comment">// Check typed optional params: correct type, incorrect type, and missing cases.
+        </span><span class="macro">assert_eq!</span>(req.opt_string_param(<span class="string">&quot;string&quot;</span>).unwrap().unwrap(), <span class="string">&quot;hello&quot;</span>);
+        <span class="kw">match </span>req.opt_string_param(<span class="string">&quot;integer&quot;</span>).unwrap_err() {
+            RequestError::IncorrectParamType { actual, expected }
+                <span class="kw">if </span>actual == RequestParamType::Integer &amp;&amp; expected == RequestParamType::Literal =&gt; {
             }
-            <span class="ident">err</span> =&gt; <span class="macro">panic!</span>(
+            err =&gt; <span class="macro">panic!</span>(
                 <span class="string">&quot;expecting IncorrectParamType {{ Integer, String }}, got {:?}&quot;</span>,
-                <span class="ident">err</span>
+                err
             ),
         }
-        <span class="macro">assert_eq!</span>(<span class="ident">req</span>.<span class="ident">opt_string_param</span>(<span class="string">&quot;nosuchparam&quot;</span>).<span class="ident">unwrap</span>(), <span class="prelude-val">None</span>);
+        <span class="macro">assert_eq!</span>(req.opt_string_param(<span class="string">&quot;nosuchparam&quot;</span>).unwrap(), <span class="prelude-val">None</span>);
 
         <span class="macro">assert_eq!</span>(
-            <span class="ident">req</span>.<span class="ident">opt_integer_param</span>::<span class="op">&lt;</span><span class="kw">_</span>, <span class="ident">usize</span><span class="op">&gt;</span>(<span class="string">&quot;integer&quot;</span>)
-                .<span class="ident">unwrap</span>()
-                .<span class="ident">unwrap</span>(),
-            <span class="number">42</span>
-        );
-        <span class="kw">match</span> <span class="ident">req</span>.<span class="ident">opt_integer_param</span>::<span class="op">&lt;</span><span class="kw">_</span>, <span class="ident">usize</span><span class="op">&gt;</span>(<span class="string">&quot;string&quot;</span>).<span class="ident">unwrap_err</span>() {
-            <span class="ident">RequestError::IncorrectParamType</span> { <span class="ident">actual</span>, <span class="ident">expected</span> }
-                <span class="kw">if</span> <span class="ident">actual</span> <span class="op">==</span> <span class="ident">RequestParamType::Literal</span> <span class="op">&amp;&amp;</span> <span class="ident">expected</span> <span class="op">==</span> <span class="ident">RequestParamType::Integer</span> =&gt; {
+            req.opt_integer_param::&lt;<span class="kw">_</span>, usize&gt;(<span class="string">&quot;integer&quot;</span>)
+                .unwrap()
+                .unwrap(),
+            <span class="number">42
+        </span>);
+        <span class="kw">match </span>req.opt_integer_param::&lt;<span class="kw">_</span>, usize&gt;(<span class="string">&quot;string&quot;</span>).unwrap_err() {
+            RequestError::IncorrectParamType { actual, expected }
+                <span class="kw">if </span>actual == RequestParamType::Literal &amp;&amp; expected == RequestParamType::Integer =&gt; {
             }
-            <span class="ident">err</span> =&gt; <span class="macro">panic!</span>(
+            err =&gt; <span class="macro">panic!</span>(
                 <span class="string">&quot;expecting IncorrectParamType {{ Literal, Integer }}, got {:?}&quot;</span>,
-                <span class="ident">err</span>
+                err
             ),
         }
         <span class="macro">assert_eq!</span>(
-            <span class="ident">req</span>.<span class="ident">opt_integer_param</span>::<span class="op">&lt;</span><span class="kw">_</span>, <span class="ident">usize</span><span class="op">&gt;</span>(<span class="string">&quot;nosuchparam&quot;</span>).<span class="ident">unwrap</span>(),
-            <span class="prelude-val">None</span>
-        );
+            req.opt_integer_param::&lt;<span class="kw">_</span>, usize&gt;(<span class="string">&quot;nosuchparam&quot;</span>).unwrap(),
+            <span class="prelude-val">None
+        </span>);
 
-        <span class="macro">assert!</span>(<span class="ident">req</span>.<span class="ident">opt_boolean_param</span>(<span class="string">&quot;boolean&quot;</span>).<span class="ident">unwrap</span>().<span class="ident">unwrap</span>());
-        <span class="kw">match</span> <span class="ident">req</span>.<span class="ident">opt_boolean_param</span>(<span class="string">&quot;integer&quot;</span>).<span class="ident">unwrap_err</span>() {
-            <span class="ident">RequestError::IncorrectParamType</span> { <span class="ident">actual</span>, <span class="ident">expected</span> }
-                <span class="kw">if</span> <span class="ident">actual</span> <span class="op">==</span> <span class="ident">RequestParamType::Integer</span> <span class="op">&amp;&amp;</span> <span class="ident">expected</span> <span class="op">==</span> <span class="ident">RequestParamType::Boolean</span> =&gt; {
+        <span class="macro">assert!</span>(req.opt_boolean_param(<span class="string">&quot;boolean&quot;</span>).unwrap().unwrap());
+        <span class="kw">match </span>req.opt_boolean_param(<span class="string">&quot;integer&quot;</span>).unwrap_err() {
+            RequestError::IncorrectParamType { actual, expected }
+                <span class="kw">if </span>actual == RequestParamType::Integer &amp;&amp; expected == RequestParamType::Boolean =&gt; {
             }
-            <span class="ident">err</span> =&gt; <span class="macro">panic!</span>(
+            err =&gt; <span class="macro">panic!</span>(
                 <span class="string">&quot;expecting IncorrectParamType {{ Integer, Boolean }}, got {:?}&quot;</span>,
-                <span class="ident">err</span>
+                err
             ),
         }
-        <span class="macro">assert_eq!</span>(<span class="ident">req</span>.<span class="ident">opt_boolean_param</span>(<span class="string">&quot;nosuchparam&quot;</span>).<span class="ident">unwrap</span>(), <span class="prelude-val">None</span>);
+        <span class="macro">assert_eq!</span>(req.opt_boolean_param(<span class="string">&quot;nosuchparam&quot;</span>).unwrap(), <span class="prelude-val">None</span>);
 
         <span class="macro">assert_eq!</span>(
-            <span class="kw-2">*</span><span class="ident">req</span>.<span class="ident">opt_tagged_base64_param</span>(<span class="string">&quot;tagged_base64&quot;</span>)
-                .<span class="ident">unwrap</span>()
-                .<span class="ident">unwrap</span>(),
-            <span class="ident">tb64</span>
+            <span class="kw-2">*</span>req.opt_tagged_base64_param(<span class="string">&quot;tagged_base64&quot;</span>)
+                .unwrap()
+                .unwrap(),
+            tb64
         );
-        <span class="kw">match</span> <span class="ident">req</span>.<span class="ident">opt_tagged_base64_param</span>(<span class="string">&quot;integer&quot;</span>).<span class="ident">unwrap_err</span>() {
-            <span class="ident">RequestError::IncorrectParamType</span> { <span class="ident">actual</span>, <span class="ident">expected</span> }
-                <span class="kw">if</span> <span class="ident">actual</span> <span class="op">==</span> <span class="ident">RequestParamType::Integer</span>
-                    <span class="op">&amp;&amp;</span> <span class="ident">expected</span> <span class="op">==</span> <span class="ident">RequestParamType::TaggedBase64</span> =&gt; {}
-            <span class="ident">err</span> =&gt; <span class="macro">panic!</span>(
+        <span class="kw">match </span>req.opt_tagged_base64_param(<span class="string">&quot;integer&quot;</span>).unwrap_err() {
+            RequestError::IncorrectParamType { actual, expected }
+                <span class="kw">if </span>actual == RequestParamType::Integer
+                    &amp;&amp; expected == RequestParamType::TaggedBase64 =&gt; {}
+            err =&gt; <span class="macro">panic!</span>(
                 <span class="string">&quot;expecting IncorrectParamType {{ Integer, TaggedBase64 }}, got {:?}&quot;</span>,
-                <span class="ident">err</span>
+                err
             ),
         }
-        <span class="macro">assert_eq!</span>(<span class="ident">req</span>.<span class="ident">opt_tagged_base64_param</span>(<span class="string">&quot;nosuchparam&quot;</span>).<span class="ident">unwrap</span>(), <span class="prelude-val">None</span>);
+        <span class="macro">assert_eq!</span>(req.opt_tagged_base64_param(<span class="string">&quot;nosuchparam&quot;</span>).unwrap(), <span class="prelude-val">None</span>);
 
         <span class="macro">assert_eq!</span>(
-            <span class="ident">req</span>.<span class="ident">opt_blob_param</span>::<span class="op">&lt;</span><span class="kw">_</span>, <span class="ident">Blob</span><span class="op">&gt;</span>(<span class="string">&quot;blob&quot;</span>).<span class="ident">unwrap</span>().<span class="ident">unwrap</span>(),
-            <span class="ident">blob</span>
+            req.opt_blob_param::&lt;<span class="kw">_</span>, Blob&gt;(<span class="string">&quot;blob&quot;</span>).unwrap().unwrap(),
+            blob
         );
-        <span class="kw">match</span> <span class="ident">req</span>.<span class="ident">opt_blob_param</span>::<span class="op">&lt;</span><span class="kw">_</span>, <span class="ident">Blob</span><span class="op">&gt;</span>(<span class="string">&quot;integer&quot;</span>).<span class="ident">unwrap_err</span>() {
-            <span class="ident">RequestError::IncorrectParamType</span> { <span class="ident">actual</span>, <span class="ident">expected</span> }
-                <span class="kw">if</span> <span class="ident">actual</span> <span class="op">==</span> <span class="ident">RequestParamType::Integer</span>
-                    <span class="op">&amp;&amp;</span> <span class="ident">expected</span> <span class="op">==</span> <span class="ident">RequestParamType::TaggedBase64</span> =&gt; {}
-            <span class="ident">err</span> =&gt; <span class="macro">panic!</span>(
+        <span class="kw">match </span>req.opt_blob_param::&lt;<span class="kw">_</span>, Blob&gt;(<span class="string">&quot;integer&quot;</span>).unwrap_err() {
+            RequestError::IncorrectParamType { actual, expected }
+                <span class="kw">if </span>actual == RequestParamType::Integer
+                    &amp;&amp; expected == RequestParamType::TaggedBase64 =&gt; {}
+            err =&gt; <span class="macro">panic!</span>(
                 <span class="string">&quot;expecting IncorrectParamType {{ Integer, TaggedBase64 }}, got {:?}&quot;</span>,
-                <span class="ident">err</span>
+                err
             ),
         }
-        <span class="macro">assert_eq!</span>(<span class="ident">req</span>.<span class="ident">opt_blob_param</span>::<span class="op">&lt;</span><span class="kw">_</span>, <span class="ident">Blob</span><span class="op">&gt;</span>(<span class="string">&quot;nosuchparam&quot;</span>).<span class="ident">unwrap</span>(), <span class="prelude-val">None</span>);
+        <span class="macro">assert_eq!</span>(req.opt_blob_param::&lt;<span class="kw">_</span>, Blob&gt;(<span class="string">&quot;nosuchparam&quot;</span>).unwrap(), <span class="prelude-val">None</span>);
     }
 }
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="tide_disco" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.64.0 (a55dd71d5 2022-09-19)" ></div></body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="tide_disco" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0 (897e37553 2022-11-02)" ></div></body></html>
