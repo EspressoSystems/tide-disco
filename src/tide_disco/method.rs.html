@@ -249,7 +249,19 @@
 <span id="249">249</span>
 <span id="250">250</span>
 <span id="251">251</span>
-</pre><pre class="rust"><code><span class="doccomment">//! Interfaces for methods of accessing to state.
+<span id="252">252</span>
+<span id="253">253</span>
+<span id="254">254</span>
+<span id="255">255</span>
+<span id="256">256</span>
+<span id="257">257</span>
+</pre><pre class="rust"><code><span class="comment">// Copyright (c) 2022 Espresso Systems (espressosys.com)
+// This file is part of the tide-disco library.
+
+// You should have received a copy of the MIT License
+// along with the tide-disco library. If not, see &lt;https://mit-license.org/&gt;.
+
+</span><span class="doccomment">//! Interfaces for methods of accessing to state.
 //!
 //! A common pattern is for the `State` type of an [App](crate::App) to enable some form of interior
 //! mutability, with the option of read-only access, such as [RwLock]. Route handlers will then
