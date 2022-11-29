@@ -1,3 +1,9 @@
+// Copyright (c) 2022 Espresso Systems (espressosys.com)
+// This file is part of the tide-disco library.
+
+// You should have received a copy of the MIT License
+// along with the tide-disco library. If not, see <https://mit-license.org/>.
+
 //! Interfaces for methods of accessing to state.
 //!
 //! A common pattern is for the `State` type of an [App](crate::App) to enable some form of interior
