@@ -12,7 +12,7 @@ use std::collections::HashMap;
 use std::fmt::Display;
 use strum_macros::EnumString;
 use tagged_base64::TaggedBase64;
-use tide::http::{content::Accept, mime::Mime, Headers};
+use tide::http::{self, content::Accept, mime::Mime, Headers};
 
 #[derive(Clone, Debug, Snafu, Deserialize, Serialize)]
 pub enum RequestError {
@@ -59,10 +59,9 @@ pub enum RequestError {
 /// These parameters describe the incoming request and the current server state.
 #[derive(Clone, Debug)]
 pub struct RequestParams {
-    headers: Headers,
+    req: http::Request,
     post_data: Vec<u8>,
     params: HashMap<String, RequestParamValue>,
-    method: Method,
 }
 
 impl RequestParams {
@@ -71,7 +70,6 @@ impl RequestParams {
         formal_params: &[RequestParam],
     ) -> Result<Self, RequestError> {
         Ok(Self {
-            headers: AsRef::<Headers>::as_ref(&req).clone(),
             post_data: req.body_bytes().await.unwrap(),
             params: formal_params
                 .iter()
@@ -81,18 +79,18 @@ impl RequestParams {
                     Err(err) => Some(Err(err)),
                 })
                 .collect::<Result<_, _>>()?,
-            method: req.method().into(),
+            req: req.into(),
         })
     }
 
     /// The [Method] used to dispatch the request.
     pub fn method(&self) -> Method {
-        self.method
+        self.req.method().into()
     }
 
     /// The headers of the incoming request.
     pub fn headers(&self) -> &Headers {
-        &self.headers
+        self.req.as_ref()
     }
 
     /// The [Accept] header of this request.
@@ -105,7 +103,7 @@ impl RequestParams {
     ///
     /// Returns [RequestError::Http] if the [Accept] header is malformed.
     pub fn accept(&self) -> Result<Accept, RequestError> {
-        Self::accept_from_headers(&self.headers)
+        Self::accept_from_headers(self.headers())
     }
 
     pub(crate) fn accept_from_headers(
@@ -124,6 +122,16 @@ impl RequestParams {
                 Ok(accept)
             }
         }
+    }
+
+    /// Get the remote address for this request.
+    ///
+    /// This is determined in the following priority:
+    /// 1. `Forwarded` header `for` key
+    /// 2. The first `X-Forwarded-For` header
+    /// 3. Peer address of the transport
+    pub fn remote(&self) -> Option<&str> {
+        self.req.remote()
     }
 
     /// Get the value of a named parameter.
@@ -399,7 +407,7 @@ impl RequestParams {
     where
         T: serde::de::DeserializeOwned,
     {
-        if let Some(content_type) = self.headers.get("Content-Type") {
+        if let Some(content_type) = self.headers().get("Content-Type") {
             match content_type.as_str() {
                 "application/json" => self.body_json(),
                 "application/octet-stream" => {
@@ -599,14 +607,11 @@ pub(crate) fn best_response_type(
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::StatusCode;
     use ark_serialize::*;
     use tagged_base64::tagged;
 
-    fn default_headers() -> Headers {
-        let res = tide::Response::builder(StatusCode::Ok).build();
-        let h: &Headers = res.as_ref();
-        h.clone()
+    fn default_req() -> http::Request {
+        http::Request::new(http::Method::Get, "http://localhost:12345")
     }
 
     fn param(ty: RequestParamType, name: &str, val: &str) -> RequestParamValue {
@@ -624,10 +629,9 @@ mod test {
         params: impl IntoIterator<Item = (String, RequestParamValue)>,
     ) -> RequestParams {
         RequestParams {
-            headers: default_headers(),
+            req: default_req(),
             post_data: Default::default(),
             params: params.into_iter().collect(),
-            method: Method::get(),
         }
     }
 
