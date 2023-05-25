@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":[["RequestError",""],["RequestParamType",""],["RequestParamValue",""]],"struct":[["RequestParam",""],["RequestParams","Parameters passed to a route handler."]]};
+window.SIDEBAR_ITEMS = {"enum":["RequestError","RequestParamType","RequestParamValue"],"struct":["RequestParam","RequestParams"]};

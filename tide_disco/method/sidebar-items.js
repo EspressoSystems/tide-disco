@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":[["Method",""]],"struct":[["ParseMethodError",""]],"trait":[["ReadState","A state which allows read access."],["WriteState","A state which allows exclusive, write access."]]};
+window.SIDEBAR_ITEMS = {"enum":["Method"],"struct":["ParseMethodError"],"trait":["ReadState","WriteState"]};
