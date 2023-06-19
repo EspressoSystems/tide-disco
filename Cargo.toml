@@ -38,7 +38,7 @@ shellexpand = "3.1"
 signal-hook = "0.3.14"
 snafu = { version = "0.7", features = ["backtraces"] }
 strum = "0.24"
-strum_macros = "0.24"
+strum_macros = "0.25"
 surf = "2.3.2"
 tagged-base64 = { git = "https://github.com/EspressoSystems/tagged-base64.git", tag = "0.2.4" }
 tide = { version = "0.16.0", default-features = false }
