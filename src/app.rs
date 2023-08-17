@@ -73,7 +73,7 @@ impl<State: Send + Sync + 'static, Error: 'static> App<State, Error> {
     pub fn module<'a, ModuleError>(
         &'a mut self,
         base_url: &'a str,
-        api: toml::Value,
+        api: impl Into<toml::Value>,
     ) -> Result<Module<'a, State, Error, ModuleError>, AppError>
     where
         Error: From<ModuleError>,

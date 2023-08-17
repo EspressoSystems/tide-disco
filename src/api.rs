@@ -300,7 +300,8 @@ impl<'a, State, Error> Iterator for RoutesWithPath<'a, State, Error> {
 
 impl<State, Error> Api<State, Error> {
     /// Parse an API from a TOML specification.
-    pub fn new(mut api: toml::Value) -> Result<Self, ApiError> {
+    pub fn new(api: impl Into<toml::Value>) -> Result<Self, ApiError> {
+        let mut api = api.into();
         let meta = match api
             .as_table_mut()
             .context(ApiMustBeTableSnafu)?
@@ -358,14 +359,17 @@ impl<State, Error> Api<State, Error> {
 
     /// Create an [Api] by reading a TOML specification from a file.
     pub fn from_file<P: AsRef<Path>>(path: P) -> Result<Self, ApiError> {
-        Self::new(
-            toml::from_slice(&fs::read(path).map_err(|err| ApiError::CannotReadToml {
+        let bytes = fs::read(path).map_err(|err| ApiError::CannotReadToml {
+            reason: err.to_string(),
+        })?;
+        let string = std::str::from_utf8(&bytes).map_err(|err| ApiError::CannotReadToml {
+            reason: err.to_string(),
+        })?;
+        Self::new(toml::from_str::<toml::Value>(string).map_err(|err| {
+            ApiError::CannotReadToml {
                 reason: err.to_string(),
-            })?)
-            .map_err(|err| ApiError::CannotReadToml {
-                reason: err.to_string(),
-            })?,
-        )
+            }
+        })?)
     }
 
     /// Iterate over groups of routes with the same path.
