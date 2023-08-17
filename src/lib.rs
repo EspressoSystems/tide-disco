@@ -51,7 +51,9 @@
 //! type State = ();
 //! type Error = ServerError;
 //!
-//! let spec = toml::from_slice(&std::fs::read("/path/to/api.toml").unwrap()).unwrap();
+//! let spec: toml::Value = toml::from_str(
+//!     std::str::from_utf8(&std::fs::read("/path/to/api.toml").unwrap()).unwrap(),
+//! ).unwrap();
 //! let mut api = Api::<State, Error>::new(spec)?;
 //! # Ok(())
 //! # }
@@ -71,7 +73,7 @@
 //! ```no_run
 //! # use tide_disco::Api;
 //! # fn main() -> Result<(), tide_disco::api::ApiError> {
-//! # let spec = toml::from_slice(&std::fs::read("/path/to/api.toml").unwrap()).unwrap();
+//! # let spec: toml::Value = toml::from_str(std::str::from_utf8(&std::fs::read("/path/to/api.toml").unwrap()).unwrap()).unwrap();
 //! # let mut api = Api::<(), tide_disco::error::ServerError>::new(spec)?;
 //! use futures::FutureExt;
 //!
@@ -89,7 +91,7 @@
 //! # type State = ();
 //! # type Error = tide_disco::error::ServerError;
 //! # #[async_std::main] async fn main() {
-//! # let spec = toml::from_slice(&std::fs::read("/path/to/api.toml").unwrap()).unwrap();
+//! # let spec: toml::Value = toml::from_str(std::str::from_utf8(&std::fs::read("/path/to/api.toml").unwrap()).unwrap()).unwrap();
 //! # let api = tide_disco::Api::<State, Error>::new(spec).unwrap();
 //! use tide_disco::App;
 //!
