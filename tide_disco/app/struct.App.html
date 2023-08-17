@@ -7,7 +7,7 @@ desired modules are registered, the app can be converted into an asynchronous se
 </div></details><details class="toggle method-toggle" open><summary><section id="method.module" class="method"><a class="srclink rightside" href="../../src/tide_disco/app.rs.html#73-91">source</a><h4 class="code-header">pub fn <a href="#method.module" class="fn">module</a>&lt;'a, ModuleError&gt;(
     &amp;'a mut self,
     base_url: &amp;'a <a class="primitive" href="https://doc.rust-lang.org/1.71.1/std/primitive.str.html">str</a>,
-    api: Value
+    api: impl <a class="trait" href="https://doc.rust-lang.org/1.71.1/core/convert/trait.Into.html" title="trait core::convert::Into">Into</a>&lt;Value&gt;
 ) -&gt; <a class="enum" href="https://doc.rust-lang.org/1.71.1/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="struct" href="struct.Module.html" title="struct tide_disco::app::Module">Module</a>&lt;'a, State, Error, ModuleError&gt;, <a class="enum" href="enum.AppError.html" title="enum tide_disco::app::AppError">AppError</a>&gt;<span class="where fmt-newline">where
     Error: <a class="trait" href="https://doc.rust-lang.org/1.71.1/core/convert/trait.From.html" title="trait core::convert::From">From</a>&lt;ModuleError&gt;,
     ModuleError: 'static + <a class="trait" href="https://doc.rust-lang.org/1.71.1/core/marker/trait.Send.html" title="trait core::marker::Send">Send</a> + <a class="trait" href="https://doc.rust-lang.org/1.71.1/core/marker/trait.Sync.html" title="trait core::marker::Sync">Sync</a>,</span></h4></section></summary><div class="docblock"><p>Create and register an API module.</p>

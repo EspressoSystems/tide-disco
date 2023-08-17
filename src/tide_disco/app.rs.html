@@ -810,7 +810,7 @@
     </span><span class="kw">pub fn </span>module&lt;<span class="lifetime">&#39;a</span>, ModuleError&gt;(
         <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span><span class="self">self</span>,
         base_url: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>str,
-        api: toml::Value,
+        api: <span class="kw">impl </span>Into&lt;toml::Value&gt;,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;Module&lt;<span class="lifetime">&#39;a</span>, State, Error, ModuleError&gt;, AppError&gt;
     <span class="kw">where
         </span>Error: From&lt;ModuleError&gt;,

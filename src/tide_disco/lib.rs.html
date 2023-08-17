@@ -673,6 +673,8 @@
 <a href="#673" id="673">673</a>
 <a href="#674" id="674">674</a>
 <a href="#675" id="675">675</a>
+<a href="#676" id="676">676</a>
+<a href="#677" id="677">677</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright (c) 2022 Espresso Systems (espressosys.com)
 // This file is part of the tide-disco library.
 
@@ -726,7 +728,9 @@
 //! type State = ();
 //! type Error = ServerError;
 //!
-//! let spec = toml::from_slice(&amp;std::fs::read(&quot;/path/to/api.toml&quot;).unwrap()).unwrap();
+//! let spec: toml::Value = toml::from_str(
+//!     std::str::from_utf8(&amp;std::fs::read(&quot;/path/to/api.toml&quot;).unwrap()).unwrap(),
+//! ).unwrap();
 //! let mut api = Api::&lt;State, Error&gt;::new(spec)?;
 //! # Ok(())
 //! # }
@@ -746,7 +750,7 @@
 //! ```no_run
 //! # use tide_disco::Api;
 //! # fn main() -&gt; Result&lt;(), tide_disco::api::ApiError&gt; {
-//! # let spec = toml::from_slice(&amp;std::fs::read(&quot;/path/to/api.toml&quot;).unwrap()).unwrap();
+//! # let spec: toml::Value = toml::from_str(std::str::from_utf8(&amp;std::fs::read(&quot;/path/to/api.toml&quot;).unwrap()).unwrap()).unwrap();
 //! # let mut api = Api::&lt;(), tide_disco::error::ServerError&gt;::new(spec)?;
 //! use futures::FutureExt;
 //!
@@ -764,7 +768,7 @@
 //! # type State = ();
 //! # type Error = tide_disco::error::ServerError;
 //! # #[async_std::main] async fn main() {
-//! # let spec = toml::from_slice(&amp;std::fs::read(&quot;/path/to/api.toml&quot;).unwrap()).unwrap();
+//! # let spec: toml::Value = toml::from_str(std::str::from_utf8(&amp;std::fs::read(&quot;/path/to/api.toml&quot;).unwrap()).unwrap()).unwrap();
 //! # let api = tide_disco::Api::&lt;State, Error&gt;::new(spec).unwrap();
 //! use tide_disco::App;
 //!
