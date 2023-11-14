@@ -13,6 +13,17 @@
 {
   description = "Development shell for Tide Disco";
 
+  nixConfig = {
+    extra-substituters = [
+      "https://espresso-systems-private.cachix.org"
+      "https://nixpkgs-cross-overlay.cachix.org"
+    ];
+    extra-trusted-public-keys = [
+      "espresso-systems-private.cachix.org-1:LHYk03zKQCeZ4dvg3NctyCq88e44oBZVug5LpYKjPRI="
+      "nixpkgs-cross-overlay.cachix.org-1:TjKExGN4ys960TlsGqNOI/NBdoz2Jdr2ow1VybWV5JM="
+    ];
+  };
+
   inputs.nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
 
   inputs.flake-utils.url = "github:numtide/flake-utils";
@@ -25,7 +36,7 @@
   inputs.fenix.url = "github:nix-community/fenix";
   inputs.fenix.inputs.nixpkgs.follows = "nixpkgs";
 
-  outputs = { self, nixpkgs, flake-utils, flake-compat, rust-overlay, fenix, ... }:
+  outputs = { self, nixpkgs, flake-utils, rust-overlay, fenix, ... }:
     flake-utils.lib.eachDefaultSystem (system:
       let
         info = builtins.split "\([a-zA-Z0-9_]+\)" system;
@@ -40,14 +51,12 @@
           [
             pkg-config
             openssl
-            bash
 
             curl
 
             cargo-edit
             cargo-udeps
             cargo-sort
-            cmake
           ] ++ lib.optionals stdenv.isDarwin [
             darwin.apple_sdk.frameworks.Security
             darwin.apple_sdk.frameworks.CoreFoundation
@@ -55,7 +64,7 @@
 
             # https://github.com/NixOS/nixpkgs/issues/126182
             libiconv
-          ] ++ lib.optionals (stdenv.system != "aarch64-darwin") [
+          ] ++ lib.optionals (!stdenv.isDarwin) [
             cargo-watch # broken: https://github.com/NixOS/nixpkgs/issues/146349
           ];
         # nixWithFlakes allows pre v2.4 nix installations to use
@@ -63,23 +72,13 @@
         nixWithFlakes = pkgs.writeShellScriptBin "nix" ''
           exec ${pkgs.nixFlakes}/bin/nix --experimental-features "nix-command flakes" "$@"
         '';
-        shellHook  = ''
-          # on mac os `bin/pwd -P` returns the canonical path on case insensitive file-systems
-          my_pwd=$(/bin/pwd -P 2> /dev/null || pwd)
-
-          export PATH=${pkgs.xdot}/bin:$PATH
-          export PATH=''${my_pwd}/bin:$PATH
-        '';
       in {
         devShell = pkgs.mkShell {
-          shellHook = shellHook;
           buildInputs = with pkgs;
             [
               fenix.packages.${system}.rust-analyzer
               nixWithFlakes
               nixpkgs-fmt
-              git
-              mdbook # make-doc, documentation generation
               rustToolchain
             ] ++ rustDeps;
 
