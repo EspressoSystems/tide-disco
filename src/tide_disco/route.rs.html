@@ -605,6 +605,14 @@
 <a href="#605" id="605">605</a>
 <a href="#606" id="606">606</a>
 <a href="#607" id="607">607</a>
+<a href="#608" id="608">608</a>
+<a href="#609" id="609">609</a>
+<a href="#610" id="610">610</a>
+<a href="#611" id="611">611</a>
+<a href="#612" id="612">612</a>
+<a href="#613" id="613">613</a>
+<a href="#614" id="614">614</a>
+<a href="#615" id="615">615</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright (c) 2022 Espresso Systems (espressosys.com)
 // This file is part of the tide-disco library.
 
@@ -619,7 +627,9 @@
     socket::{<span class="self">self</span>, SocketError},
     Html,
 };
+<span class="kw">use </span>async_std::sync::Arc;
 <span class="kw">use </span>async_trait::async_trait;
+<span class="kw">use </span>derivative::Derivative;
 <span class="kw">use </span>derive_more::From;
 <span class="kw">use </span>futures::future::{BoxFuture, FutureExt};
 <span class="kw">use </span>maud::{html, PreEscaped};
@@ -820,12 +830,16 @@
 /// It can be parsed from a TOML specification, and it also includes an optional handler function
 /// which the Rust server can register. Routes with no handler will use a default handler that
 /// simply returns information about the route.
+</span><span class="attr">#[derive(Derivative)]
+#[derivative(Debug(bound = <span class="string">&quot;&quot;</span>))]
 </span><span class="kw">pub struct </span>Route&lt;State, Error&gt; {
     name: String,
     patterns: Vec&lt;String&gt;,
     params: Vec&lt;RequestParam&gt;,
     doc: String,
-    handler: RouteImplementation&lt;State, Error&gt;,
+    meta: Arc&lt;ApiMetadata&gt;,
+    <span class="attr">#[derivative(Debug = <span class="string">&quot;ignore&quot;</span>)]
+    </span>handler: RouteImplementation&lt;State, Error&gt;,
 }
 
 <span class="attr">#[derive(Clone, Debug, Snafu)]
@@ -854,7 +868,11 @@
     /// In addition, the following optional keys may be specified:
     /// * `METHOD`: the method to use to dispatch the route (default `GET`)
     /// * `DOC`: Markdown description of the route
-    </span><span class="kw">pub fn </span>new(name: String, spec: <span class="kw-2">&amp;</span>toml::Value) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, RouteParseError&gt; {
+    </span><span class="kw">pub fn </span>new(
+        name: String,
+        spec: <span class="kw-2">&amp;</span>toml::Value,
+        meta: Arc&lt;ApiMetadata&gt;,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, RouteParseError&gt; {
         <span class="kw">let </span>paths: Vec&lt;String&gt; = spec[<span class="string">&quot;PATH&quot;</span>]
             .as_array()
             .ok_or(RouteParseError::MissingPathArray)<span class="question-mark">?
@@ -917,6 +935,7 @@
                 <span class="prelude-val">Some</span>(doc) =&gt; markdown::to_html(doc.as_str().context(IncorrectDocTypeSnafu)<span class="question-mark">?</span>),
                 <span class="prelude-val">None </span>=&gt; String::new(),
             },
+            meta,
         })
     }
 
@@ -970,31 +989,32 @@
             patterns: <span class="self">self</span>.patterns,
             params: <span class="self">self</span>.params,
             doc: <span class="self">self</span>.doc,
+            meta: <span class="self">self</span>.meta,
         }
     }
 
     <span class="doccomment">/// Compose an HTML fragment documenting all the variations on this route.
-    </span><span class="kw">pub fn </span>documentation(<span class="kw-2">&amp;</span><span class="self">self</span>, meta: <span class="kw-2">&amp;</span>ApiMetadata) -&gt; Html {
+    </span><span class="kw">pub fn </span>documentation(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Html {
         <span class="macro">html! </span>{
-            (PreEscaped(meta.heading_entry
+            (PreEscaped(<span class="self">self</span>.meta.heading_entry
                 .replace(<span class="string">&quot;{{METHOD}}&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.method().to_string())
                 .replace(<span class="string">&quot;{{NAME}}&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.name())))
-            (PreEscaped(<span class="kw-2">&amp;</span>meta.heading_routes))
+            (PreEscaped(<span class="kw-2">&amp;</span><span class="self">self</span>.meta.heading_routes))
             @<span class="kw">for </span>path <span class="kw">in </span><span class="self">self</span>.patterns() {
-                (PreEscaped(meta.route_path.replace(<span class="string">&quot;{{PATH}}&quot;</span>, <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;/{}/{}&quot;</span>, meta.name, path))))
+                (PreEscaped(<span class="self">self</span>.meta.route_path.replace(<span class="string">&quot;{{PATH}}&quot;</span>, <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;/{}/{}&quot;</span>, <span class="self">self</span>.meta.name, path))))
             }
-            (PreEscaped(<span class="kw-2">&amp;</span>meta.heading_parameters))
-            (PreEscaped(<span class="kw-2">&amp;</span>meta.parameter_table_open))
+            (PreEscaped(<span class="kw-2">&amp;</span><span class="self">self</span>.meta.heading_parameters))
+            (PreEscaped(<span class="kw-2">&amp;</span><span class="self">self</span>.meta.parameter_table_open))
             @<span class="kw">for </span>param <span class="kw">in </span><span class="self">self</span>.params() {
-                (PreEscaped(meta.parameter_row
+                (PreEscaped(<span class="self">self</span>.meta.parameter_row
                     .replace(<span class="string">&quot;{{NAME}}&quot;</span>, <span class="kw-2">&amp;</span>param.name)
                     .replace(<span class="string">&quot;{{TYPE}}&quot;</span>, <span class="kw-2">&amp;</span>param.param_type.to_string())))
             }
             @<span class="kw">if </span><span class="self">self</span>.params().is_empty() {
-                (PreEscaped(<span class="kw-2">&amp;</span>meta.parameter_none))
+                (PreEscaped(<span class="kw-2">&amp;</span><span class="self">self</span>.meta.parameter_none))
             }
-            (PreEscaped(<span class="kw-2">&amp;</span>meta.parameter_table_close))
-            (PreEscaped(<span class="kw-2">&amp;</span>meta.heading_description))
+            (PreEscaped(<span class="kw-2">&amp;</span><span class="self">self</span>.meta.parameter_table_close))
+            (PreEscaped(<span class="kw-2">&amp;</span><span class="self">self</span>.meta.heading_description))
             (PreEscaped(<span class="kw-2">&amp;</span><span class="self">self</span>.doc))
         }
     }
@@ -1042,12 +1062,8 @@
 
     <span class="doccomment">/// Print documentation about the route, to aid the developer when the route is not yet
     /// implemented.
-    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>default_handler(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        _req: RequestParams,
-        _state: <span class="kw-2">&amp;</span>State,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;tide::Response, RouteError&lt;Error&gt;&gt; {
-        <span class="macro">unimplemented!</span>()
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>default_handler(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;tide::Response, RouteError&lt;Error&gt;&gt; {
+        <span class="prelude-val">Ok</span>(<span class="self">self</span>.documentation().into())
     }
 
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">async fn </span>handle_socket(
@@ -1087,7 +1103,7 @@
         <span class="kw">match </span><span class="kw-2">&amp;</span><span class="self">self</span>.handler {
             RouteImplementation::Http { handler, .. } =&gt; <span class="kw">match </span>handler {
                 <span class="prelude-val">Some</span>(handler) =&gt; handler.handle(req, state).<span class="kw">await</span>,
-                <span class="prelude-val">None </span>=&gt; <span class="self">self</span>.default_handler(req, state),
+                <span class="prelude-val">None </span>=&gt; <span class="self">self</span>.default_handler(),
             },
             RouteImplementation::Socket { .. } =&gt; <span class="prelude-val">Err</span>(RouteError::IncorrectMethod {
                 expected: <span class="self">self</span>.method(),

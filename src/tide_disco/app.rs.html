@@ -733,8 +733,6 @@
 <a href="#733" id="733">733</a>
 <a href="#734" id="734">734</a>
 <a href="#735" id="735">735</a>
-<a href="#736" id="736">736</a>
-<a href="#737" id="737">737</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright (c) 2022 Espresso Systems (espressosys.com)
 // This file is part of the tide-disco library.
 
@@ -1169,10 +1167,8 @@
             <span class="kw">let </span>api = api.clone();
             <span class="kw">async move </span>{
                 <span class="kw">let </span>route = <span class="kw-2">&amp;</span>req.state().clone().apis[<span class="kw-2">&amp;</span>api][<span class="kw-2">&amp;</span>name];
-                <span class="kw">let </span>state = <span class="kw-2">&amp;*</span>req.state().clone().state;
-                <span class="kw">let </span>req = request_params(req, route.params()).<span class="kw">await</span><span class="question-mark">?</span>;
                 route
-                    .default_handler(req, state)
+                    .default_handler()
                     .map_err(|err| <span class="kw">match </span>err {
                         RouteError::AppSpecific(err) =&gt; err,
                         <span class="kw">_ </span>=&gt; Error::from_route_error(err),
@@ -1244,7 +1240,7 @@
         <span class="kw">let </span><span class="kw-2">mut </span>res = next.run(req).<span class="kw">await</span>;
         <span class="kw">if let </span><span class="prelude-val">Some</span>(error) = res.take_error() {
             <span class="kw">let </span>error = E::from_server_error(error);
-            <span class="macro">tracing::warn!</span>(<span class="string">&quot;responding with error: {}&quot;</span>, error);
+            <span class="macro">tracing::info!</span>(<span class="string">&quot;responding with error: {}&quot;</span>, error);
             <span class="comment">// Try to add the error to the response body using a format accepted by the client. If
             // we cannot do that (for example, if the client requested a format that is incompatible
             // with a serialized error) just add the error as a string using plaintext.

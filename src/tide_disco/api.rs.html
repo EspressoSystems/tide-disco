@@ -1453,6 +1453,15 @@
 <a href="#1453" id="1453">1453</a>
 <a href="#1454" id="1454">1454</a>
 <a href="#1455" id="1455">1455</a>
+<a href="#1456" id="1456">1456</a>
+<a href="#1457" id="1457">1457</a>
+<a href="#1458" id="1458">1458</a>
+<a href="#1459" id="1459">1459</a>
+<a href="#1460" id="1460">1460</a>
+<a href="#1461" id="1461">1461</a>
+<a href="#1462" id="1462">1462</a>
+<a href="#1463" id="1463">1463</a>
+<a href="#1464" id="1464">1464</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright (c) 2022 Espresso Systems (espressosys.com)
 // This file is part of the tide-disco library.
 
@@ -1466,7 +1475,9 @@
     route::{<span class="self">self</span>, <span class="kw-2">*</span>},
     socket, Html,
 };
+<span class="kw">use </span>async_std::sync::Arc;
 <span class="kw">use </span>async_trait::async_trait;
+<span class="kw">use </span>derivative::Derivative;
 <span class="kw">use </span>derive_more::From;
 <span class="kw">use </span>futures::{future::BoxFuture, stream::BoxStream};
 <span class="kw">use </span>maud::{html, PreEscaped};
@@ -1700,11 +1711,15 @@
 /// An [Api] is a structured representation of an `api.toml` specification. It contains API-level
 /// metadata and descriptions of all of the routes in the specification. It can be parsed from a
 /// TOML file and registered as a module of an [App](crate::App).
+</span><span class="attr">#[derive(Derivative)]
+#[derivative(Debug(bound = <span class="string">&quot;&quot;</span>))]
 </span><span class="kw">pub struct </span>Api&lt;State, Error&gt; {
-    meta: ApiMetadata,
+    meta: Arc&lt;ApiMetadata&gt;,
+    name: String,
     routes: HashMap&lt;String, Route&lt;State, Error&gt;&gt;,
     routes_by_path: HashMap&lt;String, Vec&lt;String&gt;&gt;,
-    health_check: <span class="prelude-ty">Option</span>&lt;HealthCheckHandler&lt;State&gt;&gt;,
+    <span class="attr">#[derivative(Debug = <span class="string">&quot;ignore&quot;</span>)]
+    </span>health_check: <span class="prelude-ty">Option</span>&lt;HealthCheckHandler&lt;State&gt;&gt;,
     api_version: <span class="prelude-ty">Option</span>&lt;Version&gt;,
     public: <span class="prelude-ty">Option</span>&lt;PathBuf&gt;,
 }
@@ -1766,6 +1781,7 @@
                 .map_err(|source| ApiError::InvalidMetaTable { source })<span class="question-mark">?</span>,
             <span class="prelude-val">None </span>=&gt; ApiMetadata::default(),
         };
+        <span class="kw">let </span>meta = Arc::new(meta);
         <span class="kw">let </span>routes = <span class="kw">match </span>api.get(<span class="string">&quot;route&quot;</span>) {
             <span class="prelude-val">Some</span>(routes) =&gt; routes.as_table().context(RoutesMustBeTableSnafu)<span class="question-mark">?</span>,
             <span class="prelude-val">None </span>=&gt; <span class="kw">return </span><span class="prelude-val">Err</span>(ApiError::MissingRoutesTable),
@@ -1774,7 +1790,7 @@
         </span><span class="kw">let </span>routes = routes
             .into_iter()
             .map(|(name, spec)| {
-                <span class="kw">let </span>route = Route::new(name.clone(), spec).context(RouteSnafu)<span class="question-mark">?</span>;
+                <span class="kw">let </span>route = Route::new(name.clone(), spec, meta.clone()).context(RouteSnafu)<span class="question-mark">?</span>;
                 <span class="prelude-val">Ok</span>((route.name(), route))
             })
             .collect::&lt;<span class="prelude-ty">Result</span>&lt;HashMap&lt;<span class="kw">_</span>, <span class="kw">_</span>&gt;, <span class="kw">_</span>&gt;&gt;()<span class="question-mark">?</span>;
@@ -1803,6 +1819,7 @@
             }
         }
         <span class="prelude-val">Ok</span>(<span class="self">Self </span>{
+            name: meta.name.clone(),
             meta,
             routes,
             routes_by_path,
@@ -2500,6 +2517,7 @@
     {
         Api {
             meta: <span class="self">self</span>.meta,
+            name: <span class="self">self</span>.name,
             routes: <span class="self">self
                 </span>.routes
                 .into_iter()
@@ -2513,23 +2531,23 @@
     }
 
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>set_name(<span class="kw-2">&amp;mut </span><span class="self">self</span>, name: String) {
-        <span class="self">self</span>.meta.name = name;
+        <span class="self">self</span>.name = name;
     }
 
     <span class="doccomment">/// Compose an HTML page documenting all the routes in this API.
     </span><span class="kw">pub fn </span>documentation(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Html {
         <span class="macro">html! </span>{
             (PreEscaped(<span class="self">self</span>.meta.html_top
-                .replace(<span class="string">&quot;{{NAME}}&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.meta.name)
+                .replace(<span class="string">&quot;{{NAME}}&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.name)
                 .replace(<span class="string">&quot;{{DESCRIPTION}}&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.meta.description)
                 .replace(<span class="string">&quot;{{VERSION}}&quot;</span>, <span class="kw-2">&amp;</span><span class="kw">match </span><span class="kw-2">&amp;</span><span class="self">self</span>.api_version {
                     <span class="prelude-val">Some</span>(version) =&gt; version.to_string(),
                     <span class="prelude-val">None </span>=&gt; <span class="string">&quot;(no version)&quot;</span>.to_string(),
                 })
                 .replace(<span class="string">&quot;{{FORMAT_VERSION}}&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.meta.format_version.to_string())
-                .replace(<span class="string">&quot;{{PUBLIC}}&quot;</span>, <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;/public/{}&quot;</span>, <span class="self">self</span>.meta.name))))
+                .replace(<span class="string">&quot;{{PUBLIC}}&quot;</span>, <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;/public/{}&quot;</span>, <span class="self">self</span>.name))))
             @<span class="kw">for </span>route <span class="kw">in </span><span class="self">self</span>.routes.values() {
-                (route.documentation(<span class="kw-2">&amp;</span><span class="self">self</span>.meta))
+                (route.documentation())
             }
             (PreEscaped(<span class="kw-2">&amp;</span><span class="self">self</span>.meta.html_bottom))
         }
