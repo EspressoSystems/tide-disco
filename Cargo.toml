@@ -17,6 +17,7 @@ async-trait = "0.1.51"
 bincode = "1.3.3"
 clap = { version = "4.0", features = ["derive"] }
 config = "0.13.1"
+derivative = "2.2"
 derive_more = "0.99"
 dirs = "5.0.1"
 edit-distance = "2.1.0"
