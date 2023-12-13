@@ -11,7 +11,9 @@ use crate::{
     route::{self, *},
     socket, Html,
 };
+use async_std::sync::Arc;
 use async_trait::async_trait;
+use derivative::Derivative;
 use derive_more::From;
 use futures::{future::BoxFuture, stream::BoxStream};
 use maud::{html, PreEscaped};
@@ -245,10 +247,14 @@ mod meta_defaults {
 /// An [Api] is a structured representation of an `api.toml` specification. It contains API-level
 /// metadata and descriptions of all of the routes in the specification. It can be parsed from a
 /// TOML file and registered as a module of an [App](crate::App).
+#[derive(Derivative)]
+#[derivative(Debug(bound = ""))]
 pub struct Api<State, Error> {
-    meta: ApiMetadata,
+    meta: Arc<ApiMetadata>,
+    name: String,
     routes: HashMap<String, Route<State, Error>>,
     routes_by_path: HashMap<String, Vec<String>>,
+    #[derivative(Debug = "ignore")]
     health_check: Option<HealthCheckHandler<State>>,
     api_version: Option<Version>,
     public: Option<PathBuf>,
@@ -311,6 +317,7 @@ impl<State, Error> Api<State, Error> {
                 .map_err(|source| ApiError::InvalidMetaTable { source })?,
             None => ApiMetadata::default(),
         };
+        let meta = Arc::new(meta);
         let routes = match api.get("route") {
             Some(routes) => routes.as_table().context(RoutesMustBeTableSnafu)?,
             None => return Err(ApiError::MissingRoutesTable),
@@ -319,7 +326,7 @@ impl<State, Error> Api<State, Error> {
         let routes = routes
             .into_iter()
             .map(|(name, spec)| {
-                let route = Route::new(name.clone(), spec).context(RouteSnafu)?;
+                let route = Route::new(name.clone(), spec, meta.clone()).context(RouteSnafu)?;
                 Ok((route.name(), route))
             })
             .collect::<Result<HashMap<_, _>, _>>()?;
@@ -348,6 +355,7 @@ impl<State, Error> Api<State, Error> {
             }
         }
         Ok(Self {
+            name: meta.name.clone(),
             meta,
             routes,
             routes_by_path,
@@ -1045,6 +1053,7 @@ impl<State, Error> Api<State, Error> {
     {
         Api {
             meta: self.meta,
+            name: self.name,
             routes: self
                 .routes
                 .into_iter()
@@ -1058,23 +1067,23 @@ impl<State, Error> Api<State, Error> {
     }
 
     pub(crate) fn set_name(&mut self, name: String) {
-        self.meta.name = name;
+        self.name = name;
     }
 
     /// Compose an HTML page documenting all the routes in this API.
     pub fn documentation(&self) -> Html {
         html! {
             (PreEscaped(self.meta.html_top
-                .replace("{{NAME}}", &self.meta.name)
+                .replace("{{NAME}}", &self.name)
                 .replace("{{DESCRIPTION}}", &self.meta.description)
                 .replace("{{VERSION}}", &match &self.api_version {
                     Some(version) => version.to_string(),
                     None => "(no version)".to_string(),
                 })
                 .replace("{{FORMAT_VERSION}}", &self.meta.format_version.to_string())
-                .replace("{{PUBLIC}}", &format!("/public/{}", self.meta.name))))
+                .replace("{{PUBLIC}}", &format!("/public/{}", self.name))))
             @for route in self.routes.values() {
-                (route.documentation(&self.meta))
+                (route.documentation())
             }
             (PreEscaped(&self.meta.html_bottom))
         }

@@ -432,10 +432,8 @@ impl<State: Send + Sync + 'static, Error: 'static + crate::Error> App<State, Err
             let api = api.clone();
             async move {
                 let route = &req.state().clone().apis[&api][&name];
-                let state = &*req.state().clone().state;
-                let req = request_params(req, route.params()).await?;
                 route
-                    .default_handler(req, state)
+                    .default_handler()
                     .map_err(|err| match err {
                         RouteError::AppSpecific(err) => err,
                         _ => Error::from_route_error(err),
@@ -507,7 +505,7 @@ fn add_error_body<T: Clone + Send + Sync + 'static, E: crate::Error>(
         let mut res = next.run(req).await;
         if let Some(error) = res.take_error() {
             let error = E::from_server_error(error);
-            tracing::warn!("responding with error: {}", error);
+            tracing::info!("responding with error: {}", error);
             // Try to add the error to the response body using a format accepted by the client. If
             // we cannot do that (for example, if the client requested a format that is incompatible
             // with a serialized error) just add the error as a string using plaintext.

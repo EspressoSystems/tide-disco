@@ -12,7 +12,9 @@ use crate::{
     socket::{self, SocketError},
     Html,
 };
+use async_std::sync::Arc;
 use async_trait::async_trait;
+use derivative::Derivative;
 use derive_more::From;
 use futures::future::{BoxFuture, FutureExt};
 use maud::{html, PreEscaped};
@@ -213,11 +215,15 @@ impl<State, Error> RouteImplementation<State, Error> {
 /// It can be parsed from a TOML specification, and it also includes an optional handler function
 /// which the Rust server can register. Routes with no handler will use a default handler that
 /// simply returns information about the route.
+#[derive(Derivative)]
+#[derivative(Debug(bound = ""))]
 pub struct Route<State, Error> {
     name: String,
     patterns: Vec<String>,
     params: Vec<RequestParam>,
     doc: String,
+    meta: Arc<ApiMetadata>,
+    #[derivative(Debug = "ignore")]
     handler: RouteImplementation<State, Error>,
 }
 
@@ -247,7 +253,11 @@ impl<State, Error> Route<State, Error> {
     /// In addition, the following optional keys may be specified:
     /// * `METHOD`: the method to use to dispatch the route (default `GET`)
     /// * `DOC`: Markdown description of the route
-    pub fn new(name: String, spec: &toml::Value) -> Result<Self, RouteParseError> {
+    pub fn new(
+        name: String,
+        spec: &toml::Value,
+        meta: Arc<ApiMetadata>,
+    ) -> Result<Self, RouteParseError> {
         let paths: Vec<String> = spec["PATH"]
             .as_array()
             .ok_or(RouteParseError::MissingPathArray)?
@@ -310,6 +320,7 @@ impl<State, Error> Route<State, Error> {
                 Some(doc) => markdown::to_html(doc.as_str().context(IncorrectDocTypeSnafu)?),
                 None => String::new(),
             },
+            meta,
         })
     }
 
@@ -363,31 +374,32 @@ impl<State, Error> Route<State, Error> {
             patterns: self.patterns,
             params: self.params,
             doc: self.doc,
+            meta: self.meta,
         }
     }
 
     /// Compose an HTML fragment documenting all the variations on this route.
-    pub fn documentation(&self, meta: &ApiMetadata) -> Html {
+    pub fn documentation(&self) -> Html {
         html! {
-            (PreEscaped(meta.heading_entry
+            (PreEscaped(self.meta.heading_entry
                 .replace("{{METHOD}}", &self.method().to_string())
                 .replace("{{NAME}}", &self.name())))
-            (PreEscaped(&meta.heading_routes))
+            (PreEscaped(&self.meta.heading_routes))
             @for path in self.patterns() {
-                (PreEscaped(meta.route_path.replace("{{PATH}}", &format!("/{}/{}", meta.name, path))))
+                (PreEscaped(self.meta.route_path.replace("{{PATH}}", &format!("/{}/{}", self.meta.name, path))))
             }
-            (PreEscaped(&meta.heading_parameters))
-            (PreEscaped(&meta.parameter_table_open))
+            (PreEscaped(&self.meta.heading_parameters))
+            (PreEscaped(&self.meta.parameter_table_open))
             @for param in self.params() {
-                (PreEscaped(meta.parameter_row
+                (PreEscaped(self.meta.parameter_row
                     .replace("{{NAME}}", &param.name)
                     .replace("{{TYPE}}", &param.param_type.to_string())))
             }
             @if self.params().is_empty() {
-                (PreEscaped(&meta.parameter_none))
+                (PreEscaped(&self.meta.parameter_none))
             }
-            (PreEscaped(&meta.parameter_table_close))
-            (PreEscaped(&meta.heading_description))
+            (PreEscaped(&self.meta.parameter_table_close))
+            (PreEscaped(&self.meta.heading_description))
             (PreEscaped(&self.doc))
         }
     }
@@ -435,12 +447,8 @@ impl<State, Error> Route<State, Error> {
 
     /// Print documentation about the route, to aid the developer when the route is not yet
     /// implemented.
-    pub(crate) fn default_handler(
-        &self,
-        _req: RequestParams,
-        _state: &State,
-    ) -> Result<tide::Response, RouteError<Error>> {
-        unimplemented!()
+    pub(crate) fn default_handler(&self) -> Result<tide::Response, RouteError<Error>> {
+        Ok(self.documentation().into())
     }
 
     pub(crate) async fn handle_socket(
@@ -480,7 +488,7 @@ where
         match &self.handler {
             RouteImplementation::Http { handler, .. } => match handler {
                 Some(handler) => handler.handle(req, state).await,
-                None => self.default_handler(req, state),
+                None => self.default_handler(),
             },
             RouteImplementation::Socket { .. } => Err(RouteError::IncorrectMethod {
                 expected: self.method(),
