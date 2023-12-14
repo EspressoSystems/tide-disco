@@ -15,7 +15,7 @@ test = true
 async-std = { version = "1.8.0", features = ["attributes"] }
 async-trait = "0.1.74"
 bincode = "1.3.3"
-clap = { version = "4.0", features = ["derive"] }
+clap = { version = "4.4", features = ["derive"] }
 config = "0.13.1"
 derivative = "2.2"
 derive_more = "0.99"
