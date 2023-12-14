@@ -30,6 +30,7 @@ use std::str::FromStr;
 pub enum Method {
     Http(http::Method),
     Socket,
+    Metrics,
 }
 
 impl Method {
@@ -58,6 +59,11 @@ impl Method {
         Self::Socket
     }
 
+    /// The Tide Disco METRICS method.
+    pub fn metrics() -> Self {
+        Self::Metrics
+    }
+
     /// Check if a method is a standard HTTP method.
     pub fn is_http(&self) -> bool {
         matches!(self, Self::Http(_))
@@ -68,6 +74,7 @@ impl Method {
         match self {
             Self::Http(m) => !m.is_safe(),
             Self::Socket => true,
+            Self::Metrics => false,
         }
     }
 }
@@ -83,6 +90,7 @@ impl Display for Method {
         match self {
             Self::Http(m) => write!(f, "{}", m),
             Self::Socket => write!(f, "SOCKET"),
+            Self::Metrics => write!(f, "METRICS"),
         }
     }
 }
@@ -93,10 +101,10 @@ impl FromStr for Method {
     type Err = ParseMethodError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        if s == "SOCKET" {
-            Ok(Self::Socket)
-        } else {
-            s.parse().map_err(|_| ParseMethodError).map(Self::Http)
+        match s {
+            "SOCKET" => Ok(Self::Socket),
+            "METRICS" => Ok(Self::Metrics),
+            _ => s.parse().map_err(|_| ParseMethodError).map(Self::Http),
         }
     }
 }

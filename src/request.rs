@@ -584,14 +584,19 @@ pub(crate) fn best_response_type(
         } else if proposed.subtype() == "*" {
             // If the subtype is * but the basetype is not, look for a proposed type with a matching
             // basetype and any subtype.
-            for mime in available {
-                if mime.basetype() == proposed.basetype() {
-                    return Ok(mime.clone());
-                }
+            if let Some(mime) = available
+                .iter()
+                .find(|mime| mime.basetype() == proposed.basetype())
+            {
+                return Ok(mime.clone());
             }
-        } else if available.contains(proposed) {
+        } else {
             // If neither part of the proposal is a wildcard, look for a literal match.
-            return Ok((**proposed).clone());
+            if let Some(mime) = available.iter().find(|mime| {
+                mime.basetype() == proposed.basetype() && mime.subtype() == proposed.subtype()
+            }) {
+                return Ok(mime.clone());
+            }
         }
     }
 
