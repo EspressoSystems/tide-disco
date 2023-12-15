@@ -58,6 +58,6 @@ signal-hook-async-std = "0.2.2"
 [dev-dependencies]
 ark-serialize = { version = "0.4", features = ["derive"] }
 ark-std = "0.4.0"
-async-tungstenite = { version = "0.23", features = ["async-std-runtime"] }
+async-tungstenite = { version = "0.24", features = ["async-std-runtime"] }
 portpicker = "0.1"
 tracing-test = "0.2"
