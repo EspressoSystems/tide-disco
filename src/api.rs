@@ -7,6 +7,7 @@
 use crate::{
     healthcheck::{HealthCheck, HealthStatus},
     method::{Method, ReadState, WriteState},
+    metrics::Metrics,
     request::RequestParams,
     route::{self, *},
     socket, Html,
@@ -21,6 +22,7 @@ use semver::Version;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use serde_with::{serde_as, DisplayFromStr};
 use snafu::{OptionExt, ResultExt, Snafu};
+use std::borrow::Cow;
 use std::collections::hash_map::{Entry, HashMap, IntoValues, Values};
 use std::fmt::Display;
 use std::fs;
@@ -993,6 +995,101 @@ impl<State, Error> Api<State, Error> {
         Ok(self)
     }
 
+    /// Register a handler for a METRICS route.
+    ///
+    /// When the server receives any request whose URL matches the pattern for this route and whose
+    /// headers indicate it is a request for metrics, the server will invoke this `handler` instead
+    /// of the regular HTTP handler for the endpoint. Instead of returning a typed object to
+    /// serialize, `handler` will return a [Metrics] object which will be serialized to plaintext
+    /// using the Prometheus format.
+    ///
+    /// A request is considered a request for metrics, for the purpose of dispatching to this
+    /// handler, if the method is GET and the `Accept` header specifies `text/plain` as a better
+    /// response type than `application/json` and `application/octet-stream` (other Tide Disco
+    /// handlers respond to the content types `application/json` or `application/octet-stream`). As
+    /// a special case, a request with no `Accept` header or `Accept: *` will return metrics when
+    /// there is a metrics route matching the request URL, since metrics are given priority over
+    /// other content types when multiple routes match the URL.
+    ///
+    /// # Examples
+    ///
+    /// A metrics endpoint which keeps track of how many times it has been called.
+    ///
+    /// `api.toml`
+    ///
+    /// ```toml
+    /// [route.metrics]
+    /// PATH = ["/metrics"]
+    /// METHOD = "METRICS"
+    /// DOC = "Export Prometheus metrics."
+    /// ```
+    ///
+    /// ```
+    /// # use async_std::sync::Mutex;
+    /// # use futures::FutureExt;
+    /// # use tide_disco::{api::{Api, ApiError}, error::ServerError};
+    /// # use std::borrow::Cow;
+    /// use prometheus::{Counter, Registry};
+    ///
+    /// struct State {
+    ///     counter: Counter,
+    ///     metrics: Registry,
+    /// }
+    ///
+    /// # fn ex(_api: Api<Mutex<State>, ServerError>) -> Result<(), ApiError> {
+    /// let mut api: Api<Mutex<State>, ServerError>;
+    /// # api = _api;
+    /// api.metrics("metrics", |_req, state| async move {
+    ///     state.counter.inc();
+    ///     Ok(Cow::Borrowed(&state.metrics))
+    /// }.boxed())?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    //
+    /// # Errors
+    ///
+    /// If the route `name` does not exist in the API specification, or if the route already has a
+    /// handler registered, an error is returned. Note that all routes are initialized with a
+    /// default handler that echoes parameters and shows documentation, but this default handler can
+    /// replaced by this function without raising [ApiError::HandlerAlreadyRegistered].
+    ///
+    /// If the route `name` exists, but the method is not METRICS (that is, `METHOD = "M"` was used
+    /// in the route definition in `api.toml`, with `M` other than `METRICS`) the error
+    /// [IncorrectMethod](ApiError::IncorrectMethod) is returned.
+    ///
+    /// # Limitations
+    ///
+    /// [Like many function parameters](crate#boxed-futures) in [tide_disco](crate), the
+    /// handler function is required to return a [BoxFuture].
+    pub fn metrics<F, T>(&mut self, name: &str, handler: F) -> Result<&mut Self, ApiError>
+    where
+        F: 'static
+            + Send
+            + Sync
+            + Fn(RequestParams, &State::State) -> BoxFuture<Result<Cow<T>, Error>>,
+        T: 'static + Clone + Metrics,
+        State: 'static + Send + Sync + ReadState,
+        Error: 'static,
+    {
+        let route = self.routes.get_mut(name).ok_or(ApiError::UndefinedRoute)?;
+        if route.method() != Method::Metrics {
+            return Err(ApiError::IncorrectMethod {
+                expected: Method::Metrics,
+                actual: route.method(),
+            });
+        }
+        if route.has_handler() {
+            return Err(ApiError::HandlerAlreadyRegistered);
+        }
+        // `set_metrics_handler` only fails if the route is not a metrics route; since we have
+        // already checked that it is, this cannot fail.
+        route
+            .set_metrics_handler(handler)
+            .unwrap_or_else(|_| panic!("unexpected failure in set_metrics_handler"));
+        Ok(self)
+    }
+
     /// Set the health check handler for this API.
     ///
     /// This overrides the existing handler. If `health_check` has not yet been called, the default
@@ -1182,6 +1279,8 @@ mod test {
         AsyncRead, AsyncWrite, FutureExt, SinkExt, StreamExt,
     };
     use portpicker::pick_unused_port;
+    use prometheus::{Counter, Registry};
+    use std::borrow::Cow;
     use toml::toml;
 
     #[cfg(windows)]
@@ -1460,5 +1559,54 @@ mod test {
             res.body_json::<HealthStatus>().await.unwrap(),
             HealthStatus::Available
         );
+    }
+
+    #[async_std::test]
+    async fn test_metrics_endpoint() {
+        struct State {
+            metrics: Registry,
+            counter: Counter,
+        }
+
+        let counter = Counter::new(
+            "counter",
+            "count of how many times metrics have been exported",
+        )
+        .unwrap();
+        let metrics = Registry::new();
+        metrics.register(Box::new(counter.clone())).unwrap();
+        let state = State { metrics, counter };
+
+        let mut app = App::<_, ServerError>::with_state(RwLock::new(state));
+        let api_toml = toml! {
+            [meta]
+            FORMAT_VERSION = "0.1.0"
+
+            [route.metrics]
+            PATH = ["/metrics"]
+            METHOD = "METRICS"
+        };
+        {
+            let mut api = app.module::<ServerError>("mod", api_toml).unwrap();
+            api.metrics("metrics", |_req, state| {
+                async move {
+                    state.counter.inc();
+                    Ok(Cow::Borrowed(&state.metrics))
+                }
+                .boxed()
+            })
+            .unwrap();
+        }
+        let port = pick_unused_port().unwrap();
+        let url: Url = format!("http://localhost:{port}").parse().unwrap();
+        spawn(app.serve(format!("0.0.0.0:{port}")));
+        wait_for_server(&url, SERVER_STARTUP_RETRIES, SERVER_STARTUP_SLEEP_MS).await;
+
+        for i in 1..5 {
+            let expected = format!("# HELP counter count of how many times metrics have been exported\n# TYPE counter counter\ncounter {i}\n");
+            let mut res = surf::get(format!("{url}mod/metrics")).send().await.unwrap();
+            assert_eq!(res.body_string().await.unwrap(), expected);
+            assert_eq!(res.status(), StatusCode::Ok);
+        }
     }
 }

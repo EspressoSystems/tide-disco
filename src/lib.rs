@@ -269,6 +269,7 @@ pub mod app;
 pub mod error;
 pub mod healthcheck;
 pub mod method;
+pub mod metrics;
 pub mod request;
 pub mod route;
 pub mod socket;

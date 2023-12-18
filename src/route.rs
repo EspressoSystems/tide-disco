@@ -7,7 +7,8 @@
 use crate::{
     api::ApiMetadata,
     healthcheck::HealthCheck,
-    method::Method,
+    method::{Method, ReadState},
+    metrics,
     request::{best_response_type, RequestError, RequestParam, RequestParamType, RequestParams},
     socket::{self, SocketError},
     Html,
@@ -20,6 +21,7 @@ use futures::future::{BoxFuture, FutureExt};
 use maud::{html, PreEscaped};
 use serde::Serialize;
 use snafu::{OptionExt, Snafu};
+use std::borrow::Cow;
 use std::collections::HashMap;
 use std::convert::Infallible;
 use std::fmt::{self, Display, Formatter};
@@ -48,6 +50,7 @@ pub enum RouteError<E> {
     Bincode(bincode::Error),
     Json(serde_json::Error),
     Tide(tide::Error),
+    ExportMetrics(String),
     IncorrectMethod { expected: Method },
 }
 
@@ -60,6 +63,7 @@ impl<E: Display> Display for RouteError<E> {
             Self::Bincode(err) => write!(f, "error creating byte stream: {}", err),
             Self::Json(err) => write!(f, "error creating JSON response: {}", err),
             Self::Tide(err) => write!(f, "{}", err),
+            Self::ExportMetrics(msg) => write!(f, "error exporting metrics: {msg}"),
             Self::IncorrectMethod { expected } => {
                 write!(f, "route may only be called as {}", expected)
             }
@@ -85,6 +89,7 @@ impl<E> RouteError<E> {
             RouteError::Bincode(err) => RouteError::Bincode(err),
             RouteError::Json(err) => RouteError::Json(err),
             RouteError::Tide(err) => RouteError::Tide(err),
+            RouteError::ExportMetrics(msg) => RouteError::ExportMetrics(msg),
             Self::IncorrectMethod { expected } => RouteError::IncorrectMethod { expected },
         }
     }
@@ -119,7 +124,7 @@ pub(crate) trait Handler<State, Error>: 'static + Send + Sync {
 /// A [Handler] which delegates to an async function.
 ///
 /// The function type `F` should be callable as
-/// `async fn(RequestParams<State>) -> Result<R, Error>`. The [Handler] implementation will
+/// `async fn(RequestParams, &State) -> Result<R, Error>`. The [Handler] implementation will
 /// automatically convert the result `R` to a [tide::Response] by serializing it, or the error
 /// `Error` to a [RouteError] using [RouteError::AppSpecific]. Note that the format used for
 /// serializing the response is flexible. This implementation will use the [Accept] header of the
@@ -179,6 +184,9 @@ enum RouteImplementation<State, Error> {
     Socket {
         handler: Option<socket::Handler<State, Error>>,
     },
+    Metrics {
+        handler: Option<Box<dyn Handler<State, Error>>>,
+    },
 }
 
 impl<State, Error> RouteImplementation<State, Error> {
@@ -204,6 +212,15 @@ impl<State, Error> RouteImplementation<State, Error> {
             },
             Self::Socket { handler } => RouteImplementation::Socket {
                 handler: handler.map(|h| socket::map_err(h, f)),
+            },
+            Self::Metrics { handler } => RouteImplementation::Metrics {
+                handler: handler.map(|h| {
+                    let h: Box<dyn Handler<State, Error2>> =
+                        Box::new(MapErr::<Box<dyn Handler<State, Error>>, _, Error>::new(
+                            h, f,
+                        ));
+                    h
+                }),
             },
         }
     }
@@ -303,6 +320,7 @@ impl<State, Error> Route<State, Error> {
                 handler: None,
             },
             Method::Socket => RouteImplementation::Socket { handler: None },
+            Method::Metrics => RouteImplementation::Metrics { handler: None },
         };
         Ok(Route {
             name,
@@ -342,6 +360,7 @@ impl<State, Error> Route<State, Error> {
         match &self.handler {
             RouteImplementation::Http { method, .. } => (*method).into(),
             RouteImplementation::Socket { .. } => Method::socket(),
+            RouteImplementation::Metrics { .. } => Method::metrics(),
         }
     }
 
@@ -350,6 +369,7 @@ impl<State, Error> Route<State, Error> {
         match &self.handler {
             RouteImplementation::Http { handler, .. } => handler.is_some(),
             RouteImplementation::Socket { handler, .. } => handler.is_some(),
+            RouteImplementation::Metrics { handler, .. } => handler.is_some(),
         }
     }
 
@@ -415,7 +435,7 @@ impl<State, Error> Route<State, Error> {
                 *handler = Some(Box::new(h));
                 Ok(())
             }
-            RouteImplementation::Socket { .. } => Err(RouteError::IncorrectMethod {
+            _ => Err(RouteError::IncorrectMethod {
                 expected: self.method(),
             }),
         }
@@ -439,7 +459,28 @@ impl<State, Error> Route<State, Error> {
                 *handler = Some(h);
                 Ok(())
             }
-            RouteImplementation::Http { .. } => Err(RouteError::IncorrectMethod {
+            _ => Err(RouteError::IncorrectMethod {
+                expected: self.method(),
+            }),
+        }
+    }
+
+    pub(crate) fn set_metrics_handler<F, T>(&mut self, h: F) -> Result<(), RouteError<Error>>
+    where
+        F: 'static
+            + Send
+            + Sync
+            + Fn(RequestParams, &State::State) -> BoxFuture<Result<Cow<T>, Error>>,
+        T: 'static + Clone + metrics::Metrics,
+        State: 'static + Send + Sync + ReadState,
+        Error: 'static,
+    {
+        match &mut self.handler {
+            RouteImplementation::Metrics { handler, .. } => {
+                *handler = Some(Box::new(metrics::Handler::from(h)));
+                Ok(())
+            }
+            _ => Err(RouteError::IncorrectMethod {
                 expected: self.method(),
             }),
         }
@@ -466,7 +507,7 @@ impl<State, Error> Route<State, Error> {
                 // means that we should not get here.
                 None => unreachable!(),
             },
-            RouteImplementation::Http { .. } => Err(SocketError::IncorrectMethod {
+            _ => Err(SocketError::IncorrectMethod {
                 expected: self.method(),
                 actual: req.method(),
             }),
@@ -486,7 +527,8 @@ where
         state: &State,
     ) -> Result<tide::Response, RouteError<Error>> {
         match &self.handler {
-            RouteImplementation::Http { handler, .. } => match handler {
+            RouteImplementation::Http { handler, .. }
+            | RouteImplementation::Metrics { handler, .. } => match handler {
                 Some(handler) => handler.handle(req, state).await,
                 None => self.default_handler(),
             },

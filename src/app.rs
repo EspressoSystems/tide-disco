@@ -9,13 +9,13 @@ use crate::{
     healthcheck::{HealthCheck, HealthStatus},
     http,
     method::Method,
-    request::{RequestParam, RequestParams},
+    request::{best_response_type, RequestParam, RequestParams},
     route::{self, health_check_response, respond_with, Handler, Route, RouteError},
     socket::SocketError,
     Html,
 };
 use async_std::sync::Arc;
-use futures::future::BoxFuture;
+use futures::future::{BoxFuture, FutureExt};
 use include_dir::{include_dir, Dir};
 use lazy_static::lazy_static;
 use maud::html;
@@ -241,6 +241,10 @@ impl<State: Send + Sync + 'static, Error: 'static + crate::Error> App<State, Err
             for (path, routes) in api.routes_by_path() {
                 let mut endpoint = api_endpoint.at(path);
                 let routes = routes.collect::<Vec<_>>();
+
+                // Register socket and metrics middlewares. These must be registered before any
+                // regular HTTP routes, because Tide only applies middlewares to routes which were
+                // already registered before the route handler.
                 if let Some(socket_route) =
                     routes.iter().find(|route| route.method() == Method::Socket)
                 {
@@ -249,6 +253,17 @@ impl<State: Send + Sync + 'static, Error: 'static + crate::Error> App<State, Err
                     // method that has the socket upgrade headers will trigger a WebSockets upgrade.
                     Self::register_socket(prefix.to_owned(), &mut endpoint, socket_route);
                 }
+                if let Some(metrics_route) = routes
+                    .iter()
+                    .find(|route| route.method() == Method::Metrics)
+                {
+                    // If there is a metrics route with this pattern, add the metrics middleware to
+                    // all endpoints registered under this pattern, so that a request to this path
+                    // with the right headers will return metrics instead of going through the
+                    // normal method-based dispatching.
+                    Self::register_metrics(prefix.to_owned(), &mut endpoint, metrics_route);
+                }
+
                 // Register the HTTP routes.
                 for route in routes {
                     if let Method::Http(method) = route.method() {
@@ -383,6 +398,31 @@ impl<State: Send + Sync + 'static, Error: 'static + crate::Error> App<State, Err
         });
     }
 
+    fn register_metrics(
+        api: String,
+        endpoint: &mut tide::Route<Arc<Self>>,
+        route: &Route<State, Error>,
+    ) {
+        let name = route.name();
+        if route.has_handler() {
+            // If there is a metrics handler, add middleware to the endpoint to intercept the
+            // request and respond with metrics, rather than the usual HTTP dispatching, if the
+            // appropriate headers are set.
+            endpoint.with(MetricsMiddleware::new(name.clone(), api.clone()));
+        }
+
+        // Register a catch-all HTTP handler for the route, which serves the route documentation as
+        // HTML. This ensures that there is at least one endpoint registered with the Tide
+        // dispatcher, so that the middleware actually fires on requests to this path. In addition,
+        // this handler will trigger for requests that are not otherwise valid, aiding in
+        // discoverability.
+        //
+        // We register the default handler using `all`, which makes it act as a fallback handler.
+        // This means if there are other, non-metrics routes with this same path, we will still
+        // dispatch to them if the path is hit with the appropriate method.
+        Self::register_fallback(api, endpoint, route);
+    }
+
     fn register_socket(
         api: String,
         endpoint: &mut tide::Route<Arc<Self>>,
@@ -427,6 +467,15 @@ impl<State: Send + Sync + 'static, Error: 'static + crate::Error> App<State, Err
         // We register the default handler using `all`, which makes it act as a fallback handler.
         // This means if there are other, non-socket routes with this same path, we will still
         // dispatch to them if the path is hit with the appropriate method.
+        Self::register_fallback(api, endpoint, route);
+    }
+
+    fn register_fallback(
+        api: String,
+        endpoint: &mut tide::Route<Arc<Self>>,
+        route: &Route<State, Error>,
+    ) {
+        let name = route.name();
         endpoint.all(move |req: tide::Request<Arc<Self>>| {
             let name = name.clone();
             let api = api.clone();
@@ -441,6 +490,67 @@ impl<State: Send + Sync + 'static, Error: 'static + crate::Error> App<State, Err
                     .map_err(|err| err.into_tide_error())
             }
         });
+    }
+}
+
+struct MetricsMiddleware {
+    route: String,
+    api: String,
+}
+
+impl MetricsMiddleware {
+    fn new(route: String, api: String) -> Self {
+        Self { route, api }
+    }
+}
+
+impl<State, Error> tide::Middleware<Arc<App<State, Error>>> for MetricsMiddleware
+where
+    State: Send + Sync + 'static,
+    Error: 'static + crate::Error,
+{
+    fn handle<'a, 'b, 't>(
+        &'a self,
+        req: tide::Request<Arc<App<State, Error>>>,
+        next: tide::Next<'b, Arc<App<State, Error>>>,
+    ) -> BoxFuture<'t, tide::Result>
+    where
+        'a: 't,
+        'b: 't,
+        Self: 't,
+    {
+        let route = self.route.clone();
+        let api = self.api.clone();
+        async move {
+            if req.method() != http::Method::Get {
+                // Metrics only apply to GET requests. For other requests, proceed with normal
+                // dispatching.
+                return Ok(next.run(req).await);
+            }
+            // Look at the `Accept` header. If the requested content type is plaintext, we consider
+            // it a metrics request. Other endpoints have typed responses yielding either JSON or
+            // bincode.
+            let accept = RequestParams::accept_from_headers(&req)?;
+            let reponse_ty =
+                best_response_type(&accept, &[mime::PLAIN, mime::JSON, mime::BYTE_STREAM])?;
+            if reponse_ty != mime::PLAIN {
+                return Ok(next.run(req).await);
+            }
+            // This is a metrics request, abort the rest of the dispatching chain and run the
+            // metrics handler.
+            let route = &req.state().clone().apis[&api][&route];
+            let state = &*req.state().clone().state;
+            let req = request_params(req, route.params()).await?;
+            route
+                .handle(req, state)
+                .await
+                .map_err(|err| match err {
+                    RouteError::AppSpecific(err) => err,
+                    _ => Error::from_route_error(err),
+                })
+                .map_err(|err| err.into_tide_error())
+        }
+        .boxed()
     }
 }
 
@@ -573,21 +683,33 @@ where
 mod test {
     use super::*;
     use crate::{
-        error::ServerError, socket::Connection, wait_for_server, Url, SERVER_STARTUP_RETRIES,
-        SERVER_STARTUP_SLEEP_MS,
+        error::ServerError, metrics::Metrics, socket::Connection, wait_for_server, Url,
+        SERVER_STARTUP_RETRIES, SERVER_STARTUP_SLEEP_MS,
     };
     use async_std::{sync::RwLock, task::spawn};
     use async_tungstenite::{async_std::connect_async, tungstenite::Message};
     use futures::{FutureExt, SinkExt, StreamExt};
     use portpicker::pick_unused_port;
+    use std::borrow::Cow;
     use toml::toml;
+
+    #[derive(Clone, Copy, Debug)]
+    struct FakeMetrics;
+
+    impl Metrics for FakeMetrics {
+        type Error = ServerError;
+
+        fn export(&self) -> Result<String, Self::Error> {
+            Ok("METRICS".into())
+        }
+    }
 
     /// Test route dispatching for routes with the same path and different methods.
     #[async_std::test]
     async fn test_method_dispatch() {
         use crate::http::Method::*;
 
-        let mut app = App::<_, ServerError>::with_state(RwLock::new(()));
+        let mut app = App::<_, ServerError>::with_state(RwLock::new(FakeMetrics));
         let api_toml = toml! {
             [meta]
             FORMAT_VERSION = "0.1.0"
@@ -611,6 +733,10 @@ mod test {
             [route.socket_test]
             PATH = ["/test"]
             METHOD = "SOCKET"
+
+            [route.metrics_test]
+            PATH = ["/test"]
+            METHOD = "METRICS"
         };
         {
             let mut api = app.module::<ServerError>("mod", api_toml).unwrap();
@@ -640,6 +766,10 @@ mod test {
                     .boxed()
                 },
             )
+            .unwrap()
+            .metrics("metrics_test", |_req, state| {
+                async move { Ok(Cow::Borrowed(state)) }.boxed()
+            })
             .unwrap();
         }
         let port = pick_unused_port().unwrap();
@@ -651,9 +781,12 @@ mod test {
             .set_base_url(url.clone())
             .try_into()
             .unwrap();
+
+        // Regular HTTP methods.
         for method in [Get, Post, Put, Delete] {
             let mut res = client
                 .request(method, url.join("mod/test").unwrap())
+                .header("Accept", "application/json")
                 .send()
                 .await
                 .unwrap();
@@ -661,6 +794,26 @@ mod test {
             assert_eq!(res.body_json::<String>().await.unwrap(), method.to_string());
         }
 
+        // Metrics with Accept header.
+        let mut res = client
+            .get(url.join("mod/test").unwrap())
+            .header("Accept", "text/plain")
+            .send()
+            .await
+            .unwrap();
+        assert_eq!(res.body_string().await.unwrap(), "METRICS");
+        assert_eq!(res.status(), StatusCode::Ok);
+
+        // Metrics without Accept header.
+        let mut res = client
+            .get(url.join("mod/test").unwrap())
+            .send()
+            .await
+            .unwrap();
+        assert_eq!(res.body_string().await.unwrap(), "METRICS");
+        assert_eq!(res.status(), StatusCode::Ok);
+
+        // Socket.
         let mut socket_url = url.join("mod/test").unwrap();
         socket_url.set_scheme("ws").unwrap();
         let mut conn = connect_async(socket_url).await.unwrap().0;
