@@ -841,6 +841,11 @@
 <a href="#841" id="841">841</a>
 <a href="#842" id="842">842</a>
 <a href="#843" id="843">843</a>
+<a href="#844" id="844">844</a>
+<a href="#845" id="845">845</a>
+<a href="#846" id="846">846</a>
+<a href="#847" id="847">847</a>
+<a href="#848" id="848">848</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright (c) 2022 Espresso Systems (espressosys.com)
 // This file is part of the tide-disco library.
 
@@ -1427,14 +1432,19 @@
         } <span class="kw">else if </span>proposed.subtype() == <span class="string">&quot;*&quot; </span>{
             <span class="comment">// If the subtype is * but the basetype is not, look for a proposed type with a matching
             // basetype and any subtype.
-            </span><span class="kw">for </span>mime <span class="kw">in </span>available {
-                <span class="kw">if </span>mime.basetype() == proposed.basetype() {
-                    <span class="kw">return </span><span class="prelude-val">Ok</span>(mime.clone());
-                }
+            </span><span class="kw">if let </span><span class="prelude-val">Some</span>(mime) = available
+                .iter()
+                .find(|mime| mime.basetype() == proposed.basetype())
+            {
+                <span class="kw">return </span><span class="prelude-val">Ok</span>(mime.clone());
             }
-        } <span class="kw">else if </span>available.contains(proposed) {
+        } <span class="kw">else </span>{
             <span class="comment">// If neither part of the proposal is a wildcard, look for a literal match.
-            </span><span class="kw">return </span><span class="prelude-val">Ok</span>((<span class="kw-2">**</span>proposed).clone());
+            </span><span class="kw">if let </span><span class="prelude-val">Some</span>(mime) = available.iter().find(|mime| {
+                mime.basetype() == proposed.basetype() &amp;&amp; mime.subtype() == proposed.subtype()
+            }) {
+                <span class="kw">return </span><span class="prelude-val">Ok</span>(mime.clone());
+            }
         }
     }
 

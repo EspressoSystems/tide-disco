@@ -255,6 +255,14 @@
 <a href="#255" id="255">255</a>
 <a href="#256" id="256">256</a>
 <a href="#257" id="257">257</a>
+<a href="#258" id="258">258</a>
+<a href="#259" id="259">259</a>
+<a href="#260" id="260">260</a>
+<a href="#261" id="261">261</a>
+<a href="#262" id="262">262</a>
+<a href="#263" id="263">263</a>
+<a href="#264" id="264">264</a>
+<a href="#265" id="265">265</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright (c) 2022 Espresso Systems (espressosys.com)
 // This file is part of the tide-disco library.
 
@@ -287,6 +295,7 @@
 </span><span class="kw">pub enum </span>Method {
     Http(http::Method),
     Socket,
+    Metrics,
 }
 
 <span class="kw">impl </span>Method {
@@ -315,6 +324,11 @@
         <span class="self">Self</span>::Socket
     }
 
+    <span class="doccomment">/// The Tide Disco METRICS method.
+    </span><span class="kw">pub fn </span>metrics() -&gt; <span class="self">Self </span>{
+        <span class="self">Self</span>::Metrics
+    }
+
     <span class="doccomment">/// Check if a method is a standard HTTP method.
     </span><span class="kw">pub fn </span>is_http(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
         <span class="macro">matches!</span>(<span class="self">self</span>, <span class="self">Self</span>::Http(<span class="kw">_</span>))
@@ -325,6 +339,7 @@
         <span class="kw">match </span><span class="self">self </span>{
             <span class="self">Self</span>::Http(m) =&gt; !m.is_safe(),
             <span class="self">Self</span>::Socket =&gt; <span class="bool-val">true</span>,
+            <span class="self">Self</span>::Metrics =&gt; <span class="bool-val">false</span>,
         }
     }
 }
@@ -340,6 +355,7 @@
         <span class="kw">match </span><span class="self">self </span>{
             <span class="self">Self</span>::Http(m) =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;{}&quot;</span>, m),
             <span class="self">Self</span>::Socket =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;SOCKET&quot;</span>),
+            <span class="self">Self</span>::Metrics =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;METRICS&quot;</span>),
         }
     }
 }
@@ -350,10 +366,10 @@
     <span class="kw">type </span><span class="prelude-val">Err </span>= ParseMethodError;
 
     <span class="kw">fn </span>from_str(s: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, <span class="self">Self</span>::Err&gt; {
-        <span class="kw">if </span>s == <span class="string">&quot;SOCKET&quot; </span>{
-            <span class="prelude-val">Ok</span>(<span class="self">Self</span>::Socket)
-        } <span class="kw">else </span>{
-            s.parse().map_err(|<span class="kw">_</span>| ParseMethodError).map(<span class="self">Self</span>::Http)
+        <span class="kw">match </span>s {
+            <span class="string">&quot;SOCKET&quot; </span>=&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>::Socket),
+            <span class="string">&quot;METRICS&quot; </span>=&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>::Metrics),
+            <span class="kw">_ </span>=&gt; s.parse().map_err(|<span class="kw">_</span>| ParseMethodError).map(<span class="self">Self</span>::Http),
         }
     }
 }
