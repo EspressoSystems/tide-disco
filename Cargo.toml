@@ -51,7 +51,7 @@ tracing-distributed = "0.4"
 tracing-futures = "0.2"
 tracing-log = "0.2.0"
 tracing-subscriber = { version = "0.3.10", features = ["env-filter", "json"] }
-url = "2.2.2"
+url = "2.5.0"
 
 [target.'cfg(not(windows))'.dependencies]
 signal-hook-async-std = "0.2.2"
