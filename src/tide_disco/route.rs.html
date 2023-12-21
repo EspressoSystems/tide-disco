@@ -654,7 +654,6 @@
 <a href="#654" id="654">654</a>
 <a href="#655" id="655">655</a>
 <a href="#656" id="656">656</a>
-<a href="#657" id="657">657</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright (c) 2022 Espresso Systems (espressosys.com)
 // This file is part of the tide-disco library.
 
@@ -668,7 +667,7 @@
     metrics,
     request::{best_response_type, RequestError, RequestParam, RequestParamType, RequestParams},
     socket::{<span class="self">self</span>, SocketError},
-    Html,
+    Html, StatusCode,
 };
 <span class="kw">use </span>async_std::sync::Arc;
 <span class="kw">use </span>async_trait::async_trait;
@@ -689,7 +688,6 @@
         <span class="self">self</span>,
         content::Accept,
         mime::{<span class="self">self</span>, Mime},
-        StatusCode,
     },
     Body,
 };

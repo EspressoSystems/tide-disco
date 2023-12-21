@@ -885,7 +885,6 @@
 <a href="#885" id="885">885</a>
 <a href="#886" id="886">886</a>
 <a href="#887" id="887">887</a>
-<a href="#888" id="888">888</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright (c) 2022 Espresso Systems (espressosys.com)
 // This file is part of the tide-disco library.
 
@@ -900,7 +899,7 @@
     request::{best_response_type, RequestParam, RequestParams},
     route::{<span class="self">self</span>, health_check_response, respond_with, Handler, Route, RouteError},
     socket::SocketError,
-    Html,
+    Html, StatusCode,
 };
 <span class="kw">use </span>async_std::sync::Arc;
 <span class="kw">use </span>futures::future::{BoxFuture, FutureExt};
@@ -921,7 +920,6 @@
 <span class="kw">use </span>tide::{
     http::{headers::HeaderValue, mime},
     security::{CorsMiddleware, Origin},
-    StatusCode,
 };
 <span class="kw">use </span>tide_websockets::WebSocket;
 
@@ -1054,7 +1052,7 @@
         <span class="kw">let </span><span class="kw-2">mut </span>modules = HashMap::new();
         <span class="kw">let </span><span class="kw-2">mut </span>status = HealthStatus::Available;
         <span class="kw">for </span>(name, api) <span class="kw">in </span><span class="kw-2">&amp;</span><span class="self">self</span>.apis {
-            <span class="kw">let </span>health = api.health(req.clone(), state).<span class="kw">await</span>.status();
+            <span class="kw">let </span>health = StatusCode::from(api.health(req.clone(), state).<span class="kw">await</span>.status());
             <span class="kw">if </span>health != StatusCode::Ok {
                 status = HealthStatus::Unhealthy;
             }

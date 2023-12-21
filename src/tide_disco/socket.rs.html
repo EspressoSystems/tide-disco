@@ -403,6 +403,7 @@
 <a href="#403" id="403">403</a>
 <a href="#404" id="404">404</a>
 <a href="#405" id="405">405</a>
+<a href="#406" id="406">406</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright (c) 2022 Espresso Systems (espressosys.com)
 // This file is part of the tide-disco library.
 
@@ -412,9 +413,10 @@
 </span><span class="doccomment">//! An interface for asynchronous communication with clients, using WebSockets.
 
 </span><span class="kw">use crate</span>::{
-    http::{content::Accept, mime, StatusCode},
+    http::{content::Accept, mime},
     method::Method,
     request::{best_response_type, RequestError, RequestParams},
+    StatusCode,
 };
 <span class="kw">use </span>async_std::sync::Arc;
 <span class="kw">use </span>futures::{

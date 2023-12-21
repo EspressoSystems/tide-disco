@@ -676,6 +676,8 @@
 <a href="#676" id="676">676</a>
 <a href="#677" id="677">677</a>
 <a href="#678" id="678">678</a>
+<a href="#679" id="679">679</a>
+<a href="#680" id="680">680</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright (c) 2022 Espresso Systems (espressosys.com)
 // This file is part of the tide-disco library.
 
@@ -951,13 +953,15 @@
 <span class="kw">pub mod </span>request;
 <span class="kw">pub mod </span>route;
 <span class="kw">pub mod </span>socket;
+<span class="kw">pub mod </span>status;
 
 <span class="kw">pub use </span>api::Api;
 <span class="kw">pub use </span>app::App;
 <span class="kw">pub use </span>error::Error;
 <span class="kw">pub use </span>method::Method;
 <span class="kw">pub use </span>request::{RequestError, RequestParam, RequestParamType, RequestParamValue, RequestParams};
-<span class="kw">pub use </span>tide::http::{<span class="self">self</span>, StatusCode};
+<span class="kw">pub use </span>status::StatusCode;
+<span class="kw">pub use </span>tide::http;
 <span class="kw">pub use </span>url::Url;
 
 <span class="kw">pub type </span>Html = maud::Markup;
