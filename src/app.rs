@@ -12,7 +12,7 @@ use crate::{
     request::{best_response_type, RequestParam, RequestParams},
     route::{self, health_check_response, respond_with, Handler, Route, RouteError},
     socket::SocketError,
-    Html,
+    Html, StatusCode,
 };
 use async_std::sync::Arc;
 use futures::future::{BoxFuture, FutureExt};
@@ -33,7 +33,6 @@ use std::path::PathBuf;
 use tide::{
     http::{headers::HeaderValue, mime},
     security::{CorsMiddleware, Origin},
-    StatusCode,
 };
 use tide_websockets::WebSocket;
 
@@ -166,7 +165,7 @@ impl<State: Send + Sync + 'static, Error: 'static> App<State, Error> {
         let mut modules = HashMap::new();
         let mut status = HealthStatus::Available;
         for (name, api) in &self.apis {
-            let health = api.health(req.clone(), state).await.status();
+            let health = StatusCode::from(api.health(req.clone(), state).await.status());
             if health != StatusCode::Ok {
                 status = HealthStatus::Unhealthy;
             }

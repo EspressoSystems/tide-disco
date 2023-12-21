@@ -4,8 +4,8 @@
 // You should have received a copy of the MIT License
 // along with the tide-disco library. If not, see <https://mit-license.org/>.
 
+use crate::StatusCode;
 use serde::{Deserialize, Serialize};
-use tide::StatusCode;
 
 /// A response to a healthcheck endpoint.
 ///
