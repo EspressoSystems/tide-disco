@@ -4,13 +4,12 @@
 // You should have received a copy of the MIT License
 // along with the tide-disco library. If not, see <https://mit-license.org/>.
 
-use crate::{request::RequestError, route::RouteError, socket::SocketError};
+use crate::{request::RequestError, route::RouteError, socket::SocketError, StatusCode};
 use config::ConfigError;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use snafu::Snafu;
 use std::fmt::Display;
 use std::io::Error as IoError;
-use tide::StatusCode;
 
 /// Errors which can be serialized in a response body.
 ///
@@ -54,7 +53,7 @@ pub trait Error: std::error::Error + Serialize + DeserializeOwned + Send + Sync 
     fn from_server_error(source: tide::Error) -> Self {
         match source.downcast::<Self>() {
             Ok(err) => err,
-            Err(source) => Self::catch_all(source.status(), source.to_string()),
+            Err(source) => Self::catch_all(source.status().into(), source.to_string()),
         }
     }
 }
@@ -67,27 +66,8 @@ pub trait Error: std::error::Error + Serialize + DeserializeOwned + Send + Sync 
 #[derive(Clone, Debug, Snafu, Serialize, Deserialize, PartialEq, Eq)]
 #[snafu(display("Error {}: {}", status, message))]
 pub struct ServerError {
-    #[serde(with = "ser_status")]
     pub status: StatusCode,
     pub message: String,
-}
-
-mod ser_status {
-    //! The deserialization implementation for [StatusCode] uses `deserialize_any` unnecessarily,
-    //! which prevents it from working with [bincode].
-    use super::*;
-    use serde::{
-        de::{Deserializer, Error},
-        ser::Serializer,
-    };
-
-    pub fn serialize<S: Serializer>(status: &StatusCode, s: S) -> Result<S::Ok, S::Error> {
-        u16::from(*status).serialize(s)
-    }
-
-    pub fn deserialize<'de, D: Deserializer<'de>>(d: D) -> Result<StatusCode, D::Error> {
-        u16::deserialize(d)?.try_into().map_err(D::Error::custom)
-    }
 }
 
 impl Error for ServerError {

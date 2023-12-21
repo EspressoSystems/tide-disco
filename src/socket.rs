@@ -7,9 +7,10 @@
 //! An interface for asynchronous communication with clients, using WebSockets.
 
 use crate::{
-    http::{content::Accept, mime, StatusCode},
+    http::{content::Accept, mime},
     method::Method,
     request::{best_response_type, RequestError, RequestParams},
+    StatusCode,
 };
 use async_std::sync::Arc;
 use futures::{

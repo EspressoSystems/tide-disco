@@ -11,7 +11,7 @@ use crate::{
     metrics,
     request::{best_response_type, RequestError, RequestParam, RequestParamType, RequestParams},
     socket::{self, SocketError},
-    Html,
+    Html, StatusCode,
 };
 use async_std::sync::Arc;
 use async_trait::async_trait;
@@ -32,7 +32,6 @@ use tide::{
         self,
         content::Accept,
         mime::{self, Mime},
-        StatusCode,
     },
     Body,
 };

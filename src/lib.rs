@@ -273,13 +273,15 @@ pub mod metrics;
 pub mod request;
 pub mod route;
 pub mod socket;
+pub mod status;
 
 pub use api::Api;
 pub use app::App;
 pub use error::Error;
 pub use method::Method;
 pub use request::{RequestError, RequestParam, RequestParamType, RequestParamValue, RequestParams};
-pub use tide::http::{self, StatusCode};
+pub use status::StatusCode;
+pub use tide::http;
 pub use url::Url;
 
 pub type Html = maud::Markup;

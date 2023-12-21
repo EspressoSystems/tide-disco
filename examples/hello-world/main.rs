@@ -9,7 +9,7 @@ use futures::FutureExt;
 use serde::{Deserialize, Serialize};
 use snafu::Snafu;
 use std::io;
-use tide_disco::{http::StatusCode, Api, App, Error, RequestError};
+use tide_disco::{Api, App, Error, RequestError, StatusCode};
 use tracing::info;
 
 #[derive(Clone, Debug, Deserialize, Serialize, Snafu)]
