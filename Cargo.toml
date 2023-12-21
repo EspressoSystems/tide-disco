@@ -50,7 +50,7 @@ tracing = "0.1.40"
 tracing-distributed = "0.4"
 tracing-futures = "0.2"
 tracing-log = "0.2.0"
-tracing-subscriber = { version = "0.3.10", features = ["env-filter", "json"] }
+tracing-subscriber = { version = "0.3.18", features = ["env-filter", "json"] }
 url = "2.5.0"
 
 [target.'cfg(not(windows))'.dependencies]
