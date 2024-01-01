@@ -13,7 +13,7 @@ test = true
 
 [dependencies]
 async-std = { version = "1.8.0", features = ["attributes"] }
-async-trait = "0.1.74"
+async-trait = "0.1.76"
 bincode = "1.3.3"
 clap = { version = "4.4", features = ["derive"] }
 config = "0.13.4"
