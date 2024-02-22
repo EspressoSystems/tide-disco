@@ -1375,23 +1375,29 @@ mod test {
                 },
             )
             .unwrap()
-            .socket("once", |_req, mut conn: Connection<_, (), _, 0, 1>, _state| {
-                async move {
-                    conn.send("msg").boxed().await?;
-                    Ok(())
-                }
-                .boxed()
-            })
+            .socket(
+                "once",
+                |_req, mut conn: Connection<_, (), _, 0, 1>, _state| {
+                    async move {
+                        conn.send("msg").boxed().await?;
+                        Ok(())
+                    }
+                    .boxed()
+                },
+            )
             .unwrap()
-            .socket("error", |_req, _conn: Connection<(), (), _, 0, 1>, _state| {
-                async move {
-                    Err(ServerError::catch_all(
-                        StatusCode::InternalServerError,
-                        "an error message".to_string(),
-                    ))
-                }
-                .boxed()
-            })
+            .socket(
+                "error",
+                |_req, _conn: Connection<(), (), _, 0, 1>, _state| {
+                    async move {
+                        Err(ServerError::catch_all(
+                            StatusCode::InternalServerError,
+                            "an error message".to_string(),
+                        ))
+                    }
+                    .boxed()
+                },
+            )
             .unwrap();
         }
         let port = pick_unused_port().unwrap();
