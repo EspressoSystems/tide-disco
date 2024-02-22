@@ -44,9 +44,9 @@ pub use tide::listener::{Listener, ToListener};
 /// constructing an [Api] for each module and calling [App::register_module]. Once all of the
 /// desired modules are registered, the app can be converted into an asynchronous server task using
 /// [App::serve].
-pub struct App<State, Error> {
+pub struct App<State, Error, const MAJOR: u16, const MINOR: u16> {
     // Map from base URL to module API.
-    apis: HashMap<String, Api<State, Error>>,
+    apis: HashMap<String, Api<State, Error, MAJOR, MINOR>>,
     state: Arc<State>,
     app_version: Option<Version>,
 }
@@ -58,7 +58,9 @@ pub enum AppError {
     ModuleAlreadyExists,
 }
 
-impl<State: Send + Sync + 'static, Error: 'static> App<State, Error> {
+impl<State: Send + Sync + 'static, Error: 'static, const MAJOR: u16, const MINOR: u16>
+    App<State, Error, MAJOR, MINOR>
+{
     /// Create a new [App] with a given state.
     pub fn with_state(state: State) -> Self {
         Self {
@@ -73,7 +75,7 @@ impl<State: Send + Sync + 'static, Error: 'static> App<State, Error> {
         &'a mut self,
         base_url: &'a str,
         api: impl Into<toml::Value>,
-    ) -> Result<Module<'a, State, Error, ModuleError>, AppError>
+    ) -> Result<Module<'a, State, Error, ModuleError, MAJOR, MINOR>, AppError>
     where
         Error: From<ModuleError>,
         ModuleError: 'static + Send + Sync,
@@ -93,7 +95,7 @@ impl<State: Send + Sync + 'static, Error: 'static> App<State, Error> {
     pub fn register_module<ModuleError>(
         &mut self,
         base_url: &str,
-        api: Api<State, ModuleError>,
+        api: Api<State, ModuleError, MAJOR, MINOR>,
     ) -> Result<&mut Self, AppError>
     where
         Error: From<ModuleError>,
@@ -133,7 +135,9 @@ impl<State: Send + Sync + 'static, Error: 'static> App<State, Error> {
     /// is contained in the application crate, it should result in a reasonable version:
     ///
     /// ```
-    /// # fn ex(app: &mut tide_disco::App<(), ()>) {
+    /// # const MAJOR: u16 = 0;
+    /// # const MINOR: u16 = 1;
+    /// # fn ex(app: &mut tide_disco::App<(), (), MAJOR, MINOR>) {
     /// app.with_version(env!("CARGO_PKG_VERSION").parse().unwrap());
     /// # }
     /// ```
@@ -209,7 +213,13 @@ lazy_static! {
     };
 }
 
-impl<State: Send + Sync + 'static, Error: 'static + crate::Error> App<State, Error> {
+impl<
+        State: Send + Sync + 'static,
+        Error: 'static + crate::Error,
+        const MAJOR: u16,
+        const MINOR: u16,
+    > App<State, Error, MAJOR, MINOR>
+{
     /// Serve the [App] asynchronously.
     pub async fn serve<L: ToListener<Arc<Self>>>(self, listener: L) -> io::Result<()> {
         let state = Arc::new(self);
@@ -225,7 +235,7 @@ impl<State: Send + Sync + 'static, Error: 'static + crate::Error> App<State, Err
                 .at(name)
                 .serve_dir(api.public().unwrap_or_else(|| &DEFAULT_PUBLIC_PATH))?;
         }
-        server.with(add_error_body::<_, Error>);
+        server.with(add_error_body::<_, Error, MAJOR, MINOR>);
         server.with(
             CorsMiddleware::new()
                 .allow_methods("GET, POST".parse::<HeaderValue>().unwrap())
@@ -298,9 +308,9 @@ impl<State: Send + Sync + 'static, Error: 'static + crate::Error> App<State, Err
                         async move {
                             let api = &req.state().apis[&prefix];
                             let accept = RequestParams::accept_from_headers(&req)?;
-                            respond_with(&accept, api.version()).map_err(|err| {
-                                Error::from_route_error::<Infallible>(err).into_tide_error()
-                            })
+                            respond_with::<_, _, MAJOR, MINOR>(&accept, api.version()).map_err(
+                                |err| Error::from_route_error::<Infallible>(err).into_tide_error(),
+                            )
                         }
                     });
             }
@@ -315,13 +325,13 @@ impl<State: Send + Sync + 'static, Error: 'static + crate::Error> App<State, Err
                 let req = request_params(req, &[]).await?;
                 let accept = req.accept()?;
                 let res = state.health(req, app_state).await;
-                Ok(health_check_response(&accept, res))
+                Ok(health_check_response::<_, MAJOR, MINOR>(&accept, res))
             });
         server
             .at("version")
             .get(|req: tide::Request<Arc<Self>>| async move {
                 let accept = RequestParams::accept_from_headers(&req)?;
-                respond_with(&accept, req.state().version())
+                respond_with::<_, _, MAJOR, MINOR>(&accept, req.state().version())
                     .map_err(|err| Error::from_route_error::<Infallible>(err).into_tide_error())
             });
 
@@ -374,7 +384,7 @@ impl<State: Send + Sync + 'static, Error: 'static + crate::Error> App<State, Err
     fn register_route(
         api: String,
         endpoint: &mut tide::Route<Arc<Self>>,
-        route: &Route<State, Error>,
+        route: &Route<State, Error, MAJOR, MINOR>,
         method: http::Method,
     ) {
         let name = route.name();
@@ -400,7 +410,7 @@ impl<State: Send + Sync + 'static, Error: 'static + crate::Error> App<State, Err
     fn register_metrics(
         api: String,
         endpoint: &mut tide::Route<Arc<Self>>,
-        route: &Route<State, Error>,
+        route: &Route<State, Error, MAJOR, MINOR>,
     ) {
         let name = route.name();
         if route.has_handler() {
@@ -425,7 +435,7 @@ impl<State: Send + Sync + 'static, Error: 'static + crate::Error> App<State, Err
     fn register_socket(
         api: String,
         endpoint: &mut tide::Route<Arc<Self>>,
-        route: &Route<State, Error>,
+        route: &Route<State, Error, MAJOR, MINOR>,
     ) {
         let name = route.name();
         if route.has_handler() {
@@ -472,7 +482,7 @@ impl<State: Send + Sync + 'static, Error: 'static + crate::Error> App<State, Err
     fn register_fallback(
         api: String,
         endpoint: &mut tide::Route<Arc<Self>>,
-        route: &Route<State, Error>,
+        route: &Route<State, Error, MAJOR, MINOR>,
     ) {
         let name = route.name();
         endpoint.all(move |req: tide::Request<Arc<Self>>| {
@@ -503,15 +513,16 @@ impl MetricsMiddleware {
     }
 }
 
-impl<State, Error> tide::Middleware<Arc<App<State, Error>>> for MetricsMiddleware
+impl<State, Error, const MAJOR: u16, const MINOR: u16>
+    tide::Middleware<Arc<App<State, Error, MAJOR, MINOR>>> for MetricsMiddleware
 where
     State: Send + Sync + 'static,
     Error: 'static + crate::Error,
 {
     fn handle<'a, 'b, 't>(
         &'a self,
-        req: tide::Request<Arc<App<State, Error>>>,
-        next: tide::Next<'b, Arc<App<State, Error>>>,
+        req: tide::Request<Arc<App<State, Error, MAJOR, MINOR>>>,
+        next: tide::Next<'b, Arc<App<State, Error, MAJOR, MINOR>>>,
     ) -> BoxFuture<'t, tide::Result>
     where
         'a: 't,
@@ -528,7 +539,7 @@ where
             }
             // Look at the `Accept` header. If the requested content type is plaintext, we consider
             // it a metrics request. Other endpoints have typed responses yielding either JSON or
-            // bincode.
+            // binary.
             let accept = RequestParams::accept_from_headers(&req)?;
             let reponse_ty =
                 best_response_type(&accept, &[mime::PLAIN, mime::JSON, mime::BYTE_STREAM])?;
@@ -553,8 +564,8 @@ where
     }
 }
 
-async fn request_params<State, Error: crate::Error>(
-    req: tide::Request<Arc<App<State, Error>>>,
+async fn request_params<State, Error: crate::Error, const MAJOR: u16, const MINOR: u16>(
+    req: tide::Request<Arc<App<State, Error, MAJOR, MINOR>>>,
     params: &[RequestParam],
 ) -> Result<RequestParams, tide::Error> {
     RequestParams::new(req, params)
@@ -605,7 +616,12 @@ pub struct AppVersion {
 /// body of the response.
 ///
 /// If the response does not contain an error, it is passed through unchanged.
-fn add_error_body<T: Clone + Send + Sync + 'static, E: crate::Error>(
+fn add_error_body<
+    T: Clone + Send + Sync + 'static,
+    E: crate::Error,
+    const MAJOR: u16,
+    const MINOR: u16,
+>(
     req: tide::Request<T>,
     next: tide::Next<T>,
 ) -> BoxFuture<tide::Result> {
@@ -618,7 +634,7 @@ fn add_error_body<T: Clone + Send + Sync + 'static, E: crate::Error>(
             // Try to add the error to the response body using a format accepted by the client. If
             // we cannot do that (for example, if the client requested a format that is incompatible
             // with a serialized error) just add the error as a string using plaintext.
-            let (body, content_type) = route::response_body::<_, E>(&accept, &error)
+            let (body, content_type) = route::response_body::<_, E, MAJOR, MINOR>(&accept, &error)
                 .unwrap_or_else(|_| (error.to_string().into(), mime::PLAIN));
             res.set_body(body);
             res.set_content_type(content_type);
@@ -629,32 +645,34 @@ fn add_error_body<T: Clone + Send + Sync + 'static, E: crate::Error>(
     })
 }
 
-pub struct Module<'a, State, Error, ModuleError>
+pub struct Module<'a, State, Error, ModuleError, const MAJOR: u16, const MINOR: u16>
 where
     State: 'static + Send + Sync,
     Error: 'static + From<ModuleError>,
     ModuleError: 'static + Send + Sync,
 {
-    app: &'a mut App<State, Error>,
+    app: &'a mut App<State, Error, MAJOR, MINOR>,
     base_url: &'a str,
     // This is only an [Option] so we can [take] out of it during [drop].
-    api: Option<Api<State, ModuleError>>,
+    api: Option<Api<State, ModuleError, MAJOR, MINOR>>,
 }
 
-impl<'a, State, Error, ModuleError> Deref for Module<'a, State, Error, ModuleError>
+impl<'a, State, Error, ModuleError, const MAJOR: u16, const MINOR: u16> Deref
+    for Module<'a, State, Error, ModuleError, MAJOR, MINOR>
 where
     State: 'static + Send + Sync,
     Error: 'static + From<ModuleError>,
     ModuleError: 'static + Send + Sync,
 {
-    type Target = Api<State, ModuleError>;
+    type Target = Api<State, ModuleError, MAJOR, MINOR>;
 
     fn deref(&self) -> &Self::Target {
         self.api.as_ref().unwrap()
     }
 }
 
-impl<'a, State, Error, ModuleError> DerefMut for Module<'a, State, Error, ModuleError>
+impl<'a, State, Error, ModuleError, const MAJOR: u16, const MINOR: u16> DerefMut
+    for Module<'a, State, Error, ModuleError, MAJOR, MINOR>
 where
     State: 'static + Send + Sync,
     Error: 'static + From<ModuleError>,
@@ -665,7 +683,8 @@ where
     }
 }
 
-impl<'a, State, Error, ModuleError> Drop for Module<'a, State, Error, ModuleError>
+impl<'a, State, Error, ModuleError, const MAJOR: u16, const MINOR: u16> Drop
+    for Module<'a, State, Error, ModuleError, MAJOR, MINOR>
 where
     State: 'static + Send + Sync,
     Error: 'static + From<ModuleError>,
@@ -691,6 +710,7 @@ mod test {
     use portpicker::pick_unused_port;
     use std::borrow::Cow;
     use toml::toml;
+    use versioned_binary_serialization::{BinarySerializer, Serializer};
 
     #[derive(Clone, Copy, Debug)]
     struct FakeMetrics;
@@ -708,7 +728,7 @@ mod test {
     async fn test_method_dispatch() {
         use crate::http::Method::*;
 
-        let mut app = App::<_, ServerError>::with_state(RwLock::new(FakeMetrics));
+        let mut app = App::<_, ServerError, 0, 1>::with_state(RwLock::new(FakeMetrics));
         let api_toml = toml! {
             [meta]
             FORMAT_VERSION = "0.1.0"
@@ -757,7 +777,7 @@ mod test {
             .unwrap()
             .socket(
                 "socket_test",
-                |_req, mut conn: Connection<_, (), _>, _state| {
+                |_req, mut conn: Connection<_, (), _, 0, 1>, _state| {
                     async move {
                         conn.send("SOCKET").await.unwrap();
                         Ok(())
@@ -819,7 +839,7 @@ mod test {
         let msg = conn.next().await.unwrap().unwrap();
         let body: String = match msg {
             Message::Text(m) => serde_json::from_str(&m).unwrap(),
-            Message::Binary(m) => bincode::deserialize(&m).unwrap(),
+            Message::Binary(m) => Serializer::<0, 1>::deserialize(&m).unwrap(),
             m => panic!("expected Text or Binary message, but got {}", m),
         };
         assert_eq!(body, "SOCKET");
@@ -828,7 +848,7 @@ mod test {
     /// Test route dispatching for routes with patterns containing different parmaeters
     #[async_std::test]
     async fn test_param_dispatch() {
-        let mut app = App::<_, ServerError>::with_state(RwLock::new(()));
+        let mut app = App::<_, ServerError, 0, 1>::with_state(RwLock::new(()));
         let api_toml = toml! {
             [meta]
             FORMAT_VERSION = "0.1.0"

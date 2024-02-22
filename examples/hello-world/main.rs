@@ -39,11 +39,12 @@ impl From<RequestError> for HelloError {
 }
 
 async fn serve(port: u16) -> io::Result<()> {
-    let mut app = App::<_, HelloError>::with_state(RwLock::new("Hello".to_string()));
+    let mut app = App::<_, HelloError, 0, 1>::with_state(RwLock::new("Hello".to_string()));
     app.with_version(env!("CARGO_PKG_VERSION").parse().unwrap());
 
     let mut api =
-        Api::<RwLock<String>, HelloError>::from_file("examples/hello-world/api.toml").unwrap();
+        Api::<RwLock<String>, HelloError, 0, 1>::from_file("examples/hello-world/api.toml")
+            .unwrap();
     api.with_version(env!("CARGO_PKG_VERSION").parse().unwrap());
 
     // Can invoke by browsing

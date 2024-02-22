@@ -532,6 +532,7 @@ impl StatusCode {
 #[cfg(test)]
 mod test {
     use super::*;
+    use versioned_binary_serialization::{BinarySerializer, Serializer};
 
     #[test]
     fn test_status_code() {
@@ -547,10 +548,13 @@ mod test {
             );
             assert_eq!(code, u16::from(status));
 
-            // Test bincode round trip.
+            // Test binary round trip.
             assert_eq!(
                 status,
-                bincode::deserialize::<StatusCode>(&bincode::serialize(&status).unwrap()).unwrap()
+                Serializer::<0, 1>::deserialize::<StatusCode>(
+                    &Serializer::<0, 1>::serialize(&status).unwrap()
+                )
+                .unwrap()
             );
 
             // Test JSON round trip, readability, and backwards compatibility.

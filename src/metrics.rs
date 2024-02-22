@@ -54,7 +54,8 @@ impl Metrics for prometheus::Registry {
 pub(crate) struct Handler<F>(F);
 
 #[async_trait]
-impl<F, T, State, Error> route::Handler<State, Error> for Handler<F>
+impl<F, T, State, Error, const MAJOR: u16, const MINOR: u16>
+    route::Handler<State, Error, MAJOR, MINOR> for Handler<F>
 where
     F: 'static + Send + Sync + Fn(RequestParams, &State::State) -> BoxFuture<Result<Cow<T>, Error>>,
     T: 'static + Clone + Metrics,

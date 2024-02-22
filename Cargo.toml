@@ -12,9 +12,9 @@ name = "hello-world"
 test = true
 
 [dependencies]
+anyhow = "1.0"
 async-std = { version = "1.8.0", features = ["attributes"] }
 async-trait = "0.1.74"
-bincode = "1.3.3"
 clap = { version = "4.4", features = ["derive"] }
 config = "0.13.4"
 derivative = "2.2"
@@ -54,6 +54,7 @@ tracing-futures = "0.2"
 tracing-log = "0.2.0"
 tracing-subscriber = { version = "0.3.18", features = ["env-filter", "json"] }
 url = "2.5.0"
+versioned-binary-serialization = { git = "https://github.com/EspressoSystems/versioned-binary-serialization.git", branch = "main" }
 
 [target.'cfg(not(windows))'.dependencies]
 signal-hook-async-std = "0.2.2"
