@@ -197,7 +197,8 @@ mod meta_defaults {
                       alt='Espresso Systems Logo'
                       /></a></div>
             <h1>{{NAME}} API {{VERSION}} Reference</h1>
-            <p>{{DESCRIPTION}}</p>
+            <p>{{SHORT_DESCRIPTION}}</p><br/>
+            {{LONG_DESCRIPTION}}
         "
         .to_string()
     }
@@ -260,6 +261,8 @@ pub struct Api<State, Error> {
     health_check: Option<HealthCheckHandler<State>>,
     api_version: Option<Version>,
     public: Option<PathBuf>,
+    short_description: String,
+    long_description: String,
 }
 
 impl<'a, State, Error> IntoIterator for &'a Api<State, Error> {
@@ -356,6 +359,31 @@ impl<State, Error> Api<State, Error> {
                 }
             }
         }
+
+        // Parse description: the first line is a short description, to display when briefly
+        // describing this API in a list. The rest is the long description, to display on this API's
+        // own documentation page. Both are rendered to HTML via Markdown.
+        let blocks = markdown::tokenize(&meta.description);
+        let (short_description, long_description) = match blocks.split_first() {
+            Some((short, long)) => {
+                let render = |blocks| markdown::to_html(&markdown::generate_markdown(blocks));
+
+                let short = render(vec![short.clone()]);
+                let long = render(long.to_vec());
+
+                // The short description is only one block, and sometimes we would like to display
+                // it inline (as a `span`). Markdown automatically wraps blocks in `<p>`. We will
+                // strip this outer tag so that we can wrap it in either `<p>` or `<span>`,
+                // depending on the context.
+                let short = short.strip_prefix("<p>").unwrap_or(&short);
+                let short = short.strip_suffix("</p>").unwrap_or(short);
+                let short = short.to_string();
+
+                (short, long)
+            }
+            None => Default::default(),
+        };
+
         Ok(Self {
             name: meta.name.clone(),
             meta,
@@ -364,6 +392,8 @@ impl<State, Error> Api<State, Error> {
             health_check: None,
             api_version: None,
             public: None,
+            short_description,
+            long_description,
         })
     }
 
@@ -1160,6 +1190,8 @@ impl<State, Error> Api<State, Error> {
             health_check: self.health_check,
             api_version: self.api_version,
             public: self.public,
+            short_description: self.short_description,
+            long_description: self.long_description,
         }
     }
 
@@ -1172,7 +1204,8 @@ impl<State, Error> Api<State, Error> {
         html! {
             (PreEscaped(self.meta.html_top
                 .replace("{{NAME}}", &self.name)
-                .replace("{{DESCRIPTION}}", &self.meta.description)
+                .replace("{{SHORT_DESCRIPTION}}", &self.short_description)
+                .replace("{{LONG_DESCRIPTION}}", &self.long_description)
                 .replace("{{VERSION}}", &match &self.api_version {
                     Some(version) => version.to_string(),
                     None => "(no version)".to_string(),
@@ -1186,9 +1219,9 @@ impl<State, Error> Api<State, Error> {
         }
     }
 
-    /// The description of this API from the specification.
-    pub fn description(&self) -> &str {
-        &self.meta.description
+    /// The short description of this API from the specification.
+    pub fn short_description(&self) -> &str {
+        &self.short_description
     }
 }
 
