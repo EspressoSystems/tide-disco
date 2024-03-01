@@ -1,4 +1,5 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/route.rs`."><title>route.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-fa3bb1812debf86c.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="tide_disco" data-themes="" data-resource-suffix="" data-rustdoc-version="1.74.1 (a28077b28 2023-12-04)" data-channel="1.74.1" data-search-js="search-8be46b629f5f14a8.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-c5bd66d33317d69f.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../tide_disco/index.html"><img class="rust-logo" src="../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/route.rs`."><title>route.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-ac92e1bbe349e143.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="tide_disco" data-themes="" data-resource-suffix="" data-rustdoc-version="1.76.0 (07dca489a 2024-02-04)" data-channel="1.76.0" data-search-js="search-2b6ce74ff89ae146.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-f2adc0d6ca4d09fb.js"></script><script defer src="../../static.files/src-script-39ed315d46fb705f.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-305769736d49e732.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-feafe1bb7466e4bd.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><div class="sidebar-resizer"></div>
+    <main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -710,17 +711,17 @@
 }
 
 <span class="kw">impl</span>&lt;E: Display&gt; Display <span class="kw">for </span>RouteError&lt;E&gt; {
-    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result {
         <span class="kw">match </span><span class="self">self </span>{
-            <span class="self">Self</span>::AppSpecific(err) =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;{}&quot;</span>, err),
-            <span class="self">Self</span>::Request(err) =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;{}&quot;</span>, err),
-            <span class="self">Self</span>::UnsupportedContentType =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;requested content type is not supported&quot;</span>),
-            <span class="self">Self</span>::Bincode(err) =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;error creating byte stream: {}&quot;</span>, err),
-            <span class="self">Self</span>::Json(err) =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;error creating JSON response: {}&quot;</span>, err),
-            <span class="self">Self</span>::Tide(err) =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;{}&quot;</span>, err),
-            <span class="self">Self</span>::ExportMetrics(msg) =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;error exporting metrics: {msg}&quot;</span>),
+            <span class="self">Self</span>::AppSpecific(err) =&gt; <span class="macro">write!</span>(f, <span class="string">"{}"</span>, err),
+            <span class="self">Self</span>::Request(err) =&gt; <span class="macro">write!</span>(f, <span class="string">"{}"</span>, err),
+            <span class="self">Self</span>::UnsupportedContentType =&gt; <span class="macro">write!</span>(f, <span class="string">"requested content type is not supported"</span>),
+            <span class="self">Self</span>::Bincode(err) =&gt; <span class="macro">write!</span>(f, <span class="string">"error creating byte stream: {}"</span>, err),
+            <span class="self">Self</span>::Json(err) =&gt; <span class="macro">write!</span>(f, <span class="string">"error creating JSON response: {}"</span>, err),
+            <span class="self">Self</span>::Tide(err) =&gt; <span class="macro">write!</span>(f, <span class="string">"{}"</span>, err),
+            <span class="self">Self</span>::ExportMetrics(msg) =&gt; <span class="macro">write!</span>(f, <span class="string">"error exporting metrics: {msg}"</span>),
             <span class="self">Self</span>::IncorrectMethod { expected } =&gt; {
-                <span class="macro">write!</span>(f, <span class="string">&quot;route may only be called as {}&quot;</span>, expected)
+                <span class="macro">write!</span>(f, <span class="string">"route may only be called as {}"</span>, expected)
             }
         }
     }
@@ -768,7 +769,7 @@
 /// return type of a handler function. The types which are preserved, `State` and `Error`, should be
 /// the same for all handlers in an API module.
 </span><span class="attr">#[async_trait]
-</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">trait </span>Handler&lt;State, Error&gt;: <span class="lifetime">&#39;static </span>+ Send + Sync {
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">trait </span>Handler&lt;State, Error&gt;: <span class="lifetime">'static </span>+ Send + Sync {
     <span class="kw">async fn </span>handle(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         req: RequestParams,
@@ -796,9 +797,9 @@
 <span class="attr">#[async_trait]
 </span><span class="kw">impl</span>&lt;F, T, State, Error&gt; Handler&lt;State, Error&gt; <span class="kw">for </span>FnHandler&lt;F&gt;
 <span class="kw">where
-    </span>F: <span class="lifetime">&#39;static </span>+ Send + Sync + Fn(RequestParams, <span class="kw-2">&amp;</span>State) -&gt; BoxFuture&lt;<span class="lifetime">&#39;_</span>, <span class="prelude-ty">Result</span>&lt;T, Error&gt;&gt;,
+    </span>F: <span class="lifetime">'static </span>+ Send + Sync + Fn(RequestParams, <span class="kw-2">&amp;</span>State) -&gt; BoxFuture&lt;<span class="lifetime">'_</span>, <span class="prelude-ty">Result</span>&lt;T, Error&gt;&gt;,
     T: Serialize,
-    State: <span class="lifetime">&#39;static </span>+ Send + Sync,
+    State: <span class="lifetime">'static </span>+ Send + Sync,
 {
     <span class="kw">async fn </span>handle(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
@@ -819,7 +820,7 @@
 }
 
 <span class="attr">#[async_trait]
-</span><span class="kw">impl</span>&lt;H: <span class="question-mark">?</span>Sized + Handler&lt;State, Error&gt;, State: <span class="lifetime">&#39;static </span>+ Send + Sync, Error&gt; Handler&lt;State, Error&gt;
+</span><span class="kw">impl</span>&lt;H: <span class="question-mark">?</span>Sized + Handler&lt;State, Error&gt;, State: <span class="lifetime">'static </span>+ Send + Sync, Error&gt; Handler&lt;State, Error&gt;
     <span class="kw">for </span>Box&lt;H&gt;
 {
     <span class="kw">async fn </span>handle(
@@ -847,12 +848,12 @@
 <span class="kw">impl</span>&lt;State, Error&gt; RouteImplementation&lt;State, Error&gt; {
     <span class="kw">fn </span>map_err&lt;Error2&gt;(
         <span class="self">self</span>,
-        f: <span class="kw">impl </span><span class="lifetime">&#39;static </span>+ Send + Sync + Fn(Error) -&gt; Error2,
+        f: <span class="kw">impl </span><span class="lifetime">'static </span>+ Send + Sync + Fn(Error) -&gt; Error2,
     ) -&gt; RouteImplementation&lt;State, Error2&gt;
     <span class="kw">where
-        </span>State: <span class="lifetime">&#39;static </span>+ Send + Sync,
-        Error: <span class="lifetime">&#39;static </span>+ Send + Sync,
-        Error2: <span class="lifetime">&#39;static</span>,
+        </span>State: <span class="lifetime">'static </span>+ Send + Sync,
+        Error: <span class="lifetime">'static </span>+ Send + Sync,
+        Error2: <span class="lifetime">'static</span>,
     {
         <span class="kw">match </span><span class="self">self </span>{
             <span class="self">Self</span>::Http { method, handler } =&gt; RouteImplementation::Http {
@@ -888,14 +889,14 @@
 /// which the Rust server can register. Routes with no handler will use a default handler that
 /// simply returns information about the route.
 </span><span class="attr">#[derive(Derivative)]
-#[derivative(Debug(bound = <span class="string">&quot;&quot;</span>))]
+#[derivative(Debug(bound = <span class="string">""</span>))]
 </span><span class="kw">pub struct </span>Route&lt;State, Error&gt; {
     name: String,
     patterns: Vec&lt;String&gt;,
     params: Vec&lt;RequestParam&gt;,
     doc: String,
     meta: Arc&lt;ApiMetadata&gt;,
-    <span class="attr">#[derivative(Debug = <span class="string">&quot;ignore&quot;</span>)]
+    <span class="attr">#[derivative(Debug = <span class="string">"ignore"</span>)]
     </span>handler: RouteImplementation&lt;State, Error&gt;,
 }
 
@@ -930,7 +931,7 @@
         spec: <span class="kw-2">&amp;</span>toml::Value,
         meta: Arc&lt;ApiMetadata&gt;,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, RouteParseError&gt; {
-        <span class="kw">let </span>paths: Vec&lt;String&gt; = spec[<span class="string">&quot;PATH&quot;</span>]
+        <span class="kw">let </span>paths: Vec&lt;String&gt; = spec[<span class="string">"PATH"</span>]
             .as_array()
             .ok_or(RouteParseError::MissingPathArray)<span class="question-mark">?
             </span>.iter()
@@ -943,8 +944,8 @@
             .collect();
         <span class="kw">let </span><span class="kw-2">mut </span>params = HashMap::&lt;String, RequestParam&gt;::new();
         <span class="kw">for </span>path <span class="kw">in </span>paths.iter() {
-            <span class="kw">for </span>seg <span class="kw">in </span>path.split(<span class="string">&#39;/&#39;</span>) {
-                <span class="kw">if let </span><span class="prelude-val">Some</span>(name) = seg.strip_prefix(<span class="string">&#39;:&#39;</span>) {
+            <span class="kw">for </span>seg <span class="kw">in </span>path.split(<span class="string">'/'</span>) {
+                <span class="kw">if let </span><span class="prelude-val">Some</span>(name) = seg.strip_prefix(<span class="string">':'</span>) {
                     <span class="kw">let </span>param_type = RequestParamType::from_str(
                         spec[seg]
                             .as_str()
@@ -961,7 +962,7 @@
                 }
             }
         }
-        <span class="kw">let </span>method = <span class="kw">match </span>spec.get(<span class="string">&quot;METHOD&quot;</span>) {
+        <span class="kw">let </span>method = <span class="kw">match </span>spec.get(<span class="string">"METHOD"</span>) {
             <span class="prelude-val">Some</span>(val) =&gt; val
                 .as_str()
                 .context(MethodMustBeStringSnafu)<span class="question-mark">?
@@ -979,7 +980,7 @@
         };
         <span class="prelude-val">Ok</span>(Route {
             name,
-            patterns: <span class="kw">match </span>spec.get(<span class="string">&quot;PATH&quot;</span>).context(MissingPathSnafu)<span class="question-mark">? </span>{
+            patterns: <span class="kw">match </span>spec.get(<span class="string">"PATH"</span>).context(MissingPathSnafu)<span class="question-mark">? </span>{
                 toml::Value::String(s) =&gt; <span class="macro">vec!</span>[s.clone()],
                 toml::Value::Array(paths) =&gt; paths
                     .iter()
@@ -989,7 +990,7 @@
             },
             params: params.into_values().collect(),
             handler,
-            doc: <span class="kw">match </span>spec.get(<span class="string">&quot;DOC&quot;</span>) {
+            doc: <span class="kw">match </span>spec.get(<span class="string">"DOC"</span>) {
                 <span class="prelude-val">Some</span>(doc) =&gt; markdown::to_html(doc.as_str().context(IncorrectDocTypeSnafu)<span class="question-mark">?</span>),
                 <span class="prelude-val">None </span>=&gt; String::new(),
             },
@@ -1036,12 +1037,12 @@
     <span class="doccomment">/// Create a new route with a modified error type.
     </span><span class="kw">pub fn </span>map_err&lt;Error2&gt;(
         <span class="self">self</span>,
-        f: <span class="kw">impl </span><span class="lifetime">&#39;static </span>+ Send + Sync + Fn(Error) -&gt; Error2,
+        f: <span class="kw">impl </span><span class="lifetime">'static </span>+ Send + Sync + Fn(Error) -&gt; Error2,
     ) -&gt; Route&lt;State, Error2&gt;
     <span class="kw">where
-        </span>State: <span class="lifetime">&#39;static </span>+ Send + Sync,
-        Error: <span class="lifetime">&#39;static </span>+ Send + Sync,
-        Error2: <span class="lifetime">&#39;static</span>,
+        </span>State: <span class="lifetime">'static </span>+ Send + Sync,
+        Error: <span class="lifetime">'static </span>+ Send + Sync,
+        Error2: <span class="lifetime">'static</span>,
     {
         Route {
             handler: <span class="self">self</span>.handler.map_err(f),
@@ -1057,18 +1058,18 @@
     </span><span class="kw">pub fn </span>documentation(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Html {
         <span class="macro">html! </span>{
             (PreEscaped(<span class="self">self</span>.meta.heading_entry
-                .replace(<span class="string">&quot;{{METHOD}}&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.method().to_string())
-                .replace(<span class="string">&quot;{{NAME}}&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.name())))
+                .replace(<span class="string">"{{METHOD}}"</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.method().to_string())
+                .replace(<span class="string">"{{NAME}}"</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.name())))
             (PreEscaped(<span class="kw-2">&amp;</span><span class="self">self</span>.meta.heading_routes))
             @<span class="kw">for </span>path <span class="kw">in </span><span class="self">self</span>.patterns() {
-                (PreEscaped(<span class="self">self</span>.meta.route_path.replace(<span class="string">&quot;{{PATH}}&quot;</span>, <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;/{}/{}&quot;</span>, <span class="self">self</span>.meta.name, path))))
+                (PreEscaped(<span class="self">self</span>.meta.route_path.replace(<span class="string">"{{PATH}}"</span>, <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"/{}/{}"</span>, <span class="self">self</span>.meta.name, path))))
             }
             (PreEscaped(<span class="kw-2">&amp;</span><span class="self">self</span>.meta.heading_parameters))
             (PreEscaped(<span class="kw-2">&amp;</span><span class="self">self</span>.meta.parameter_table_open))
             @<span class="kw">for </span>param <span class="kw">in </span><span class="self">self</span>.params() {
                 (PreEscaped(<span class="self">self</span>.meta.parameter_row
-                    .replace(<span class="string">&quot;{{NAME}}&quot;</span>, <span class="kw-2">&amp;</span>param.name)
-                    .replace(<span class="string">&quot;{{TYPE}}&quot;</span>, <span class="kw-2">&amp;</span>param.param_type.to_string())))
+                    .replace(<span class="string">"{{NAME}}"</span>, <span class="kw-2">&amp;</span>param.name)
+                    .replace(<span class="string">"{{TYPE}}"</span>, <span class="kw-2">&amp;</span>param.param_type.to_string())))
             }
             @<span class="kw">if </span><span class="self">self</span>.params().is_empty() {
                 (PreEscaped(<span class="kw-2">&amp;</span><span class="self">self</span>.meta.parameter_none))
@@ -1098,9 +1099,9 @@
 
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>set_fn_handler&lt;F, T&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, handler: F) -&gt; <span class="prelude-ty">Result</span>&lt;(), RouteError&lt;Error&gt;&gt;
     <span class="kw">where
-        </span>F: <span class="lifetime">&#39;static </span>+ Send + Sync + Fn(RequestParams, <span class="kw-2">&amp;</span>State) -&gt; BoxFuture&lt;<span class="lifetime">&#39;_</span>, <span class="prelude-ty">Result</span>&lt;T, Error&gt;&gt;,
+        </span>F: <span class="lifetime">'static </span>+ Send + Sync + Fn(RequestParams, <span class="kw-2">&amp;</span>State) -&gt; BoxFuture&lt;<span class="lifetime">'_</span>, <span class="prelude-ty">Result</span>&lt;T, Error&gt;&gt;,
         T: Serialize,
-        State: <span class="lifetime">&#39;static </span>+ Send + Sync,
+        State: <span class="lifetime">'static </span>+ Send + Sync,
     {
         <span class="self">self</span>.set_handler(FnHandler::from(handler))
     }
@@ -1122,13 +1123,13 @@
 
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>set_metrics_handler&lt;F, T&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, h: F) -&gt; <span class="prelude-ty">Result</span>&lt;(), RouteError&lt;Error&gt;&gt;
     <span class="kw">where
-        </span>F: <span class="lifetime">&#39;static
+        </span>F: <span class="lifetime">'static
             </span>+ Send
             + Sync
             + Fn(RequestParams, <span class="kw-2">&amp;</span>State::State) -&gt; BoxFuture&lt;<span class="prelude-ty">Result</span>&lt;Cow&lt;T&gt;, Error&gt;&gt;,
-        T: <span class="lifetime">&#39;static </span>+ Clone + metrics::Metrics,
-        State: <span class="lifetime">&#39;static </span>+ Send + Sync + ReadState,
-        Error: <span class="lifetime">&#39;static</span>,
+        T: <span class="lifetime">'static </span>+ Clone + metrics::Metrics,
+        State: <span class="lifetime">'static </span>+ Send + Sync + ReadState,
+        Error: <span class="lifetime">'static</span>,
     {
         <span class="kw">match </span><span class="kw-2">&amp;mut </span><span class="self">self</span>.handler {
             RouteImplementation::Metrics { handler, .. } =&gt; {
@@ -1173,8 +1174,8 @@
 <span class="attr">#[async_trait]
 </span><span class="kw">impl</span>&lt;State, Error&gt; Handler&lt;State, Error&gt; <span class="kw">for </span>Route&lt;State, Error&gt;
 <span class="kw">where
-    </span>Error: <span class="lifetime">&#39;static</span>,
-    State: <span class="lifetime">&#39;static </span>+ Send + Sync,
+    </span>Error: <span class="lifetime">'static</span>,
+    State: <span class="lifetime">'static </span>+ Send + Sync,
 {
     <span class="kw">async fn </span>handle(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
@@ -1214,10 +1215,10 @@
 </span><span class="kw">impl</span>&lt;H, F, State, Error1, Error2&gt; Handler&lt;State, Error2&gt; <span class="kw">for </span>MapErr&lt;H, F, Error1&gt;
 <span class="kw">where
     </span>H: Handler&lt;State, Error1&gt;,
-    F: <span class="lifetime">&#39;static </span>+ Send + Sync + Fn(Error1) -&gt; Error2,
-    State: <span class="lifetime">&#39;static </span>+ Send + Sync,
-    Error1: <span class="lifetime">&#39;static </span>+ Send + Sync,
-    Error2: <span class="lifetime">&#39;static</span>,
+    F: <span class="lifetime">'static </span>+ Send + Sync + Fn(Error1) -&gt; Error2,
+    State: <span class="lifetime">'static </span>+ Send + Sync,
+    Error1: <span class="lifetime">'static </span>+ Send + Sync,
+    Error2: <span class="lifetime">'static</span>,
 {
     <span class="kw">async fn </span>handle(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
@@ -1238,14 +1239,14 @@
 /// `tide::Response`. The status code of the response will be the status code of the `HealthCheck`
 /// implementation returned by the underlying handler.
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">type </span>HealthCheckHandler&lt;State&gt; =
-    Box&lt;<span class="kw">dyn </span><span class="lifetime">&#39;static </span>+ Send + Sync + Fn(RequestParams, <span class="kw-2">&amp;</span>State) -&gt; BoxFuture&lt;<span class="lifetime">&#39;_</span>, tide::Response&gt;&gt;;
+    Box&lt;<span class="kw">dyn </span><span class="lifetime">'static </span>+ Send + Sync + Fn(RequestParams, <span class="kw-2">&amp;</span>State) -&gt; BoxFuture&lt;<span class="lifetime">'_</span>, tide::Response&gt;&gt;;
 
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>health_check_response&lt;H: HealthCheck&gt;(accept: <span class="kw-2">&amp;</span>Accept, health: H) -&gt; tide::Response {
     <span class="kw">let </span>status = health.status();
     <span class="kw">let </span>(body, content_type) =
         response_body::&lt;H, Infallible&gt;(accept, health).unwrap_or_else(|err| {
             <span class="kw">let </span>msg = <span class="macro">format!</span>(
-                <span class="string">&quot;health status was {}, but there was an error generating the response: {}&quot;</span>,
+                <span class="string">"health status was {}, but there was an error generating the response: {}"</span>,
                 status, err
             );
             (msg.into(), mime::PLAIN)
@@ -1261,16 +1262,16 @@
 /// Given a handler, this function can be used to derive a new, type-erased [HealthCheckHandler]
 /// that takes only [RequestParams] and returns a generic [tide::Response].
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>health_check_handler&lt;State, H&gt;(
-    handler: <span class="kw">impl </span><span class="lifetime">&#39;static </span>+ Send + Sync + Fn(<span class="kw-2">&amp;</span>State) -&gt; BoxFuture&lt;H&gt;,
+    handler: <span class="kw">impl </span><span class="lifetime">'static </span>+ Send + Sync + Fn(<span class="kw-2">&amp;</span>State) -&gt; BoxFuture&lt;H&gt;,
 ) -&gt; HealthCheckHandler&lt;State&gt;
 <span class="kw">where
-    </span>State: <span class="lifetime">&#39;static </span>+ Send + Sync,
-    H: <span class="lifetime">&#39;static </span>+ HealthCheck,
+    </span>State: <span class="lifetime">'static </span>+ Send + Sync,
+    H: <span class="lifetime">'static </span>+ HealthCheck,
 {
     Box::new(<span class="kw">move </span>|req, state| {
         <span class="kw">let </span>accept = req.accept().unwrap_or_else(|<span class="kw">_</span>| {
             <span class="comment">// The healthcheck endpoint is not allowed to fail, so just use the default content
-            // type if we can&#39;t parse the Accept header.
+            // type if we can't parse the Accept header.
             </span><span class="kw">let </span><span class="kw-2">mut </span>accept = Accept::new();
             accept.set_wildcard(<span class="bool-val">true</span>);
             accept

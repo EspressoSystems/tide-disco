@@ -1,4 +1,5 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/app.rs`."><title>app.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-fa3bb1812debf86c.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="tide_disco" data-themes="" data-resource-suffix="" data-rustdoc-version="1.74.1 (a28077b28 2023-12-04)" data-channel="1.74.1" data-search-js="search-8be46b629f5f14a8.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-c5bd66d33317d69f.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../tide_disco/index.html"><img class="rust-logo" src="../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/app.rs`."><title>app.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-ac92e1bbe349e143.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="tide_disco" data-themes="" data-resource-suffix="" data-rustdoc-version="1.76.0 (07dca489a 2024-02-04)" data-channel="1.76.0" data-search-js="search-2b6ce74ff89ae146.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-f2adc0d6ca4d09fb.js"></script><script defer src="../../static.files/src-script-39ed315d46fb705f.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-305769736d49e732.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-feafe1bb7466e4bd.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><div class="sidebar-resizer"></div>
+    <main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -905,7 +906,7 @@
 <span class="kw">use </span>futures::future::{BoxFuture, FutureExt};
 <span class="kw">use </span>include_dir::{include_dir, Dir};
 <span class="kw">use </span>lazy_static::lazy_static;
-<span class="kw">use </span>maud::html;
+<span class="kw">use </span>maud::{html, PreEscaped};
 <span class="kw">use </span>semver::Version;
 <span class="kw">use </span>serde::{Deserialize, Serialize};
 <span class="kw">use </span>serde_with::{serde_as, DisplayFromStr};
@@ -945,7 +946,7 @@
     ModuleAlreadyExists,
 }
 
-<span class="kw">impl</span>&lt;State: Send + Sync + <span class="lifetime">&#39;static</span>, Error: <span class="lifetime">&#39;static</span>&gt; App&lt;State, Error&gt; {
+<span class="kw">impl</span>&lt;State: Send + Sync + <span class="lifetime">'static</span>, Error: <span class="lifetime">'static</span>&gt; App&lt;State, Error&gt; {
     <span class="doccomment">/// Create a new [App] with a given state.
     </span><span class="kw">pub fn </span>with_state(state: State) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
@@ -956,14 +957,14 @@
     }
 
     <span class="doccomment">/// Create and register an API module.
-    </span><span class="kw">pub fn </span>module&lt;<span class="lifetime">&#39;a</span>, ModuleError&gt;(
-        <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span><span class="self">self</span>,
-        base_url: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>str,
+    </span><span class="kw">pub fn </span>module&lt;<span class="lifetime">'a</span>, ModuleError&gt;(
+        <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span><span class="self">self</span>,
+        base_url: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>str,
         api: <span class="kw">impl </span>Into&lt;toml::Value&gt;,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;Module&lt;<span class="lifetime">&#39;a</span>, State, Error, ModuleError&gt;, AppError&gt;
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;Module&lt;<span class="lifetime">'a</span>, State, Error, ModuleError&gt;, AppError&gt;
     <span class="kw">where
         </span>Error: From&lt;ModuleError&gt;,
-        ModuleError: <span class="lifetime">&#39;static </span>+ Send + Sync,
+        ModuleError: <span class="lifetime">'static </span>+ Send + Sync,
     {
         <span class="kw">if </span><span class="self">self</span>.apis.contains_key(base_url) {
             <span class="kw">return </span><span class="prelude-val">Err</span>(AppError::ModuleAlreadyExists);
@@ -984,7 +985,7 @@
     ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="kw-2">&amp;mut </span><span class="self">Self</span>, AppError&gt;
     <span class="kw">where
         </span>Error: From&lt;ModuleError&gt;,
-        ModuleError: <span class="lifetime">&#39;static </span>+ Send + Sync,
+        ModuleError: <span class="lifetime">'static </span>+ Send + Sync,
     {
         <span class="kw">match </span><span class="self">self</span>.apis.entry(base_url.to_string()) {
             Entry::Occupied(<span class="kw">_</span>) =&gt; {
@@ -1021,7 +1022,7 @@
     ///
     /// ```
     /// # fn ex(app: &amp;mut tide_disco::App&lt;(), ()&gt;) {
-    /// app.with_version(env!(&quot;CARGO_PKG_VERSION&quot;).parse().unwrap());
+    /// app.with_version(env!("CARGO_PKG_VERSION").parse().unwrap());
     /// # }
     /// ```
     </span><span class="kw">pub fn </span>with_version(<span class="kw-2">&amp;mut </span><span class="self">self</span>, version: Version) -&gt; <span class="kw-2">&amp;mut </span><span class="self">Self </span>{
@@ -1033,7 +1034,7 @@
     </span><span class="kw">pub fn </span>version(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; AppVersion {
         AppVersion {
             app_version: <span class="self">self</span>.app_version.clone(),
-            disco_version: <span class="macro">env!</span>(<span class="string">&quot;CARGO_PKG_VERSION&quot;</span>).parse().unwrap(),
+            disco_version: <span class="macro">env!</span>(<span class="string">"CARGO_PKG_VERSION"</span>).parse().unwrap(),
             modules: <span class="self">self
                 </span>.apis
                 .iter()
@@ -1064,7 +1065,7 @@
     <span class="doccomment">/// Check the health of the named module.
     ///
     /// The resulting [Response](tide::Response) has a status code which is [StatusCode::Ok] if the
-    /// module is healthy. The response body is constructed from the results of the module&#39;s
+    /// module is healthy. The response body is constructed from the results of the module's
     /// registered healthcheck handler. If the module does not have an explicit healthcheck
     /// handler, the response will be a [HealthStatus].
     ///
@@ -1080,23 +1081,23 @@
     }
 }
 
-<span class="kw">static </span>DEFAULT_PUBLIC_DIR: Dir&lt;<span class="lifetime">&#39;_</span>&gt; = <span class="macro">include_dir!</span>(<span class="string">&quot;$CARGO_MANIFEST_DIR/public/media&quot;</span>);
+<span class="kw">static </span>DEFAULT_PUBLIC_DIR: Dir&lt;<span class="lifetime">'_</span>&gt; = <span class="macro">include_dir!</span>(<span class="string">"$CARGO_MANIFEST_DIR/public/media"</span>);
 <span class="macro">lazy_static! </span>{
     <span class="kw">static </span><span class="kw-2">ref </span>DEFAULT_PUBLIC_PATH: PathBuf = {
         <span class="comment">// The contents of the default public directory are included in the binary. The first time
         // the default directory is used, if ever, we extract them to a directory on the host file
         // system and return the path to that directory.
         </span><span class="kw">let </span>path = dirs::data_local_dir()
-            .unwrap_or_else(|| env::current_dir().unwrap_or_else(|<span class="kw">_</span>| PathBuf::from(<span class="string">&quot;./&quot;</span>)))
-            .join(<span class="string">&quot;tide-disco/public/media&quot;</span>);
+            .unwrap_or_else(|| env::current_dir().unwrap_or_else(|<span class="kw">_</span>| PathBuf::from(<span class="string">"./"</span>)))
+            .join(<span class="string">"tide-disco/public/media"</span>);
         <span class="comment">// If the path already exists, move it aside so we can update it.
-        </span><span class="kw">let _ </span>= fs::rename(<span class="kw-2">&amp;</span>path, path.with_extension(<span class="string">&quot;old&quot;</span>));
+        </span><span class="kw">let _ </span>= fs::rename(<span class="kw-2">&amp;</span>path, path.with_extension(<span class="string">"old"</span>));
         DEFAULT_PUBLIC_DIR.extract(<span class="kw-2">&amp;</span>path).unwrap();
         path
     };
 }
 
-<span class="kw">impl</span>&lt;State: Send + Sync + <span class="lifetime">&#39;static</span>, Error: <span class="lifetime">&#39;static </span>+ <span class="kw">crate</span>::Error&gt; App&lt;State, Error&gt; {
+<span class="kw">impl</span>&lt;State: Send + Sync + <span class="lifetime">'static</span>, Error: <span class="lifetime">'static </span>+ <span class="kw">crate</span>::Error&gt; App&lt;State, Error&gt; {
     <span class="doccomment">/// Serve the [App] asynchronously.
     </span><span class="kw">pub async fn </span>serve&lt;L: ToListener&lt;Arc&lt;<span class="self">Self</span>&gt;&gt;&gt;(<span class="self">self</span>, listener: L) -&gt; io::Result&lt;()&gt; {
         <span class="kw">let </span>state = Arc::new(<span class="self">self</span>);
@@ -1108,16 +1109,16 @@
             // this if we need to (if `api.public()` is `None`) so we disable the lint.
             </span><span class="attr">#[allow(clippy::unnecessary_lazy_evaluations)]
             </span>server
-                .at(<span class="string">&quot;/public&quot;</span>)
+                .at(<span class="string">"/public"</span>)
                 .at(name)
                 .serve_dir(api.public().unwrap_or_else(|| <span class="kw-2">&amp;</span>DEFAULT_PUBLIC_PATH))<span class="question-mark">?</span>;
         }
         server.with(add_error_body::&lt;<span class="kw">_</span>, Error&gt;);
         server.with(
             CorsMiddleware::new()
-                .allow_methods(<span class="string">&quot;GET, POST&quot;</span>.parse::&lt;HeaderValue&gt;().unwrap())
-                .allow_headers(<span class="string">&quot;*&quot;</span>.parse::&lt;HeaderValue&gt;().unwrap())
-                .allow_origin(Origin::from(<span class="string">&quot;*&quot;</span>))
+                .allow_methods(<span class="string">"GET, POST"</span>.parse::&lt;HeaderValue&gt;().unwrap())
+                .allow_headers(<span class="string">"*"</span>.parse::&lt;HeaderValue&gt;().unwrap())
+                .allow_origin(Origin::from(<span class="string">"*"</span>))
                 .allow_credentials(<span class="bool-val">true</span>),
         );
 
@@ -1163,7 +1164,7 @@
                 <span class="kw">let </span>prefix = prefix.clone();
                 server
                     .at(<span class="kw-2">&amp;</span>prefix)
-                    .at(<span class="string">&quot;healthcheck&quot;</span>)
+                    .at(<span class="string">"healthcheck"</span>)
                     .get(<span class="kw">move </span>|req: tide::Request&lt;Arc&lt;<span class="self">Self</span>&gt;&gt;| {
                         <span class="kw">let </span>prefix = prefix.clone();
                         <span class="kw">async move </span>{
@@ -1179,7 +1180,7 @@
                 <span class="kw">let </span>prefix = prefix.clone();
                 server
                     .at(<span class="kw-2">&amp;</span>prefix)
-                    .at(<span class="string">&quot;version&quot;</span>)
+                    .at(<span class="string">"version"</span>)
                     .get(<span class="kw">move </span>|req: tide::Request&lt;Arc&lt;<span class="self">Self</span>&gt;&gt;| {
                         <span class="kw">let </span>prefix = prefix.clone();
                         <span class="kw">async move </span>{
@@ -1195,7 +1196,7 @@
 
         <span class="comment">// Register app-level automatic routes: `healthcheck` and `version`.
         </span>server
-            .at(<span class="string">&quot;healthcheck&quot;</span>)
+            .at(<span class="string">"healthcheck"</span>)
             .get(|req: tide::Request&lt;Arc&lt;<span class="self">Self</span>&gt;&gt;| <span class="kw">async move </span>{
                 <span class="kw">let </span>state = req.state().clone();
                 <span class="kw">let </span>app_state = <span class="kw-2">&amp;*</span>state.state;
@@ -1205,7 +1206,7 @@
                 <span class="prelude-val">Ok</span>(health_check_response(<span class="kw-2">&amp;</span>accept, res))
             });
         server
-            .at(<span class="string">&quot;version&quot;</span>)
+            .at(<span class="string">"version"</span>)
             .get(|req: tide::Request&lt;Arc&lt;<span class="self">Self</span>&gt;&gt;| <span class="kw">async move </span>{
                 <span class="kw">let </span>accept = RequestParams::accept_from_headers(<span class="kw-2">&amp;</span>req)<span class="question-mark">?</span>;
                 respond_with(<span class="kw-2">&amp;</span>accept, req.state().version())
@@ -1215,17 +1216,17 @@
         <span class="comment">// Register catch-all routes for discoverability
         </span>{
             server
-                .at(<span class="string">&quot;/&quot;</span>)
+                .at(<span class="string">"/"</span>)
                 .all(<span class="kw">move </span>|req: tide::Request&lt;Arc&lt;<span class="self">Self</span>&gt;&gt;| <span class="kw">async move </span>{
                     <span class="prelude-val">Ok</span>(<span class="macro">html! </span>{
-                        <span class="string">&quot;This is a Tide Disco app composed of the following modules:&quot;
+                        <span class="string">"This is a Tide Disco app composed of the following modules:"
                         </span>(req.state().list_apis())
                     })
                 });
         }
         {
             server
-                .at(<span class="string">&quot;/*&quot;</span>)
+                .at(<span class="string">"/*"</span>)
                 .all(<span class="kw">move </span>|req: tide::Request&lt;Arc&lt;<span class="self">Self</span>&gt;&gt;| <span class="kw">async move </span>{
                     <span class="kw">let </span>api_name = req.url().path_segments().unwrap().next().unwrap();
                     <span class="kw">let </span>state = req.state();
@@ -1233,8 +1234,8 @@
                         <span class="prelude-val">Ok</span>(api.documentation())
                     } <span class="kw">else </span>{
                         <span class="prelude-val">Ok</span>(<span class="macro">html! </span>{
-                            <span class="string">&quot;No valid route begins with \&quot;&quot; </span>(api_name) <span class="string">&quot;\&quot;. Try routes beginning
-                            with one of the following API identifiers:&quot;
+                            <span class="string">"No valid route begins with \"" </span>(api_name) <span class="string">"\". Try routes beginning
+                            with one of the following API identifiers:"
                             </span>(state.list_apis())
                         })
                     }
@@ -1249,9 +1250,9 @@
             ul {
                 @<span class="kw">for </span>(name, api) <span class="kw">in </span><span class="kw-2">&amp;</span><span class="self">self</span>.apis {
                     li {
-                        a href=(<span class="macro">format!</span>(<span class="string">&quot;/{}&quot;</span>, name)) {(name)}
-                        <span class="string">&quot; &quot;
-                        </span>(api.description())
+                        a href=(<span class="macro">format!</span>(<span class="string">"/{}"</span>, name)) {(name)}
+                        <span class="string">" "
+                        </span>(PreEscaped(api.short_description()))
                     }
                 }
             }
@@ -1392,18 +1393,18 @@
 
 <span class="kw">impl</span>&lt;State, Error&gt; tide::Middleware&lt;Arc&lt;App&lt;State, Error&gt;&gt;&gt; <span class="kw">for </span>MetricsMiddleware
 <span class="kw">where
-    </span>State: Send + Sync + <span class="lifetime">&#39;static</span>,
-    Error: <span class="lifetime">&#39;static </span>+ <span class="kw">crate</span>::Error,
+    </span>State: Send + Sync + <span class="lifetime">'static</span>,
+    Error: <span class="lifetime">'static </span>+ <span class="kw">crate</span>::Error,
 {
-    <span class="kw">fn </span>handle&lt;<span class="lifetime">&#39;a</span>, <span class="lifetime">&#39;b</span>, <span class="lifetime">&#39;t</span>&gt;(
-        <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="self">self</span>,
+    <span class="kw">fn </span>handle&lt;<span class="lifetime">'a</span>, <span class="lifetime">'b</span>, <span class="lifetime">'t</span>&gt;(
+        <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="self">self</span>,
         req: tide::Request&lt;Arc&lt;App&lt;State, Error&gt;&gt;&gt;,
-        next: tide::Next&lt;<span class="lifetime">&#39;b</span>, Arc&lt;App&lt;State, Error&gt;&gt;&gt;,
-    ) -&gt; BoxFuture&lt;<span class="lifetime">&#39;t</span>, tide::Result&gt;
+        next: tide::Next&lt;<span class="lifetime">'b</span>, Arc&lt;App&lt;State, Error&gt;&gt;&gt;,
+    ) -&gt; BoxFuture&lt;<span class="lifetime">'t</span>, tide::Result&gt;
     <span class="kw">where
-        </span><span class="lifetime">&#39;a</span>: <span class="lifetime">&#39;t</span>,
-        <span class="lifetime">&#39;b</span>: <span class="lifetime">&#39;t</span>,
-        <span class="self">Self</span>: <span class="lifetime">&#39;t</span>,
+        </span><span class="lifetime">'a</span>: <span class="lifetime">'t</span>,
+        <span class="lifetime">'b</span>: <span class="lifetime">'t</span>,
+        <span class="self">Self</span>: <span class="lifetime">'t</span>,
     {
         <span class="kw">let </span>route = <span class="self">self</span>.route.clone();
         <span class="kw">let </span>api = <span class="self">self</span>.api.clone();
@@ -1454,7 +1455,7 @@
 </span><span class="kw">pub struct </span>AppHealth {
     <span class="doccomment">/// The status of the overall application.
     ///
-    /// [HealthStatus::Available] if all of the application&#39;s modules are healthy, otherwise a
+    /// [HealthStatus::Available] if all of the application's modules are healthy, otherwise a
     /// [HealthStatus] variant with [status](HealthCheck::status) other than 200.
     </span><span class="kw">pub </span>status: HealthStatus,
     <span class="doccomment">/// The status of each registered module.
@@ -1475,11 +1476,11 @@
     </span><span class="kw">pub </span>modules: HashMap&lt;String, ApiVersion&gt;,
 
     <span class="doccomment">/// The version of this application.
-    </span><span class="attr">#[serde_as(<span class="kw">as </span>= <span class="string">&quot;Option&lt;DisplayFromStr&gt;&quot;</span>)]
+    </span><span class="attr">#[serde_as(<span class="kw">as </span>= <span class="string">"Option&lt;DisplayFromStr&gt;"</span>)]
     </span><span class="kw">pub </span>app_version: <span class="prelude-ty">Option</span>&lt;Version&gt;,
 
     <span class="doccomment">/// The version of the Tide Disco server framework.
-    </span><span class="attr">#[serde_as(<span class="kw">as </span>= <span class="string">&quot;DisplayFromStr&quot;</span>)]
+    </span><span class="attr">#[serde_as(<span class="kw">as </span>= <span class="string">"DisplayFromStr"</span>)]
     </span><span class="kw">pub </span>disco_version: Version,
 }
 
@@ -1492,7 +1493,7 @@
 /// body of the response.
 ///
 /// If the response does not contain an error, it is passed through unchanged.
-</span><span class="kw">fn </span>add_error_body&lt;T: Clone + Send + Sync + <span class="lifetime">&#39;static</span>, E: <span class="kw">crate</span>::Error&gt;(
+</span><span class="kw">fn </span>add_error_body&lt;T: Clone + Send + Sync + <span class="lifetime">'static</span>, E: <span class="kw">crate</span>::Error&gt;(
     req: tide::Request&lt;T&gt;,
     next: tide::Next&lt;T&gt;,
 ) -&gt; BoxFuture&lt;tide::Result&gt; {
@@ -1501,7 +1502,7 @@
         <span class="kw">let </span><span class="kw-2">mut </span>res = next.run(req).<span class="kw">await</span>;
         <span class="kw">if let </span><span class="prelude-val">Some</span>(error) = res.take_error() {
             <span class="kw">let </span>error = E::from_server_error(error);
-            <span class="macro">tracing::info!</span>(<span class="string">&quot;responding with error: {}&quot;</span>, error);
+            <span class="macro">tracing::info!</span>(<span class="string">"responding with error: {}"</span>, error);
             <span class="comment">// Try to add the error to the response body using a format accepted by the client. If
             // we cannot do that (for example, if the client requested a format that is incompatible
             // with a serialized error) just add the error as a string using plaintext.
@@ -1516,23 +1517,23 @@
     })
 }
 
-<span class="kw">pub struct </span>Module&lt;<span class="lifetime">&#39;a</span>, State, Error, ModuleError&gt;
+<span class="kw">pub struct </span>Module&lt;<span class="lifetime">'a</span>, State, Error, ModuleError&gt;
 <span class="kw">where
-    </span>State: <span class="lifetime">&#39;static </span>+ Send + Sync,
-    Error: <span class="lifetime">&#39;static </span>+ From&lt;ModuleError&gt;,
-    ModuleError: <span class="lifetime">&#39;static </span>+ Send + Sync,
+    </span>State: <span class="lifetime">'static </span>+ Send + Sync,
+    Error: <span class="lifetime">'static </span>+ From&lt;ModuleError&gt;,
+    ModuleError: <span class="lifetime">'static </span>+ Send + Sync,
 {
-    app: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span>App&lt;State, Error&gt;,
-    base_url: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>str,
+    app: <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span>App&lt;State, Error&gt;,
+    base_url: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>str,
     <span class="comment">// This is only an [Option] so we can [take] out of it during [drop].
     </span>api: <span class="prelude-ty">Option</span>&lt;Api&lt;State, ModuleError&gt;&gt;,
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, State, Error, ModuleError&gt; Deref <span class="kw">for </span>Module&lt;<span class="lifetime">&#39;a</span>, State, Error, ModuleError&gt;
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, State, Error, ModuleError&gt; Deref <span class="kw">for </span>Module&lt;<span class="lifetime">'a</span>, State, Error, ModuleError&gt;
 <span class="kw">where
-    </span>State: <span class="lifetime">&#39;static </span>+ Send + Sync,
-    Error: <span class="lifetime">&#39;static </span>+ From&lt;ModuleError&gt;,
-    ModuleError: <span class="lifetime">&#39;static </span>+ Send + Sync,
+    </span>State: <span class="lifetime">'static </span>+ Send + Sync,
+    Error: <span class="lifetime">'static </span>+ From&lt;ModuleError&gt;,
+    ModuleError: <span class="lifetime">'static </span>+ Send + Sync,
 {
     <span class="kw">type </span>Target = Api&lt;State, ModuleError&gt;;
 
@@ -1541,22 +1542,22 @@
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, State, Error, ModuleError&gt; DerefMut <span class="kw">for </span>Module&lt;<span class="lifetime">&#39;a</span>, State, Error, ModuleError&gt;
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, State, Error, ModuleError&gt; DerefMut <span class="kw">for </span>Module&lt;<span class="lifetime">'a</span>, State, Error, ModuleError&gt;
 <span class="kw">where
-    </span>State: <span class="lifetime">&#39;static </span>+ Send + Sync,
-    Error: <span class="lifetime">&#39;static </span>+ From&lt;ModuleError&gt;,
-    ModuleError: <span class="lifetime">&#39;static </span>+ Send + Sync,
+    </span>State: <span class="lifetime">'static </span>+ Send + Sync,
+    Error: <span class="lifetime">'static </span>+ From&lt;ModuleError&gt;,
+    ModuleError: <span class="lifetime">'static </span>+ Send + Sync,
 {
     <span class="kw">fn </span>deref_mut(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;mut </span><span class="self">Self</span>::Target {
         <span class="self">self</span>.api.as_mut().unwrap()
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, State, Error, ModuleError&gt; Drop <span class="kw">for </span>Module&lt;<span class="lifetime">&#39;a</span>, State, Error, ModuleError&gt;
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, State, Error, ModuleError&gt; Drop <span class="kw">for </span>Module&lt;<span class="lifetime">'a</span>, State, Error, ModuleError&gt;
 <span class="kw">where
-    </span>State: <span class="lifetime">&#39;static </span>+ Send + Sync,
-    Error: <span class="lifetime">&#39;static </span>+ From&lt;ModuleError&gt;,
-    ModuleError: <span class="lifetime">&#39;static </span>+ Send + Sync,
+    </span>State: <span class="lifetime">'static </span>+ Send + Sync,
+    Error: <span class="lifetime">'static </span>+ From&lt;ModuleError&gt;,
+    ModuleError: <span class="lifetime">'static </span>+ Send + Sync,
 {
     <span class="kw">fn </span>drop(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
         <span class="self">self</span>.app
@@ -1586,7 +1587,7 @@
         <span class="kw">type </span>Error = ServerError;
 
         <span class="kw">fn </span>export(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;String, <span class="self">Self</span>::Error&gt; {
-            <span class="prelude-val">Ok</span>(<span class="string">&quot;METRICS&quot;</span>.into())
+            <span class="prelude-val">Ok</span>(<span class="string">"METRICS"</span>.into())
         }
     }
 
@@ -1598,69 +1599,69 @@
         <span class="kw">let </span><span class="kw-2">mut </span>app = App::&lt;<span class="kw">_</span>, ServerError&gt;::with_state(RwLock::new(FakeMetrics));
         <span class="kw">let </span>api_toml = <span class="macro">toml! </span>{
             [meta]
-            FORMAT_VERSION = <span class="string">&quot;0.1.0&quot;
+            FORMAT_VERSION = <span class="string">"0.1.0"
 
             </span>[route.get_test]
-            PATH = [<span class="string">&quot;/test&quot;</span>]
-            METHOD = <span class="string">&quot;GET&quot;
+            PATH = [<span class="string">"/test"</span>]
+            METHOD = <span class="string">"GET"
 
             </span>[route.post_test]
-            PATH = [<span class="string">&quot;/test&quot;</span>]
-            METHOD = <span class="string">&quot;POST&quot;
+            PATH = [<span class="string">"/test"</span>]
+            METHOD = <span class="string">"POST"
 
             </span>[route.put_test]
-            PATH = [<span class="string">&quot;/test&quot;</span>]
-            METHOD = <span class="string">&quot;PUT&quot;
+            PATH = [<span class="string">"/test"</span>]
+            METHOD = <span class="string">"PUT"
 
             </span>[route.delete_test]
-            PATH = [<span class="string">&quot;/test&quot;</span>]
-            METHOD = <span class="string">&quot;DELETE&quot;
+            PATH = [<span class="string">"/test"</span>]
+            METHOD = <span class="string">"DELETE"
 
             </span>[route.socket_test]
-            PATH = [<span class="string">&quot;/test&quot;</span>]
-            METHOD = <span class="string">&quot;SOCKET&quot;
+            PATH = [<span class="string">"/test"</span>]
+            METHOD = <span class="string">"SOCKET"
 
             </span>[route.metrics_test]
-            PATH = [<span class="string">&quot;/test&quot;</span>]
-            METHOD = <span class="string">&quot;METRICS&quot;
+            PATH = [<span class="string">"/test"</span>]
+            METHOD = <span class="string">"METRICS"
         </span>};
         {
-            <span class="kw">let </span><span class="kw-2">mut </span>api = app.module::&lt;ServerError&gt;(<span class="string">&quot;mod&quot;</span>, api_toml).unwrap();
-            api.get(<span class="string">&quot;get_test&quot;</span>, |_req, _state| {
+            <span class="kw">let </span><span class="kw-2">mut </span>api = app.module::&lt;ServerError&gt;(<span class="string">"mod"</span>, api_toml).unwrap();
+            api.get(<span class="string">"get_test"</span>, |_req, _state| {
                 <span class="kw">async move </span>{ <span class="prelude-val">Ok</span>(Get.to_string()) }.boxed()
             })
             .unwrap()
-            .post(<span class="string">&quot;post_test&quot;</span>, |_req, _state| {
+            .post(<span class="string">"post_test"</span>, |_req, _state| {
                 <span class="kw">async move </span>{ <span class="prelude-val">Ok</span>(Post.to_string()) }.boxed()
             })
             .unwrap()
-            .put(<span class="string">&quot;put_test&quot;</span>, |_req, _state| {
+            .put(<span class="string">"put_test"</span>, |_req, _state| {
                 <span class="kw">async move </span>{ <span class="prelude-val">Ok</span>(Put.to_string()) }.boxed()
             })
             .unwrap()
-            .delete(<span class="string">&quot;delete_test&quot;</span>, |_req, _state| {
+            .delete(<span class="string">"delete_test"</span>, |_req, _state| {
                 <span class="kw">async move </span>{ <span class="prelude-val">Ok</span>(Delete.to_string()) }.boxed()
             })
             .unwrap()
             .socket(
-                <span class="string">&quot;socket_test&quot;</span>,
+                <span class="string">"socket_test"</span>,
                 |_req, <span class="kw-2">mut </span>conn: Connection&lt;<span class="kw">_</span>, (), <span class="kw">_</span>&gt;, _state| {
                     <span class="kw">async move </span>{
-                        conn.send(<span class="string">&quot;SOCKET&quot;</span>).<span class="kw">await</span>.unwrap();
+                        conn.send(<span class="string">"SOCKET"</span>).<span class="kw">await</span>.unwrap();
                         <span class="prelude-val">Ok</span>(())
                     }
                     .boxed()
                 },
             )
             .unwrap()
-            .metrics(<span class="string">&quot;metrics_test&quot;</span>, |_req, state| {
+            .metrics(<span class="string">"metrics_test"</span>, |_req, state| {
                 <span class="kw">async move </span>{ <span class="prelude-val">Ok</span>(Cow::Borrowed(state)) }.boxed()
             })
             .unwrap();
         }
         <span class="kw">let </span>port = pick_unused_port().unwrap();
-        <span class="kw">let </span>url: Url = <span class="macro">format!</span>(<span class="string">&quot;http://localhost:{}&quot;</span>, port).parse().unwrap();
-        spawn(app.serve(<span class="macro">format!</span>(<span class="string">&quot;0.0.0.0:{}&quot;</span>, port)));
+        <span class="kw">let </span>url: Url = <span class="macro">format!</span>(<span class="string">"http://localhost:{}"</span>, port).parse().unwrap();
+        spawn(app.serve(<span class="macro">format!</span>(<span class="string">"0.0.0.0:{}"</span>, port)));
         wait_for_server(<span class="kw-2">&amp;</span>url, SERVER_STARTUP_RETRIES, SERVER_STARTUP_SLEEP_MS).<span class="kw">await</span>;
 
         <span class="kw">let </span>client: surf::Client = surf::Config::new()
@@ -1671,8 +1672,8 @@
         <span class="comment">// Regular HTTP methods.
         </span><span class="kw">for </span>method <span class="kw">in </span>[Get, Post, Put, Delete] {
             <span class="kw">let </span><span class="kw-2">mut </span>res = client
-                .request(method, url.join(<span class="string">&quot;mod/test&quot;</span>).unwrap())
-                .header(<span class="string">&quot;Accept&quot;</span>, <span class="string">&quot;application/json&quot;</span>)
+                .request(method, url.join(<span class="string">"mod/test"</span>).unwrap())
+                .header(<span class="string">"Accept"</span>, <span class="string">"application/json"</span>)
                 .send()
                 .<span class="kw">await
                 </span>.unwrap();
@@ -1682,34 +1683,34 @@
 
         <span class="comment">// Metrics with Accept header.
         </span><span class="kw">let </span><span class="kw-2">mut </span>res = client
-            .get(url.join(<span class="string">&quot;mod/test&quot;</span>).unwrap())
-            .header(<span class="string">&quot;Accept&quot;</span>, <span class="string">&quot;text/plain&quot;</span>)
+            .get(url.join(<span class="string">"mod/test"</span>).unwrap())
+            .header(<span class="string">"Accept"</span>, <span class="string">"text/plain"</span>)
             .send()
             .<span class="kw">await
             </span>.unwrap();
-        <span class="macro">assert_eq!</span>(res.body_string().<span class="kw">await</span>.unwrap(), <span class="string">&quot;METRICS&quot;</span>);
+        <span class="macro">assert_eq!</span>(res.body_string().<span class="kw">await</span>.unwrap(), <span class="string">"METRICS"</span>);
         <span class="macro">assert_eq!</span>(res.status(), StatusCode::Ok);
 
         <span class="comment">// Metrics without Accept header.
         </span><span class="kw">let </span><span class="kw-2">mut </span>res = client
-            .get(url.join(<span class="string">&quot;mod/test&quot;</span>).unwrap())
+            .get(url.join(<span class="string">"mod/test"</span>).unwrap())
             .send()
             .<span class="kw">await
             </span>.unwrap();
-        <span class="macro">assert_eq!</span>(res.body_string().<span class="kw">await</span>.unwrap(), <span class="string">&quot;METRICS&quot;</span>);
+        <span class="macro">assert_eq!</span>(res.body_string().<span class="kw">await</span>.unwrap(), <span class="string">"METRICS"</span>);
         <span class="macro">assert_eq!</span>(res.status(), StatusCode::Ok);
 
         <span class="comment">// Socket.
-        </span><span class="kw">let </span><span class="kw-2">mut </span>socket_url = url.join(<span class="string">&quot;mod/test&quot;</span>).unwrap();
-        socket_url.set_scheme(<span class="string">&quot;ws&quot;</span>).unwrap();
+        </span><span class="kw">let </span><span class="kw-2">mut </span>socket_url = url.join(<span class="string">"mod/test"</span>).unwrap();
+        socket_url.set_scheme(<span class="string">"ws"</span>).unwrap();
         <span class="kw">let </span><span class="kw-2">mut </span>conn = connect_async(socket_url).<span class="kw">await</span>.unwrap().<span class="number">0</span>;
         <span class="kw">let </span>msg = conn.next().<span class="kw">await</span>.unwrap().unwrap();
         <span class="kw">let </span>body: String = <span class="kw">match </span>msg {
             Message::Text(m) =&gt; serde_json::from_str(<span class="kw-2">&amp;</span>m).unwrap(),
             Message::Binary(m) =&gt; bincode::deserialize(<span class="kw-2">&amp;</span>m).unwrap(),
-            m =&gt; <span class="macro">panic!</span>(<span class="string">&quot;expected Text or Binary message, but got {}&quot;</span>, m),
+            m =&gt; <span class="macro">panic!</span>(<span class="string">"expected Text or Binary message, but got {}"</span>, m),
         };
-        <span class="macro">assert_eq!</span>(body, <span class="string">&quot;SOCKET&quot;</span>);
+        <span class="macro">assert_eq!</span>(body, <span class="string">"SOCKET"</span>);
     }
 
     <span class="doccomment">/// Test route dispatching for routes with patterns containing different parmaeters
@@ -1718,21 +1719,21 @@
         <span class="kw">let </span><span class="kw-2">mut </span>app = App::&lt;<span class="kw">_</span>, ServerError&gt;::with_state(RwLock::new(()));
         <span class="kw">let </span>api_toml = <span class="macro">toml! </span>{
             [meta]
-            FORMAT_VERSION = <span class="string">&quot;0.1.0&quot;
+            FORMAT_VERSION = <span class="string">"0.1.0"
 
             </span>[route.test]
-            PATH = [<span class="string">&quot;/test/a/:a&quot;</span>, <span class="string">&quot;/test/b/:b&quot;</span>]
-            <span class="string">&quot;:a&quot; </span>= <span class="string">&quot;Integer&quot;
-            &quot;:b&quot; </span>= <span class="string">&quot;Boolean&quot;
+            PATH = [<span class="string">"/test/a/:a"</span>, <span class="string">"/test/b/:b"</span>]
+            <span class="string">":a" </span>= <span class="string">"Integer"
+            ":b" </span>= <span class="string">"Boolean"
         </span>};
         {
-            <span class="kw">let </span><span class="kw-2">mut </span>api = app.module::&lt;ServerError&gt;(<span class="string">&quot;mod&quot;</span>, api_toml).unwrap();
-            api.get(<span class="string">&quot;test&quot;</span>, |req, _state| {
+            <span class="kw">let </span><span class="kw-2">mut </span>api = app.module::&lt;ServerError&gt;(<span class="string">"mod"</span>, api_toml).unwrap();
+            api.get(<span class="string">"test"</span>, |req, _state| {
                 <span class="kw">async move </span>{
-                    <span class="kw">if let </span><span class="prelude-val">Some</span>(a) = req.opt_integer_param::&lt;<span class="kw">_</span>, i32&gt;(<span class="string">&quot;a&quot;</span>)<span class="question-mark">? </span>{
-                        <span class="prelude-val">Ok</span>((<span class="string">&quot;a&quot;</span>, a.to_string()))
+                    <span class="kw">if let </span><span class="prelude-val">Some</span>(a) = req.opt_integer_param::&lt;<span class="kw">_</span>, i32&gt;(<span class="string">"a"</span>)<span class="question-mark">? </span>{
+                        <span class="prelude-val">Ok</span>((<span class="string">"a"</span>, a.to_string()))
                     } <span class="kw">else </span>{
-                        <span class="prelude-val">Ok</span>((<span class="string">&quot;b&quot;</span>, req.boolean_param(<span class="string">&quot;b&quot;</span>)<span class="question-mark">?</span>.to_string()))
+                        <span class="prelude-val">Ok</span>((<span class="string">"b"</span>, req.boolean_param(<span class="string">"b"</span>)<span class="question-mark">?</span>.to_string()))
                     }
                 }
                 .boxed()
@@ -1740,8 +1741,8 @@
             .unwrap();
         }
         <span class="kw">let </span>port = pick_unused_port().unwrap();
-        <span class="kw">let </span>url: Url = <span class="macro">format!</span>(<span class="string">&quot;http://localhost:{}&quot;</span>, port).parse().unwrap();
-        spawn(app.serve(<span class="macro">format!</span>(<span class="string">&quot;0.0.0.0:{}&quot;</span>, port)));
+        <span class="kw">let </span>url: Url = <span class="macro">format!</span>(<span class="string">"http://localhost:{}"</span>, port).parse().unwrap();
+        spawn(app.serve(<span class="macro">format!</span>(<span class="string">"0.0.0.0:{}"</span>, port)));
         wait_for_server(<span class="kw-2">&amp;</span>url, SERVER_STARTUP_RETRIES, SERVER_STARTUP_SLEEP_MS).<span class="kw">await</span>;
 
         <span class="kw">let </span>client: surf::Client = surf::Config::new()
@@ -1750,25 +1751,25 @@
             .unwrap();
 
         <span class="kw">let </span><span class="kw-2">mut </span>res = client
-            .get(url.join(<span class="string">&quot;mod/test/a/42&quot;</span>).unwrap())
+            .get(url.join(<span class="string">"mod/test/a/42"</span>).unwrap())
             .send()
             .<span class="kw">await
             </span>.unwrap();
         <span class="macro">assert_eq!</span>(res.status(), StatusCode::Ok);
         <span class="macro">assert_eq!</span>(
             res.body_json::&lt;(String, String)&gt;().<span class="kw">await</span>.unwrap(),
-            (<span class="string">&quot;a&quot;</span>.to_string(), <span class="string">&quot;42&quot;</span>.to_string())
+            (<span class="string">"a"</span>.to_string(), <span class="string">"42"</span>.to_string())
         );
 
         <span class="kw">let </span><span class="kw-2">mut </span>res = client
-            .get(url.join(<span class="string">&quot;mod/test/b/true&quot;</span>).unwrap())
+            .get(url.join(<span class="string">"mod/test/b/true"</span>).unwrap())
             .send()
             .<span class="kw">await
             </span>.unwrap();
         <span class="macro">assert_eq!</span>(res.status(), StatusCode::Ok);
         <span class="macro">assert_eq!</span>(
             res.body_json::&lt;(String, String)&gt;().<span class="kw">await</span>.unwrap(),
-            (<span class="string">&quot;b&quot;</span>.to_string(), <span class="string">&quot;true&quot;</span>.to_string())
+            (<span class="string">"b"</span>.to_string(), <span class="string">"true"</span>.to_string())
         );
     }
 }
