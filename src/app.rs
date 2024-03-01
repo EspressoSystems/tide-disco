@@ -18,7 +18,7 @@ use async_std::sync::Arc;
 use futures::future::{BoxFuture, FutureExt};
 use include_dir::{include_dir, Dir};
 use lazy_static::lazy_static;
-use maud::html;
+use maud::{html, PreEscaped};
 use semver::Version;
 use serde::{Deserialize, Serialize};
 use serde_with::{serde_as, DisplayFromStr};
@@ -364,7 +364,7 @@ impl<State: Send + Sync + 'static, Error: 'static + crate::Error> App<State, Err
                     li {
                         a href=(format!("/{}", name)) {(name)}
                         " "
-                        (api.description())
+                        (PreEscaped(api.short_description()))
                     }
                 }
             }
