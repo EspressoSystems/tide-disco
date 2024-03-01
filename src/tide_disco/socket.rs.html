@@ -405,6 +405,19 @@
 <a href="#404" id="404">404</a>
 <a href="#405" id="405">405</a>
 <a href="#406" id="406">406</a>
+<a href="#407" id="407">407</a>
+<a href="#408" id="408">408</a>
+<a href="#409" id="409">409</a>
+<a href="#410" id="410">410</a>
+<a href="#411" id="411">411</a>
+<a href="#412" id="412">412</a>
+<a href="#413" id="413">413</a>
+<a href="#414" id="414">414</a>
+<a href="#415" id="415">415</a>
+<a href="#416" id="416">416</a>
+<a href="#417" id="417">417</a>
+<a href="#418" id="418">418</a>
+<a href="#419" id="419">419</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright (c) 2022 Espresso Systems (espressosys.com)
 // This file is part of the tide-disco library.
 
@@ -436,6 +449,7 @@
     tungstenite::protocol::frame::{coding::CloseCode, CloseFrame},
     Message, WebSocketConnection,
 };
+<span class="kw">use </span>versioned_binary_serialization::{BinarySerializer, Serializer};
 
 <span class="doccomment">/// An error returned by a socket handler.
 ///
@@ -446,7 +460,7 @@
 </span><span class="kw">pub enum </span>SocketError&lt;E&gt; {
     AppSpecific(E),
     Request(RequestError),
-    Bincode(bincode::Error),
+    Binary(anyhow::Error),
     Json(serde_json::Error),
     WebSockets(tide_websockets::Error),
     UnsupportedMessageType,
@@ -472,7 +486,7 @@
         <span class="kw">match </span><span class="self">self </span>{
             <span class="self">Self</span>::AppSpecific(e) =&gt; SocketError::AppSpecific(f(e)),
             <span class="self">Self</span>::Request(e) =&gt; SocketError::Request(e),
-            <span class="self">Self</span>::Bincode(e) =&gt; SocketError::Bincode(e),
+            <span class="self">Self</span>::Binary(e) =&gt; SocketError::Binary(e),
             <span class="self">Self</span>::Json(e) =&gt; SocketError::Json(e),
             <span class="self">Self</span>::WebSockets(e) =&gt; SocketError::WebSockets(e),
             <span class="self">Self</span>::UnsupportedMessageType =&gt; SocketError::UnsupportedMessageType,
@@ -489,7 +503,7 @@
         <span class="kw">match </span><span class="self">self </span>{
             <span class="self">Self</span>::AppSpecific(e) =&gt; <span class="macro">write!</span>(f, <span class="string">"{}"</span>, e),
             <span class="self">Self</span>::Request(e) =&gt; <span class="macro">write!</span>(f, <span class="string">"{}"</span>, e),
-            <span class="self">Self</span>::Bincode(e) =&gt; <span class="macro">write!</span>(f, <span class="string">"error creating byte stream: {}"</span>, e),
+            <span class="self">Self</span>::Binary(e) =&gt; <span class="macro">write!</span>(f, <span class="string">"error creating byte stream: {}"</span>, e),
             <span class="self">Self</span>::Json(e) =&gt; <span class="macro">write!</span>(f, <span class="string">"error creating JSON message: {}"</span>, e),
             <span class="self">Self</span>::WebSockets(e) =&gt; <span class="macro">write!</span>(f, <span class="string">"WebSockets protocol error: {}"</span>, e),
             <span class="self">Self</span>::UnsupportedMessageType =&gt; {
@@ -511,9 +525,9 @@
     }
 }
 
-<span class="kw">impl</span>&lt;E&gt; From&lt;bincode::Error&gt; <span class="kw">for </span>SocketError&lt;E&gt; {
-    <span class="kw">fn </span>from(err: bincode::Error) -&gt; <span class="self">Self </span>{
-        <span class="self">Self</span>::Bincode(err)
+<span class="kw">impl</span>&lt;E&gt; From&lt;anyhow::Error&gt; <span class="kw">for </span>SocketError&lt;E&gt; {
+    <span class="kw">fn </span>from(err: anyhow::Error) -&gt; <span class="self">Self </span>{
+        <span class="self">Self</span>::Binary(err)
     }
 }
 
@@ -531,7 +545,7 @@
 
 <span class="attr">#[derive(Clone, Copy, Debug)]
 </span><span class="kw">enum </span>MessageType {
-    Bincode,
+    Binary,
     Json,
 }
 
@@ -539,7 +553,7 @@
 ///
 /// [Connection] implements [Stream], which can be used to receive `FromClient` messages from the
 /// client, and [Sink] which can be used to send `ToClient` messages to the client.
-</span><span class="kw">pub struct </span>Connection&lt;ToClient: <span class="question-mark">?</span>Sized, FromClient, Error&gt; {
+</span><span class="kw">pub struct </span>Connection&lt;ToClient: <span class="question-mark">?</span>Sized, FromClient, Error, <span class="kw">const </span>MAJOR: u16, <span class="kw">const </span>MINOR: u16&gt; {
     conn: WebSocketConnection,
     <span class="comment">// [Sink] wrapper around `conn`
     </span>sink: Pin&lt;Box&lt;<span class="kw">dyn </span>Send + Sink&lt;Message, Error = SocketError&lt;Error&gt;&gt;&gt;&gt;,
@@ -547,8 +561,8 @@
     _phantom: PhantomData&lt;<span class="kw">fn</span>(<span class="kw-2">&amp;</span>ToClient, <span class="kw-2">&amp;</span>FromClient, <span class="kw-2">&amp;</span>Error) -&gt; ()&gt;,
 }
 
-<span class="kw">impl</span>&lt;ToClient: <span class="question-mark">?</span>Sized, FromClient: DeserializeOwned, E&gt; Stream
-    <span class="kw">for </span>Connection&lt;ToClient, FromClient, E&gt;
+<span class="kw">impl</span>&lt;ToClient: <span class="question-mark">?</span>Sized, FromClient: DeserializeOwned, E, <span class="kw">const </span>MAJOR: u16, <span class="kw">const </span>MINOR: u16&gt; Stream
+    <span class="kw">for </span>Connection&lt;ToClient, FromClient, E, MAJOR, MINOR&gt;
 {
     <span class="kw">type </span>Item = <span class="prelude-ty">Result</span>&lt;FromClient, SocketError&lt;E&gt;&gt;;
 
@@ -559,7 +573,9 @@
             Poll::Ready(<span class="prelude-val">None</span>) =&gt; Poll::Ready(<span class="prelude-val">None</span>),
             Poll::Ready(<span class="prelude-val">Some</span>(<span class="prelude-val">Err</span>(err))) =&gt; Poll::Ready(<span class="prelude-val">Some</span>(<span class="prelude-val">Err</span>(err.into()))),
             Poll::Ready(<span class="prelude-val">Some</span>(<span class="prelude-val">Ok</span>(msg))) =&gt; Poll::Ready(<span class="prelude-val">Some</span>(<span class="kw">match </span>msg {
-                Message::Binary(bytes) =&gt; bincode::deserialize(<span class="kw-2">&amp;</span>bytes).map_err(SocketError::from),
+                Message::Binary(bytes) =&gt; {
+                    Serializer::&lt;MAJOR, MINOR&gt;::deserialize(<span class="kw-2">&amp;</span>bytes).map_err(SocketError::from)
+                }
                 Message::Text(s) =&gt; serde_json::from_str(<span class="kw-2">&amp;</span>s).map_err(SocketError::from),
                 <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(SocketError::UnsupportedMessageType),
             })),
@@ -568,8 +584,8 @@
     }
 }
 
-<span class="kw">impl</span>&lt;ToClient: Serialize + <span class="question-mark">?</span>Sized, FromClient, E&gt; Sink&lt;<span class="kw-2">&amp;</span>ToClient&gt;
-    <span class="kw">for </span>Connection&lt;ToClient, FromClient, E&gt;
+<span class="kw">impl</span>&lt;ToClient: Serialize + <span class="question-mark">?</span>Sized, FromClient, E, <span class="kw">const </span>MAJOR: u16, <span class="kw">const </span>MINOR: u16&gt;
+    Sink&lt;<span class="kw-2">&amp;</span>ToClient&gt; <span class="kw">for </span>Connection&lt;ToClient, FromClient, E, MAJOR, MINOR&gt;
 {
     <span class="kw">type </span>Error = SocketError&lt;E&gt;;
 
@@ -579,7 +595,7 @@
 
     <span class="kw">fn </span>start_send(<span class="kw-2">mut </span><span class="self">self</span>: Pin&lt;<span class="kw-2">&amp;mut </span><span class="self">Self</span>&gt;, item: <span class="kw-2">&amp;</span>ToClient) -&gt; <span class="prelude-ty">Result</span>&lt;(), <span class="self">Self</span>::Error&gt; {
         <span class="kw">let </span>msg = <span class="kw">match </span><span class="self">self</span>.accept {
-            MessageType::Bincode =&gt; Message::Binary(bincode::serialize(item)<span class="question-mark">?</span>),
+            MessageType::Binary =&gt; Message::Binary(Serializer::&lt;MAJOR, MINOR&gt;::serialize(item)<span class="question-mark">?</span>),
             MessageType::Json =&gt; Message::Text(serde_json::to_string(item)<span class="question-mark">?</span>),
         };
         <span class="self">self</span>.sink
@@ -597,7 +613,9 @@
     }
 }
 
-<span class="kw">impl</span>&lt;ToClient: <span class="question-mark">?</span>Sized, FromClient, Error&gt; Drop <span class="kw">for </span>Connection&lt;ToClient, FromClient, Error&gt; {
+<span class="kw">impl</span>&lt;ToClient: <span class="question-mark">?</span>Sized, FromClient, Error, <span class="kw">const </span>MAJOR: u16, <span class="kw">const </span>MINOR: u16&gt; Drop
+    <span class="kw">for </span>Connection&lt;ToClient, FromClient, Error, MAJOR, MINOR&gt;
+{
     <span class="kw">fn </span>drop(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
         <span class="comment">// This is the idiomatic way to implement [drop] for a type that uses pinning. Since [drop]
         // is implicitly called with `&amp;mut self` even on types that were pinned, we place any
@@ -613,21 +631,23 @@
         // `new_unchecked` is okay because we know this value is never used again after being
         // dropped.
         </span>inner_drop(<span class="kw">unsafe </span>{ Pin::new_unchecked(<span class="self">self</span>) });
-        <span class="kw">fn </span>inner_drop&lt;ToClient: <span class="question-mark">?</span>Sized, FromClient, Error&gt;(
-            _this: Pin&lt;<span class="kw-2">&amp;mut </span>Connection&lt;ToClient, FromClient, Error&gt;&gt;,
+        <span class="kw">fn </span>inner_drop&lt;ToClient: <span class="question-mark">?</span>Sized, FromClient, Error, <span class="kw">const </span>MAJOR: u16, <span class="kw">const </span>MINOR: u16&gt;(
+            _this: Pin&lt;<span class="kw-2">&amp;mut </span>Connection&lt;ToClient, FromClient, Error, MAJOR, MINOR&gt;&gt;,
         ) {
             <span class="comment">// Any logic goes here.
         </span>}
     }
 }
 
-<span class="kw">impl</span>&lt;ToClient: <span class="question-mark">?</span>Sized, FromClient, E&gt; Connection&lt;ToClient, FromClient, E&gt; {
+<span class="kw">impl</span>&lt;ToClient: <span class="question-mark">?</span>Sized, FromClient, E, <span class="kw">const </span>MAJOR: u16, <span class="kw">const </span>MINOR: u16&gt;
+    Connection&lt;ToClient, FromClient, E, MAJOR, MINOR&gt;
+{
     <span class="kw">fn </span>new(accept: <span class="kw-2">&amp;</span>Accept, conn: WebSocketConnection) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, SocketError&lt;E&gt;&gt; {
         <span class="kw">let </span>ty = best_response_type(accept, <span class="kw-2">&amp;</span>[mime::JSON, mime::BYTE_STREAM])<span class="question-mark">?</span>;
         <span class="kw">let </span>ty = <span class="kw">if </span>ty == mime::JSON {
             MessageType::Json
         } <span class="kw">else if </span>ty == mime::BYTE_STREAM {
-            MessageType::Bincode
+            MessageType::Binary
         } <span class="kw">else </span>{
             <span class="macro">unreachable!</span>()
         };
@@ -675,14 +695,16 @@
         + Fn(RequestParams, WebSocketConnection, <span class="kw-2">&amp;</span>State) -&gt; BoxFuture&lt;<span class="prelude-ty">Result</span>&lt;(), SocketError&lt;Error&gt;&gt;&gt;,
 &gt;;
 
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>handler&lt;State, Error, ToClient, FromClient, F&gt;(f: F) -&gt; Handler&lt;State, Error&gt;
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>handler&lt;State, Error, ToClient, FromClient, F, <span class="kw">const </span>MAJOR: u16, <span class="kw">const </span>MINOR: u16&gt;(
+    f: F,
+) -&gt; Handler&lt;State, Error&gt;
 <span class="kw">where
     </span>F: <span class="lifetime">'static
         </span>+ Send
         + Sync
         + Fn(
             RequestParams,
-            Connection&lt;ToClient, FromClient, Error&gt;,
+            Connection&lt;ToClient, FromClient, Error, MAJOR, MINOR&gt;,
             <span class="kw-2">&amp;</span>State,
         ) -&gt; BoxFuture&lt;<span class="prelude-ty">Result</span>&lt;(), Error&gt;&gt;,
     State: <span class="lifetime">'static </span>+ Send + Sync,
@@ -697,13 +719,13 @@
     })
 }
 
-<span class="kw">struct </span>StreamHandler&lt;F&gt;(F);
+<span class="kw">struct </span>StreamHandler&lt;F, <span class="kw">const </span>MAJOR: u16, <span class="kw">const </span>MINOR: u16&gt;(F);
 
-<span class="kw">impl</span>&lt;F&gt; StreamHandler&lt;F&gt; {
+<span class="kw">impl</span>&lt;F, <span class="kw">const </span>MAJOR: u16, <span class="kw">const </span>MINOR: u16&gt; StreamHandler&lt;F, MAJOR, MINOR&gt; {
     <span class="kw">fn </span>handle&lt;<span class="lifetime">'a</span>, State, Error, Msg&gt;(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         req: RequestParams,
-        <span class="kw-2">mut </span>conn: Connection&lt;Msg, (), Error&gt;,
+        <span class="kw-2">mut </span>conn: Connection&lt;Msg, (), Error, MAJOR, MINOR&gt;,
         state: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>State,
     ) -&gt; BoxFuture&lt;<span class="lifetime">'a</span>, <span class="prelude-ty">Result</span>&lt;(), SocketError&lt;Error&gt;&gt;&gt;
     <span class="kw">where
@@ -723,25 +745,29 @@
     }
 }
 
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>stream_handler&lt;State, Error, Msg, F&gt;(f: F) -&gt; Handler&lt;State, Error&gt;
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>stream_handler&lt;State, Error, Msg, F, <span class="kw">const </span>MAJOR: u16, <span class="kw">const </span>MINOR: u16&gt;(
+    f: F,
+) -&gt; Handler&lt;State, Error&gt;
 <span class="kw">where
     </span>F: <span class="lifetime">'static </span>+ Send + Sync + Fn(RequestParams, <span class="kw-2">&amp;</span>State) -&gt; BoxStream&lt;<span class="prelude-ty">Result</span>&lt;Msg, Error&gt;&gt;,
     State: <span class="lifetime">'static </span>+ Send + Sync,
     Msg: <span class="lifetime">'static </span>+ Serialize + Send + Sync,
     Error: <span class="lifetime">'static </span>+ Send + Display,
 {
-    <span class="kw">let </span>handler = StreamHandler(f);
+    <span class="kw">let </span>handler: StreamHandler&lt;F, MAJOR, MINOR&gt; = StreamHandler(f);
     raw_handler(<span class="kw">move </span>|req, conn, state| handler.handle(req, conn, state))
 }
 
-<span class="kw">fn </span>raw_handler&lt;State, Error, ToClient, FromClient, F&gt;(f: F) -&gt; Handler&lt;State, Error&gt;
+<span class="kw">fn </span>raw_handler&lt;State, Error, ToClient, FromClient, F, <span class="kw">const </span>MAJOR: u16, <span class="kw">const </span>MINOR: u16&gt;(
+    f: F,
+) -&gt; Handler&lt;State, Error&gt;
 <span class="kw">where
     </span>F: <span class="lifetime">'static
         </span>+ Send
         + Sync
         + Fn(
             RequestParams,
-            Connection&lt;ToClient, FromClient, Error&gt;,
+            Connection&lt;ToClient, FromClient, Error, MAJOR, MINOR&gt;,
             <span class="kw-2">&amp;</span>State,
         ) -&gt; BoxFuture&lt;<span class="prelude-ty">Result</span>&lt;(), SocketError&lt;Error&gt;&gt;&gt;,
     State: <span class="lifetime">'static </span>+ Send + Sync,

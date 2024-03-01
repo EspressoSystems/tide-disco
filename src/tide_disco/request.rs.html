@@ -847,6 +847,8 @@
 <a href="#846" id="846">846</a>
 <a href="#847" id="847">847</a>
 <a href="#848" id="848">848</a>
+<a href="#849" id="849">849</a>
+<a href="#850" id="850">850</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright (c) 2022 Espresso Systems (espressosys.com)
 // This file is part of the tide-disco library.
 
@@ -862,6 +864,7 @@
 <span class="kw">use </span>strum_macros::EnumString;
 <span class="kw">use </span>tagged_base64::TaggedBase64;
 <span class="kw">use </span>tide::http::{<span class="self">self</span>, content::Accept, mime::Mime, Headers};
+<span class="kw">use </span>versioned_binary_serialization::{BinarySerializer, Serializer};
 
 <span class="attr">#[derive(Clone, Debug, Snafu, Deserialize, Serialize)]
 </span><span class="kw">pub enum </span>RequestError {
@@ -884,8 +887,8 @@
     <span class="attr">#[snafu(display(<span class="string">"Unable to deserialize from JSON"</span>))]
     </span>Json,
 
-    <span class="attr">#[snafu(display(<span class="string">"Unable to deserialize from bincode"</span>))]
-    </span>Bincode,
+    <span class="attr">#[snafu(display(<span class="string">"Unable to deserialize from binary"</span>))]
+    </span>Binary,
 
     <span class="attr">#[snafu(display(<span class="string">"Unable to deserialise from tagged base 64: {}"</span>, reason))]
     </span>TaggedBase64 { reason: String },
@@ -1252,7 +1255,7 @@
     <span class="doccomment">/// Deserialize the body of a request.
     ///
     /// The Content-Type header is used to determine the serialization format.
-    </span><span class="kw">pub fn </span>body_auto&lt;T&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;T, RequestError&gt;
+    </span><span class="kw">pub fn </span>body_auto&lt;T, <span class="kw">const </span>MAJOR: u16, <span class="kw">const </span>MINOR: u16&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;T, RequestError&gt;
     <span class="kw">where
         </span>T: serde::de::DeserializeOwned,
     {
@@ -1261,7 +1264,8 @@
                 <span class="string">"application/json" </span>=&gt; <span class="self">self</span>.body_json(),
                 <span class="string">"application/octet-stream" </span>=&gt; {
                     <span class="kw">let </span>bytes = <span class="self">self</span>.body_bytes();
-                    bincode::deserialize(<span class="kw-2">&amp;</span>bytes).map_err(|_err| RequestError::Bincode {})
+                    Serializer::&lt;MAJOR, MINOR&gt;::deserialize(<span class="kw-2">&amp;</span>bytes)
+                        .map_err(|_err| RequestError::Binary {})
                 }
                 _content_type =&gt; <span class="prelude-val">Err</span>(RequestError::UnsupportedContentType {}),
             }

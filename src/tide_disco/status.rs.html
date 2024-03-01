@@ -587,6 +587,10 @@
 <a href="#586" id="586">586</a>
 <a href="#587" id="587">587</a>
 <a href="#588" id="588">588</a>
+<a href="#589" id="589">589</a>
+<a href="#590" id="590">590</a>
+<a href="#591" id="591">591</a>
+<a href="#592" id="592">592</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright (c) 2022 Espresso Systems (espressosys.com)
 // This file is part of the tide-disco library.
 
@@ -1121,6 +1125,7 @@
 <span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>test {
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
+    <span class="kw">use </span>versioned_binary_serialization::{BinarySerializer, Serializer};
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_status_code() {
@@ -1136,10 +1141,13 @@
             );
             <span class="macro">assert_eq!</span>(code, u16::from(status));
 
-            <span class="comment">// Test bincode round trip.
+            <span class="comment">// Test binary round trip.
             </span><span class="macro">assert_eq!</span>(
                 status,
-                bincode::deserialize::&lt;StatusCode&gt;(<span class="kw-2">&amp;</span>bincode::serialize(<span class="kw-2">&amp;</span>status).unwrap()).unwrap()
+                Serializer::&lt;<span class="number">0</span>, <span class="number">1</span>&gt;::deserialize::&lt;StatusCode&gt;(
+                    <span class="kw-2">&amp;</span>Serializer::&lt;<span class="number">0</span>, <span class="number">1</span>&gt;::serialize(<span class="kw-2">&amp;</span>status).unwrap()
+                )
+                .unwrap()
             );
 
             <span class="comment">// Test JSON round trip, readability, and backwards compatibility.
