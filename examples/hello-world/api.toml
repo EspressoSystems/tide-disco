@@ -1,7 +1,11 @@
 [meta]
-NAME = "hello-world"
-DESCRIPTION = "An example of a simple Tide Disco module"
 FORMAT_VERSION = "0.1.0"
+NAME = "hello-world"
+DESCRIPTION = """
+An example of a simple Tide Disco module
+
+This example demonstrates the basic functionality of Tide Disco, with `GET` and `POST` routes.
+"""
 
 [route.greeting]
 PATH = ["greeting/:name"]
