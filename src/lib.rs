@@ -50,11 +50,13 @@
 //!
 //! type State = ();
 //! type Error = ServerError;
+//! const MAJOR: u16 = 0;
+//! const MINOR: u16 = 1;
 //!
 //! let spec: toml::Value = toml::from_str(
 //!     std::str::from_utf8(&std::fs::read("/path/to/api.toml").unwrap()).unwrap(),
 //! ).unwrap();
-//! let mut api = Api::<State, Error>::new(spec)?;
+//! let mut api = Api::<State, Error, MAJOR, MINOR>::new(spec)?;
 //! # Ok(())
 //! # }
 //! ```
@@ -72,9 +74,11 @@
 //!
 //! ```no_run
 //! # use tide_disco::Api;
+//! # const MAJOR: u16 = 0;
+//! # const MINOR: u16 = 1;
 //! # fn main() -> Result<(), tide_disco::api::ApiError> {
 //! # let spec: toml::Value = toml::from_str(std::str::from_utf8(&std::fs::read("/path/to/api.toml").unwrap()).unwrap()).unwrap();
-//! # let mut api = Api::<(), tide_disco::error::ServerError>::new(spec)?;
+//! # let mut api = Api::<(), tide_disco::error::ServerError, MAJOR, MINOR>::new(spec)?;
 //! use futures::FutureExt;
 //!
 //! api.get("hello", |req, state| async move { Ok("Hello, world!") }.boxed())?;
@@ -90,12 +94,17 @@
 //! ```no_run
 //! # type State = ();
 //! # type Error = tide_disco::error::ServerError;
+//! # const MAJOR: u16 = 0;
+//! # const MINOR: u16 = 1;
 //! # #[async_std::main] async fn main() {
 //! # let spec: toml::Value = toml::from_str(std::str::from_utf8(&std::fs::read("/path/to/api.toml").unwrap()).unwrap()).unwrap();
-//! # let api = tide_disco::Api::<State, Error>::new(spec).unwrap();
+//! # let api = tide_disco::Api::<State, Error, MAJOR, MINOR>::new(spec).unwrap();
 //! use tide_disco::App;
 //!
-//! let mut app = App::<State, Error>::with_state(());
+//! const MAJOR: u16 = 0;
+//! const MINOR: u16 = 1;
+//!
+//! let mut app = App::<State, Error, MAJOR, MINOR>::with_state(());
 //! app.register_module("api", api);
 //! app.serve("http://localhost:8080").await;
 //! # }
@@ -158,7 +167,7 @@
 //! implements [Fn], not just static function pointers. Here is what we would _like_ to write:
 //!
 //! ```ignore
-//! impl<State, Error> Api<State, Error> {
+//! impl<State, Error, const MAJOR: u16, const MINOR: u16> Api<State, Error, MAJOR, MINOR> {
 //!     pub fn at<F, T>(&mut self, route: &str, handler: F)
 //!     where
 //!         F: for<'a> Fn<(RequestParams, &'a State)>,
@@ -183,7 +192,7 @@
 //! `F`. Here is the actual (partial) signature of [at](Api::at):
 //!
 //! ```ignore
-//! impl<State, Error> Api<State, Error> {
+//! impl<State, Error, const MAJOR: u16, const MINOR: u16> Api<State, Error, MAJOR, MINOR> {
 //!     pub fn at<F, T>(&mut self, route: &str, handler: F)
 //!     where
 //!         F: for<'a> Fn(RequestParams, &'a State) -> BoxFuture<'a, Result<T, Error>>,
@@ -203,7 +212,10 @@
 //! type State = RwLock<u64>;
 //! type Error = ();
 //!
-//! fn define_routes(api: &mut Api<State, Error>) {
+//! const MAJOR: u16 = 0;
+//! const MINOR: u16 = 1;
+//!
+//! fn define_routes(api: &mut Api<State, Error, MAJOR, MINOR>) {
 //!     api.at("someroute", |_req, state: &State| async {
 //!         Ok(*state.read().await)
 //!     }.boxed());
@@ -221,12 +233,14 @@
 //!
 //! type State = RwLock<u64>;
 //! type Error = ();
+//! const MAJOR: u16 = 0;
+//! const MINOR: u16 = 1;
 //!
 //! async fn handler(_req: RequestParams, state: &State) -> Result<u64, Error> {
 //!     Ok(*state.read().await)
 //! }
 //!
-//! fn register(api: &mut Api<State, Error>) {
+//! fn register(api: &mut Api<State, Error, MAJOR, MINOR>) {
 //!     api.at("someroute", |req, state: &State| handler(req, state).boxed());
 //! }
 //! ```

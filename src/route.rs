@@ -36,6 +36,7 @@ use tide::{
     Body,
 };
 use tide_websockets::WebSocketConnection;
+use versioned_binary_serialization::{BinarySerializer, Serializer};
 
 /// An error returned by a route handler.
 ///
@@ -46,7 +47,7 @@ pub enum RouteError<E> {
     AppSpecific(E),
     Request(RequestError),
     UnsupportedContentType,
-    Bincode(bincode::Error),
+    Binary(anyhow::Error),
     Json(serde_json::Error),
     Tide(tide::Error),
     ExportMetrics(String),
@@ -59,7 +60,7 @@ impl<E: Display> Display for RouteError<E> {
             Self::AppSpecific(err) => write!(f, "{}", err),
             Self::Request(err) => write!(f, "{}", err),
             Self::UnsupportedContentType => write!(f, "requested content type is not supported"),
-            Self::Bincode(err) => write!(f, "error creating byte stream: {}", err),
+            Self::Binary(err) => write!(f, "error creating byte stream: {}", err),
             Self::Json(err) => write!(f, "error creating JSON response: {}", err),
             Self::Tide(err) => write!(f, "{}", err),
             Self::ExportMetrics(msg) => write!(f, "error exporting metrics: {msg}"),
@@ -85,7 +86,7 @@ impl<E> RouteError<E> {
             RouteError::AppSpecific(e) => RouteError::AppSpecific(f(e)),
             RouteError::Request(e) => RouteError::Request(e),
             RouteError::UnsupportedContentType => RouteError::UnsupportedContentType,
-            RouteError::Bincode(err) => RouteError::Bincode(err),
+            RouteError::Binary(err) => RouteError::Binary(err),
             RouteError::Json(err) => RouteError::Json(err),
             RouteError::Tide(err) => RouteError::Tide(err),
             RouteError::ExportMetrics(msg) => RouteError::ExportMetrics(msg),
@@ -112,7 +113,9 @@ impl<E> From<RequestError> for RouteError<E> {
 /// return type of a handler function. The types which are preserved, `State` and `Error`, should be
 /// the same for all handlers in an API module.
 #[async_trait]
-pub(crate) trait Handler<State, Error>: 'static + Send + Sync {
+pub(crate) trait Handler<State, Error, const MAJOR: u16, const MINOR: u16>:
+    'static + Send + Sync
+{
     async fn handle(
         &self,
         req: RequestParams,
@@ -138,7 +141,8 @@ pub(crate) trait Handler<State, Error>: 'static + Send + Sync {
 pub(crate) struct FnHandler<F>(F);
 
 #[async_trait]
-impl<F, T, State, Error> Handler<State, Error> for FnHandler<F>
+impl<F, T, State, Error, const MAJOR: u16, const MINOR: u16> Handler<State, Error, MAJOR, MINOR>
+    for FnHandler<F>
 where
     F: 'static + Send + Sync + Fn(RequestParams, &State) -> BoxFuture<'_, Result<T, Error>>,
     T: Serialize,
@@ -150,21 +154,26 @@ where
         state: &State,
     ) -> Result<tide::Response, RouteError<Error>> {
         let accept = req.accept()?;
-        response_from_result(&accept, (self.0)(req, state).await)
+        response_from_result::<_, _, MAJOR, MINOR>(&accept, (self.0)(req, state).await)
     }
 }
 
-pub(crate) fn response_from_result<T: Serialize, Error>(
+pub(crate) fn response_from_result<T: Serialize, Error, const MAJOR: u16, const MINOR: u16>(
     accept: &Accept,
     res: Result<T, Error>,
 ) -> Result<tide::Response, RouteError<Error>> {
     res.map_err(RouteError::AppSpecific)
-        .and_then(|res| respond_with(accept, &res))
+        .and_then(|res| respond_with::<_, _, MAJOR, MINOR>(accept, &res))
 }
 
 #[async_trait]
-impl<H: ?Sized + Handler<State, Error>, State: 'static + Send + Sync, Error> Handler<State, Error>
-    for Box<H>
+impl<
+        H: ?Sized + Handler<State, Error, MAJOR, MINOR>,
+        State: 'static + Send + Sync,
+        Error,
+        const MAJOR: u16,
+        const MINOR: u16,
+    > Handler<State, Error, MAJOR, MINOR> for Box<H>
 {
     async fn handle(
         &self,
@@ -175,24 +184,26 @@ impl<H: ?Sized + Handler<State, Error>, State: 'static + Send + Sync, Error> Han
     }
 }
 
-enum RouteImplementation<State, Error> {
+enum RouteImplementation<State, Error, const MAJOR: u16, const MINOR: u16> {
     Http {
         method: http::Method,
-        handler: Option<Box<dyn Handler<State, Error>>>,
+        handler: Option<Box<dyn Handler<State, Error, MAJOR, MINOR>>>,
     },
     Socket {
         handler: Option<socket::Handler<State, Error>>,
     },
     Metrics {
-        handler: Option<Box<dyn Handler<State, Error>>>,
+        handler: Option<Box<dyn Handler<State, Error, MAJOR, MINOR>>>,
     },
 }
 
-impl<State, Error> RouteImplementation<State, Error> {
+impl<State, Error, const MAJOR: u16, const MINOR: u16>
+    RouteImplementation<State, Error, MAJOR, MINOR>
+{
     fn map_err<Error2>(
         self,
         f: impl 'static + Send + Sync + Fn(Error) -> Error2,
-    ) -> RouteImplementation<State, Error2>
+    ) -> RouteImplementation<State, Error2, MAJOR, MINOR>
     where
         State: 'static + Send + Sync,
         Error: 'static + Send + Sync,
@@ -202,10 +213,12 @@ impl<State, Error> RouteImplementation<State, Error> {
             Self::Http { method, handler } => RouteImplementation::Http {
                 method,
                 handler: handler.map(|h| {
-                    let h: Box<dyn Handler<State, Error2>> =
-                        Box::new(MapErr::<Box<dyn Handler<State, Error>>, _, Error>::new(
-                            h, f,
-                        ));
+                    let h: Box<dyn Handler<State, Error2, MAJOR, MINOR>> =
+                        Box::new(MapErr::<
+                            Box<dyn Handler<State, Error, MAJOR, MINOR>>,
+                            _,
+                            Error,
+                        >::new(h, f));
                     h
                 }),
             },
@@ -214,10 +227,12 @@ impl<State, Error> RouteImplementation<State, Error> {
             },
             Self::Metrics { handler } => RouteImplementation::Metrics {
                 handler: handler.map(|h| {
-                    let h: Box<dyn Handler<State, Error2>> =
-                        Box::new(MapErr::<Box<dyn Handler<State, Error>>, _, Error>::new(
-                            h, f,
-                        ));
+                    let h: Box<dyn Handler<State, Error2, MAJOR, MINOR>> =
+                        Box::new(MapErr::<
+                            Box<dyn Handler<State, Error, MAJOR, MINOR>>,
+                            _,
+                            Error,
+                        >::new(h, f));
                     h
                 }),
             },
@@ -233,14 +248,14 @@ impl<State, Error> RouteImplementation<State, Error> {
 /// simply returns information about the route.
 #[derive(Derivative)]
 #[derivative(Debug(bound = ""))]
-pub struct Route<State, Error> {
+pub struct Route<State, Error, const MAJOR: u16, const MINOR: u16> {
     name: String,
     patterns: Vec<String>,
     params: Vec<RequestParam>,
     doc: String,
     meta: Arc<ApiMetadata>,
     #[derivative(Debug = "ignore")]
-    handler: RouteImplementation<State, Error>,
+    handler: RouteImplementation<State, Error, MAJOR, MINOR>,
 }
 
 #[derive(Clone, Debug, Snafu)]
@@ -258,7 +273,7 @@ pub enum RouteParseError {
     RouteMustBeTable,
 }
 
-impl<State, Error> Route<State, Error> {
+impl<State, Error, const MAJOR: u16, const MINOR: u16> Route<State, Error, MAJOR, MINOR> {
     /// Parse a [Route] from a TOML specification.
     ///
     /// The specification must be a table containing at least the following keys:
@@ -381,7 +396,7 @@ impl<State, Error> Route<State, Error> {
     pub fn map_err<Error2>(
         self,
         f: impl 'static + Send + Sync + Fn(Error) -> Error2,
-    ) -> Route<State, Error2>
+    ) -> Route<State, Error2, MAJOR, MINOR>
     where
         State: 'static + Send + Sync,
         Error: 'static + Send + Sync,
@@ -424,10 +439,10 @@ impl<State, Error> Route<State, Error> {
     }
 }
 
-impl<State, Error> Route<State, Error> {
+impl<State, Error, const MAJOR: u16, const MINOR: u16> Route<State, Error, MAJOR, MINOR> {
     pub(crate) fn set_handler(
         &mut self,
-        h: impl Handler<State, Error>,
+        h: impl Handler<State, Error, MAJOR, MINOR>,
     ) -> Result<(), RouteError<Error>> {
         match &mut self.handler {
             RouteImplementation::Http { handler, .. } => {
@@ -515,7 +530,8 @@ impl<State, Error> Route<State, Error> {
 }
 
 #[async_trait]
-impl<State, Error> Handler<State, Error> for Route<State, Error>
+impl<State, Error, const MAJOR: u16, const MINOR: u16> Handler<State, Error, MAJOR, MINOR>
+    for Route<State, Error, MAJOR, MINOR>
 where
     Error: 'static,
     State: 'static + Send + Sync,
@@ -555,9 +571,10 @@ impl<H, F, E> MapErr<H, F, E> {
 }
 
 #[async_trait]
-impl<H, F, State, Error1, Error2> Handler<State, Error2> for MapErr<H, F, Error1>
+impl<H, F, State, Error1, Error2, const MAJOR: u16, const MINOR: u16>
+    Handler<State, Error2, MAJOR, MINOR> for MapErr<H, F, Error1>
 where
-    H: Handler<State, Error1>,
+    H: Handler<State, Error1, MAJOR, MINOR>,
     F: 'static + Send + Sync + Fn(Error1) -> Error2,
     State: 'static + Send + Sync,
     Error1: 'static + Send + Sync,
@@ -584,10 +601,13 @@ where
 pub(crate) type HealthCheckHandler<State> =
     Box<dyn 'static + Send + Sync + Fn(RequestParams, &State) -> BoxFuture<'_, tide::Response>>;
 
-pub(crate) fn health_check_response<H: HealthCheck>(accept: &Accept, health: H) -> tide::Response {
+pub(crate) fn health_check_response<H: HealthCheck, const MAJOR: u16, const MINOR: u16>(
+    accept: &Accept,
+    health: H,
+) -> tide::Response {
     let status = health.status();
-    let (body, content_type) =
-        response_body::<H, Infallible>(accept, health).unwrap_or_else(|err| {
+    let (body, content_type) = response_body::<H, Infallible, MAJOR, MINOR>(accept, health)
+        .unwrap_or_else(|err| {
             let msg = format!(
                 "health status was {}, but there was an error generating the response: {}",
                 status, err
@@ -604,7 +624,7 @@ pub(crate) fn health_check_response<H: HealthCheck>(accept: &Accept, health: H) 
 ///
 /// Given a handler, this function can be used to derive a new, type-erased [HealthCheckHandler]
 /// that takes only [RequestParams] and returns a generic [tide::Response].
-pub(crate) fn health_check_handler<State, H>(
+pub(crate) fn health_check_handler<State, H, const MAJOR: u16, const MINOR: u16>(
     handler: impl 'static + Send + Sync + Fn(&State) -> BoxFuture<H>,
 ) -> HealthCheckHandler<State>
 where
@@ -622,19 +642,19 @@ where
         let future = handler(state);
         async move {
             let health = future.await;
-            health_check_response(&accept, health)
+            health_check_response::<_, MAJOR, MINOR>(&accept, health)
         }
         .boxed()
     })
 }
 
-pub(crate) fn response_body<T: Serialize, E>(
+pub(crate) fn response_body<T: Serialize, E, const MAJOR: u16, const MINOR: u16>(
     accept: &Accept,
     body: T,
 ) -> Result<(Body, Mime), RouteError<E>> {
     let ty = best_response_type(accept, &[mime::JSON, mime::BYTE_STREAM])?;
     if ty == mime::BYTE_STREAM {
-        let bytes = bincode::serialize(&body).map_err(RouteError::Bincode)?;
+        let bytes = Serializer::<MAJOR, MINOR>::serialize(&body).map_err(RouteError::Binary)?;
         Ok((bytes.into(), mime::BYTE_STREAM))
     } else if ty == mime::JSON {
         let json = serde_json::to_string(&body).map_err(RouteError::Json)?;
@@ -644,11 +664,11 @@ pub(crate) fn response_body<T: Serialize, E>(
     }
 }
 
-pub(crate) fn respond_with<T: Serialize, E>(
+pub(crate) fn respond_with<T: Serialize, E, const MAJOR: u16, const MINOR: u16>(
     accept: &Accept,
     body: T,
 ) -> Result<tide::Response, RouteError<E>> {
-    let (body, content_type) = response_body(accept, body)?;
+    let (body, content_type) = response_body::<_, _, MAJOR, MINOR>(accept, body)?;
     Ok(tide::Response::builder(StatusCode::Ok)
         .body(body)
         .content_type(content_type)

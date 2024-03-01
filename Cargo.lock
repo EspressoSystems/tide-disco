@@ -876,6 +876,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "212d0f5754cb6769937f4501cc0e67f4f4483c8d2c3e1e922ee9edbe4ab4c7c0"
 
 [[package]]
+name = "displaydoc"
+version = "0.2.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "487585f4d0c6655fe74905e2504d8ad6908e4db67f744eb140876906c2f3175d"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.28",
+]
+
+[[package]]
 name = "dlv-list"
 version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2829,14 +2840,14 @@ dependencies = [
 
 [[package]]
 name = "tide-disco"
-version = "0.4.6"
+version = "0.4.7"
 dependencies = [
+ "anyhow",
  "ark-serialize",
  "ark-std",
  "async-std",
  "async-trait",
  "async-tungstenite 0.24.0",
- "bincode",
  "clap",
  "config",
  "derivative",
@@ -2879,6 +2890,7 @@ dependencies = [
  "tracing-subscriber",
  "tracing-test",
  "url",
+ "versioned-binary-serialization",
 ]
 
 [[package]]
@@ -3311,6 +3323,18 @@ name = "version_check"
 version = "0.9.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "49874b5167b65d7193b8aba1567f5c7d93d001cafc34600cee003eda787e483f"
+
+[[package]]
+name = "versioned-binary-serialization"
+version = "0.1.0"
+source = "git+https://github.com/EspressoSystems/versioned-binary-serialization.git?tag=0.1.0#6b5bf0c0b74f8384c940880d5a988d5ec757de3e"
+dependencies = [
+ "anyhow",
+ "bincode",
+ "displaydoc",
+ "serde",
+ "serde_with",
+]
 
 [[package]]
 name = "waker-fn"

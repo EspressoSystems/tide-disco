@@ -29,6 +29,7 @@ use tide_websockets::{
     tungstenite::protocol::frame::{coding::CloseCode, CloseFrame},
     Message, WebSocketConnection,
 };
+use versioned_binary_serialization::{BinarySerializer, Serializer};
 
 /// An error returned by a socket handler.
 ///
@@ -39,7 +40,7 @@ use tide_websockets::{
 pub enum SocketError<E> {
     AppSpecific(E),
     Request(RequestError),
-    Bincode(bincode::Error),
+    Binary(anyhow::Error),
     Json(serde_json::Error),
     WebSockets(tide_websockets::Error),
     UnsupportedMessageType,
@@ -65,7 +66,7 @@ impl<E> SocketError<E> {
         match self {
             Self::AppSpecific(e) => SocketError::AppSpecific(f(e)),
             Self::Request(e) => SocketError::Request(e),
-            Self::Bincode(e) => SocketError::Bincode(e),
+            Self::Binary(e) => SocketError::Binary(e),
             Self::Json(e) => SocketError::Json(e),
             Self::WebSockets(e) => SocketError::WebSockets(e),
             Self::UnsupportedMessageType => SocketError::UnsupportedMessageType,
@@ -82,7 +83,7 @@ impl<E: Display> Display for SocketError<E> {
         match self {
             Self::AppSpecific(e) => write!(f, "{}", e),
             Self::Request(e) => write!(f, "{}", e),
-            Self::Bincode(e) => write!(f, "error creating byte stream: {}", e),
+            Self::Binary(e) => write!(f, "error creating byte stream: {}", e),
             Self::Json(e) => write!(f, "error creating JSON message: {}", e),
             Self::WebSockets(e) => write!(f, "WebSockets protocol error: {}", e),
             Self::UnsupportedMessageType => {
@@ -104,9 +105,9 @@ impl<E> From<RequestError> for SocketError<E> {
     }
 }
 
-impl<E> From<bincode::Error> for SocketError<E> {
-    fn from(err: bincode::Error) -> Self {
-        Self::Bincode(err)
+impl<E> From<anyhow::Error> for SocketError<E> {
+    fn from(err: anyhow::Error) -> Self {
+        Self::Binary(err)
     }
 }
 
@@ -124,7 +125,7 @@ impl<E> From<tide_websockets::Error> for SocketError<E> {
 
 #[derive(Clone, Copy, Debug)]
 enum MessageType {
-    Bincode,
+    Binary,
     Json,
 }
 
@@ -132,7 +133,7 @@ enum MessageType {
 ///
 /// [Connection] implements [Stream], which can be used to receive `FromClient` messages from the
 /// client, and [Sink] which can be used to send `ToClient` messages to the client.
-pub struct Connection<ToClient: ?Sized, FromClient, Error> {
+pub struct Connection<ToClient: ?Sized, FromClient, Error, const MAJOR: u16, const MINOR: u16> {
     conn: WebSocketConnection,
     // [Sink] wrapper around `conn`
     sink: Pin<Box<dyn Send + Sink<Message, Error = SocketError<Error>>>>,
@@ -140,8 +141,8 @@ pub struct Connection<ToClient: ?Sized, FromClient, Error> {
     _phantom: PhantomData<fn(&ToClient, &FromClient, &Error) -> ()>,
 }
 
-impl<ToClient: ?Sized, FromClient: DeserializeOwned, E> Stream
-    for Connection<ToClient, FromClient, E>
+impl<ToClient: ?Sized, FromClient: DeserializeOwned, E, const MAJOR: u16, const MINOR: u16> Stream
+    for Connection<ToClient, FromClient, E, MAJOR, MINOR>
 {
     type Item = Result<FromClient, SocketError<E>>;
 
@@ -152,7 +153,9 @@ impl<ToClient: ?Sized, FromClient: DeserializeOwned, E> Stream
             Poll::Ready(None) => Poll::Ready(None),
             Poll::Ready(Some(Err(err))) => Poll::Ready(Some(Err(err.into()))),
             Poll::Ready(Some(Ok(msg))) => Poll::Ready(Some(match msg {
-                Message::Binary(bytes) => bincode::deserialize(&bytes).map_err(SocketError::from),
+                Message::Binary(bytes) => {
+                    Serializer::<MAJOR, MINOR>::deserialize(&bytes).map_err(SocketError::from)
+                }
                 Message::Text(s) => serde_json::from_str(&s).map_err(SocketError::from),
                 _ => Err(SocketError::UnsupportedMessageType),
             })),
@@ -161,8 +164,8 @@ impl<ToClient: ?Sized, FromClient: DeserializeOwned, E> Stream
     }
 }
 
-impl<ToClient: Serialize + ?Sized, FromClient, E> Sink<&ToClient>
-    for Connection<ToClient, FromClient, E>
+impl<ToClient: Serialize + ?Sized, FromClient, E, const MAJOR: u16, const MINOR: u16>
+    Sink<&ToClient> for Connection<ToClient, FromClient, E, MAJOR, MINOR>
 {
     type Error = SocketError<E>;
 
@@ -172,7 +175,7 @@ impl<ToClient: Serialize + ?Sized, FromClient, E> Sink<&ToClient>
 
     fn start_send(mut self: Pin<&mut Self>, item: &ToClient) -> Result<(), Self::Error> {
         let msg = match self.accept {
-            MessageType::Bincode => Message::Binary(bincode::serialize(item)?),
+            MessageType::Binary => Message::Binary(Serializer::<MAJOR, MINOR>::serialize(item)?),
             MessageType::Json => Message::Text(serde_json::to_string(item)?),
         };
         self.sink
@@ -190,7 +193,9 @@ impl<ToClient: Serialize + ?Sized, FromClient, E> Sink<&ToClient>
     }
 }
 
-impl<ToClient: ?Sized, FromClient, Error> Drop for Connection<ToClient, FromClient, Error> {
+impl<ToClient: ?Sized, FromClient, Error, const MAJOR: u16, const MINOR: u16> Drop
+    for Connection<ToClient, FromClient, Error, MAJOR, MINOR>
+{
     fn drop(&mut self) {
         // This is the idiomatic way to implement [drop] for a type that uses pinning. Since [drop]
         // is implicitly called with `&mut self` even on types that were pinned, we place any
@@ -206,21 +211,23 @@ impl<ToClient: ?Sized, FromClient, Error> Drop for Connection<ToClient, FromClie
         // `new_unchecked` is okay because we know this value is never used again after being
         // dropped.
         inner_drop(unsafe { Pin::new_unchecked(self) });
-        fn inner_drop<ToClient: ?Sized, FromClient, Error>(
-            _this: Pin<&mut Connection<ToClient, FromClient, Error>>,
+        fn inner_drop<ToClient: ?Sized, FromClient, Error, const MAJOR: u16, const MINOR: u16>(
+            _this: Pin<&mut Connection<ToClient, FromClient, Error, MAJOR, MINOR>>,
         ) {
             // Any logic goes here.
         }
     }
 }
 
-impl<ToClient: ?Sized, FromClient, E> Connection<ToClient, FromClient, E> {
+impl<ToClient: ?Sized, FromClient, E, const MAJOR: u16, const MINOR: u16>
+    Connection<ToClient, FromClient, E, MAJOR, MINOR>
+{
     fn new(accept: &Accept, conn: WebSocketConnection) -> Result<Self, SocketError<E>> {
         let ty = best_response_type(accept, &[mime::JSON, mime::BYTE_STREAM])?;
         let ty = if ty == mime::JSON {
             MessageType::Json
         } else if ty == mime::BYTE_STREAM {
-            MessageType::Bincode
+            MessageType::Binary
         } else {
             unreachable!()
         };
@@ -268,14 +275,16 @@ pub(crate) type Handler<State, Error> = Box<
         + Fn(RequestParams, WebSocketConnection, &State) -> BoxFuture<Result<(), SocketError<Error>>>,
 >;
 
-pub(crate) fn handler<State, Error, ToClient, FromClient, F>(f: F) -> Handler<State, Error>
+pub(crate) fn handler<State, Error, ToClient, FromClient, F, const MAJOR: u16, const MINOR: u16>(
+    f: F,
+) -> Handler<State, Error>
 where
     F: 'static
         + Send
         + Sync
         + Fn(
             RequestParams,
-            Connection<ToClient, FromClient, Error>,
+            Connection<ToClient, FromClient, Error, MAJOR, MINOR>,
             &State,
         ) -> BoxFuture<Result<(), Error>>,
     State: 'static + Send + Sync,
@@ -290,13 +299,13 @@ where
     })
 }
 
-struct StreamHandler<F>(F);
+struct StreamHandler<F, const MAJOR: u16, const MINOR: u16>(F);
 
-impl<F> StreamHandler<F> {
+impl<F, const MAJOR: u16, const MINOR: u16> StreamHandler<F, MAJOR, MINOR> {
     fn handle<'a, State, Error, Msg>(
         &self,
         req: RequestParams,
-        mut conn: Connection<Msg, (), Error>,
+        mut conn: Connection<Msg, (), Error, MAJOR, MINOR>,
         state: &'a State,
     ) -> BoxFuture<'a, Result<(), SocketError<Error>>>
     where
@@ -316,25 +325,29 @@ impl<F> StreamHandler<F> {
     }
 }
 
-pub(crate) fn stream_handler<State, Error, Msg, F>(f: F) -> Handler<State, Error>
+pub(crate) fn stream_handler<State, Error, Msg, F, const MAJOR: u16, const MINOR: u16>(
+    f: F,
+) -> Handler<State, Error>
 where
     F: 'static + Send + Sync + Fn(RequestParams, &State) -> BoxStream<Result<Msg, Error>>,
     State: 'static + Send + Sync,
     Msg: 'static + Serialize + Send + Sync,
     Error: 'static + Send + Display,
 {
-    let handler = StreamHandler(f);
+    let handler: StreamHandler<F, MAJOR, MINOR> = StreamHandler(f);
     raw_handler(move |req, conn, state| handler.handle(req, conn, state))
 }
 
-fn raw_handler<State, Error, ToClient, FromClient, F>(f: F) -> Handler<State, Error>
+fn raw_handler<State, Error, ToClient, FromClient, F, const MAJOR: u16, const MINOR: u16>(
+    f: F,
+) -> Handler<State, Error>
 where
     F: 'static
         + Send
         + Sync
         + Fn(
             RequestParams,
-            Connection<ToClient, FromClient, Error>,
+            Connection<ToClient, FromClient, Error, MAJOR, MINOR>,
             &State,
         ) -> BoxFuture<Result<(), SocketError<Error>>>,
     State: 'static + Send + Sync,

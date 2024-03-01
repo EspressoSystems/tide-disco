@@ -252,10 +252,10 @@ mod meta_defaults {
 /// TOML file and registered as a module of an [App](crate::App).
 #[derive(Derivative)]
 #[derivative(Debug(bound = ""))]
-pub struct Api<State, Error> {
+pub struct Api<State, Error, const MAJOR: u16, const MINOR: u16> {
     meta: Arc<ApiMetadata>,
     name: String,
-    routes: HashMap<String, Route<State, Error>>,
+    routes: HashMap<String, Route<State, Error, MAJOR, MINOR>>,
     routes_by_path: HashMap<String, Vec<String>>,
     #[derivative(Debug = "ignore")]
     health_check: Option<HealthCheckHandler<State>>,
@@ -265,28 +265,34 @@ pub struct Api<State, Error> {
     long_description: String,
 }
 
-impl<'a, State, Error> IntoIterator for &'a Api<State, Error> {
-    type Item = &'a Route<State, Error>;
-    type IntoIter = Values<'a, String, Route<State, Error>>;
+impl<'a, State, Error, const MAJOR: u16, const MINOR: u16> IntoIterator
+    for &'a Api<State, Error, MAJOR, MINOR>
+{
+    type Item = &'a Route<State, Error, MAJOR, MINOR>;
+    type IntoIter = Values<'a, String, Route<State, Error, MAJOR, MINOR>>;
 
     fn into_iter(self) -> Self::IntoIter {
         self.routes.values()
     }
 }
 
-impl<State, Error> IntoIterator for Api<State, Error> {
-    type Item = Route<State, Error>;
-    type IntoIter = IntoValues<String, Route<State, Error>>;
+impl<State, Error, const MAJOR: u16, const MINOR: u16> IntoIterator
+    for Api<State, Error, MAJOR, MINOR>
+{
+    type Item = Route<State, Error, MAJOR, MINOR>;
+    type IntoIter = IntoValues<String, Route<State, Error, MAJOR, MINOR>>;
 
     fn into_iter(self) -> Self::IntoIter {
         self.routes.into_values()
     }
 }
 
-impl<State, Error> Index<&str> for Api<State, Error> {
-    type Output = Route<State, Error>;
+impl<State, Error, const MAJOR: u16, const MINOR: u16> Index<&str>
+    for Api<State, Error, MAJOR, MINOR>
+{
+    type Output = Route<State, Error, MAJOR, MINOR>;
 
-    fn index(&self, index: &str) -> &Route<State, Error> {
+    fn index(&self, index: &str) -> &Route<State, Error, MAJOR, MINOR> {
         &self.routes[index]
     }
 }
@@ -296,20 +302,22 @@ impl<State, Error> Index<&str> for Api<State, Error> {
 /// This type iterates over all of the routes that have a given path.
 /// [routes_by_path](Api::routes_by_path), in turn, returns an iterator over paths whose items
 /// contain a [RoutesWithPath] iterator.
-pub struct RoutesWithPath<'a, State, Error> {
+pub struct RoutesWithPath<'a, State, Error, const MAJOR: u16, const MINOR: u16> {
     routes: std::slice::Iter<'a, String>,
-    api: &'a Api<State, Error>,
+    api: &'a Api<State, Error, MAJOR, MINOR>,
 }
 
-impl<'a, State, Error> Iterator for RoutesWithPath<'a, State, Error> {
-    type Item = &'a Route<State, Error>;
+impl<'a, State, Error, const MAJOR: u16, const MINOR: u16> Iterator
+    for RoutesWithPath<'a, State, Error, MAJOR, MINOR>
+{
+    type Item = &'a Route<State, Error, MAJOR, MINOR>;
 
     fn next(&mut self) -> Option<Self::Item> {
         Some(&self.api.routes[self.routes.next()?])
     }
 }
 
-impl<State, Error> Api<State, Error> {
+impl<State, Error, const MAJOR: u16, const MINOR: u16> Api<State, Error, MAJOR, MINOR> {
     /// Parse an API from a TOML specification.
     pub fn new(api: impl Into<toml::Value>) -> Result<Self, ApiError> {
         let mut api = api.into();
@@ -413,7 +421,9 @@ impl<State, Error> Api<State, Error> {
     }
 
     /// Iterate over groups of routes with the same path.
-    pub fn routes_by_path(&self) -> impl Iterator<Item = (&str, RoutesWithPath<'_, State, Error>)> {
+    pub fn routes_by_path(
+        &self,
+    ) -> impl Iterator<Item = (&str, RoutesWithPath<'_, State, Error, MAJOR, MINOR>)> {
         self.routes_by_path.iter().map(|(path, routes)| {
             (
                 path.as_str(),
@@ -441,7 +451,9 @@ impl<State, Error> Api<State, Error> {
     /// is contained in the API crate, it should result in a reasonable version:
     ///
     /// ```
-    /// # fn ex(api: &mut tide_disco::Api<(), ()>) {
+    /// # const MAJOR: u16 = 0;
+    /// # const MINOR: u16 = 1;
+    /// # fn ex(api: &mut tide_disco::Api<(), (), MAJOR, MINOR>) {
     /// api.with_version(env!("CARGO_PKG_VERSION").parse().unwrap());
     /// # }
     /// ```
@@ -479,8 +491,10 @@ impl<State, Error> Api<State, Error> {
     /// # use tide_disco::Api;
     ///
     /// type State = u64;
+    /// const MAJOR: u16 = 0;
+    /// const MINOR: u16 = 1;
     ///
-    /// # fn ex(api: &mut Api<State, ()>) {
+    /// # fn ex(api: &mut Api<State, (), MAJOR, MINOR>) {
     /// api.at("getstate", |req, state| async { Ok(*state) }.boxed());
     /// # }
     /// ```
@@ -503,8 +517,10 @@ impl<State, Error> Api<State, Error> {
     /// # use tide_disco::Api;
     ///
     /// type State = Mutex<u64>;
+    /// const MAJOR: u16 = 0;
+    /// const MINOR: u16 = 1;
     ///
-    /// # fn ex(api: &mut Api<State, ()>) {
+    /// # fn ex(api: &mut Api<State, (), MAJOR, MINOR>) {
     /// api.at("increment", |req, state| async {
     ///     let mut guard = state.lock().await;
     ///     *guard += 1;
@@ -634,8 +650,10 @@ impl<State, Error> Api<State, Error> {
     /// # use tide_disco::Api;
     ///
     /// type State = RwLock<u64>;
+    /// const MAJOR: u16 = 0;
+    /// const MINOR: u16 = 1;
     ///
-    /// # fn ex(api: &mut Api<State, ()>) {
+    /// # fn ex(api: &mut Api<State, (), MAJOR, MINOR>) {
     /// api.get("getstate", |req, state| async { Ok(*state) }.boxed());
     /// # }
     /// ```
@@ -731,8 +749,10 @@ impl<State, Error> Api<State, Error> {
     /// # use tide_disco::Api;
     ///
     /// type State = RwLock<u64>;
+    /// const MAJOR: u16 = 0;
+    /// const MINOR: u16 = 1;
     ///
-    /// # fn ex(api: &mut Api<State, ()>) {
+    /// # fn ex(api: &mut Api<State, (), MAJOR, MINOR>) {
     /// api.post("increment", |req, state| async {
     ///     *state += 1;
     ///     Ok(*state)
@@ -798,8 +818,10 @@ impl<State, Error> Api<State, Error> {
     /// # use tide_disco::Api;
     ///
     /// type State = RwLock<u64>;
+    /// const MAJOR: u16 = 0;
+    /// const MINOR: u16 = 1;
     ///
-    /// # fn ex(api: &mut Api<State, tide_disco::RequestError>) {
+    /// # fn ex(api: &mut Api<State, tide_disco::RequestError, MAJOR, MINOR>) {
     /// api.post("replace", |req, state| async move {
     ///     *state = req.integer_param("new_state")?;
     ///     Ok(())
@@ -864,8 +886,10 @@ impl<State, Error> Api<State, Error> {
     /// # use tide_disco::Api;
     ///
     /// type State = RwLock<Option<u64>>;
+    /// const MAJOR: u16 = 0;
+    /// const MINOR: u16 = 1;
     ///
-    /// # fn ex(api: &mut Api<State, ()>) {
+    /// # fn ex(api: &mut Api<State, (), MAJOR, MINOR>) {
     /// api.delete("state", |req, state| async {
     ///     *state = None;
     ///     Ok(())
@@ -932,8 +956,8 @@ impl<State, Error> Api<State, Error> {
     /// use futures::{FutureExt, SinkExt, StreamExt};
     /// use tide_disco::{error::ServerError, socket::Connection, Api};
     ///
-    /// # fn ex(api: &mut Api<(), ServerError>) {
-    /// api.socket("sum", |_req, mut conn: Connection<i32, i32, ServerError>, _state| async move {
+    /// # fn ex(api: &mut Api<(), ServerError, 0, 1>) {
+    /// api.socket("sum", |_req, mut conn: Connection<i32, i32, ServerError, 0, 1>, _state| async move {
     ///     let mut sum = 0;
     ///     while let Some(amount) = conn.next().await {
     ///         sum += amount?;
@@ -970,7 +994,7 @@ impl<State, Error> Api<State, Error> {
             + Sync
             + Fn(
                 RequestParams,
-                socket::Connection<ToClient, FromClient, Error>,
+                socket::Connection<ToClient, FromClient, Error, MAJOR, MINOR>,
                 &State,
             ) -> BoxFuture<'_, Result<(), Error>>,
         ToClient: 'static + Serialize + ?Sized,
@@ -998,7 +1022,10 @@ impl<State, Error> Api<State, Error> {
         State: 'static + Send + Sync,
         Error: 'static + Send + Display,
     {
-        self.register_socket_handler(name, socket::stream_handler(handler))
+        self.register_socket_handler(
+            name,
+            socket::stream_handler::<_, _, _, _, MAJOR, MINOR>(handler),
+        )
     }
 
     fn register_socket_handler(
@@ -1065,9 +1092,11 @@ impl<State, Error> Api<State, Error> {
     ///     counter: Counter,
     ///     metrics: Registry,
     /// }
+    /// const MAJOR: u16 = 0;
+    /// const MINOR: u16 = 1;
     ///
-    /// # fn ex(_api: Api<Mutex<State>, ServerError>) -> Result<(), ApiError> {
-    /// let mut api: Api<Mutex<State>, ServerError>;
+    /// # fn ex(_api: Api<Mutex<State>, ServerError, MAJOR, MINOR>) -> Result<(), ApiError> {
+    /// let mut api: Api<Mutex<State>, ServerError, MAJOR, MINOR>;
     /// # api = _api;
     /// api.metrics("metrics", |_req, state| async move {
     ///     state.counter.inc();
@@ -1132,7 +1161,7 @@ impl<State, Error> Api<State, Error> {
         State: 'static + Send + Sync,
         H: 'static + HealthCheck,
     {
-        self.health_check = Some(route::health_check_handler(handler));
+        self.health_check = Some(route::health_check_handler::<_, _, MAJOR, MINOR>(handler));
         self
     }
 
@@ -1143,7 +1172,7 @@ impl<State, Error> Api<State, Error> {
         } else {
             // If there is no healthcheck handler registered, just return [HealthStatus::Available]
             // by default; after all, if this handler is getting hit at all, the service must be up.
-            route::health_check_response(
+            route::health_check_response::<_, MAJOR, MINOR>(
                 &req.accept().unwrap_or_else(|_| {
                     // The healthcheck endpoint is not allowed to fail, so just use the default content
                     // type if we can't parse the Accept header.
@@ -1172,7 +1201,7 @@ impl<State, Error> Api<State, Error> {
     pub fn map_err<Error2>(
         self,
         f: impl 'static + Clone + Send + Sync + Fn(Error) -> Error2,
-    ) -> Api<State, Error2>
+    ) -> Api<State, Error2, MAJOR, MINOR>
     where
         Error: 'static + Send + Sync,
         Error2: 'static,
@@ -1239,7 +1268,8 @@ struct ReadHandler<F> {
 }
 
 #[async_trait]
-impl<State, Error, F, R> Handler<State, Error> for ReadHandler<F>
+impl<State, Error, F, R, const MAJOR: u16, const MINOR: u16> Handler<State, Error, MAJOR, MINOR>
+    for ReadHandler<F>
 where
     F: 'static
         + Send
@@ -1254,7 +1284,7 @@ where
         state: &State,
     ) -> Result<tide::Response, RouteError<Error>> {
         let accept = req.accept()?;
-        response_from_result(
+        response_from_result::<_, _, MAJOR, MINOR>(
             &accept,
             state.read(|state| (self.handler)(req, state)).await,
         )
@@ -1268,7 +1298,8 @@ struct WriteHandler<F> {
 }
 
 #[async_trait]
-impl<State, Error, F, R> Handler<State, Error> for WriteHandler<F>
+impl<State, Error, F, R, const MAJOR: u16, const MINOR: u16> Handler<State, Error, MAJOR, MINOR>
+    for WriteHandler<F>
 where
     F: 'static
         + Send
@@ -1283,7 +1314,7 @@ where
         state: &State,
     ) -> Result<tide::Response, RouteError<Error>> {
         let accept = req.accept()?;
-        response_from_result(
+        response_from_result::<_, _, MAJOR, MINOR>(
             &accept,
             state.write(|state| (self.handler)(req, state)).await,
         )
@@ -1315,6 +1346,7 @@ mod test {
     use prometheus::{Counter, Registry};
     use std::borrow::Cow;
     use toml::toml;
+    use versioned_binary_serialization::{BinarySerializer, Serializer};
 
     #[cfg(windows)]
     use async_tungstenite::tungstenite::Error as WsError;
@@ -1344,7 +1376,7 @@ mod test {
 
     #[async_std::test]
     async fn test_socket_endpoint() {
-        let mut app = App::<_, ServerError>::with_state(RwLock::new(()));
+        let mut app = App::<_, ServerError, 0, 1>::with_state(RwLock::new(()));
         let api_toml = toml! {
             [meta]
             FORMAT_VERSION = "0.1.0"
@@ -1365,7 +1397,7 @@ mod test {
             let mut api = app.module::<ServerError>("mod", api_toml).unwrap();
             api.socket(
                 "echo",
-                |_req, mut conn: Connection<String, String, _>, _state| {
+                |_req, mut conn: Connection<String, String, _, 0, 1>, _state| {
                     async move {
                         while let Some(msg) = conn.next().await {
                             conn.send(&msg?).await?;
@@ -1376,23 +1408,29 @@ mod test {
                 },
             )
             .unwrap()
-            .socket("once", |_req, mut conn: Connection<_, (), _>, _state| {
-                async move {
-                    conn.send("msg").boxed().await?;
-                    Ok(())
-                }
-                .boxed()
-            })
+            .socket(
+                "once",
+                |_req, mut conn: Connection<_, (), _, 0, 1>, _state| {
+                    async move {
+                        conn.send("msg").boxed().await?;
+                        Ok(())
+                    }
+                    .boxed()
+                },
+            )
             .unwrap()
-            .socket("error", |_req, _conn: Connection<(), (), _>, _state| {
-                async move {
-                    Err(ServerError::catch_all(
-                        StatusCode::InternalServerError,
-                        "an error message".to_string(),
-                    ))
-                }
-                .boxed()
-            })
+            .socket(
+                "error",
+                |_req, _conn: Connection<(), (), _, 0, 1>, _state| {
+                    async move {
+                        Err(ServerError::catch_all(
+                            StatusCode::InternalServerError,
+                            "an error message".to_string(),
+                        ))
+                    }
+                    .boxed()
+                },
+            )
             .unwrap();
         }
         let port = pick_unused_port().unwrap();
@@ -1420,9 +1458,11 @@ mod test {
         );
 
         // Send a binary message.
-        conn.send(Message::Binary(bincode::serialize("goodbye").unwrap()))
-            .await
-            .unwrap();
+        conn.send(Message::Binary(
+            Serializer::<0, 1>::serialize("goodbye").unwrap(),
+        ))
+        .await
+        .unwrap();
         assert_eq!(
             conn.next().await.unwrap().unwrap(),
             Message::Text(serde_json::to_string("goodbye").unwrap())
@@ -1441,16 +1481,18 @@ mod test {
             .unwrap();
         assert_eq!(
             conn.next().await.unwrap().unwrap(),
-            Message::Binary(bincode::serialize("hello").unwrap())
+            Message::Binary(Serializer::<0, 1>::serialize("hello").unwrap())
         );
 
         // Send a binary message.
-        conn.send(Message::Binary(bincode::serialize("goodbye").unwrap()))
-            .await
-            .unwrap();
+        conn.send(Message::Binary(
+            Serializer::<0, 1>::serialize("goodbye").unwrap(),
+        ))
+        .await
+        .unwrap();
         assert_eq!(
             conn.next().await.unwrap().unwrap(),
-            Message::Binary(bincode::serialize("goodbye").unwrap())
+            Message::Binary(Serializer::<0, 1>::serialize("goodbye").unwrap())
         );
 
         // Test a stream that exits normally.
@@ -1483,7 +1525,7 @@ mod test {
 
     #[async_std::test]
     async fn test_stream_endpoint() {
-        let mut app = App::<_, ServerError>::with_state(RwLock::new(()));
+        let mut app = App::<_, ServerError, 0, 1>::with_state(RwLock::new(()));
         let api_toml = toml! {
             [meta]
             FORMAT_VERSION = "0.1.0"
@@ -1566,7 +1608,7 @@ mod test {
 
     #[async_std::test]
     async fn test_custom_healthcheck() {
-        let mut app = App::<_, ServerError>::with_state(HealthStatus::Available);
+        let mut app = App::<_, ServerError, 0, 1>::with_state(HealthStatus::Available);
         let api_toml = toml! {
             [meta]
             FORMAT_VERSION = "0.1.0"
@@ -1610,7 +1652,7 @@ mod test {
         metrics.register(Box::new(counter.clone())).unwrap();
         let state = State { metrics, counter };
 
-        let mut app = App::<_, ServerError>::with_state(RwLock::new(state));
+        let mut app = App::<_, ServerError, 0, 1>::with_state(RwLock::new(state));
         let api_toml = toml! {
             [meta]
             FORMAT_VERSION = "0.1.0"
