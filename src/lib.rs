@@ -47,16 +47,16 @@
 //! # fn main() -> Result<(), tide_disco::api::ApiError> {
 //! use tide_disco::Api;
 //! use tide_disco::error::ServerError;
+//! use versioned_binary_serialization::version::StaticVersion;
 //!
 //! type State = ();
 //! type Error = ServerError;
-//! const MAJOR: u16 = 0;
-//! const MINOR: u16 = 1;
+//! type StaticVer01 = StaticVersion<0, 1>;
 //!
 //! let spec: toml::Value = toml::from_str(
 //!     std::str::from_utf8(&std::fs::read("/path/to/api.toml").unwrap()).unwrap(),
 //! ).unwrap();
-//! let mut api = Api::<State, Error, MAJOR, MINOR>::new(spec)?;
+//! let mut api = Api::<State, Error, StaticVer01>::new(spec)?;
 //! # Ok(())
 //! # }
 //! ```
@@ -74,11 +74,11 @@
 //!
 //! ```no_run
 //! # use tide_disco::Api;
-//! # const MAJOR: u16 = 0;
-//! # const MINOR: u16 = 1;
+//! # use versioned_binary_serialization::version::StaticVersion;
+//! # type StaticVer01 = StaticVersion<0, 1>;
 //! # fn main() -> Result<(), tide_disco::api::ApiError> {
 //! # let spec: toml::Value = toml::from_str(std::str::from_utf8(&std::fs::read("/path/to/api.toml").unwrap()).unwrap()).unwrap();
-//! # let mut api = Api::<(), tide_disco::error::ServerError, MAJOR, MINOR>::new(spec)?;
+//! # let mut api = Api::<(), tide_disco::error::ServerError, StaticVer01>::new(spec)?;
 //! use futures::FutureExt;
 //!
 //! api.get("hello", |req, state| async move { Ok("Hello, world!") }.boxed())?;
@@ -92,21 +92,22 @@
 //! an [App]:
 //!
 //! ```no_run
+//! # use versioned_binary_serialization::version::StaticVersion;
 //! # type State = ();
 //! # type Error = tide_disco::error::ServerError;
-//! # const MAJOR: u16 = 0;
-//! # const MINOR: u16 = 1;
+//! # type StaticVer01 = StaticVersion<0, 1>;
 //! # #[async_std::main] async fn main() {
 //! # let spec: toml::Value = toml::from_str(std::str::from_utf8(&std::fs::read("/path/to/api.toml").unwrap()).unwrap()).unwrap();
-//! # let api = tide_disco::Api::<State, Error, MAJOR, MINOR>::new(spec).unwrap();
+//! # let api = tide_disco::Api::<State, Error, StaticVer01>::new(spec).unwrap();
 //! use tide_disco::App;
+//! use versioned_binary_serialization::version::StaticVersion;
 //!
-//! const MAJOR: u16 = 0;
-//! const MINOR: u16 = 1;
+//! type StaticVer01 = StaticVersion<0, 1>;
+//! const VER_0_1: StaticVer01 = StaticVersion {};
 //!
-//! let mut app = App::<State, Error, MAJOR, MINOR>::with_state(());
+//! let mut app = App::<State, Error, StaticVer01>::with_state(());
 //! app.register_module("api", api);
-//! app.serve("http://localhost:8080").await;
+//! app.serve("http://localhost:8080", VER_0_1).await;
 //! # }
 //! ```
 //!
@@ -167,7 +168,7 @@
 //! implements [Fn], not just static function pointers. Here is what we would _like_ to write:
 //!
 //! ```ignore
-//! impl<State, Error, const MAJOR: u16, const MINOR: u16> Api<State, Error, MAJOR, MINOR> {
+//! impl<State, Error, VER: StaticVersionType> Api<State, Error, VER> {
 //!     pub fn at<F, T>(&mut self, route: &str, handler: F)
 //!     where
 //!         F: for<'a> Fn<(RequestParams, &'a State)>,
@@ -192,7 +193,7 @@
 //! `F`. Here is the actual (partial) signature of [at](Api::at):
 //!
 //! ```ignore
-//! impl<State, Error, const MAJOR: u16, const MINOR: u16> Api<State, Error, MAJOR, MINOR> {
+//! impl<State, Error, VER: StaticVersionType> Api<State, Error, VER> {
 //!     pub fn at<F, T>(&mut self, route: &str, handler: F)
 //!     where
 //!         F: for<'a> Fn(RequestParams, &'a State) -> BoxFuture<'a, Result<T, Error>>,
@@ -208,14 +209,14 @@
 //! use async_std::sync::RwLock;
 //! use futures::FutureExt;
 //! use tide_disco::Api;
+//! use versioned_binary_serialization::version::StaticVersion;
 //!
 //! type State = RwLock<u64>;
 //! type Error = ();
 //!
-//! const MAJOR: u16 = 0;
-//! const MINOR: u16 = 1;
+//! type StaticVer01 = StaticVersion<0, 1>;
 //!
-//! fn define_routes(api: &mut Api<State, Error, MAJOR, MINOR>) {
+//! fn define_routes(api: &mut Api<State, Error, StaticVer01>) {
 //!     api.at("someroute", |_req, state: &State| async {
 //!         Ok(*state.read().await)
 //!     }.boxed());
@@ -230,17 +231,17 @@
 //! use async_std::sync::RwLock;
 //! use futures::FutureExt;
 //! use tide_disco::{Api, RequestParams};
+//! use versioned_binary_serialization::version::StaticVersion;
 //!
 //! type State = RwLock<u64>;
 //! type Error = ();
-//! const MAJOR: u16 = 0;
-//! const MINOR: u16 = 1;
+//! type StaticVer01 = StaticVersion<0, 1>;
 //!
 //! async fn handler(_req: RequestParams, state: &State) -> Result<u64, Error> {
 //!     Ok(*state.read().await)
 //! }
 //!
-//! fn register(api: &mut Api<State, Error, MAJOR, MINOR>) {
+//! fn register(api: &mut Api<State, Error, StaticVer01>) {
 //!     api.at("someroute", |req, state: &State| handler(req, state).boxed());
 //! }
 //! ```

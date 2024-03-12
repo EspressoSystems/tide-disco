@@ -13,7 +13,7 @@ use std::fmt::Display;
 use strum_macros::EnumString;
 use tagged_base64::TaggedBase64;
 use tide::http::{self, content::Accept, mime::Mime, Headers};
-use versioned_binary_serialization::{BinarySerializer, Serializer};
+use versioned_binary_serialization::{version::StaticVersionType, BinarySerializer, Serializer};
 
 #[derive(Clone, Debug, Snafu, Deserialize, Serialize)]
 pub enum RequestError {
@@ -404,7 +404,7 @@ impl RequestParams {
     /// Deserialize the body of a request.
     ///
     /// The Content-Type header is used to determine the serialization format.
-    pub fn body_auto<T, const MAJOR: u16, const MINOR: u16>(&self) -> Result<T, RequestError>
+    pub fn body_auto<T, VER: StaticVersionType>(&self, _: VER) -> Result<T, RequestError>
     where
         T: serde::de::DeserializeOwned,
     {
@@ -413,8 +413,7 @@ impl RequestParams {
                 "application/json" => self.body_json(),
                 "application/octet-stream" => {
                     let bytes = self.body_bytes();
-                    Serializer::<MAJOR, MINOR>::deserialize(&bytes)
-                        .map_err(|_err| RequestError::Binary {})
+                    Serializer::<VER>::deserialize(&bytes).map_err(|_err| RequestError::Binary {})
                 }
                 _content_type => Err(RequestError::UnsupportedContentType {}),
             }

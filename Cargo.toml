@@ -1,6 +1,6 @@
 [package]
 name = "tide-disco"
-version = "0.4.7"
+version = "0.4.8"
 edition = "2021"
 authors = ["Espresso Systems <hello@espressosys.com>"]
 description = "Discoverability for Tide"
@@ -54,7 +54,7 @@ tracing-futures = "0.2"
 tracing-log = "0.2.0"
 tracing-subscriber = { version = "0.3.18", features = ["env-filter", "json"] }
 url = "2.5.0"
-versioned-binary-serialization = { git = "https://github.com/EspressoSystems/versioned-binary-serialization.git", tag = "0.1.0" }
+versioned-binary-serialization = { git = "https://github.com/EspressoSystems/versioned-binary-serialization.git", tag = "0.1.1" }
 
 [target.'cfg(not(windows))'.dependencies]
 signal-hook-async-std = "0.2.2"

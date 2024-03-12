@@ -2840,7 +2840,7 @@ dependencies = [
 
 [[package]]
 name = "tide-disco"
-version = "0.4.7"
+version = "0.4.8"
 dependencies = [
  "anyhow",
  "ark-serialize",
@@ -3326,8 +3326,8 @@ checksum = "49874b5167b65d7193b8aba1567f5c7d93d001cafc34600cee003eda787e483f"
 
 [[package]]
 name = "versioned-binary-serialization"
-version = "0.1.0"
-source = "git+https://github.com/EspressoSystems/versioned-binary-serialization.git?tag=0.1.0#6b5bf0c0b74f8384c940880d5a988d5ec757de3e"
+version = "0.1.1"
+source = "git+https://github.com/EspressoSystems/versioned-binary-serialization.git?tag=0.1.1#d9e3c7127d28c1a8f17a67886c4ce0bbae431240"
 dependencies = [
  "anyhow",
  "bincode",
