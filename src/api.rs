@@ -1359,9 +1359,9 @@ mod test {
     #[cfg(windows)]
     use std::io::ErrorKind;
 
-    type StaticVersion01 = StaticVersion<0, 1>;
+    type StaticVer01 = StaticVersion<0, 1>;
     type SerializerV01 = Serializer<StaticVersion<0, 1>>;
-    const VER_0_1: StaticVersion01 = StaticVersion {};
+    const VER_0_1: StaticVer01 = StaticVersion {};
 
     async fn check_stream_closed<S>(mut conn: WebSocketStream<S>)
     where
@@ -1386,7 +1386,7 @@ mod test {
 
     #[async_std::test]
     async fn test_socket_endpoint() {
-        let mut app = App::<_, ServerError, StaticVersion01>::with_state(RwLock::new(()));
+        let mut app = App::<_, ServerError, StaticVer01>::with_state(RwLock::new(()));
         let api_toml = toml! {
             [meta]
             FORMAT_VERSION = "0.1.0"
@@ -1407,7 +1407,7 @@ mod test {
             let mut api = app.module::<ServerError>("mod", api_toml).unwrap();
             api.socket(
                 "echo",
-                |_req, mut conn: Connection<String, String, _, StaticVersion01>, _state| {
+                |_req, mut conn: Connection<String, String, _, StaticVer01>, _state| {
                     async move {
                         while let Some(msg) = conn.next().await {
                             conn.send(&msg?).await?;
@@ -1420,7 +1420,7 @@ mod test {
             .unwrap()
             .socket(
                 "once",
-                |_req, mut conn: Connection<_, (), _, StaticVersion01>, _state| {
+                |_req, mut conn: Connection<_, (), _, StaticVer01>, _state| {
                     async move {
                         conn.send("msg").boxed().await?;
                         Ok(())
@@ -1431,7 +1431,7 @@ mod test {
             .unwrap()
             .socket(
                 "error",
-                |_req, _conn: Connection<(), (), _, StaticVersion01>, _state| {
+                |_req, _conn: Connection<(), (), _, StaticVer01>, _state| {
                     async move {
                         Err(ServerError::catch_all(
                             StatusCode::InternalServerError,
@@ -1535,7 +1535,7 @@ mod test {
 
     #[async_std::test]
     async fn test_stream_endpoint() {
-        let mut app = App::<_, ServerError, StaticVersion01>::with_state(RwLock::new(()));
+        let mut app = App::<_, ServerError, StaticVer01>::with_state(RwLock::new(()));
         let api_toml = toml! {
             [meta]
             FORMAT_VERSION = "0.1.0"
@@ -1618,7 +1618,7 @@ mod test {
 
     #[async_std::test]
     async fn test_custom_healthcheck() {
-        let mut app = App::<_, ServerError, StaticVersion01>::with_state(HealthStatus::Available);
+        let mut app = App::<_, ServerError, StaticVer01>::with_state(HealthStatus::Available);
         let api_toml = toml! {
             [meta]
             FORMAT_VERSION = "0.1.0"
@@ -1662,7 +1662,7 @@ mod test {
         metrics.register(Box::new(counter.clone())).unwrap();
         let state = State { metrics, counter };
 
-        let mut app = App::<_, ServerError, StaticVersion01>::with_state(RwLock::new(state));
+        let mut app = App::<_, ServerError, StaticVer01>::with_state(RwLock::new(state));
         let api_toml = toml! {
             [meta]
             FORMAT_VERSION = "0.1.0"

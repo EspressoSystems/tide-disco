@@ -13,8 +13,8 @@ use tide_disco::{Api, App, Error, RequestError, StatusCode};
 use tracing::info;
 use versioned_binary_serialization::version::StaticVersion;
 
-type Ver01 = StaticVersion<0, 1>;
-const STATIC_VER: Ver01 = StaticVersion {};
+type StaticVer01 = StaticVersion<0, 1>;
+const STATIC_VER: StaticVer01 = StaticVersion {};
 
 #[derive(Clone, Debug, Deserialize, Serialize, Snafu)]
 enum HelloError {
@@ -43,11 +43,11 @@ impl From<RequestError> for HelloError {
 }
 
 async fn serve(port: u16) -> io::Result<()> {
-    let mut app = App::<_, HelloError, Ver01>::with_state(RwLock::new("Hello".to_string()));
+    let mut app = App::<_, HelloError, StaticVer01>::with_state(RwLock::new("Hello".to_string()));
     app.with_version(env!("CARGO_PKG_VERSION").parse().unwrap());
 
     let mut api =
-        Api::<RwLock<String>, HelloError, Ver01>::from_file("examples/hello-world/api.toml")
+        Api::<RwLock<String>, HelloError, StaticVer01>::from_file("examples/hello-world/api.toml")
             .unwrap();
     api.with_version(env!("CARGO_PKG_VERSION").parse().unwrap());
 

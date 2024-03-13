@@ -741,9 +741,9 @@ mod test {
     use toml::toml;
     use versioned_binary_serialization::{version::StaticVersion, BinarySerializer, Serializer};
 
-    type StaticVersion01 = StaticVersion<0, 1>;
+    type StaticVer01 = StaticVersion<0, 1>;
     type SerializerV01 = Serializer<StaticVersion<0, 1>>;
-    const VER_0_1: StaticVersion01 = StaticVersion {};
+    const VER_0_1: StaticVer01 = StaticVersion {};
 
     #[derive(Clone, Copy, Debug)]
     struct FakeMetrics;
@@ -761,7 +761,7 @@ mod test {
     async fn test_method_dispatch() {
         use crate::http::Method::*;
 
-        let mut app = App::<_, ServerError, StaticVersion01>::with_state(RwLock::new(FakeMetrics));
+        let mut app = App::<_, ServerError, StaticVer01>::with_state(RwLock::new(FakeMetrics));
         let api_toml = toml! {
             [meta]
             FORMAT_VERSION = "0.1.0"
@@ -810,7 +810,7 @@ mod test {
             .unwrap()
             .socket(
                 "socket_test",
-                |_req, mut conn: Connection<_, (), _, StaticVersion01>, _state| {
+                |_req, mut conn: Connection<_, (), _, StaticVer01>, _state| {
                     async move {
                         conn.send("SOCKET").await.unwrap();
                         Ok(())
@@ -881,7 +881,7 @@ mod test {
     /// Test route dispatching for routes with patterns containing different parmaeters
     #[async_std::test]
     async fn test_param_dispatch() {
-        let mut app = App::<_, ServerError, StaticVersion01>::with_state(RwLock::new(()));
+        let mut app = App::<_, ServerError, StaticVer01>::with_state(RwLock::new(()));
         let api_toml = toml! {
             [meta]
             FORMAT_VERSION = "0.1.0"
