@@ -3336,8 +3336,8 @@ checksum = "49874b5167b65d7193b8aba1567f5c7d93d001cafc34600cee003eda787e483f"
 
 [[package]]
 name = "versioned-binary-serialization"
-version = "0.1.1"
-source = "git+https://github.com/EspressoSystems/versioned-binary-serialization.git?tag=0.1.1#40d96786d4f92a5025fdb8db13b0c4098339a149"
+version = "0.1.2"
+source = "git+https://github.com/EspressoSystems/versioned-binary-serialization.git?tag=0.1.2#6874f91a3c8d64acc24fe0abe4ad93c35b75eb9d"
 dependencies = [
  "anyhow",
  "bincode",
