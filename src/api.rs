@@ -29,6 +29,7 @@ use std::fs;
 use std::ops::Index;
 use std::path::{Path, PathBuf};
 use tide::http::content::Accept;
+use versioned_binary_serialization::version::StaticVersionType;
 
 /// An error encountered when parsing or constructing an [Api].
 #[derive(Clone, Debug, Snafu)]
@@ -252,10 +253,10 @@ mod meta_defaults {
 /// TOML file and registered as a module of an [App](crate::App).
 #[derive(Derivative)]
 #[derivative(Debug(bound = ""))]
-pub struct Api<State, Error, const MAJOR: u16, const MINOR: u16> {
+pub struct Api<State, Error, VER: StaticVersionType> {
     meta: Arc<ApiMetadata>,
     name: String,
-    routes: HashMap<String, Route<State, Error, MAJOR, MINOR>>,
+    routes: HashMap<String, Route<State, Error, VER>>,
     routes_by_path: HashMap<String, Vec<String>>,
     #[derivative(Debug = "ignore")]
     health_check: Option<HealthCheckHandler<State>>,
@@ -265,34 +266,28 @@ pub struct Api<State, Error, const MAJOR: u16, const MINOR: u16> {
     long_description: String,
 }
 
-impl<'a, State, Error, const MAJOR: u16, const MINOR: u16> IntoIterator
-    for &'a Api<State, Error, MAJOR, MINOR>
-{
-    type Item = &'a Route<State, Error, MAJOR, MINOR>;
-    type IntoIter = Values<'a, String, Route<State, Error, MAJOR, MINOR>>;
+impl<'a, State, Error, VER: StaticVersionType> IntoIterator for &'a Api<State, Error, VER> {
+    type Item = &'a Route<State, Error, VER>;
+    type IntoIter = Values<'a, String, Route<State, Error, VER>>;
 
     fn into_iter(self) -> Self::IntoIter {
         self.routes.values()
     }
 }
 
-impl<State, Error, const MAJOR: u16, const MINOR: u16> IntoIterator
-    for Api<State, Error, MAJOR, MINOR>
-{
-    type Item = Route<State, Error, MAJOR, MINOR>;
-    type IntoIter = IntoValues<String, Route<State, Error, MAJOR, MINOR>>;
+impl<State, Error, VER: StaticVersionType> IntoIterator for Api<State, Error, VER> {
+    type Item = Route<State, Error, VER>;
+    type IntoIter = IntoValues<String, Route<State, Error, VER>>;
 
     fn into_iter(self) -> Self::IntoIter {
         self.routes.into_values()
     }
 }
 
-impl<State, Error, const MAJOR: u16, const MINOR: u16> Index<&str>
-    for Api<State, Error, MAJOR, MINOR>
-{
-    type Output = Route<State, Error, MAJOR, MINOR>;
+impl<State, Error, VER: StaticVersionType> Index<&str> for Api<State, Error, VER> {
+    type Output = Route<State, Error, VER>;
 
-    fn index(&self, index: &str) -> &Route<State, Error, MAJOR, MINOR> {
+    fn index(&self, index: &str) -> &Route<State, Error, VER> {
         &self.routes[index]
     }
 }
@@ -302,22 +297,20 @@ impl<State, Error, const MAJOR: u16, const MINOR: u16> Index<&str>
 /// This type iterates over all of the routes that have a given path.
 /// [routes_by_path](Api::routes_by_path), in turn, returns an iterator over paths whose items
 /// contain a [RoutesWithPath] iterator.
-pub struct RoutesWithPath<'a, State, Error, const MAJOR: u16, const MINOR: u16> {
+pub struct RoutesWithPath<'a, State, Error, VER: StaticVersionType> {
     routes: std::slice::Iter<'a, String>,
-    api: &'a Api<State, Error, MAJOR, MINOR>,
+    api: &'a Api<State, Error, VER>,
 }
 
-impl<'a, State, Error, const MAJOR: u16, const MINOR: u16> Iterator
-    for RoutesWithPath<'a, State, Error, MAJOR, MINOR>
-{
-    type Item = &'a Route<State, Error, MAJOR, MINOR>;
+impl<'a, State, Error, VER: StaticVersionType> Iterator for RoutesWithPath<'a, State, Error, VER> {
+    type Item = &'a Route<State, Error, VER>;
 
     fn next(&mut self) -> Option<Self::Item> {
         Some(&self.api.routes[self.routes.next()?])
     }
 }
 
-impl<State, Error, const MAJOR: u16, const MINOR: u16> Api<State, Error, MAJOR, MINOR> {
+impl<State, Error, VER: StaticVersionType> Api<State, Error, VER> {
     /// Parse an API from a TOML specification.
     pub fn new(api: impl Into<toml::Value>) -> Result<Self, ApiError> {
         let mut api = api.into();
@@ -423,7 +416,7 @@ impl<State, Error, const MAJOR: u16, const MINOR: u16> Api<State, Error, MAJOR, 
     /// Iterate over groups of routes with the same path.
     pub fn routes_by_path(
         &self,
-    ) -> impl Iterator<Item = (&str, RoutesWithPath<'_, State, Error, MAJOR, MINOR>)> {
+    ) -> impl Iterator<Item = (&str, RoutesWithPath<'_, State, Error, VER>)> {
         self.routes_by_path.iter().map(|(path, routes)| {
             (
                 path.as_str(),
@@ -451,9 +444,9 @@ impl<State, Error, const MAJOR: u16, const MINOR: u16> Api<State, Error, MAJOR, 
     /// is contained in the API crate, it should result in a reasonable version:
     ///
     /// ```
-    /// # const MAJOR: u16 = 0;
-    /// # const MINOR: u16 = 1;
-    /// # fn ex(api: &mut tide_disco::Api<(), (), MAJOR, MINOR>) {
+    /// # use versioned_binary_serialization::version::StaticVersion;
+    /// # type StaticVer01 = StaticVersion<0, 1>;
+    /// # fn ex(api: &mut tide_disco::Api<(), (), StaticVer01>) {
     /// api.with_version(env!("CARGO_PKG_VERSION").parse().unwrap());
     /// # }
     /// ```
@@ -489,12 +482,12 @@ impl<State, Error, const MAJOR: u16, const MINOR: u16> Api<State, Error, MAJOR, 
     /// ```
     /// use futures::FutureExt;
     /// # use tide_disco::Api;
+    /// # use versioned_binary_serialization::version::StaticVersion;
     ///
     /// type State = u64;
-    /// const MAJOR: u16 = 0;
-    /// const MINOR: u16 = 1;
+    /// type StaticVer01 = StaticVersion<0, 1>;
     ///
-    /// # fn ex(api: &mut Api<State, (), MAJOR, MINOR>) {
+    /// # fn ex(api: &mut Api<State, (), StaticVer01>) {
     /// api.at("getstate", |req, state| async { Ok(*state) }.boxed());
     /// # }
     /// ```
@@ -515,12 +508,12 @@ impl<State, Error, const MAJOR: u16, const MINOR: u16> Api<State, Error, MAJOR, 
     /// use async_std::sync::Mutex;
     /// use futures::FutureExt;
     /// # use tide_disco::Api;
+    /// # use versioned_binary_serialization::version::StaticVersion;
     ///
     /// type State = Mutex<u64>;
-    /// const MAJOR: u16 = 0;
-    /// const MINOR: u16 = 1;
+    /// type StaticVer01 = StaticVersion<0, 1>;
     ///
-    /// # fn ex(api: &mut Api<State, (), MAJOR, MINOR>) {
+    /// # fn ex(api: &mut Api<State, (), StaticVer01>) {
     /// api.at("increment", |req, state| async {
     ///     let mut guard = state.lock().await;
     ///     *guard += 1;
@@ -565,6 +558,7 @@ impl<State, Error, const MAJOR: u16, const MINOR: u16> Api<State, Error, MAJOR, 
         F: 'static + Send + Sync + Fn(RequestParams, &State) -> BoxFuture<'_, Result<T, Error>>,
         T: Serialize,
         State: 'static + Send + Sync,
+        VER: 'static + Send + Sync,
     {
         let route = self.routes.get_mut(name).ok_or(ApiError::UndefinedRoute)?;
         if route.has_handler() {
@@ -601,6 +595,7 @@ impl<State, Error, const MAJOR: u16, const MINOR: u16> Api<State, Error, MAJOR, 
             + Fn(RequestParams, &<State as ReadState>::State) -> BoxFuture<'_, Result<T, Error>>,
         T: Serialize,
         State: 'static + Send + Sync + ReadState,
+        VER: 'static + Send + Sync + StaticVersionType,
     {
         assert!(method.is_http() && !method.is_mutable());
         let route = self.routes.get_mut(name).ok_or(ApiError::UndefinedRoute)?;
@@ -648,12 +643,12 @@ impl<State, Error, const MAJOR: u16, const MINOR: u16> Api<State, Error, MAJOR, 
     /// use async_std::sync::RwLock;
     /// use futures::FutureExt;
     /// # use tide_disco::Api;
+    /// # use versioned_binary_serialization::{Serializer, version::StaticVersion};
     ///
     /// type State = RwLock<u64>;
-    /// const MAJOR: u16 = 0;
-    /// const MINOR: u16 = 1;
+    /// type StaticVer01 = StaticVersion<0, 1>;
     ///
-    /// # fn ex(api: &mut Api<State, (), MAJOR, MINOR>) {
+    /// # fn ex(api: &mut Api<State, (), StaticVer01>) {
     /// api.get("getstate", |req, state| async { Ok(*state) }.boxed());
     /// # }
     /// ```
@@ -681,6 +676,7 @@ impl<State, Error, const MAJOR: u16, const MINOR: u16> Api<State, Error, MAJOR, 
             + Fn(RequestParams, &<State as ReadState>::State) -> BoxFuture<'_, Result<T, Error>>,
         T: Serialize,
         State: 'static + Send + Sync + ReadState,
+        VER: 'static + Send + Sync,
     {
         self.method_immutable(Method::get(), name, handler)
     }
@@ -698,6 +694,7 @@ impl<State, Error, const MAJOR: u16, const MINOR: u16> Api<State, Error, MAJOR, 
             + Fn(RequestParams, &mut <State as ReadState>::State) -> BoxFuture<'_, Result<T, Error>>,
         T: Serialize,
         State: 'static + Send + Sync + WriteState,
+        VER: 'static + Send + Sync,
     {
         assert!(method.is_http() && method.is_mutable());
         let route = self.routes.get_mut(name).ok_or(ApiError::UndefinedRoute)?;
@@ -747,12 +744,12 @@ impl<State, Error, const MAJOR: u16, const MINOR: u16> Api<State, Error, MAJOR, 
     /// use async_std::sync::RwLock;
     /// use futures::FutureExt;
     /// # use tide_disco::Api;
+    /// # use versioned_binary_serialization::version::StaticVersion;
     ///
     /// type State = RwLock<u64>;
-    /// const MAJOR: u16 = 0;
-    /// const MINOR: u16 = 1;
+    /// type StaticVer01 = StaticVersion<0, 1>;
     ///
-    /// # fn ex(api: &mut Api<State, (), MAJOR, MINOR>) {
+    /// # fn ex(api: &mut Api<State, (), StaticVer01>) {
     /// api.post("increment", |req, state| async {
     ///     *state += 1;
     ///     Ok(*state)
@@ -783,6 +780,7 @@ impl<State, Error, const MAJOR: u16, const MINOR: u16> Api<State, Error, MAJOR, 
             + Fn(RequestParams, &mut <State as ReadState>::State) -> BoxFuture<'_, Result<T, Error>>,
         T: Serialize,
         State: 'static + Send + Sync + WriteState,
+        VER: 'static + Send + Sync,
     {
         self.method_mutable(Method::post(), name, handler)
     }
@@ -816,12 +814,12 @@ impl<State, Error, const MAJOR: u16, const MINOR: u16> Api<State, Error, MAJOR, 
     /// use async_std::sync::RwLock;
     /// use futures::FutureExt;
     /// # use tide_disco::Api;
+    /// # use versioned_binary_serialization::version::StaticVersion;
     ///
     /// type State = RwLock<u64>;
-    /// const MAJOR: u16 = 0;
-    /// const MINOR: u16 = 1;
+    /// type StaticVer01 = StaticVersion<0, 1>;
     ///
-    /// # fn ex(api: &mut Api<State, tide_disco::RequestError, MAJOR, MINOR>) {
+    /// # fn ex(api: &mut Api<State, tide_disco::RequestError, StaticVer01>) {
     /// api.post("replace", |req, state| async move {
     ///     *state = req.integer_param("new_state")?;
     ///     Ok(())
@@ -852,6 +850,7 @@ impl<State, Error, const MAJOR: u16, const MINOR: u16> Api<State, Error, MAJOR, 
             + Fn(RequestParams, &mut <State as ReadState>::State) -> BoxFuture<'_, Result<T, Error>>,
         T: Serialize,
         State: 'static + Send + Sync + WriteState,
+        VER: 'static + Send + Sync,
     {
         self.method_mutable(Method::put(), name, handler)
     }
@@ -884,12 +883,12 @@ impl<State, Error, const MAJOR: u16, const MINOR: u16> Api<State, Error, MAJOR, 
     /// use async_std::sync::RwLock;
     /// use futures::FutureExt;
     /// # use tide_disco::Api;
+    /// # use versioned_binary_serialization::version::StaticVersion;
     ///
     /// type State = RwLock<Option<u64>>;
-    /// const MAJOR: u16 = 0;
-    /// const MINOR: u16 = 1;
+    /// type StaticVer01 = StaticVersion<0, 1>;
     ///
-    /// # fn ex(api: &mut Api<State, (), MAJOR, MINOR>) {
+    /// # fn ex(api: &mut Api<State, (), StaticVer01>) {
     /// api.delete("state", |req, state| async {
     ///     *state = None;
     ///     Ok(())
@@ -920,6 +919,7 @@ impl<State, Error, const MAJOR: u16, const MINOR: u16> Api<State, Error, MAJOR, 
             + Fn(RequestParams, &mut <State as ReadState>::State) -> BoxFuture<'_, Result<T, Error>>,
         T: Serialize,
         State: 'static + Send + Sync + WriteState,
+        VER: 'static + Send + Sync,
     {
         self.method_mutable(Method::delete(), name, handler)
     }
@@ -955,9 +955,10 @@ impl<State, Error, const MAJOR: u16, const MINOR: u16> Api<State, Error, MAJOR, 
     /// ```
     /// use futures::{FutureExt, SinkExt, StreamExt};
     /// use tide_disco::{error::ServerError, socket::Connection, Api};
+    /// # use versioned_binary_serialization::version::StaticVersion;
     ///
-    /// # fn ex(api: &mut Api<(), ServerError, 0, 1>) {
-    /// api.socket("sum", |_req, mut conn: Connection<i32, i32, ServerError, 0, 1>, _state| async move {
+    /// # fn ex(api: &mut Api<(), ServerError, StaticVersion<0, 1>>) {
+    /// api.socket("sum", |_req, mut conn: Connection<i32, i32, ServerError, StaticVersion<0, 1>>, _state| async move {
     ///     let mut sum = 0;
     ///     while let Some(amount) = conn.next().await {
     ///         sum += amount?;
@@ -994,7 +995,7 @@ impl<State, Error, const MAJOR: u16, const MINOR: u16> Api<State, Error, MAJOR, 
             + Sync
             + Fn(
                 RequestParams,
-                socket::Connection<ToClient, FromClient, Error, MAJOR, MINOR>,
+                socket::Connection<ToClient, FromClient, Error, VER>,
                 &State,
             ) -> BoxFuture<'_, Result<(), Error>>,
         ToClient: 'static + Serialize + ?Sized,
@@ -1021,11 +1022,9 @@ impl<State, Error, const MAJOR: u16, const MINOR: u16> Api<State, Error, MAJOR, 
         Msg: 'static + Serialize + Send + Sync,
         State: 'static + Send + Sync,
         Error: 'static + Send + Display,
+        VER: 'static + Send + Sync,
     {
-        self.register_socket_handler(
-            name,
-            socket::stream_handler::<_, _, _, _, MAJOR, MINOR>(handler),
-        )
+        self.register_socket_handler(name, socket::stream_handler::<_, _, _, _, VER>(handler))
     }
 
     fn register_socket_handler(
@@ -1086,17 +1085,17 @@ impl<State, Error, const MAJOR: u16, const MINOR: u16> Api<State, Error, MAJOR, 
     /// # use futures::FutureExt;
     /// # use tide_disco::{api::{Api, ApiError}, error::ServerError};
     /// # use std::borrow::Cow;
+    /// # use versioned_binary_serialization::version::StaticVersion;
     /// use prometheus::{Counter, Registry};
     ///
     /// struct State {
     ///     counter: Counter,
     ///     metrics: Registry,
     /// }
-    /// const MAJOR: u16 = 0;
-    /// const MINOR: u16 = 1;
+    /// type StaticVer01 = StaticVersion<0, 1>;
     ///
-    /// # fn ex(_api: Api<Mutex<State>, ServerError, MAJOR, MINOR>) -> Result<(), ApiError> {
-    /// let mut api: Api<Mutex<State>, ServerError, MAJOR, MINOR>;
+    /// # fn ex(_api: Api<Mutex<State>, ServerError, StaticVer01>) -> Result<(), ApiError> {
+    /// let mut api: Api<Mutex<State>, ServerError, StaticVer01>;
     /// # api = _api;
     /// api.metrics("metrics", |_req, state| async move {
     ///     state.counter.inc();
@@ -1130,6 +1129,7 @@ impl<State, Error, const MAJOR: u16, const MINOR: u16> Api<State, Error, MAJOR, 
         T: 'static + Clone + Metrics,
         State: 'static + Send + Sync + ReadState,
         Error: 'static,
+        VER: 'static + Send + Sync,
     {
         let route = self.routes.get_mut(name).ok_or(ApiError::UndefinedRoute)?;
         if route.method() != Method::Metrics {
@@ -1160,8 +1160,9 @@ impl<State, Error, const MAJOR: u16, const MINOR: u16> Api<State, Error, MAJOR, 
     where
         State: 'static + Send + Sync,
         H: 'static + HealthCheck,
+        VER: 'static + Send + Sync,
     {
-        self.health_check = Some(route::health_check_handler::<_, _, MAJOR, MINOR>(handler));
+        self.health_check = Some(route::health_check_handler::<_, _, VER>(handler));
         self
     }
 
@@ -1172,7 +1173,7 @@ impl<State, Error, const MAJOR: u16, const MINOR: u16> Api<State, Error, MAJOR, 
         } else {
             // If there is no healthcheck handler registered, just return [HealthStatus::Available]
             // by default; after all, if this handler is getting hit at all, the service must be up.
-            route::health_check_response::<_, MAJOR, MINOR>(
+            route::health_check_response::<_, VER>(
                 &req.accept().unwrap_or_else(|_| {
                     // The healthcheck endpoint is not allowed to fail, so just use the default content
                     // type if we can't parse the Accept header.
@@ -1201,11 +1202,12 @@ impl<State, Error, const MAJOR: u16, const MINOR: u16> Api<State, Error, MAJOR, 
     pub fn map_err<Error2>(
         self,
         f: impl 'static + Clone + Send + Sync + Fn(Error) -> Error2,
-    ) -> Api<State, Error2, MAJOR, MINOR>
+    ) -> Api<State, Error2, VER>
     where
         Error: 'static + Send + Sync,
         Error2: 'static,
         State: 'static + Send + Sync,
+        VER: 'static + Send + Sync,
     {
         Api {
             meta: self.meta,
@@ -1268,8 +1270,7 @@ struct ReadHandler<F> {
 }
 
 #[async_trait]
-impl<State, Error, F, R, const MAJOR: u16, const MINOR: u16> Handler<State, Error, MAJOR, MINOR>
-    for ReadHandler<F>
+impl<State, Error, F, R, VER> Handler<State, Error, VER> for ReadHandler<F>
 where
     F: 'static
         + Send
@@ -1277,16 +1278,19 @@ where
         + Fn(RequestParams, &<State as ReadState>::State) -> BoxFuture<'_, Result<R, Error>>,
     R: Serialize,
     State: 'static + Send + Sync + ReadState,
+    VER: 'static + Send + Sync + StaticVersionType,
 {
     async fn handle(
         &self,
         req: RequestParams,
         state: &State,
+        bind_version: VER,
     ) -> Result<tide::Response, RouteError<Error>> {
         let accept = req.accept()?;
-        response_from_result::<_, _, MAJOR, MINOR>(
+        response_from_result(
             &accept,
             state.read(|state| (self.handler)(req, state)).await,
+            bind_version,
         )
     }
 }
@@ -1298,8 +1302,7 @@ struct WriteHandler<F> {
 }
 
 #[async_trait]
-impl<State, Error, F, R, const MAJOR: u16, const MINOR: u16> Handler<State, Error, MAJOR, MINOR>
-    for WriteHandler<F>
+impl<State, Error, F, R, VER> Handler<State, Error, VER> for WriteHandler<F>
 where
     F: 'static
         + Send
@@ -1307,16 +1310,19 @@ where
         + Fn(RequestParams, &mut <State as ReadState>::State) -> BoxFuture<'_, Result<R, Error>>,
     R: Serialize,
     State: 'static + Send + Sync + WriteState,
+    VER: 'static + Send + Sync + StaticVersionType,
 {
     async fn handle(
         &self,
         req: RequestParams,
         state: &State,
+        bind_version: VER,
     ) -> Result<tide::Response, RouteError<Error>> {
         let accept = req.accept()?;
-        response_from_result::<_, _, MAJOR, MINOR>(
+        response_from_result(
             &accept,
             state.write(|state| (self.handler)(req, state)).await,
+            bind_version,
         )
     }
 }
@@ -1346,12 +1352,16 @@ mod test {
     use prometheus::{Counter, Registry};
     use std::borrow::Cow;
     use toml::toml;
-    use versioned_binary_serialization::{BinarySerializer, Serializer};
+    use versioned_binary_serialization::{version::StaticVersion, BinarySerializer, Serializer};
 
     #[cfg(windows)]
     use async_tungstenite::tungstenite::Error as WsError;
     #[cfg(windows)]
     use std::io::ErrorKind;
+
+    type StaticVer01 = StaticVersion<0, 1>;
+    type SerializerV01 = Serializer<StaticVersion<0, 1>>;
+    const VER_0_1: StaticVer01 = StaticVersion {};
 
     async fn check_stream_closed<S>(mut conn: WebSocketStream<S>)
     where
@@ -1376,7 +1386,7 @@ mod test {
 
     #[async_std::test]
     async fn test_socket_endpoint() {
-        let mut app = App::<_, ServerError, 0, 1>::with_state(RwLock::new(()));
+        let mut app = App::<_, ServerError, StaticVer01>::with_state(RwLock::new(()));
         let api_toml = toml! {
             [meta]
             FORMAT_VERSION = "0.1.0"
@@ -1397,7 +1407,7 @@ mod test {
             let mut api = app.module::<ServerError>("mod", api_toml).unwrap();
             api.socket(
                 "echo",
-                |_req, mut conn: Connection<String, String, _, 0, 1>, _state| {
+                |_req, mut conn: Connection<String, String, _, StaticVer01>, _state| {
                     async move {
                         while let Some(msg) = conn.next().await {
                             conn.send(&msg?).await?;
@@ -1410,7 +1420,7 @@ mod test {
             .unwrap()
             .socket(
                 "once",
-                |_req, mut conn: Connection<_, (), _, 0, 1>, _state| {
+                |_req, mut conn: Connection<_, (), _, StaticVer01>, _state| {
                     async move {
                         conn.send("msg").boxed().await?;
                         Ok(())
@@ -1421,7 +1431,7 @@ mod test {
             .unwrap()
             .socket(
                 "error",
-                |_req, _conn: Connection<(), (), _, 0, 1>, _state| {
+                |_req, _conn: Connection<(), (), _, StaticVer01>, _state| {
                     async move {
                         Err(ServerError::catch_all(
                             StatusCode::InternalServerError,
@@ -1435,7 +1445,7 @@ mod test {
         }
         let port = pick_unused_port().unwrap();
         let url: Url = format!("http://localhost:{}", port).parse().unwrap();
-        spawn(app.serve(format!("0.0.0.0:{}", port)));
+        spawn(app.serve(format!("0.0.0.0:{}", port), VER_0_1));
         wait_for_server(&url, SERVER_STARTUP_RETRIES, SERVER_STARTUP_SLEEP_MS).await;
 
         let mut socket_url = url.join("mod/echo").unwrap();
@@ -1459,7 +1469,7 @@ mod test {
 
         // Send a binary message.
         conn.send(Message::Binary(
-            Serializer::<0, 1>::serialize("goodbye").unwrap(),
+            SerializerV01::serialize("goodbye").unwrap(),
         ))
         .await
         .unwrap();
@@ -1481,18 +1491,18 @@ mod test {
             .unwrap();
         assert_eq!(
             conn.next().await.unwrap().unwrap(),
-            Message::Binary(Serializer::<0, 1>::serialize("hello").unwrap())
+            Message::Binary(SerializerV01::serialize("hello").unwrap())
         );
 
         // Send a binary message.
         conn.send(Message::Binary(
-            Serializer::<0, 1>::serialize("goodbye").unwrap(),
+            SerializerV01::serialize("goodbye").unwrap(),
         ))
         .await
         .unwrap();
         assert_eq!(
             conn.next().await.unwrap().unwrap(),
-            Message::Binary(Serializer::<0, 1>::serialize("goodbye").unwrap())
+            Message::Binary(SerializerV01::serialize("goodbye").unwrap())
         );
 
         // Test a stream that exits normally.
@@ -1525,7 +1535,7 @@ mod test {
 
     #[async_std::test]
     async fn test_stream_endpoint() {
-        let mut app = App::<_, ServerError, 0, 1>::with_state(RwLock::new(()));
+        let mut app = App::<_, ServerError, StaticVer01>::with_state(RwLock::new(()));
         let api_toml = toml! {
             [meta]
             FORMAT_VERSION = "0.1.0"
@@ -1561,7 +1571,7 @@ mod test {
         }
         let port = pick_unused_port().unwrap();
         let url: Url = format!("http://localhost:{}", port).parse().unwrap();
-        spawn(app.serve(format!("0.0.0.0:{}", port)));
+        spawn(app.serve(format!("0.0.0.0:{}", port), VER_0_1));
         wait_for_server(&url, SERVER_STARTUP_RETRIES, SERVER_STARTUP_SLEEP_MS).await;
 
         // Consume the `nat` stream.
@@ -1608,7 +1618,7 @@ mod test {
 
     #[async_std::test]
     async fn test_custom_healthcheck() {
-        let mut app = App::<_, ServerError, 0, 1>::with_state(HealthStatus::Available);
+        let mut app = App::<_, ServerError, StaticVer01>::with_state(HealthStatus::Available);
         let api_toml = toml! {
             [meta]
             FORMAT_VERSION = "0.1.0"
@@ -1622,7 +1632,7 @@ mod test {
         }
         let port = pick_unused_port().unwrap();
         let url: Url = format!("http://localhost:{}", port).parse().unwrap();
-        spawn(app.serve(format!("0.0.0.0:{}", port)));
+        spawn(app.serve(format!("0.0.0.0:{}", port), VER_0_1));
         wait_for_server(&url, SERVER_STARTUP_RETRIES, SERVER_STARTUP_SLEEP_MS).await;
 
         let mut res = surf::get(format!("http://localhost:{}/mod/healthcheck", port))
@@ -1652,7 +1662,7 @@ mod test {
         metrics.register(Box::new(counter.clone())).unwrap();
         let state = State { metrics, counter };
 
-        let mut app = App::<_, ServerError, 0, 1>::with_state(RwLock::new(state));
+        let mut app = App::<_, ServerError, StaticVer01>::with_state(RwLock::new(state));
         let api_toml = toml! {
             [meta]
             FORMAT_VERSION = "0.1.0"
@@ -1674,7 +1684,7 @@ mod test {
         }
         let port = pick_unused_port().unwrap();
         let url: Url = format!("http://localhost:{port}").parse().unwrap();
-        spawn(app.serve(format!("0.0.0.0:{port}")));
+        spawn(app.serve(format!("0.0.0.0:{port}"), VER_0_1));
         wait_for_server(&url, SERVER_STARTUP_RETRIES, SERVER_STARTUP_SLEEP_MS).await;
 
         for i in 1..5 {

@@ -532,8 +532,9 @@ impl StatusCode {
 #[cfg(test)]
 mod test {
     use super::*;
-    use versioned_binary_serialization::{BinarySerializer, Serializer};
+    use versioned_binary_serialization::{version::StaticVersion, BinarySerializer, Serializer};
 
+    type SerializerV01 = Serializer<StaticVersion<0, 1>>;
     #[test]
     fn test_status_code() {
         for code in 0u16.. {
@@ -551,8 +552,8 @@ mod test {
             // Test binary round trip.
             assert_eq!(
                 status,
-                Serializer::<0, 1>::deserialize::<StatusCode>(
-                    &Serializer::<0, 1>::serialize(&status).unwrap()
+                SerializerV01::deserialize::<StatusCode>(
+                    &SerializerV01::serialize(&status).unwrap()
                 )
                 .unwrap()
             );
