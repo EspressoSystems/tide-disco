@@ -906,6 +906,39 @@
 <a href="#905" id="905">905</a>
 <a href="#906" id="906">906</a>
 <a href="#907" id="907">907</a>
+<a href="#908" id="908">908</a>
+<a href="#909" id="909">909</a>
+<a href="#910" id="910">910</a>
+<a href="#911" id="911">911</a>
+<a href="#912" id="912">912</a>
+<a href="#913" id="913">913</a>
+<a href="#914" id="914">914</a>
+<a href="#915" id="915">915</a>
+<a href="#916" id="916">916</a>
+<a href="#917" id="917">917</a>
+<a href="#918" id="918">918</a>
+<a href="#919" id="919">919</a>
+<a href="#920" id="920">920</a>
+<a href="#921" id="921">921</a>
+<a href="#922" id="922">922</a>
+<a href="#923" id="923">923</a>
+<a href="#924" id="924">924</a>
+<a href="#925" id="925">925</a>
+<a href="#926" id="926">926</a>
+<a href="#927" id="927">927</a>
+<a href="#928" id="928">928</a>
+<a href="#929" id="929">929</a>
+<a href="#930" id="930">930</a>
+<a href="#931" id="931">931</a>
+<a href="#932" id="932">932</a>
+<a href="#933" id="933">933</a>
+<a href="#934" id="934">934</a>
+<a href="#935" id="935">935</a>
+<a href="#936" id="936">936</a>
+<a href="#937" id="937">937</a>
+<a href="#938" id="938">938</a>
+<a href="#939" id="939">939</a>
+<a href="#940" id="940">940</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright (c) 2022 Espresso Systems (espressosys.com)
 // This file is part of the tide-disco library.
 
@@ -943,6 +976,7 @@
     security::{CorsMiddleware, Origin},
 };
 <span class="kw">use </span>tide_websockets::WebSocket;
+<span class="kw">use </span>versioned_binary_serialization::version::StaticVersionType;
 
 <span class="kw">pub use </span>tide::listener::{Listener, ToListener};
 
@@ -952,9 +986,9 @@
 /// constructing an [Api] for each module and calling [App::register_module]. Once all of the
 /// desired modules are registered, the app can be converted into an asynchronous server task using
 /// [App::serve].
-</span><span class="kw">pub struct </span>App&lt;State, Error, <span class="kw">const </span>MAJOR: u16, <span class="kw">const </span>MINOR: u16&gt; {
+</span><span class="kw">pub struct </span>App&lt;State, Error, VER: StaticVersionType&gt; {
     <span class="comment">// Map from base URL to module API.
-    </span>apis: HashMap&lt;String, Api&lt;State, Error, MAJOR, MINOR&gt;&gt;,
+    </span>apis: HashMap&lt;String, Api&lt;State, Error, VER&gt;&gt;,
     state: Arc&lt;State&gt;,
     app_version: <span class="prelude-ty">Option</span>&lt;Version&gt;,
 }
@@ -966,8 +1000,11 @@
     ModuleAlreadyExists,
 }
 
-<span class="kw">impl</span>&lt;State: Send + Sync + <span class="lifetime">'static</span>, Error: <span class="lifetime">'static</span>, <span class="kw">const </span>MAJOR: u16, <span class="kw">const </span>MINOR: u16&gt;
-    App&lt;State, Error, MAJOR, MINOR&gt;
+<span class="kw">impl</span>&lt;
+        State: Send + Sync + <span class="lifetime">'static</span>,
+        Error: <span class="lifetime">'static</span>,
+        VER: Send + Sync + <span class="lifetime">'static </span>+ StaticVersionType,
+    &gt; App&lt;State, Error, VER&gt;
 {
     <span class="doccomment">/// Create a new [App] with a given state.
     </span><span class="kw">pub fn </span>with_state(state: State) -&gt; <span class="self">Self </span>{
@@ -983,7 +1020,7 @@
         <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span><span class="self">self</span>,
         base_url: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>str,
         api: <span class="kw">impl </span>Into&lt;toml::Value&gt;,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;Module&lt;<span class="lifetime">'a</span>, State, Error, ModuleError, MAJOR, MINOR&gt;, AppError&gt;
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;Module&lt;<span class="lifetime">'a</span>, State, Error, ModuleError, VER&gt;, AppError&gt;
     <span class="kw">where
         </span>Error: From&lt;ModuleError&gt;,
         ModuleError: <span class="lifetime">'static </span>+ Send + Sync,
@@ -1003,7 +1040,7 @@
     </span><span class="kw">pub fn </span>register_module&lt;ModuleError&gt;(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
         base_url: <span class="kw-2">&amp;</span>str,
-        api: Api&lt;State, ModuleError, MAJOR, MINOR&gt;,
+        api: Api&lt;State, ModuleError, VER&gt;,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="kw-2">&amp;mut </span><span class="self">Self</span>, AppError&gt;
     <span class="kw">where
         </span>Error: From&lt;ModuleError&gt;,
@@ -1043,9 +1080,9 @@
     /// is contained in the application crate, it should result in a reasonable version:
     ///
     /// ```
-    /// # const MAJOR: u16 = 0;
-    /// # const MINOR: u16 = 1;
-    /// # fn ex(app: &amp;mut tide_disco::App&lt;(), (), MAJOR, MINOR&gt;) {
+    /// # use versioned_binary_serialization::version::StaticVersion;
+    /// # type StaticVer01 = StaticVersion&lt;0, 1&gt;;
+    /// # fn ex(app: &amp;mut tide_disco::App&lt;(), (), StaticVer01&gt;) {
     /// app.with_version(env!("CARGO_PKG_VERSION").parse().unwrap());
     /// # }
     /// ```
@@ -1124,12 +1161,15 @@
 <span class="kw">impl</span>&lt;
         State: Send + Sync + <span class="lifetime">'static</span>,
         Error: <span class="lifetime">'static </span>+ <span class="kw">crate</span>::Error,
-        <span class="kw">const </span>MAJOR: u16,
-        <span class="kw">const </span>MINOR: u16,
-    &gt; App&lt;State, Error, MAJOR, MINOR&gt;
+        VER: <span class="lifetime">'static </span>+ Send + Sync + StaticVersionType,
+    &gt; App&lt;State, Error, VER&gt;
 {
     <span class="doccomment">/// Serve the [App] asynchronously.
-    </span><span class="kw">pub async fn </span>serve&lt;L: ToListener&lt;Arc&lt;<span class="self">Self</span>&gt;&gt;&gt;(<span class="self">self</span>, listener: L) -&gt; io::Result&lt;()&gt; {
+    </span><span class="kw">pub async fn </span>serve&lt;L: ToListener&lt;Arc&lt;<span class="self">Self</span>&gt;&gt;&gt;(
+        <span class="self">self</span>,
+        listener: L,
+        bind_version: VER,
+    ) -&gt; io::Result&lt;()&gt; {
         <span class="kw">let </span>state = Arc::new(<span class="self">self</span>);
         <span class="kw">let </span><span class="kw-2">mut </span>server = tide::Server::with_state(state.clone());
         <span class="kw">for </span>(name, api) <span class="kw">in </span><span class="kw-2">&amp;</span>state.apis {
@@ -1143,7 +1183,7 @@
                 .at(name)
                 .serve_dir(api.public().unwrap_or_else(|| <span class="kw-2">&amp;</span>DEFAULT_PUBLIC_PATH))<span class="question-mark">?</span>;
         }
-        server.with(add_error_body::&lt;<span class="kw">_</span>, Error, MAJOR, MINOR&gt;);
+        server.with(add_error_body::&lt;<span class="kw">_</span>, Error, VER&gt;);
         server.with(
             CorsMiddleware::new()
                 .allow_methods(<span class="string">"GET, POST"</span>.parse::&lt;HeaderValue&gt;().unwrap())
@@ -1178,13 +1218,24 @@
                     // all endpoints registered under this pattern, so that a request to this path
                     // with the right headers will return metrics instead of going through the
                     // normal method-based dispatching.
-                    </span><span class="self">Self</span>::register_metrics(prefix.to_owned(), <span class="kw-2">&amp;mut </span>endpoint, metrics_route);
+                    </span><span class="self">Self</span>::register_metrics(
+                        prefix.to_owned(),
+                        <span class="kw-2">&amp;mut </span>endpoint,
+                        metrics_route,
+                        bind_version,
+                    );
                 }
 
                 <span class="comment">// Register the HTTP routes.
                 </span><span class="kw">for </span>route <span class="kw">in </span>routes {
                     <span class="kw">if let </span>Method::Http(method) = route.method() {
-                        <span class="self">Self</span>::register_route(prefix.to_owned(), <span class="kw-2">&amp;mut </span>endpoint, route, method);
+                        <span class="self">Self</span>::register_route(
+                            prefix.to_owned(),
+                            <span class="kw-2">&amp;mut </span>endpoint,
+                            route,
+                            method,
+                            bind_version,
+                        );
                     }
                 }
             }
@@ -1216,9 +1267,9 @@
                         <span class="kw">async move </span>{
                             <span class="kw">let </span>api = <span class="kw-2">&amp;</span>req.state().apis[<span class="kw-2">&amp;</span>prefix];
                             <span class="kw">let </span>accept = RequestParams::accept_from_headers(<span class="kw-2">&amp;</span>req)<span class="question-mark">?</span>;
-                            respond_with::&lt;<span class="kw">_</span>, <span class="kw">_</span>, MAJOR, MINOR&gt;(<span class="kw-2">&amp;</span>accept, api.version()).map_err(
-                                |err| Error::from_route_error::&lt;Infallible&gt;(err).into_tide_error(),
-                            )
+                            respond_with(<span class="kw-2">&amp;</span>accept, api.version(), bind_version).map_err(|err| {
+                                Error::from_route_error::&lt;Infallible&gt;(err).into_tide_error()
+                            })
                         }
                     });
             }
@@ -1227,19 +1278,19 @@
         <span class="comment">// Register app-level automatic routes: `healthcheck` and `version`.
         </span>server
             .at(<span class="string">"healthcheck"</span>)
-            .get(|req: tide::Request&lt;Arc&lt;<span class="self">Self</span>&gt;&gt;| <span class="kw">async move </span>{
+            .get(<span class="kw">move </span>|req: tide::Request&lt;Arc&lt;<span class="self">Self</span>&gt;&gt;| <span class="kw">async move </span>{
                 <span class="kw">let </span>state = req.state().clone();
                 <span class="kw">let </span>app_state = <span class="kw-2">&amp;*</span>state.state;
                 <span class="kw">let </span>req = request_params(req, <span class="kw-2">&amp;</span>[]).<span class="kw">await</span><span class="question-mark">?</span>;
                 <span class="kw">let </span>accept = req.accept()<span class="question-mark">?</span>;
                 <span class="kw">let </span>res = state.health(req, app_state).<span class="kw">await</span>;
-                <span class="prelude-val">Ok</span>(health_check_response::&lt;<span class="kw">_</span>, MAJOR, MINOR&gt;(<span class="kw-2">&amp;</span>accept, res))
+                <span class="prelude-val">Ok</span>(health_check_response::&lt;<span class="kw">_</span>, VER&gt;(<span class="kw-2">&amp;</span>accept, res))
             });
         server
             .at(<span class="string">"version"</span>)
-            .get(|req: tide::Request&lt;Arc&lt;<span class="self">Self</span>&gt;&gt;| <span class="kw">async move </span>{
+            .get(<span class="kw">move </span>|req: tide::Request&lt;Arc&lt;<span class="self">Self</span>&gt;&gt;| <span class="kw">async move </span>{
                 <span class="kw">let </span>accept = RequestParams::accept_from_headers(<span class="kw-2">&amp;</span>req)<span class="question-mark">?</span>;
-                respond_with::&lt;<span class="kw">_</span>, <span class="kw">_</span>, MAJOR, MINOR&gt;(<span class="kw-2">&amp;</span>accept, req.state().version())
+                respond_with(<span class="kw-2">&amp;</span>accept, req.state().version(), bind_version)
                     .map_err(|err| Error::from_route_error::&lt;Infallible&gt;(err).into_tide_error())
             });
 
@@ -1292,8 +1343,9 @@
     <span class="kw">fn </span>register_route(
         api: String,
         endpoint: <span class="kw-2">&amp;mut </span>tide::Route&lt;Arc&lt;<span class="self">Self</span>&gt;&gt;,
-        route: <span class="kw-2">&amp;</span>Route&lt;State, Error, MAJOR, MINOR&gt;,
+        route: <span class="kw-2">&amp;</span>Route&lt;State, Error, VER&gt;,
         method: http::Method,
+        bind_version: VER,
     ) {
         <span class="kw">let </span>name = route.name();
         endpoint.method(method, <span class="kw">move </span>|req: tide::Request&lt;Arc&lt;<span class="self">Self</span>&gt;&gt;| {
@@ -1304,7 +1356,7 @@
                 <span class="kw">let </span>state = <span class="kw-2">&amp;*</span>req.state().clone().state;
                 <span class="kw">let </span>req = request_params(req, route.params()).<span class="kw">await</span><span class="question-mark">?</span>;
                 route
-                    .handle(req, state)
+                    .handle(req, state, bind_version)
                     .<span class="kw">await
                     </span>.map_err(|err| <span class="kw">match </span>err {
                         RouteError::AppSpecific(err) =&gt; err,
@@ -1318,14 +1370,19 @@
     <span class="kw">fn </span>register_metrics(
         api: String,
         endpoint: <span class="kw-2">&amp;mut </span>tide::Route&lt;Arc&lt;<span class="self">Self</span>&gt;&gt;,
-        route: <span class="kw-2">&amp;</span>Route&lt;State, Error, MAJOR, MINOR&gt;,
+        route: <span class="kw-2">&amp;</span>Route&lt;State, Error, VER&gt;,
+        bind_version: VER,
     ) {
         <span class="kw">let </span>name = route.name();
         <span class="kw">if </span>route.has_handler() {
             <span class="comment">// If there is a metrics handler, add middleware to the endpoint to intercept the
             // request and respond with metrics, rather than the usual HTTP dispatching, if the
             // appropriate headers are set.
-            </span>endpoint.with(MetricsMiddleware::new(name.clone(), api.clone()));
+            </span>endpoint.with(MetricsMiddleware::new(
+                name.clone(),
+                api.clone(),
+                bind_version,
+            ));
         }
 
         <span class="comment">// Register a catch-all HTTP handler for the route, which serves the route documentation as
@@ -1343,7 +1400,7 @@
     <span class="kw">fn </span>register_socket(
         api: String,
         endpoint: <span class="kw-2">&amp;mut </span>tide::Route&lt;Arc&lt;<span class="self">Self</span>&gt;&gt;,
-        route: <span class="kw-2">&amp;</span>Route&lt;State, Error, MAJOR, MINOR&gt;,
+        route: <span class="kw-2">&amp;</span>Route&lt;State, Error, VER&gt;,
     ) {
         <span class="kw">let </span>name = route.name();
         <span class="kw">if </span>route.has_handler() {
@@ -1390,7 +1447,7 @@
     <span class="kw">fn </span>register_fallback(
         api: String,
         endpoint: <span class="kw-2">&amp;mut </span>tide::Route&lt;Arc&lt;<span class="self">Self</span>&gt;&gt;,
-        route: <span class="kw-2">&amp;</span>Route&lt;State, Error, MAJOR, MINOR&gt;,
+        route: <span class="kw-2">&amp;</span>Route&lt;State, Error, VER&gt;,
     ) {
         <span class="kw">let </span>name = route.name();
         endpoint.all(<span class="kw">move </span>|req: tide::Request&lt;Arc&lt;<span class="self">Self</span>&gt;&gt;| {
@@ -1410,27 +1467,28 @@
     }
 }
 
-<span class="kw">struct </span>MetricsMiddleware {
+<span class="kw">struct </span>MetricsMiddleware&lt;VER: StaticVersionType&gt; {
     route: String,
     api: String,
+    ver: VER,
 }
 
-<span class="kw">impl </span>MetricsMiddleware {
-    <span class="kw">fn </span>new(route: String, api: String) -&gt; <span class="self">Self </span>{
-        <span class="self">Self </span>{ route, api }
+<span class="kw">impl</span>&lt;VER: StaticVersionType&gt; MetricsMiddleware&lt;VER&gt; {
+    <span class="kw">fn </span>new(route: String, api: String, ver: VER) -&gt; <span class="self">Self </span>{
+        <span class="self">Self </span>{ route, api, ver }
     }
 }
 
-<span class="kw">impl</span>&lt;State, Error, <span class="kw">const </span>MAJOR: u16, <span class="kw">const </span>MINOR: u16&gt;
-    tide::Middleware&lt;Arc&lt;App&lt;State, Error, MAJOR, MINOR&gt;&gt;&gt; <span class="kw">for </span>MetricsMiddleware
+<span class="kw">impl</span>&lt;State, Error, VER&gt; tide::Middleware&lt;Arc&lt;App&lt;State, Error, VER&gt;&gt;&gt; <span class="kw">for </span>MetricsMiddleware&lt;VER&gt;
 <span class="kw">where
     </span>State: Send + Sync + <span class="lifetime">'static</span>,
     Error: <span class="lifetime">'static </span>+ <span class="kw">crate</span>::Error,
+    VER: Send + Sync + <span class="lifetime">'static </span>+ StaticVersionType,
 {
     <span class="kw">fn </span>handle&lt;<span class="lifetime">'a</span>, <span class="lifetime">'b</span>, <span class="lifetime">'t</span>&gt;(
         <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="self">self</span>,
-        req: tide::Request&lt;Arc&lt;App&lt;State, Error, MAJOR, MINOR&gt;&gt;&gt;,
-        next: tide::Next&lt;<span class="lifetime">'b</span>, Arc&lt;App&lt;State, Error, MAJOR, MINOR&gt;&gt;&gt;,
+        req: tide::Request&lt;Arc&lt;App&lt;State, Error, VER&gt;&gt;&gt;,
+        next: tide::Next&lt;<span class="lifetime">'b</span>, Arc&lt;App&lt;State, Error, VER&gt;&gt;&gt;,
     ) -&gt; BoxFuture&lt;<span class="lifetime">'t</span>, tide::Result&gt;
     <span class="kw">where
         </span><span class="lifetime">'a</span>: <span class="lifetime">'t</span>,
@@ -1439,6 +1497,7 @@
     {
         <span class="kw">let </span>route = <span class="self">self</span>.route.clone();
         <span class="kw">let </span>api = <span class="self">self</span>.api.clone();
+        <span class="kw">let </span>bind_version = <span class="self">self</span>.ver;
         <span class="kw">async move </span>{
             <span class="kw">if </span>req.method() != http::Method::Get {
                 <span class="comment">// Metrics only apply to GET requests. For other requests, proceed with normal
@@ -1460,7 +1519,7 @@
             <span class="kw">let </span>state = <span class="kw-2">&amp;*</span>req.state().clone().state;
             <span class="kw">let </span>req = request_params(req, route.params()).<span class="kw">await</span><span class="question-mark">?</span>;
             route
-                .handle(req, state)
+                .handle(req, state, bind_version)
                 .<span class="kw">await
                 </span>.map_err(|err| <span class="kw">match </span>err {
                     RouteError::AppSpecific(err) =&gt; err,
@@ -1472,8 +1531,8 @@
     }
 }
 
-<span class="kw">async fn </span>request_params&lt;State, Error: <span class="kw">crate</span>::Error, <span class="kw">const </span>MAJOR: u16, <span class="kw">const </span>MINOR: u16&gt;(
-    req: tide::Request&lt;Arc&lt;App&lt;State, Error, MAJOR, MINOR&gt;&gt;&gt;,
+<span class="kw">async fn </span>request_params&lt;State, Error: <span class="kw">crate</span>::Error, VER: StaticVersionType&gt;(
+    req: tide::Request&lt;Arc&lt;App&lt;State, Error, VER&gt;&gt;&gt;,
     params: <span class="kw-2">&amp;</span>[RequestParam],
 ) -&gt; <span class="prelude-ty">Result</span>&lt;RequestParams, tide::Error&gt; {
     RequestParams::new(req, params)
@@ -1527,8 +1586,7 @@
 </span><span class="kw">fn </span>add_error_body&lt;
     T: Clone + Send + Sync + <span class="lifetime">'static</span>,
     E: <span class="kw">crate</span>::Error,
-    <span class="kw">const </span>MAJOR: u16,
-    <span class="kw">const </span>MINOR: u16,
+    VER: Send + Sync + <span class="lifetime">'static </span>+ StaticVersionType,
 &gt;(
     req: tide::Request&lt;T&gt;,
     next: tide::Next&lt;T&gt;,
@@ -1542,7 +1600,7 @@
             <span class="comment">// Try to add the error to the response body using a format accepted by the client. If
             // we cannot do that (for example, if the client requested a format that is incompatible
             // with a serialized error) just add the error as a string using plaintext.
-            </span><span class="kw">let </span>(body, content_type) = route::response_body::&lt;<span class="kw">_</span>, E, MAJOR, MINOR&gt;(<span class="kw-2">&amp;</span>accept, <span class="kw-2">&amp;</span>error)
+            </span><span class="kw">let </span>(body, content_type) = route::response_body::&lt;<span class="kw">_</span>, E, VER&gt;(<span class="kw-2">&amp;</span>accept, <span class="kw-2">&amp;</span>error)
                 .unwrap_or_else(|<span class="kw">_</span>| (error.to_string().into(), mime::PLAIN));
             res.set_body(body);
             res.set_content_type(content_type);
@@ -1553,50 +1611,54 @@
     })
 }
 
-<span class="kw">pub struct </span>Module&lt;<span class="lifetime">'a</span>, State, Error, ModuleError, <span class="kw">const </span>MAJOR: u16, <span class="kw">const </span>MINOR: u16&gt;
+<span class="kw">pub struct </span>Module&lt;<span class="lifetime">'a</span>, State, Error, ModuleError, VER: StaticVersionType&gt;
 <span class="kw">where
     </span>State: <span class="lifetime">'static </span>+ Send + Sync,
     Error: <span class="lifetime">'static </span>+ From&lt;ModuleError&gt;,
     ModuleError: <span class="lifetime">'static </span>+ Send + Sync,
+    VER: <span class="lifetime">'static </span>+ Send + Sync,
 {
-    app: <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span>App&lt;State, Error, MAJOR, MINOR&gt;,
+    app: <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span>App&lt;State, Error, VER&gt;,
     base_url: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>str,
     <span class="comment">// This is only an [Option] so we can [take] out of it during [drop].
-    </span>api: <span class="prelude-ty">Option</span>&lt;Api&lt;State, ModuleError, MAJOR, MINOR&gt;&gt;,
+    </span>api: <span class="prelude-ty">Option</span>&lt;Api&lt;State, ModuleError, VER&gt;&gt;,
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, State, Error, ModuleError, <span class="kw">const </span>MAJOR: u16, <span class="kw">const </span>MINOR: u16&gt; Deref
-    <span class="kw">for </span>Module&lt;<span class="lifetime">'a</span>, State, Error, ModuleError, MAJOR, MINOR&gt;
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, State, Error, ModuleError, VER: StaticVersionType&gt; Deref
+    <span class="kw">for </span>Module&lt;<span class="lifetime">'a</span>, State, Error, ModuleError, VER&gt;
 <span class="kw">where
     </span>State: <span class="lifetime">'static </span>+ Send + Sync,
     Error: <span class="lifetime">'static </span>+ From&lt;ModuleError&gt;,
     ModuleError: <span class="lifetime">'static </span>+ Send + Sync,
+    VER: <span class="lifetime">'static </span>+ Send + Sync,
 {
-    <span class="kw">type </span>Target = Api&lt;State, ModuleError, MAJOR, MINOR&gt;;
+    <span class="kw">type </span>Target = Api&lt;State, ModuleError, VER&gt;;
 
     <span class="kw">fn </span>deref(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="self">Self</span>::Target {
         <span class="self">self</span>.api.as_ref().unwrap()
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, State, Error, ModuleError, <span class="kw">const </span>MAJOR: u16, <span class="kw">const </span>MINOR: u16&gt; DerefMut
-    <span class="kw">for </span>Module&lt;<span class="lifetime">'a</span>, State, Error, ModuleError, MAJOR, MINOR&gt;
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, State, Error, ModuleError, VER: StaticVersionType&gt; DerefMut
+    <span class="kw">for </span>Module&lt;<span class="lifetime">'a</span>, State, Error, ModuleError, VER&gt;
 <span class="kw">where
     </span>State: <span class="lifetime">'static </span>+ Send + Sync,
     Error: <span class="lifetime">'static </span>+ From&lt;ModuleError&gt;,
     ModuleError: <span class="lifetime">'static </span>+ Send + Sync,
+    VER: <span class="lifetime">'static </span>+ Send + Sync,
 {
     <span class="kw">fn </span>deref_mut(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;mut </span><span class="self">Self</span>::Target {
         <span class="self">self</span>.api.as_mut().unwrap()
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, State, Error, ModuleError, <span class="kw">const </span>MAJOR: u16, <span class="kw">const </span>MINOR: u16&gt; Drop
-    <span class="kw">for </span>Module&lt;<span class="lifetime">'a</span>, State, Error, ModuleError, MAJOR, MINOR&gt;
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, State, Error, ModuleError, VER: StaticVersionType&gt; Drop
+    <span class="kw">for </span>Module&lt;<span class="lifetime">'a</span>, State, Error, ModuleError, VER&gt;
 <span class="kw">where
     </span>State: <span class="lifetime">'static </span>+ Send + Sync,
     Error: <span class="lifetime">'static </span>+ From&lt;ModuleError&gt;,
     ModuleError: <span class="lifetime">'static </span>+ Send + Sync,
+    VER: <span class="lifetime">'static </span>+ Send + Sync,
 {
     <span class="kw">fn </span>drop(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
         <span class="self">self</span>.app
@@ -1618,7 +1680,11 @@
     <span class="kw">use </span>portpicker::pick_unused_port;
     <span class="kw">use </span>std::borrow::Cow;
     <span class="kw">use </span>toml::toml;
-    <span class="kw">use </span>versioned_binary_serialization::{BinarySerializer, Serializer};
+    <span class="kw">use </span>versioned_binary_serialization::{version::StaticVersion, BinarySerializer, Serializer};
+
+    <span class="kw">type </span>StaticVer01 = StaticVersion&lt;<span class="number">0</span>, <span class="number">1</span>&gt;;
+    <span class="kw">type </span>SerializerV01 = Serializer&lt;StaticVersion&lt;<span class="number">0</span>, <span class="number">1</span>&gt;&gt;;
+    <span class="kw">const </span>VER_0_1: StaticVer01 = StaticVersion {};
 
     <span class="attr">#[derive(Clone, Copy, Debug)]
     </span><span class="kw">struct </span>FakeMetrics;
@@ -1636,7 +1702,7 @@
     </span><span class="kw">async fn </span>test_method_dispatch() {
         <span class="kw">use </span><span class="kw">crate</span>::http::Method::<span class="kw-2">*</span>;
 
-        <span class="kw">let </span><span class="kw-2">mut </span>app = App::&lt;<span class="kw">_</span>, ServerError, <span class="number">0</span>, <span class="number">1</span>&gt;::with_state(RwLock::new(FakeMetrics));
+        <span class="kw">let </span><span class="kw-2">mut </span>app = App::&lt;<span class="kw">_</span>, ServerError, StaticVer01&gt;::with_state(RwLock::new(FakeMetrics));
         <span class="kw">let </span>api_toml = <span class="macro">toml! </span>{
             [meta]
             FORMAT_VERSION = <span class="string">"0.1.0"
@@ -1685,7 +1751,7 @@
             .unwrap()
             .socket(
                 <span class="string">"socket_test"</span>,
-                |_req, <span class="kw-2">mut </span>conn: Connection&lt;<span class="kw">_</span>, (), <span class="kw">_</span>, <span class="number">0</span>, <span class="number">1</span>&gt;, _state| {
+                |_req, <span class="kw-2">mut </span>conn: Connection&lt;<span class="kw">_</span>, (), <span class="kw">_</span>, StaticVer01&gt;, _state| {
                     <span class="kw">async move </span>{
                         conn.send(<span class="string">"SOCKET"</span>).<span class="kw">await</span>.unwrap();
                         <span class="prelude-val">Ok</span>(())
@@ -1701,7 +1767,7 @@
         }
         <span class="kw">let </span>port = pick_unused_port().unwrap();
         <span class="kw">let </span>url: Url = <span class="macro">format!</span>(<span class="string">"http://localhost:{}"</span>, port).parse().unwrap();
-        spawn(app.serve(<span class="macro">format!</span>(<span class="string">"0.0.0.0:{}"</span>, port)));
+        spawn(app.serve(<span class="macro">format!</span>(<span class="string">"0.0.0.0:{}"</span>, port), VER_0_1));
         wait_for_server(<span class="kw-2">&amp;</span>url, SERVER_STARTUP_RETRIES, SERVER_STARTUP_SLEEP_MS).<span class="kw">await</span>;
 
         <span class="kw">let </span>client: surf::Client = surf::Config::new()
@@ -1747,7 +1813,7 @@
         <span class="kw">let </span>msg = conn.next().<span class="kw">await</span>.unwrap().unwrap();
         <span class="kw">let </span>body: String = <span class="kw">match </span>msg {
             Message::Text(m) =&gt; serde_json::from_str(<span class="kw-2">&amp;</span>m).unwrap(),
-            Message::Binary(m) =&gt; Serializer::&lt;<span class="number">0</span>, <span class="number">1</span>&gt;::deserialize(<span class="kw-2">&amp;</span>m).unwrap(),
+            Message::Binary(m) =&gt; SerializerV01::deserialize(<span class="kw-2">&amp;</span>m).unwrap(),
             m =&gt; <span class="macro">panic!</span>(<span class="string">"expected Text or Binary message, but got {}"</span>, m),
         };
         <span class="macro">assert_eq!</span>(body, <span class="string">"SOCKET"</span>);
@@ -1756,7 +1822,7 @@
     <span class="doccomment">/// Test route dispatching for routes with patterns containing different parmaeters
     </span><span class="attr">#[async_std::test]
     </span><span class="kw">async fn </span>test_param_dispatch() {
-        <span class="kw">let </span><span class="kw-2">mut </span>app = App::&lt;<span class="kw">_</span>, ServerError, <span class="number">0</span>, <span class="number">1</span>&gt;::with_state(RwLock::new(()));
+        <span class="kw">let </span><span class="kw-2">mut </span>app = App::&lt;<span class="kw">_</span>, ServerError, StaticVer01&gt;::with_state(RwLock::new(()));
         <span class="kw">let </span>api_toml = <span class="macro">toml! </span>{
             [meta]
             FORMAT_VERSION = <span class="string">"0.1.0"
@@ -1782,7 +1848,7 @@
         }
         <span class="kw">let </span>port = pick_unused_port().unwrap();
         <span class="kw">let </span>url: Url = <span class="macro">format!</span>(<span class="string">"http://localhost:{}"</span>, port).parse().unwrap();
-        spawn(app.serve(<span class="macro">format!</span>(<span class="string">"0.0.0.0:{}"</span>, port)));
+        spawn(app.serve(<span class="macro">format!</span>(<span class="string">"0.0.0.0:{}"</span>, port), VER_0_1));
         wait_for_server(<span class="kw-2">&amp;</span>url, SERVER_STARTUP_RETRIES, SERVER_STARTUP_SLEEP_MS).<span class="kw">await</span>;
 
         <span class="kw">let </span>client: surf::Client = surf::Config::new()

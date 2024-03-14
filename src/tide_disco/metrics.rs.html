@@ -83,6 +83,8 @@
 <a href="#82" id="82">82</a>
 <a href="#83" id="83">83</a>
 <a href="#84" id="84">84</a>
+<a href="#85" id="85">85</a>
+<a href="#86" id="86">86</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright (c) 2022 Espresso Systems (espressosys.com)
 // This file is part of the tide-disco library.
 
@@ -101,6 +103,7 @@
 <span class="kw">use </span>futures::future::{BoxFuture, FutureExt};
 <span class="kw">use </span>prometheus::{Encoder, TextEncoder};
 <span class="kw">use </span>std::{borrow::Cow, error::Error, fmt::Debug};
+<span class="kw">use </span>versioned_binary_serialization::version::StaticVersionType;
 
 <span class="kw">pub trait </span>Metrics {
     <span class="kw">type </span>Error: Debug + Error;
@@ -139,18 +142,19 @@
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>Handler&lt;F&gt;(F);
 
 <span class="attr">#[async_trait]
-</span><span class="kw">impl</span>&lt;F, T, State, Error, <span class="kw">const </span>MAJOR: u16, <span class="kw">const </span>MINOR: u16&gt;
-    route::Handler&lt;State, Error, MAJOR, MINOR&gt; <span class="kw">for </span>Handler&lt;F&gt;
+</span><span class="kw">impl</span>&lt;F, T, State, Error, VER: StaticVersionType&gt; route::Handler&lt;State, Error, VER&gt; <span class="kw">for </span>Handler&lt;F&gt;
 <span class="kw">where
     </span>F: <span class="lifetime">'static </span>+ Send + Sync + Fn(RequestParams, <span class="kw-2">&amp;</span>State::State) -&gt; BoxFuture&lt;<span class="prelude-ty">Result</span>&lt;Cow&lt;T&gt;, Error&gt;&gt;,
     T: <span class="lifetime">'static </span>+ Clone + Metrics,
     State: <span class="lifetime">'static </span>+ Send + Sync + ReadState,
     Error: <span class="lifetime">'static</span>,
+    VER: <span class="lifetime">'static </span>+ Send + Sync,
 {
     <span class="kw">async fn </span>handle(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         req: RequestParams,
         state: <span class="kw-2">&amp;</span>State,
+        <span class="kw">_</span>: VER,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;tide::Response, RouteError&lt;Error&gt;&gt; {
         <span class="kw">let </span>exported = state
             .read(|state| {

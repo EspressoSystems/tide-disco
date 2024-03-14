@@ -1686,6 +1686,16 @@
 <a href="#1685" id="1685">1685</a>
 <a href="#1686" id="1686">1686</a>
 <a href="#1687" id="1687">1687</a>
+<a href="#1688" id="1688">1688</a>
+<a href="#1689" id="1689">1689</a>
+<a href="#1690" id="1690">1690</a>
+<a href="#1691" id="1691">1691</a>
+<a href="#1692" id="1692">1692</a>
+<a href="#1693" id="1693">1693</a>
+<a href="#1694" id="1694">1694</a>
+<a href="#1695" id="1695">1695</a>
+<a href="#1696" id="1696">1696</a>
+<a href="#1697" id="1697">1697</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright (c) 2022 Espresso Systems (espressosys.com)
 // This file is part of the tide-disco library.
 
@@ -1717,6 +1727,7 @@
 <span class="kw">use </span>std::ops::Index;
 <span class="kw">use </span>std::path::{Path, PathBuf};
 <span class="kw">use </span>tide::http::content::Accept;
+<span class="kw">use </span>versioned_binary_serialization::version::StaticVersionType;
 
 <span class="doccomment">/// An error encountered when parsing or constructing an [Api].
 </span><span class="attr">#[derive(Clone, Debug, Snafu)]
@@ -1940,10 +1951,10 @@
 /// TOML file and registered as a module of an [App](crate::App).
 </span><span class="attr">#[derive(Derivative)]
 #[derivative(Debug(bound = <span class="string">""</span>))]
-</span><span class="kw">pub struct </span>Api&lt;State, Error, <span class="kw">const </span>MAJOR: u16, <span class="kw">const </span>MINOR: u16&gt; {
+</span><span class="kw">pub struct </span>Api&lt;State, Error, VER: StaticVersionType&gt; {
     meta: Arc&lt;ApiMetadata&gt;,
     name: String,
-    routes: HashMap&lt;String, Route&lt;State, Error, MAJOR, MINOR&gt;&gt;,
+    routes: HashMap&lt;String, Route&lt;State, Error, VER&gt;&gt;,
     routes_by_path: HashMap&lt;String, Vec&lt;String&gt;&gt;,
     <span class="attr">#[derivative(Debug = <span class="string">"ignore"</span>)]
     </span>health_check: <span class="prelude-ty">Option</span>&lt;HealthCheckHandler&lt;State&gt;&gt;,
@@ -1953,34 +1964,28 @@
     long_description: String,
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, State, Error, <span class="kw">const </span>MAJOR: u16, <span class="kw">const </span>MINOR: u16&gt; IntoIterator
-    <span class="kw">for </span><span class="kw-2">&amp;</span><span class="lifetime">'a </span>Api&lt;State, Error, MAJOR, MINOR&gt;
-{
-    <span class="kw">type </span>Item = <span class="kw-2">&amp;</span><span class="lifetime">'a </span>Route&lt;State, Error, MAJOR, MINOR&gt;;
-    <span class="kw">type </span>IntoIter = Values&lt;<span class="lifetime">'a</span>, String, Route&lt;State, Error, MAJOR, MINOR&gt;&gt;;
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, State, Error, VER: StaticVersionType&gt; IntoIterator <span class="kw">for </span><span class="kw-2">&amp;</span><span class="lifetime">'a </span>Api&lt;State, Error, VER&gt; {
+    <span class="kw">type </span>Item = <span class="kw-2">&amp;</span><span class="lifetime">'a </span>Route&lt;State, Error, VER&gt;;
+    <span class="kw">type </span>IntoIter = Values&lt;<span class="lifetime">'a</span>, String, Route&lt;State, Error, VER&gt;&gt;;
 
     <span class="kw">fn </span>into_iter(<span class="self">self</span>) -&gt; <span class="self">Self</span>::IntoIter {
         <span class="self">self</span>.routes.values()
     }
 }
 
-<span class="kw">impl</span>&lt;State, Error, <span class="kw">const </span>MAJOR: u16, <span class="kw">const </span>MINOR: u16&gt; IntoIterator
-    <span class="kw">for </span>Api&lt;State, Error, MAJOR, MINOR&gt;
-{
-    <span class="kw">type </span>Item = Route&lt;State, Error, MAJOR, MINOR&gt;;
-    <span class="kw">type </span>IntoIter = IntoValues&lt;String, Route&lt;State, Error, MAJOR, MINOR&gt;&gt;;
+<span class="kw">impl</span>&lt;State, Error, VER: StaticVersionType&gt; IntoIterator <span class="kw">for </span>Api&lt;State, Error, VER&gt; {
+    <span class="kw">type </span>Item = Route&lt;State, Error, VER&gt;;
+    <span class="kw">type </span>IntoIter = IntoValues&lt;String, Route&lt;State, Error, VER&gt;&gt;;
 
     <span class="kw">fn </span>into_iter(<span class="self">self</span>) -&gt; <span class="self">Self</span>::IntoIter {
         <span class="self">self</span>.routes.into_values()
     }
 }
 
-<span class="kw">impl</span>&lt;State, Error, <span class="kw">const </span>MAJOR: u16, <span class="kw">const </span>MINOR: u16&gt; Index&lt;<span class="kw-2">&amp;</span>str&gt;
-    <span class="kw">for </span>Api&lt;State, Error, MAJOR, MINOR&gt;
-{
-    <span class="kw">type </span>Output = Route&lt;State, Error, MAJOR, MINOR&gt;;
+<span class="kw">impl</span>&lt;State, Error, VER: StaticVersionType&gt; Index&lt;<span class="kw-2">&amp;</span>str&gt; <span class="kw">for </span>Api&lt;State, Error, VER&gt; {
+    <span class="kw">type </span>Output = Route&lt;State, Error, VER&gt;;
 
-    <span class="kw">fn </span>index(<span class="kw-2">&amp;</span><span class="self">self</span>, index: <span class="kw-2">&amp;</span>str) -&gt; <span class="kw-2">&amp;</span>Route&lt;State, Error, MAJOR, MINOR&gt; {
+    <span class="kw">fn </span>index(<span class="kw-2">&amp;</span><span class="self">self</span>, index: <span class="kw-2">&amp;</span>str) -&gt; <span class="kw-2">&amp;</span>Route&lt;State, Error, VER&gt; {
         <span class="kw-2">&amp;</span><span class="self">self</span>.routes[index]
     }
 }
@@ -1990,22 +1995,20 @@
 /// This type iterates over all of the routes that have a given path.
 /// [routes_by_path](Api::routes_by_path), in turn, returns an iterator over paths whose items
 /// contain a [RoutesWithPath] iterator.
-</span><span class="kw">pub struct </span>RoutesWithPath&lt;<span class="lifetime">'a</span>, State, Error, <span class="kw">const </span>MAJOR: u16, <span class="kw">const </span>MINOR: u16&gt; {
+</span><span class="kw">pub struct </span>RoutesWithPath&lt;<span class="lifetime">'a</span>, State, Error, VER: StaticVersionType&gt; {
     routes: std::slice::Iter&lt;<span class="lifetime">'a</span>, String&gt;,
-    api: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>Api&lt;State, Error, MAJOR, MINOR&gt;,
+    api: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>Api&lt;State, Error, VER&gt;,
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, State, Error, <span class="kw">const </span>MAJOR: u16, <span class="kw">const </span>MINOR: u16&gt; Iterator
-    <span class="kw">for </span>RoutesWithPath&lt;<span class="lifetime">'a</span>, State, Error, MAJOR, MINOR&gt;
-{
-    <span class="kw">type </span>Item = <span class="kw-2">&amp;</span><span class="lifetime">'a </span>Route&lt;State, Error, MAJOR, MINOR&gt;;
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, State, Error, VER: StaticVersionType&gt; Iterator <span class="kw">for </span>RoutesWithPath&lt;<span class="lifetime">'a</span>, State, Error, VER&gt; {
+    <span class="kw">type </span>Item = <span class="kw-2">&amp;</span><span class="lifetime">'a </span>Route&lt;State, Error, VER&gt;;
 
     <span class="kw">fn </span>next(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>::Item&gt; {
         <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.api.routes[<span class="self">self</span>.routes.next()<span class="question-mark">?</span>])
     }
 }
 
-<span class="kw">impl</span>&lt;State, Error, <span class="kw">const </span>MAJOR: u16, <span class="kw">const </span>MINOR: u16&gt; Api&lt;State, Error, MAJOR, MINOR&gt; {
+<span class="kw">impl</span>&lt;State, Error, VER: StaticVersionType&gt; Api&lt;State, Error, VER&gt; {
     <span class="doccomment">/// Parse an API from a TOML specification.
     </span><span class="kw">pub fn </span>new(api: <span class="kw">impl </span>Into&lt;toml::Value&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, ApiError&gt; {
         <span class="kw">let </span><span class="kw-2">mut </span>api = api.into();
@@ -2111,7 +2114,7 @@
     <span class="doccomment">/// Iterate over groups of routes with the same path.
     </span><span class="kw">pub fn </span>routes_by_path(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-    ) -&gt; <span class="kw">impl </span>Iterator&lt;Item = (<span class="kw-2">&amp;</span>str, RoutesWithPath&lt;<span class="lifetime">'_</span>, State, Error, MAJOR, MINOR&gt;)&gt; {
+    ) -&gt; <span class="kw">impl </span>Iterator&lt;Item = (<span class="kw-2">&amp;</span>str, RoutesWithPath&lt;<span class="lifetime">'_</span>, State, Error, VER&gt;)&gt; {
         <span class="self">self</span>.routes_by_path.iter().map(|(path, routes)| {
             (
                 path.as_str(),
@@ -2139,9 +2142,9 @@
     /// is contained in the API crate, it should result in a reasonable version:
     ///
     /// ```
-    /// # const MAJOR: u16 = 0;
-    /// # const MINOR: u16 = 1;
-    /// # fn ex(api: &amp;mut tide_disco::Api&lt;(), (), MAJOR, MINOR&gt;) {
+    /// # use versioned_binary_serialization::version::StaticVersion;
+    /// # type StaticVer01 = StaticVersion&lt;0, 1&gt;;
+    /// # fn ex(api: &amp;mut tide_disco::Api&lt;(), (), StaticVer01&gt;) {
     /// api.with_version(env!("CARGO_PKG_VERSION").parse().unwrap());
     /// # }
     /// ```
@@ -2177,12 +2180,12 @@
     /// ```
     /// use futures::FutureExt;
     /// # use tide_disco::Api;
+    /// # use versioned_binary_serialization::version::StaticVersion;
     ///
     /// type State = u64;
-    /// const MAJOR: u16 = 0;
-    /// const MINOR: u16 = 1;
+    /// type StaticVer01 = StaticVersion&lt;0, 1&gt;;
     ///
-    /// # fn ex(api: &amp;mut Api&lt;State, (), MAJOR, MINOR&gt;) {
+    /// # fn ex(api: &amp;mut Api&lt;State, (), StaticVer01&gt;) {
     /// api.at("getstate", |req, state| async { Ok(*state) }.boxed());
     /// # }
     /// ```
@@ -2203,12 +2206,12 @@
     /// use async_std::sync::Mutex;
     /// use futures::FutureExt;
     /// # use tide_disco::Api;
+    /// # use versioned_binary_serialization::version::StaticVersion;
     ///
     /// type State = Mutex&lt;u64&gt;;
-    /// const MAJOR: u16 = 0;
-    /// const MINOR: u16 = 1;
+    /// type StaticVer01 = StaticVersion&lt;0, 1&gt;;
     ///
-    /// # fn ex(api: &amp;mut Api&lt;State, (), MAJOR, MINOR&gt;) {
+    /// # fn ex(api: &amp;mut Api&lt;State, (), StaticVer01&gt;) {
     /// api.at("increment", |req, state| async {
     ///     let mut guard = state.lock().await;
     ///     *guard += 1;
@@ -2253,6 +2256,7 @@
         </span>F: <span class="lifetime">'static </span>+ Send + Sync + Fn(RequestParams, <span class="kw-2">&amp;</span>State) -&gt; BoxFuture&lt;<span class="lifetime">'_</span>, <span class="prelude-ty">Result</span>&lt;T, Error&gt;&gt;,
         T: Serialize,
         State: <span class="lifetime">'static </span>+ Send + Sync,
+        VER: <span class="lifetime">'static </span>+ Send + Sync,
     {
         <span class="kw">let </span>route = <span class="self">self</span>.routes.get_mut(name).ok_or(ApiError::UndefinedRoute)<span class="question-mark">?</span>;
         <span class="kw">if </span>route.has_handler() {
@@ -2289,6 +2293,7 @@
             + Fn(RequestParams, <span class="kw-2">&amp;</span>&lt;State <span class="kw">as </span>ReadState&gt;::State) -&gt; BoxFuture&lt;<span class="lifetime">'_</span>, <span class="prelude-ty">Result</span>&lt;T, Error&gt;&gt;,
         T: Serialize,
         State: <span class="lifetime">'static </span>+ Send + Sync + ReadState,
+        VER: <span class="lifetime">'static </span>+ Send + Sync + StaticVersionType,
     {
         <span class="macro">assert!</span>(method.is_http() &amp;&amp; !method.is_mutable());
         <span class="kw">let </span>route = <span class="self">self</span>.routes.get_mut(name).ok_or(ApiError::UndefinedRoute)<span class="question-mark">?</span>;
@@ -2336,12 +2341,12 @@
     /// use async_std::sync::RwLock;
     /// use futures::FutureExt;
     /// # use tide_disco::Api;
+    /// # use versioned_binary_serialization::{Serializer, version::StaticVersion};
     ///
     /// type State = RwLock&lt;u64&gt;;
-    /// const MAJOR: u16 = 0;
-    /// const MINOR: u16 = 1;
+    /// type StaticVer01 = StaticVersion&lt;0, 1&gt;;
     ///
-    /// # fn ex(api: &amp;mut Api&lt;State, (), MAJOR, MINOR&gt;) {
+    /// # fn ex(api: &amp;mut Api&lt;State, (), StaticVer01&gt;) {
     /// api.get("getstate", |req, state| async { Ok(*state) }.boxed());
     /// # }
     /// ```
@@ -2369,6 +2374,7 @@
             + Fn(RequestParams, <span class="kw-2">&amp;</span>&lt;State <span class="kw">as </span>ReadState&gt;::State) -&gt; BoxFuture&lt;<span class="lifetime">'_</span>, <span class="prelude-ty">Result</span>&lt;T, Error&gt;&gt;,
         T: Serialize,
         State: <span class="lifetime">'static </span>+ Send + Sync + ReadState,
+        VER: <span class="lifetime">'static </span>+ Send + Sync,
     {
         <span class="self">self</span>.method_immutable(Method::get(), name, handler)
     }
@@ -2386,6 +2392,7 @@
             + Fn(RequestParams, <span class="kw-2">&amp;mut </span>&lt;State <span class="kw">as </span>ReadState&gt;::State) -&gt; BoxFuture&lt;<span class="lifetime">'_</span>, <span class="prelude-ty">Result</span>&lt;T, Error&gt;&gt;,
         T: Serialize,
         State: <span class="lifetime">'static </span>+ Send + Sync + WriteState,
+        VER: <span class="lifetime">'static </span>+ Send + Sync,
     {
         <span class="macro">assert!</span>(method.is_http() &amp;&amp; method.is_mutable());
         <span class="kw">let </span>route = <span class="self">self</span>.routes.get_mut(name).ok_or(ApiError::UndefinedRoute)<span class="question-mark">?</span>;
@@ -2435,12 +2442,12 @@
     /// use async_std::sync::RwLock;
     /// use futures::FutureExt;
     /// # use tide_disco::Api;
+    /// # use versioned_binary_serialization::version::StaticVersion;
     ///
     /// type State = RwLock&lt;u64&gt;;
-    /// const MAJOR: u16 = 0;
-    /// const MINOR: u16 = 1;
+    /// type StaticVer01 = StaticVersion&lt;0, 1&gt;;
     ///
-    /// # fn ex(api: &amp;mut Api&lt;State, (), MAJOR, MINOR&gt;) {
+    /// # fn ex(api: &amp;mut Api&lt;State, (), StaticVer01&gt;) {
     /// api.post("increment", |req, state| async {
     ///     *state += 1;
     ///     Ok(*state)
@@ -2471,6 +2478,7 @@
             + Fn(RequestParams, <span class="kw-2">&amp;mut </span>&lt;State <span class="kw">as </span>ReadState&gt;::State) -&gt; BoxFuture&lt;<span class="lifetime">'_</span>, <span class="prelude-ty">Result</span>&lt;T, Error&gt;&gt;,
         T: Serialize,
         State: <span class="lifetime">'static </span>+ Send + Sync + WriteState,
+        VER: <span class="lifetime">'static </span>+ Send + Sync,
     {
         <span class="self">self</span>.method_mutable(Method::post(), name, handler)
     }
@@ -2504,12 +2512,12 @@
     /// use async_std::sync::RwLock;
     /// use futures::FutureExt;
     /// # use tide_disco::Api;
+    /// # use versioned_binary_serialization::version::StaticVersion;
     ///
     /// type State = RwLock&lt;u64&gt;;
-    /// const MAJOR: u16 = 0;
-    /// const MINOR: u16 = 1;
+    /// type StaticVer01 = StaticVersion&lt;0, 1&gt;;
     ///
-    /// # fn ex(api: &amp;mut Api&lt;State, tide_disco::RequestError, MAJOR, MINOR&gt;) {
+    /// # fn ex(api: &amp;mut Api&lt;State, tide_disco::RequestError, StaticVer01&gt;) {
     /// api.post("replace", |req, state| async move {
     ///     *state = req.integer_param("new_state")?;
     ///     Ok(())
@@ -2540,6 +2548,7 @@
             + Fn(RequestParams, <span class="kw-2">&amp;mut </span>&lt;State <span class="kw">as </span>ReadState&gt;::State) -&gt; BoxFuture&lt;<span class="lifetime">'_</span>, <span class="prelude-ty">Result</span>&lt;T, Error&gt;&gt;,
         T: Serialize,
         State: <span class="lifetime">'static </span>+ Send + Sync + WriteState,
+        VER: <span class="lifetime">'static </span>+ Send + Sync,
     {
         <span class="self">self</span>.method_mutable(Method::put(), name, handler)
     }
@@ -2572,12 +2581,12 @@
     /// use async_std::sync::RwLock;
     /// use futures::FutureExt;
     /// # use tide_disco::Api;
+    /// # use versioned_binary_serialization::version::StaticVersion;
     ///
     /// type State = RwLock&lt;Option&lt;u64&gt;&gt;;
-    /// const MAJOR: u16 = 0;
-    /// const MINOR: u16 = 1;
+    /// type StaticVer01 = StaticVersion&lt;0, 1&gt;;
     ///
-    /// # fn ex(api: &amp;mut Api&lt;State, (), MAJOR, MINOR&gt;) {
+    /// # fn ex(api: &amp;mut Api&lt;State, (), StaticVer01&gt;) {
     /// api.delete("state", |req, state| async {
     ///     *state = None;
     ///     Ok(())
@@ -2608,6 +2617,7 @@
             + Fn(RequestParams, <span class="kw-2">&amp;mut </span>&lt;State <span class="kw">as </span>ReadState&gt;::State) -&gt; BoxFuture&lt;<span class="lifetime">'_</span>, <span class="prelude-ty">Result</span>&lt;T, Error&gt;&gt;,
         T: Serialize,
         State: <span class="lifetime">'static </span>+ Send + Sync + WriteState,
+        VER: <span class="lifetime">'static </span>+ Send + Sync,
     {
         <span class="self">self</span>.method_mutable(Method::delete(), name, handler)
     }
@@ -2643,9 +2653,10 @@
     /// ```
     /// use futures::{FutureExt, SinkExt, StreamExt};
     /// use tide_disco::{error::ServerError, socket::Connection, Api};
+    /// # use versioned_binary_serialization::version::StaticVersion;
     ///
-    /// # fn ex(api: &amp;mut Api&lt;(), ServerError, 0, 1&gt;) {
-    /// api.socket("sum", |_req, mut conn: Connection&lt;i32, i32, ServerError, 0, 1&gt;, _state| async move {
+    /// # fn ex(api: &amp;mut Api&lt;(), ServerError, StaticVersion&lt;0, 1&gt;&gt;) {
+    /// api.socket("sum", |_req, mut conn: Connection&lt;i32, i32, ServerError, StaticVersion&lt;0, 1&gt;&gt;, _state| async move {
     ///     let mut sum = 0;
     ///     while let Some(amount) = conn.next().await {
     ///         sum += amount?;
@@ -2682,7 +2693,7 @@
             + Sync
             + Fn(
                 RequestParams,
-                socket::Connection&lt;ToClient, FromClient, Error, MAJOR, MINOR&gt;,
+                socket::Connection&lt;ToClient, FromClient, Error, VER&gt;,
                 <span class="kw-2">&amp;</span>State,
             ) -&gt; BoxFuture&lt;<span class="lifetime">'_</span>, <span class="prelude-ty">Result</span>&lt;(), Error&gt;&gt;,
         ToClient: <span class="lifetime">'static </span>+ Serialize + <span class="question-mark">?</span>Sized,
@@ -2709,11 +2720,9 @@
         Msg: <span class="lifetime">'static </span>+ Serialize + Send + Sync,
         State: <span class="lifetime">'static </span>+ Send + Sync,
         Error: <span class="lifetime">'static </span>+ Send + Display,
+        VER: <span class="lifetime">'static </span>+ Send + Sync,
     {
-        <span class="self">self</span>.register_socket_handler(
-            name,
-            socket::stream_handler::&lt;<span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, MAJOR, MINOR&gt;(handler),
-        )
+        <span class="self">self</span>.register_socket_handler(name, socket::stream_handler::&lt;<span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, VER&gt;(handler))
     }
 
     <span class="kw">fn </span>register_socket_handler(
@@ -2774,17 +2783,17 @@
     /// # use futures::FutureExt;
     /// # use tide_disco::{api::{Api, ApiError}, error::ServerError};
     /// # use std::borrow::Cow;
+    /// # use versioned_binary_serialization::version::StaticVersion;
     /// use prometheus::{Counter, Registry};
     ///
     /// struct State {
     ///     counter: Counter,
     ///     metrics: Registry,
     /// }
-    /// const MAJOR: u16 = 0;
-    /// const MINOR: u16 = 1;
+    /// type StaticVer01 = StaticVersion&lt;0, 1&gt;;
     ///
-    /// # fn ex(_api: Api&lt;Mutex&lt;State&gt;, ServerError, MAJOR, MINOR&gt;) -&gt; Result&lt;(), ApiError&gt; {
-    /// let mut api: Api&lt;Mutex&lt;State&gt;, ServerError, MAJOR, MINOR&gt;;
+    /// # fn ex(_api: Api&lt;Mutex&lt;State&gt;, ServerError, StaticVer01&gt;) -&gt; Result&lt;(), ApiError&gt; {
+    /// let mut api: Api&lt;Mutex&lt;State&gt;, ServerError, StaticVer01&gt;;
     /// # api = _api;
     /// api.metrics("metrics", |_req, state| async move {
     ///     state.counter.inc();
@@ -2818,6 +2827,7 @@
         T: <span class="lifetime">'static </span>+ Clone + Metrics,
         State: <span class="lifetime">'static </span>+ Send + Sync + ReadState,
         Error: <span class="lifetime">'static</span>,
+        VER: <span class="lifetime">'static </span>+ Send + Sync,
     {
         <span class="kw">let </span>route = <span class="self">self</span>.routes.get_mut(name).ok_or(ApiError::UndefinedRoute)<span class="question-mark">?</span>;
         <span class="kw">if </span>route.method() != Method::Metrics {
@@ -2848,8 +2858,9 @@
     </span><span class="kw">where
         </span>State: <span class="lifetime">'static </span>+ Send + Sync,
         H: <span class="lifetime">'static </span>+ HealthCheck,
+        VER: <span class="lifetime">'static </span>+ Send + Sync,
     {
-        <span class="self">self</span>.health_check = <span class="prelude-val">Some</span>(route::health_check_handler::&lt;<span class="kw">_</span>, <span class="kw">_</span>, MAJOR, MINOR&gt;(handler));
+        <span class="self">self</span>.health_check = <span class="prelude-val">Some</span>(route::health_check_handler::&lt;<span class="kw">_</span>, <span class="kw">_</span>, VER&gt;(handler));
         <span class="self">self
     </span>}
 
@@ -2860,7 +2871,7 @@
         </span>} <span class="kw">else </span>{
             <span class="comment">// If there is no healthcheck handler registered, just return [HealthStatus::Available]
             // by default; after all, if this handler is getting hit at all, the service must be up.
-            </span>route::health_check_response::&lt;<span class="kw">_</span>, MAJOR, MINOR&gt;(
+            </span>route::health_check_response::&lt;<span class="kw">_</span>, VER&gt;(
                 <span class="kw-2">&amp;</span>req.accept().unwrap_or_else(|<span class="kw">_</span>| {
                     <span class="comment">// The healthcheck endpoint is not allowed to fail, so just use the default content
                     // type if we can't parse the Accept header.
@@ -2889,11 +2900,12 @@
     </span><span class="kw">pub fn </span>map_err&lt;Error2&gt;(
         <span class="self">self</span>,
         f: <span class="kw">impl </span><span class="lifetime">'static </span>+ Clone + Send + Sync + Fn(Error) -&gt; Error2,
-    ) -&gt; Api&lt;State, Error2, MAJOR, MINOR&gt;
+    ) -&gt; Api&lt;State, Error2, VER&gt;
     <span class="kw">where
         </span>Error: <span class="lifetime">'static </span>+ Send + Sync,
         Error2: <span class="lifetime">'static</span>,
         State: <span class="lifetime">'static </span>+ Send + Sync,
+        VER: <span class="lifetime">'static </span>+ Send + Sync,
     {
         Api {
             meta: <span class="self">self</span>.meta,
@@ -2956,8 +2968,7 @@
 }
 
 <span class="attr">#[async_trait]
-</span><span class="kw">impl</span>&lt;State, Error, F, R, <span class="kw">const </span>MAJOR: u16, <span class="kw">const </span>MINOR: u16&gt; Handler&lt;State, Error, MAJOR, MINOR&gt;
-    <span class="kw">for </span>ReadHandler&lt;F&gt;
+</span><span class="kw">impl</span>&lt;State, Error, F, R, VER&gt; Handler&lt;State, Error, VER&gt; <span class="kw">for </span>ReadHandler&lt;F&gt;
 <span class="kw">where
     </span>F: <span class="lifetime">'static
         </span>+ Send
@@ -2965,16 +2976,19 @@
         + Fn(RequestParams, <span class="kw-2">&amp;</span>&lt;State <span class="kw">as </span>ReadState&gt;::State) -&gt; BoxFuture&lt;<span class="lifetime">'_</span>, <span class="prelude-ty">Result</span>&lt;R, Error&gt;&gt;,
     R: Serialize,
     State: <span class="lifetime">'static </span>+ Send + Sync + ReadState,
+    VER: <span class="lifetime">'static </span>+ Send + Sync + StaticVersionType,
 {
     <span class="kw">async fn </span>handle(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         req: RequestParams,
         state: <span class="kw-2">&amp;</span>State,
+        bind_version: VER,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;tide::Response, RouteError&lt;Error&gt;&gt; {
         <span class="kw">let </span>accept = req.accept()<span class="question-mark">?</span>;
-        response_from_result::&lt;<span class="kw">_</span>, <span class="kw">_</span>, MAJOR, MINOR&gt;(
+        response_from_result(
             <span class="kw-2">&amp;</span>accept,
             state.read(|state| (<span class="self">self</span>.handler)(req, state)).<span class="kw">await</span>,
+            bind_version,
         )
     }
 }
@@ -2986,8 +3000,7 @@
 }
 
 <span class="attr">#[async_trait]
-</span><span class="kw">impl</span>&lt;State, Error, F, R, <span class="kw">const </span>MAJOR: u16, <span class="kw">const </span>MINOR: u16&gt; Handler&lt;State, Error, MAJOR, MINOR&gt;
-    <span class="kw">for </span>WriteHandler&lt;F&gt;
+</span><span class="kw">impl</span>&lt;State, Error, F, R, VER&gt; Handler&lt;State, Error, VER&gt; <span class="kw">for </span>WriteHandler&lt;F&gt;
 <span class="kw">where
     </span>F: <span class="lifetime">'static
         </span>+ Send
@@ -2995,16 +3008,19 @@
         + Fn(RequestParams, <span class="kw-2">&amp;mut </span>&lt;State <span class="kw">as </span>ReadState&gt;::State) -&gt; BoxFuture&lt;<span class="lifetime">'_</span>, <span class="prelude-ty">Result</span>&lt;R, Error&gt;&gt;,
     R: Serialize,
     State: <span class="lifetime">'static </span>+ Send + Sync + WriteState,
+    VER: <span class="lifetime">'static </span>+ Send + Sync + StaticVersionType,
 {
     <span class="kw">async fn </span>handle(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         req: RequestParams,
         state: <span class="kw-2">&amp;</span>State,
+        bind_version: VER,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;tide::Response, RouteError&lt;Error&gt;&gt; {
         <span class="kw">let </span>accept = req.accept()<span class="question-mark">?</span>;
-        response_from_result::&lt;<span class="kw">_</span>, <span class="kw">_</span>, MAJOR, MINOR&gt;(
+        response_from_result(
             <span class="kw-2">&amp;</span>accept,
             state.write(|state| (<span class="self">self</span>.handler)(req, state)).<span class="kw">await</span>,
+            bind_version,
         )
     }
 }
@@ -3034,12 +3050,16 @@
     <span class="kw">use </span>prometheus::{Counter, Registry};
     <span class="kw">use </span>std::borrow::Cow;
     <span class="kw">use </span>toml::toml;
-    <span class="kw">use </span>versioned_binary_serialization::{BinarySerializer, Serializer};
+    <span class="kw">use </span>versioned_binary_serialization::{version::StaticVersion, BinarySerializer, Serializer};
 
     <span class="attr">#[cfg(windows)]
     </span><span class="kw">use </span>async_tungstenite::tungstenite::Error <span class="kw">as </span>WsError;
     <span class="attr">#[cfg(windows)]
     </span><span class="kw">use </span>std::io::ErrorKind;
+
+    <span class="kw">type </span>StaticVer01 = StaticVersion&lt;<span class="number">0</span>, <span class="number">1</span>&gt;;
+    <span class="kw">type </span>SerializerV01 = Serializer&lt;StaticVersion&lt;<span class="number">0</span>, <span class="number">1</span>&gt;&gt;;
+    <span class="kw">const </span>VER_0_1: StaticVer01 = StaticVersion {};
 
     <span class="kw">async fn </span>check_stream_closed&lt;S&gt;(<span class="kw-2">mut </span>conn: WebSocketStream&lt;S&gt;)
     <span class="kw">where
@@ -3064,7 +3084,7 @@
 
     <span class="attr">#[async_std::test]
     </span><span class="kw">async fn </span>test_socket_endpoint() {
-        <span class="kw">let </span><span class="kw-2">mut </span>app = App::&lt;<span class="kw">_</span>, ServerError, <span class="number">0</span>, <span class="number">1</span>&gt;::with_state(RwLock::new(()));
+        <span class="kw">let </span><span class="kw-2">mut </span>app = App::&lt;<span class="kw">_</span>, ServerError, StaticVer01&gt;::with_state(RwLock::new(()));
         <span class="kw">let </span>api_toml = <span class="macro">toml! </span>{
             [meta]
             FORMAT_VERSION = <span class="string">"0.1.0"
@@ -3085,7 +3105,7 @@
             <span class="kw">let </span><span class="kw-2">mut </span>api = app.module::&lt;ServerError&gt;(<span class="string">"mod"</span>, api_toml).unwrap();
             api.socket(
                 <span class="string">"echo"</span>,
-                |_req, <span class="kw-2">mut </span>conn: Connection&lt;String, String, <span class="kw">_</span>, <span class="number">0</span>, <span class="number">1</span>&gt;, _state| {
+                |_req, <span class="kw-2">mut </span>conn: Connection&lt;String, String, <span class="kw">_</span>, StaticVer01&gt;, _state| {
                     <span class="kw">async move </span>{
                         <span class="kw">while let </span><span class="prelude-val">Some</span>(msg) = conn.next().<span class="kw">await </span>{
                             conn.send(<span class="kw-2">&amp;</span>msg<span class="question-mark">?</span>).<span class="kw">await</span><span class="question-mark">?</span>;
@@ -3098,7 +3118,7 @@
             .unwrap()
             .socket(
                 <span class="string">"once"</span>,
-                |_req, <span class="kw-2">mut </span>conn: Connection&lt;<span class="kw">_</span>, (), <span class="kw">_</span>, <span class="number">0</span>, <span class="number">1</span>&gt;, _state| {
+                |_req, <span class="kw-2">mut </span>conn: Connection&lt;<span class="kw">_</span>, (), <span class="kw">_</span>, StaticVer01&gt;, _state| {
                     <span class="kw">async move </span>{
                         conn.send(<span class="string">"msg"</span>).boxed().<span class="kw">await</span><span class="question-mark">?</span>;
                         <span class="prelude-val">Ok</span>(())
@@ -3109,7 +3129,7 @@
             .unwrap()
             .socket(
                 <span class="string">"error"</span>,
-                |_req, _conn: Connection&lt;(), (), <span class="kw">_</span>, <span class="number">0</span>, <span class="number">1</span>&gt;, _state| {
+                |_req, _conn: Connection&lt;(), (), <span class="kw">_</span>, StaticVer01&gt;, _state| {
                     <span class="kw">async move </span>{
                         <span class="prelude-val">Err</span>(ServerError::catch_all(
                             StatusCode::InternalServerError,
@@ -3123,7 +3143,7 @@
         }
         <span class="kw">let </span>port = pick_unused_port().unwrap();
         <span class="kw">let </span>url: Url = <span class="macro">format!</span>(<span class="string">"http://localhost:{}"</span>, port).parse().unwrap();
-        spawn(app.serve(<span class="macro">format!</span>(<span class="string">"0.0.0.0:{}"</span>, port)));
+        spawn(app.serve(<span class="macro">format!</span>(<span class="string">"0.0.0.0:{}"</span>, port), VER_0_1));
         wait_for_server(<span class="kw-2">&amp;</span>url, SERVER_STARTUP_RETRIES, SERVER_STARTUP_SLEEP_MS).<span class="kw">await</span>;
 
         <span class="kw">let </span><span class="kw-2">mut </span>socket_url = url.join(<span class="string">"mod/echo"</span>).unwrap();
@@ -3147,7 +3167,7 @@
 
         <span class="comment">// Send a binary message.
         </span>conn.send(Message::Binary(
-            Serializer::&lt;<span class="number">0</span>, <span class="number">1</span>&gt;::serialize(<span class="string">"goodbye"</span>).unwrap(),
+            SerializerV01::serialize(<span class="string">"goodbye"</span>).unwrap(),
         ))
         .<span class="kw">await
         </span>.unwrap();
@@ -3169,18 +3189,18 @@
             </span>.unwrap();
         <span class="macro">assert_eq!</span>(
             conn.next().<span class="kw">await</span>.unwrap().unwrap(),
-            Message::Binary(Serializer::&lt;<span class="number">0</span>, <span class="number">1</span>&gt;::serialize(<span class="string">"hello"</span>).unwrap())
+            Message::Binary(SerializerV01::serialize(<span class="string">"hello"</span>).unwrap())
         );
 
         <span class="comment">// Send a binary message.
         </span>conn.send(Message::Binary(
-            Serializer::&lt;<span class="number">0</span>, <span class="number">1</span>&gt;::serialize(<span class="string">"goodbye"</span>).unwrap(),
+            SerializerV01::serialize(<span class="string">"goodbye"</span>).unwrap(),
         ))
         .<span class="kw">await
         </span>.unwrap();
         <span class="macro">assert_eq!</span>(
             conn.next().<span class="kw">await</span>.unwrap().unwrap(),
-            Message::Binary(Serializer::&lt;<span class="number">0</span>, <span class="number">1</span>&gt;::serialize(<span class="string">"goodbye"</span>).unwrap())
+            Message::Binary(SerializerV01::serialize(<span class="string">"goodbye"</span>).unwrap())
         );
 
         <span class="comment">// Test a stream that exits normally.
@@ -3213,7 +3233,7 @@
 
     <span class="attr">#[async_std::test]
     </span><span class="kw">async fn </span>test_stream_endpoint() {
-        <span class="kw">let </span><span class="kw-2">mut </span>app = App::&lt;<span class="kw">_</span>, ServerError, <span class="number">0</span>, <span class="number">1</span>&gt;::with_state(RwLock::new(()));
+        <span class="kw">let </span><span class="kw-2">mut </span>app = App::&lt;<span class="kw">_</span>, ServerError, StaticVer01&gt;::with_state(RwLock::new(()));
         <span class="kw">let </span>api_toml = <span class="macro">toml! </span>{
             [meta]
             FORMAT_VERSION = <span class="string">"0.1.0"
@@ -3249,7 +3269,7 @@
         }
         <span class="kw">let </span>port = pick_unused_port().unwrap();
         <span class="kw">let </span>url: Url = <span class="macro">format!</span>(<span class="string">"http://localhost:{}"</span>, port).parse().unwrap();
-        spawn(app.serve(<span class="macro">format!</span>(<span class="string">"0.0.0.0:{}"</span>, port)));
+        spawn(app.serve(<span class="macro">format!</span>(<span class="string">"0.0.0.0:{}"</span>, port), VER_0_1));
         wait_for_server(<span class="kw-2">&amp;</span>url, SERVER_STARTUP_RETRIES, SERVER_STARTUP_SLEEP_MS).<span class="kw">await</span>;
 
         <span class="comment">// Consume the `nat` stream.
@@ -3296,7 +3316,7 @@
 
     <span class="attr">#[async_std::test]
     </span><span class="kw">async fn </span>test_custom_healthcheck() {
-        <span class="kw">let </span><span class="kw-2">mut </span>app = App::&lt;<span class="kw">_</span>, ServerError, <span class="number">0</span>, <span class="number">1</span>&gt;::with_state(HealthStatus::Available);
+        <span class="kw">let </span><span class="kw-2">mut </span>app = App::&lt;<span class="kw">_</span>, ServerError, StaticVer01&gt;::with_state(HealthStatus::Available);
         <span class="kw">let </span>api_toml = <span class="macro">toml! </span>{
             [meta]
             FORMAT_VERSION = <span class="string">"0.1.0"
@@ -3310,7 +3330,7 @@
         }
         <span class="kw">let </span>port = pick_unused_port().unwrap();
         <span class="kw">let </span>url: Url = <span class="macro">format!</span>(<span class="string">"http://localhost:{}"</span>, port).parse().unwrap();
-        spawn(app.serve(<span class="macro">format!</span>(<span class="string">"0.0.0.0:{}"</span>, port)));
+        spawn(app.serve(<span class="macro">format!</span>(<span class="string">"0.0.0.0:{}"</span>, port), VER_0_1));
         wait_for_server(<span class="kw-2">&amp;</span>url, SERVER_STARTUP_RETRIES, SERVER_STARTUP_SLEEP_MS).<span class="kw">await</span>;
 
         <span class="kw">let </span><span class="kw-2">mut </span>res = surf::get(<span class="macro">format!</span>(<span class="string">"http://localhost:{}/mod/healthcheck"</span>, port))
@@ -3340,7 +3360,7 @@
         metrics.register(Box::new(counter.clone())).unwrap();
         <span class="kw">let </span>state = State { metrics, counter };
 
-        <span class="kw">let </span><span class="kw-2">mut </span>app = App::&lt;<span class="kw">_</span>, ServerError, <span class="number">0</span>, <span class="number">1</span>&gt;::with_state(RwLock::new(state));
+        <span class="kw">let </span><span class="kw-2">mut </span>app = App::&lt;<span class="kw">_</span>, ServerError, StaticVer01&gt;::with_state(RwLock::new(state));
         <span class="kw">let </span>api_toml = <span class="macro">toml! </span>{
             [meta]
             FORMAT_VERSION = <span class="string">"0.1.0"
@@ -3362,7 +3382,7 @@
         }
         <span class="kw">let </span>port = pick_unused_port().unwrap();
         <span class="kw">let </span>url: Url = <span class="macro">format!</span>(<span class="string">"http://localhost:{port}"</span>).parse().unwrap();
-        spawn(app.serve(<span class="macro">format!</span>(<span class="string">"0.0.0.0:{port}"</span>)));
+        spawn(app.serve(<span class="macro">format!</span>(<span class="string">"0.0.0.0:{port}"</span>), VER_0_1));
         wait_for_server(<span class="kw-2">&amp;</span>url, SERVER_STARTUP_RETRIES, SERVER_STARTUP_SLEEP_MS).<span class="kw">await</span>;
 
         <span class="kw">for </span>i <span class="kw">in </span><span class="number">1</span>..<span class="number">5 </span>{
