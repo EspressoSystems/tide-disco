@@ -1,6 +1,6 @@
 [package]
 name = "tide-disco"
-version = "0.4.8"
+version = "0.5.0"
 edition = "2021"
 authors = ["Espresso Systems <hello@espressosys.com>"]
 description = "Discoverability for Tide"
@@ -16,33 +16,33 @@ anyhow = "1.0"
 async-std = { version = "1.8.0", features = ["attributes"] }
 async-trait = "0.1.74"
 clap = { version = "4.5", features = ["derive"] }
-config = "0.13.4"
+config = "0.14"
 derivative = "2.2"
 derive_more = "0.99"
 dirs = "5.0.1"
-edit-distance = "2.1.0"
+edit-distance = "2.1"
 futures = "0.3.30"
 futures-util = "0.3.30"
 http = "1.0.0"
 include_dir = "0.7"
-lazy_static = "1.4.0"
+lazy_static = "1.4"
 libc = "0.2.151"
 markdown = "0.3"
-maud = { version = "0.25", features = ["tide"] }
+maud = { version = "0.26", features = ["tide"] }
 num-derive = "0.4"
 num-traits = "0.2"
-parking_lot = "0.12.0"
+parking_lot = "0.12"
 prometheus = "0.13"
-routefinder = "0.5.0"
+routefinder = "0.5"
 semver = "1.0"
 serde = { version = "1.0", features = ["derive"] }
 serde_with = "3.4"
 serde_json = "1.0"
 shellexpand = "3.1"
 signal-hook = "0.3.14"
-snafu = { version = "0.7", features = ["backtraces"] }
-strum = "0.25"
-strum_macros = "0.25"
+snafu = "0.8"
+strum = "0.26"
+strum_macros = "0.26"
 surf = "2.3.2"
 tagged-base64 = { git = "https://github.com/EspressoSystems/tagged-base64.git", tag = "0.3.4" }
 tide = { version = "0.16.0", default-features = false }
@@ -51,7 +51,7 @@ toml = "0.8"
 tracing = "0.1.40"
 tracing-distributed = "0.4"
 tracing-futures = "0.2"
-tracing-log = "0.2.0"
+tracing-log = "0.2"
 tracing-subscriber = { version = "0.3.18", features = ["env-filter", "json"] }
 url = "2.5.0"
 versioned-binary-serialization = { git = "https://github.com/EspressoSystems/versioned-binary-serialization.git", tag = "0.1.2" }
@@ -62,6 +62,6 @@ signal-hook-async-std = "0.2.2"
 [dev-dependencies]
 ark-serialize = { version = "0.4", features = ["derive"] }
 ark-std = "0.4.0"
-async-tungstenite = { version = "0.24", features = ["async-std-runtime"] }
+async-tungstenite = { version = "0.25", features = ["async-std-runtime"] }
 portpicker = "0.1"
 tracing-test = "0.2"
