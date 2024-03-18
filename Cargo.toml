@@ -36,7 +36,7 @@ prometheus = "0.13"
 routefinder = "0.5"
 semver = "1.0"
 serde = { version = "1.0", features = ["derive"] }
-serde_with = "3.4"
+serde_with = "3.7"
 serde_json = "1.0"
 shellexpand = "3.1"
 signal-hook = "0.3.14"
