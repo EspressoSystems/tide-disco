@@ -74,6 +74,12 @@
         '';
       in {
         devShell = pkgs.mkShell {
+          shellHook = ''
+          # Prevent cargo aliases from using programs in `~/.cargo` to avoid conflicts with rustup
+          # installations.
+          export CARGO_HOME=$HOME/.cargo-nix
+          '';
+
           buildInputs = with pkgs;
             [
               fenix.packages.${system}.rust-analyzer
@@ -82,9 +88,12 @@
               rustToolchain
             ] ++ rustDeps;
 
+          # Use a distinct target dir for builds from within nix shells.
+          CARGO_TARGET_DIR = "target/nix";
           RUST_SRC_PATH = "${rustToolchain}/lib/rustlib/src/rust/library";
           RUST_BACKTRACE = 1;
           RUST_LOG = "info";
+          RUSTFLAGS = "--cfg async_executor_impl=\"async-std\" --cfg async_channel_impl=\"async-std\"";
         };
       });
 }

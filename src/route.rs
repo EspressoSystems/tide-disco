@@ -43,6 +43,7 @@ use versioned_binary_serialization::{version::StaticVersionType, BinarySerialize
 /// [RouteError] encapsulates application specific errors `E` returned by the user-installed handler
 /// itself. It also includes errors in the route dispatching logic, such as failures to turn the
 /// result of the user-installed handler into an HTTP response.
+#[derive(Debug)]
 pub enum RouteError<E> {
     AppSpecific(E),
     Request(RequestError),
@@ -257,7 +258,7 @@ pub struct Route<State, Error, VER: StaticVersionType> {
     handler: RouteImplementation<State, Error, VER>,
 }
 
-#[derive(Clone, Debug, Snafu)]
+#[derive(Clone, Copy, Debug, Snafu, PartialEq, Eq)]
 pub enum RouteParseError {
     MissingPathArray,
     PathElementError,
@@ -505,7 +506,9 @@ impl<State, Error, VER: StaticVersionType> Route<State, Error, VER> {
     /// Print documentation about the route, to aid the developer when the route is not yet
     /// implemented.
     pub(crate) fn default_handler(&self) -> Result<tide::Response, RouteError<Error>> {
-        Ok(self.documentation().into())
+        Ok(tide::Response::builder(StatusCode::NotImplemented)
+            .body(self.documentation().into_string())
+            .build())
     }
 
     pub(crate) async fn handle_socket(

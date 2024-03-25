@@ -103,52 +103,41 @@ mod test {
         api::ApiVersion,
         app::{AppHealth, AppVersion},
         healthcheck::HealthStatus,
-        wait_for_server, SERVER_STARTUP_RETRIES, SERVER_STARTUP_SLEEP_MS,
+        testing::{setup_test, test_client},
     };
-    use tracing_test::traced_test;
 
     #[async_std::test]
-    #[traced_test]
     async fn test_get_set_greeting() {
+        setup_test();
+
         let port = pick_unused_port().unwrap();
         spawn(serve(port));
         let url = Url::parse(&format!("http://localhost:{}/hello/", port)).unwrap();
-        wait_for_server(&url, SERVER_STARTUP_RETRIES, SERVER_STARTUP_SLEEP_MS).await;
+        let client = test_client(url).await;
 
-        let mut res = surf::get(url.join("greeting/tester").unwrap())
-            .send()
-            .await
-            .unwrap();
+        let mut res = client.get("greeting/tester").send().await.unwrap();
         assert_eq!(res.status(), StatusCode::Ok);
         assert_eq!(res.body_json::<String>().await.unwrap(), "Hello, tester");
 
-        let res = surf::post(url.join("greeting/Sup").unwrap())
-            .send()
-            .await
-            .unwrap();
+        let res = client.post("greeting/Sup").send().await.unwrap();
         assert_eq!(res.status(), StatusCode::Ok);
 
-        let mut res = surf::get(url.join("greeting/tester").unwrap())
-            .send()
-            .await
-            .unwrap();
+        let mut res = client.get("greeting/tester").send().await.unwrap();
         assert_eq!(res.status(), StatusCode::Ok);
         assert_eq!(res.body_json::<String>().await.unwrap(), "Sup, tester");
     }
 
     #[async_std::test]
-    #[traced_test]
     async fn test_version() {
+        setup_test();
+
         let port = pick_unused_port().unwrap();
         spawn(serve(port));
         let url = Url::parse(&format!("http://localhost:{}/", port)).unwrap();
-        wait_for_server(&url, SERVER_STARTUP_RETRIES, SERVER_STARTUP_SLEEP_MS).await;
+        let client = test_client(url).await;
 
         // Check the API version.
-        let mut res = surf::get(url.join("hello/version").unwrap())
-            .send()
-            .await
-            .unwrap();
+        let mut res = client.get("hello/version").send().await.unwrap();
         assert_eq!(res.status(), StatusCode::Ok);
         let api_version = ApiVersion {
             api_version: Some(env!("CARGO_PKG_VERSION").parse().unwrap()),
@@ -157,37 +146,29 @@ mod test {
         assert_eq!(res.body_json::<ApiVersion>().await.unwrap(), api_version);
 
         // Check the overall version.
-        let mut res = surf::get(url.join("version").unwrap())
-            .send()
-            .await
-            .unwrap();
+        let mut res = client.get("version").send().await.unwrap();
         assert_eq!(res.status(), StatusCode::Ok);
         assert_eq!(
             res.body_json::<AppVersion>().await.unwrap(),
             AppVersion {
                 app_version: Some(env!("CARGO_PKG_VERSION").parse().unwrap()),
                 disco_version: env!("CARGO_PKG_VERSION").parse().unwrap(),
-                modules: [("hello".to_string(), api_version)]
-                    .iter()
-                    .cloned()
-                    .collect(),
+                modules: [("hello".to_string(), vec![api_version])].into()
             }
         )
     }
 
     #[async_std::test]
-    #[traced_test]
     async fn test_healthcheck() {
+        setup_test();
+
         let port = pick_unused_port().unwrap();
         spawn(serve(port));
         let url = Url::parse(&format!("http://localhost:{}/", port)).unwrap();
-        wait_for_server(&url, SERVER_STARTUP_RETRIES, SERVER_STARTUP_SLEEP_MS).await;
+        let client = test_client(url).await;
 
         // Check the API health.
-        let mut res = surf::get(url.join("hello/healthcheck").unwrap())
-            .send()
-            .await
-            .unwrap();
+        let mut res = client.get("hello/healthcheck").send().await.unwrap();
         assert_eq!(res.status(), StatusCode::Ok);
         // The example API does not have a custom healthcheck, so we just get the default response.
         assert_eq!(
@@ -196,19 +177,13 @@ mod test {
         );
 
         // Check the overall health.
-        let mut res = surf::get(url.join("healthcheck").unwrap())
-            .send()
-            .await
-            .unwrap();
+        let mut res = client.get("healthcheck").send().await.unwrap();
         assert_eq!(res.status(), StatusCode::Ok);
         assert_eq!(
             res.body_json::<AppHealth>().await.unwrap(),
             AppHealth {
                 status: HealthStatus::Available,
-                modules: [("hello".to_string(), StatusCode::Ok)]
-                    .iter()
-                    .cloned()
-                    .collect(),
+                modules: [("hello".to_string(), [(0, StatusCode::Ok)].into())].into(),
             }
         )
     }

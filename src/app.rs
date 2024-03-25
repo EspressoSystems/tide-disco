@@ -23,7 +23,10 @@ use semver::Version;
 use serde::{Deserialize, Serialize};
 use serde_with::{serde_as, DisplayFromStr};
 use snafu::{ResultExt, Snafu};
-use std::collections::hash_map::{Entry, HashMap};
+use std::collections::{
+    btree_map::{BTreeMap, Entry as BTreeEntry},
+    hash_map::{Entry as HashEntry, HashMap},
+};
 use std::convert::Infallible;
 use std::env;
 use std::fs;
@@ -45,15 +48,16 @@ pub use tide::listener::{Listener, ToListener};
 /// constructing an [Api] for each module and calling [App::register_module]. Once all of the
 /// desired modules are registered, the app can be converted into an asynchronous server task using
 /// [App::serve].
+#[derive(Debug)]
 pub struct App<State, Error, VER: StaticVersionType> {
-    // Map from base URL to module API.
-    apis: HashMap<String, Api<State, Error, VER>>,
+    // Map from base URL, major version to API.
+    apis: HashMap<String, BTreeMap<u64, Api<State, Error, VER>>>,
     state: Arc<State>,
     app_version: Option<Version>,
 }
 
 /// An error encountered while building an [App].
-#[derive(Clone, Debug, Snafu)]
+#[derive(Clone, Debug, Snafu, PartialEq, Eq)]
 pub enum AppError {
     Api { source: ApiError },
     ModuleAlreadyExists,
@@ -75,6 +79,12 @@ impl<
     }
 
     /// Create and register an API module.
+    ///
+    /// Creates a new [`Api`] with the given `api` specification and returns an RAII guard for this
+    /// API. The guard can be used to access the API module, configure it, and populate its
+    /// handlers. When [`Module::register`] is called on the guard (or the guard is dropped), the
+    /// module will be registered in this [`App`] as if by calling
+    /// [`register_module`](Self::register_module).
     pub fn module<'a, ModuleError>(
         &'a mut self,
         base_url: &'a str,
@@ -84,10 +94,6 @@ impl<
         Error: From<ModuleError>,
         ModuleError: 'static + Send + Sync,
     {
-        if self.apis.contains_key(base_url) {
-            return Err(AppError::ModuleAlreadyExists);
-        }
-
         Ok(Module {
             app: self,
             base_url,
@@ -96,6 +102,37 @@ impl<
     }
 
     /// Register an API module.
+    ///
+    /// The module `api` will be registered as an implementation of the module hosted under the URL
+    /// prefix `base_url`.
+    ///
+    /// # Versioning
+    ///
+    /// Multiple versions of the same [`Api`] may be registered by calling this function several
+    /// times with the same `base_url`, and passing in different APIs which must have different
+    /// _major_ versions. The API version can be set using [`Api::with_version`].
+    ///
+    /// When multiple versions of the same API are registered, requests for endpoints directly under
+    /// the base URL, like `GET /base_url/endpoint`, will always be dispatched to the latest
+    /// available version of the API. There will in addition be an extension of `base_url` for each
+    /// major version registered, so `GET /base_url/v1/endpoint` will always dispatch to the
+    /// `endpoint` handler in the module with major version 1, if it exists, regardless of what the
+    /// latest version is.
+    ///
+    /// It is an error to register multiple versions of the same module with the same major version.
+    /// It is _not_ an error to register non-sequential versions of a module. For example, you could
+    /// have `/base_url/v2` and `/base_url/v4`, but not `v1` or `v3`. Requests for `v1` or `v3` will
+    /// simply fail.
+    ///
+    /// The intention of this functionality is to allow for non-disruptive breaking updates. Rather
+    /// than deploying a new major version of the API with breaking changes _in place of_ the old
+    /// version, breaking all your clients, you can continue to serve the old version for some
+    /// period of time under a version prefix. Clients can point at this version prefix until they
+    /// update their software to use the new version, on their own time.
+    ///
+    /// Note that non-breaking changes (e.g. new endpoints) can be deployed in place of an existing
+    /// API without even incrementing the major version. The need for serving two versions of an API
+    /// simultaneously only arises when you have breaking changes.
     pub fn register_module<ModuleError>(
         &mut self,
         base_url: &str,
@@ -105,14 +142,28 @@ impl<
         Error: From<ModuleError>,
         ModuleError: 'static + Send + Sync,
     {
-        match self.apis.entry(base_url.to_string()) {
-            Entry::Occupied(_) => {
-                return Err(AppError::ModuleAlreadyExists);
+        let mut api = api.map_err(Error::from);
+        api.set_name(base_url.to_string());
+
+        let major_version = match api.version().api_version {
+            Some(version) => version.major,
+            None => {
+                // If no version is explicitly specified, default to 0.
+                0
             }
-            Entry::Vacant(e) => {
-                let mut api = api.map_err(Error::from);
-                api.set_name(base_url.to_string());
-                e.insert(api);
+        };
+
+        match self.apis.entry(base_url.to_string()) {
+            HashEntry::Occupied(mut e) => match e.get_mut().entry(major_version) {
+                BTreeEntry::Occupied(_) => {
+                    return Err(AppError::ModuleAlreadyExists);
+                }
+                BTreeEntry::Vacant(e) => {
+                    e.insert(api);
+                }
+            },
+            HashEntry::Vacant(e) => {
+                e.insert([(major_version, api)].into());
             }
         }
 
@@ -158,7 +209,12 @@ impl<
             modules: self
                 .apis
                 .iter()
-                .map(|(name, api)| (name.clone(), api.version()))
+                .map(|(name, versions)| {
+                    (
+                        name.clone(),
+                        versions.values().rev().map(|api| api.version()).collect(),
+                    )
+                })
                 .collect(),
         }
     }
@@ -170,14 +226,17 @@ impl<
     /// (due to type erasure) but can be queried using [module_health](Self::module_health) or by
     /// hitting the endpoint `GET /:module/healthcheck`.
     pub async fn health(&self, req: RequestParams, state: &State) -> AppHealth {
-        let mut modules = HashMap::new();
+        let mut modules = BTreeMap::<String, BTreeMap<_, _>>::new();
         let mut status = HealthStatus::Available;
-        for (name, api) in &self.apis {
-            let health = StatusCode::from(api.health(req.clone(), state).await.status());
-            if health != StatusCode::Ok {
-                status = HealthStatus::Unhealthy;
+        for (name, versions) in &self.apis {
+            let module = modules.entry(name.clone()).or_default();
+            for (version, api) in versions {
+                let health = StatusCode::from(api.health(req.clone(), state).await.status());
+                if health != StatusCode::Ok {
+                    status = HealthStatus::Unhealthy;
+                }
+                module.insert(*version, health);
             }
-            modules.insert(name.clone(), health);
         }
         AppHealth { status, modules }
     }
@@ -189,14 +248,22 @@ impl<
     /// registered healthcheck handler. If the module does not have an explicit healthcheck
     /// handler, the response will be a [HealthStatus].
     ///
-    /// If there is no module with the given name, returns [None].
+    /// `major_version` can be used to query the health status of a specific version of the desired
+    /// module. If it is not provided, the most recent supported version will be queried.
+    ///
+    /// If there is no module with the given name or version, returns [None].
     pub async fn module_health(
         &self,
         req: RequestParams,
         state: &State,
         module: &str,
+        major_version: Option<u64>,
     ) -> Option<tide::Response> {
-        let api = self.apis.get(module)?;
+        let versions = self.apis.get(module)?;
+        let api = match major_version {
+            Some(v) => versions.get(&v)?,
+            None => versions.last_key_value()?.1,
+        };
         Some(api.health(req, state).await)
     }
 }
@@ -231,17 +298,6 @@ impl<
     ) -> io::Result<()> {
         let state = Arc::new(self);
         let mut server = tide::Server::with_state(state.clone());
-        for (name, api) in &state.apis {
-            // Clippy complains if the only non-trivial operation in an `unwrap_or_else` closure is
-            // a deref, but for `lazy_static` types, deref is an effectful operation that (in this
-            // case) causes a directory to be renamed and another extracted. We only want to execute
-            // this if we need to (if `api.public()` is `None`) so we disable the lint.
-            #[allow(clippy::unnecessary_lazy_evaluations)]
-            server
-                .at("/public")
-                .at(name)
-                .serve_dir(api.public().unwrap_or_else(|| &DEFAULT_PUBLIC_PATH))?;
-        }
         server.with(add_error_body::<_, Error, VER>);
         server.with(
             CorsMiddleware::new()
@@ -251,87 +307,8 @@ impl<
                 .allow_credentials(true),
         );
 
-        for (prefix, api) in &state.apis {
-            // Register routes for this API.
-            let mut api_endpoint = server.at(prefix);
-            for (path, routes) in api.routes_by_path() {
-                let mut endpoint = api_endpoint.at(path);
-                let routes = routes.collect::<Vec<_>>();
-
-                // Register socket and metrics middlewares. These must be registered before any
-                // regular HTTP routes, because Tide only applies middlewares to routes which were
-                // already registered before the route handler.
-                if let Some(socket_route) =
-                    routes.iter().find(|route| route.method() == Method::Socket)
-                {
-                    // If there is a socket route with this pattern, add the socket middleware to
-                    // all endpoints registered under this pattern, so that any request with any
-                    // method that has the socket upgrade headers will trigger a WebSockets upgrade.
-                    Self::register_socket(prefix.to_owned(), &mut endpoint, socket_route);
-                }
-                if let Some(metrics_route) = routes
-                    .iter()
-                    .find(|route| route.method() == Method::Metrics)
-                {
-                    // If there is a metrics route with this pattern, add the metrics middleware to
-                    // all endpoints registered under this pattern, so that a request to this path
-                    // with the right headers will return metrics instead of going through the
-                    // normal method-based dispatching.
-                    Self::register_metrics(
-                        prefix.to_owned(),
-                        &mut endpoint,
-                        metrics_route,
-                        bind_version,
-                    );
-                }
-
-                // Register the HTTP routes.
-                for route in routes {
-                    if let Method::Http(method) = route.method() {
-                        Self::register_route(
-                            prefix.to_owned(),
-                            &mut endpoint,
-                            route,
-                            method,
-                            bind_version,
-                        );
-                    }
-                }
-            }
-
-            // Register automatic routes for this API: `healthcheck` and `version`.
-            {
-                let prefix = prefix.clone();
-                server
-                    .at(&prefix)
-                    .at("healthcheck")
-                    .get(move |req: tide::Request<Arc<Self>>| {
-                        let prefix = prefix.clone();
-                        async move {
-                            let api = &req.state().clone().apis[&prefix];
-                            let state = req.state().clone();
-                            Ok(api
-                                .health(request_params(req, &[]).await?, &state.state)
-                                .await)
-                        }
-                    });
-            }
-            {
-                let prefix = prefix.clone();
-                server
-                    .at(&prefix)
-                    .at("version")
-                    .get(move |req: tide::Request<Arc<Self>>| {
-                        let prefix = prefix.clone();
-                        async move {
-                            let api = &req.state().apis[&prefix];
-                            let accept = RequestParams::accept_from_headers(&req)?;
-                            respond_with(&accept, api.version(), bind_version).map_err(|err| {
-                                Error::from_route_error::<Infallible>(err).into_tide_error()
-                            })
-                        }
-                    });
-            }
+        for (name, versions) in &state.apis {
+            Self::register_api(&mut server, name.clone(), versions, bind_version)?;
         }
 
         // Register app-level automatic routes: `healthcheck` and `version`.
@@ -366,19 +343,17 @@ impl<
         }
         {
             server
-                .at("/*")
+                .at("/*path")
                 .all(move |req: tide::Request<Arc<Self>>| async move {
-                    let api_name = req.url().path_segments().unwrap().next().unwrap();
-                    let state = req.state();
-                    if let Some(api) = state.apis.get(api_name) {
-                        Ok(api.documentation())
-                    } else {
-                        Ok(html! {
-                            "No valid route begins with \"" (api_name) "\". Try routes beginning
-                            with one of the following API identifiers:"
-                            (state.list_apis())
-                        })
-                    }
+                    let docs = html! {
+                        "No route matches /" (req.param("path")?)
+                        br {}
+                        "This is a Tide Disco app composed of the following modules:"
+                        (req.state().list_apis())
+                    };
+                    Ok(tide::Response::builder(StatusCode::NotFound)
+                        .body(docs.into_string())
+                        .build())
                 });
         }
 
@@ -388,19 +363,215 @@ impl<
     fn list_apis(&self) -> Html {
         html! {
             ul {
-                @for (name, api) in &self.apis {
+                @for (name, versions) in &self.apis {
                     li {
+                        // Link to the alias for the latest version as the primary link.
                         a href=(format!("/{}", name)) {(name)}
+                        // Add a superscript link (link a footnote) for each specific supported
+                        // version, linking to documentation for that specific version.
+                        @for version in versions.keys().rev() {
+                            sup {
+                                a href=(format!("/{name}/v{version}")) {
+                                    (format!("[v{version}]"))
+                                }
+                            }
+                        }
                         " "
-                        (PreEscaped(api.short_description()))
+                        // Take the description of the latest supported version.
+                        (PreEscaped(versions.last_key_value().unwrap().1.short_description()))
                     }
                 }
             }
         }
     }
 
+    fn register_api(
+        server: &mut tide::Server<Arc<Self>>,
+        prefix: String,
+        versions: &BTreeMap<u64, Api<State, Error, VER>>,
+        bind_version: VER,
+    ) -> io::Result<()> {
+        for (version, api) in versions {
+            Self::register_api_version(server, &prefix, *version, api, bind_version)?;
+        }
+
+        let latest_version = *versions.last_key_value().unwrap().0;
+
+        // Serve the documentation for the latest supported version at the root of the module.
+        server
+            .at(&prefix)
+            .all(tide::Redirect::new(format!("/{prefix}/v{latest_version}")));
+
+        // For requests that didn't match any specific endpoint, parse the version prefix. If there
+        // is none, redirect to the latest supported version. If there is one and the request still
+        // didn't match, it is invalid. Try to serve helpful documentation.
+        server
+            .at(&prefix)
+            .at("*path")
+            .all(move |req: tide::Request<Arc<Self>>| {
+                let prefix = prefix.clone();
+                async move {
+                    let path = req.param("path")?;
+                    // Split the first path segment from the rest so we can check if the first
+                    // segment is a version prefix.
+                    let (first, rest) = path.split_once('/').unwrap_or((path, ""));
+
+                    // Check for a version prefix.
+                    if let Some(v) = first.strip_prefix('v').and_then(|v| v.parse().ok()) {
+                        let versions = &req.state().apis[&prefix];
+                        if let Some(api) = versions.get(&v) {
+                            // The request has a valid version prefix, but did not match any route
+                            // (hence this wildcard handler). Serve documentation for the intended
+                            // API version.
+                            let docs = html! {
+                                "No route matches /" (rest)
+                                br{}
+                                (api.documentation())
+                            };
+                            return Ok(tide::Response::builder(StatusCode::NotFound)
+                                .body(docs.into_string())
+                                .build());
+                        } else {
+                            // The request has a version prefix for an unsupported version. List
+                            // supported versions.
+                            let docs = html! {
+                                "Unsupported version v" (v) ". Supported versions are:"
+                                ul {
+                                    @for v in versions.keys().rev() {
+                                        li {
+                                            a href=(format!("/{prefix}/v{v}")) { "v" (v) }
+                                        }
+                                    }
+                                }
+                            };
+                            return Ok(tide::Response::builder(StatusCode::NotImplemented)
+                                .body(docs.into_string())
+                                .build());
+                        }
+                    }
+
+                    // The request has no version prefix, redirect to the latest supported version.
+                    Ok(tide::Redirect::new(format!("/{prefix}/v{latest_version}/{path}")).into())
+                }
+            });
+
+        Ok(())
+    }
+
+    fn register_api_version(
+        server: &mut tide::Server<Arc<Self>>,
+        prefix: &String,
+        version: u64,
+        api: &Api<State, Error, VER>,
+        bind_version: VER,
+    ) -> io::Result<()> {
+        // Clippy complains if the only non-trivial operation in an `unwrap_or_else` closure is
+        // a deref, but for `lazy_static` types, deref is an effectful operation that (in this
+        // case) causes a directory to be renamed and another extracted. We only want to execute
+        // this if we need to (if `api.public()` is `None`) so we disable the lint.
+        #[allow(clippy::unnecessary_lazy_evaluations)]
+        server
+            .at("/public")
+            .at(prefix)
+            .at(&format!("v{version}"))
+            .serve_dir(api.public().unwrap_or_else(|| &DEFAULT_PUBLIC_PATH))?;
+
+        // Register routes for this API.
+        let mut api_endpoint = server.at(&format!("{prefix}/v{version}"));
+        for (path, routes) in api.routes_by_path() {
+            let mut endpoint = api_endpoint.at(path);
+            let routes = routes.collect::<Vec<_>>();
+
+            // Register socket and metrics middlewares. These must be registered before any
+            // regular HTTP routes, because Tide only applies middlewares to routes which were
+            // already registered before the route handler.
+            if let Some(socket_route) = routes.iter().find(|route| route.method() == Method::Socket)
+            {
+                // If there is a socket route with this pattern, add the socket middleware to
+                // all endpoints registered under this pattern, so that any request with any
+                // method that has the socket upgrade headers will trigger a WebSockets upgrade.
+                Self::register_socket(prefix.to_owned(), version, &mut endpoint, socket_route);
+            }
+            if let Some(metrics_route) = routes
+                .iter()
+                .find(|route| route.method() == Method::Metrics)
+            {
+                // If there is a metrics route with this pattern, add the metrics middleware to
+                // all endpoints registered under this pattern, so that a request to this path
+                // with the right headers will return metrics instead of going through the
+                // normal method-based dispatching.
+                Self::register_metrics(
+                    prefix.to_owned(),
+                    version,
+                    &mut endpoint,
+                    metrics_route,
+                    bind_version,
+                );
+            }
+
+            // Register the HTTP routes.
+            for route in routes {
+                if let Method::Http(method) = route.method() {
+                    Self::register_route(
+                        prefix.to_owned(),
+                        version,
+                        &mut endpoint,
+                        route,
+                        method,
+                        bind_version,
+                    );
+                }
+            }
+        }
+
+        // Register automatic routes for this API: documentation, `healthcheck` and `version`.
+        {
+            let prefix = prefix.clone();
+            api_endpoint.all(move |req: tide::Request<Arc<Self>>| {
+                let prefix = prefix.clone();
+                async move {
+                    let api = &req.state().clone().apis[&prefix][&version];
+                    Ok(api.documentation())
+                }
+            });
+        }
+        {
+            let prefix = prefix.clone();
+            api_endpoint
+                .at("healthcheck")
+                .get(move |req: tide::Request<Arc<Self>>| {
+                    let prefix = prefix.clone();
+                    async move {
+                        let api = &req.state().clone().apis[&prefix][&version];
+                        let state = req.state().clone();
+                        Ok(api
+                            .health(request_params(req, &[]).await?, &state.state)
+                            .await)
+                    }
+                });
+        }
+        {
+            let prefix = prefix.clone();
+            api_endpoint
+                .at("version")
+                .get(move |req: tide::Request<Arc<Self>>| {
+                    let prefix = prefix.clone();
+                    async move {
+                        let api = &req.state().apis[&prefix][&version];
+                        let accept = RequestParams::accept_from_headers(&req)?;
+                        respond_with(&accept, api.version(), bind_version).map_err(|err| {
+                            Error::from_route_error::<Infallible>(err).into_tide_error()
+                        })
+                    }
+                });
+        }
+
+        Ok(())
+    }
+
     fn register_route(
         api: String,
+        version: u64,
         endpoint: &mut tide::Route<Arc<Self>>,
         route: &Route<State, Error, VER>,
         method: http::Method,
@@ -411,7 +582,7 @@ impl<
             let name = name.clone();
             let api = api.clone();
             async move {
-                let route = &req.state().clone().apis[&api][&name];
+                let route = &req.state().clone().apis[&api][&version][&name];
                 let state = &*req.state().clone().state;
                 let req = request_params(req, route.params()).await?;
                 route
@@ -428,6 +599,7 @@ impl<
 
     fn register_metrics(
         api: String,
+        version: u64,
         endpoint: &mut tide::Route<Arc<Self>>,
         route: &Route<State, Error, VER>,
         bind_version: VER,
@@ -440,6 +612,7 @@ impl<
             endpoint.with(MetricsMiddleware::new(
                 name.clone(),
                 api.clone(),
+                version,
                 bind_version,
             ));
         }
@@ -453,11 +626,12 @@ impl<
         // We register the default handler using `all`, which makes it act as a fallback handler.
         // This means if there are other, non-metrics routes with this same path, we will still
         // dispatch to them if the path is hit with the appropriate method.
-        Self::register_fallback(api, endpoint, route);
+        Self::register_fallback(api, version, endpoint, route);
     }
 
     fn register_socket(
         api: String,
+        version: u64,
         endpoint: &mut tide::Route<Arc<Self>>,
         route: &Route<State, Error, VER>,
     ) {
@@ -472,7 +646,7 @@ impl<
                     let name = name.clone();
                     let api = api.clone();
                     async move {
-                        let route = &req.state().clone().apis[&api][&name];
+                        let route = &req.state().clone().apis[&api][&version][&name];
                         let state = &*req.state().clone().state;
                         let req = request_params(req, route.params()).await?;
                         route
@@ -500,11 +674,12 @@ impl<
         // We register the default handler using `all`, which makes it act as a fallback handler.
         // This means if there are other, non-socket routes with this same path, we will still
         // dispatch to them if the path is hit with the appropriate method.
-        Self::register_fallback(api, endpoint, route);
+        Self::register_fallback(api, version, endpoint, route);
     }
 
     fn register_fallback(
         api: String,
+        version: u64,
         endpoint: &mut tide::Route<Arc<Self>>,
         route: &Route<State, Error, VER>,
     ) {
@@ -513,7 +688,7 @@ impl<
             let name = name.clone();
             let api = api.clone();
             async move {
-                let route = &req.state().clone().apis[&api][&name];
+                let route = &req.state().clone().apis[&api][&version][&name];
                 route
                     .default_handler()
                     .map_err(|err| match err {
@@ -529,12 +704,18 @@ impl<
 struct MetricsMiddleware<VER: StaticVersionType> {
     route: String,
     api: String,
+    api_version: u64,
     ver: VER,
 }
 
 impl<VER: StaticVersionType> MetricsMiddleware<VER> {
-    fn new(route: String, api: String, ver: VER) -> Self {
-        Self { route, api, ver }
+    fn new(route: String, api: String, api_version: u64, ver: VER) -> Self {
+        Self {
+            route,
+            api,
+            api_version,
+            ver,
+        }
     }
 }
 
@@ -556,6 +737,7 @@ where
     {
         let route = self.route.clone();
         let api = self.api.clone();
+        let version = self.api_version;
         let bind_version = self.ver;
         async move {
             if req.method() != http::Method::Get {
@@ -574,7 +756,7 @@ where
             }
             // This is a metrics request, abort the rest of the dispatching chain and run the
             // metrics handler.
-            let route = &req.state().clone().apis[&api][&route];
+            let route = &req.state().clone().apis[&api][&version][&route];
             let state = &*req.state().clone().state;
             let req = request_params(req, route.params()).await?;
             route
@@ -607,8 +789,8 @@ pub struct AppHealth {
     /// [HealthStatus::Available] if all of the application's modules are healthy, otherwise a
     /// [HealthStatus] variant with [status](HealthCheck::status) other than 200.
     pub status: HealthStatus,
-    /// The status of each registered module.
-    pub modules: HashMap<String, StatusCode>,
+    /// The status of each registered module, indexed by version.
+    pub modules: BTreeMap<String, BTreeMap<u64, StatusCode>>,
 }
 
 impl HealthCheck for AppHealth {
@@ -621,8 +803,10 @@ impl HealthCheck for AppHealth {
 #[serde_as]
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct AppVersion {
-    /// The version of each module registered with this application.
-    pub modules: HashMap<String, ApiVersion>,
+    /// The supported versions of each module registered with this application.
+    ///
+    /// Versions for each module are ordered from newest to oldest.
+    pub modules: BTreeMap<String, Vec<ApiVersion>>,
 
     /// The version of this application.
     #[serde_as(as = "Option<DisplayFromStr>")]
@@ -670,6 +854,17 @@ fn add_error_body<
     })
 }
 
+/// RAII guard to ensure a module is registered after it is configured.
+///
+/// This type allows the owner to configure an [`Api`] module via the [`Deref`] and [`DerefMut`]
+/// traits. Once the API is configured, this object can be dropped, which will automatically
+/// register the module with the [`App`].
+///
+/// # Panics
+///
+/// Note that if anything goes wrong during module registration (for example, there is already an
+/// incompatible module registered with the same name), the drop implementation may panic. To handle
+/// errors without panicking, call [`register`](Self::register) explicitly.
 pub struct Module<'a, State, Error, ModuleError, VER: StaticVersionType>
 where
     State: 'static + Send + Sync,
@@ -720,9 +915,32 @@ where
     VER: 'static + Send + Sync,
 {
     fn drop(&mut self) {
-        self.app
-            .register_module(self.base_url, self.api.take().unwrap())
-            .unwrap();
+        self.register_impl().unwrap();
+    }
+}
+
+impl<'a, State, Error, ModuleError, VER> Module<'a, State, Error, ModuleError, VER>
+where
+    State: 'static + Send + Sync,
+    Error: 'static + From<ModuleError>,
+    ModuleError: 'static + Send + Sync,
+    VER: 'static + Send + Sync + StaticVersionType,
+{
+    /// Register this module with the linked app.
+    pub fn register(mut self) -> Result<(), AppError> {
+        self.register_impl()
+    }
+
+    /// Perform the logic of [`Self::register`] without consuming `self`, so this can be called from
+    /// `drop`.
+    fn register_impl(&mut self) -> Result<(), AppError> {
+        if let Some(api) = self.api.take() {
+            self.app.register_module(self.base_url, api)?;
+            Ok(())
+        } else {
+            // Already registered.
+            Ok(())
+        }
     }
 }
 
@@ -730,11 +948,14 @@ where
 mod test {
     use super::*;
     use crate::{
-        error::ServerError, metrics::Metrics, socket::Connection, wait_for_server, Url,
-        SERVER_STARTUP_RETRIES, SERVER_STARTUP_SLEEP_MS,
+        error::ServerError,
+        metrics::Metrics,
+        socket::Connection,
+        testing::{setup_test, test_client, test_ws_client},
+        Url,
     };
     use async_std::{sync::RwLock, task::spawn};
-    use async_tungstenite::{async_std::connect_async, tungstenite::Message};
+    use async_tungstenite::tungstenite::Message;
     use futures::{FutureExt, SinkExt, StreamExt};
     use portpicker::pick_unused_port;
     use std::borrow::Cow;
@@ -759,6 +980,8 @@ mod test {
     /// Test route dispatching for routes with the same path and different methods.
     #[async_std::test]
     async fn test_method_dispatch() {
+        setup_test();
+
         use crate::http::Method::*;
 
         let mut app = App::<_, ServerError, StaticVer01>::with_state(RwLock::new(FakeMetrics));
@@ -827,12 +1050,7 @@ mod test {
         let port = pick_unused_port().unwrap();
         let url: Url = format!("http://localhost:{}", port).parse().unwrap();
         spawn(app.serve(format!("0.0.0.0:{}", port), VER_0_1));
-        wait_for_server(&url, SERVER_STARTUP_RETRIES, SERVER_STARTUP_SLEEP_MS).await;
-
-        let client: surf::Client = surf::Config::new()
-            .set_base_url(url.clone())
-            .try_into()
-            .unwrap();
+        let client = test_client(url.clone()).await;
 
         // Regular HTTP methods.
         for method in [Get, Post, Put, Delete] {
@@ -866,9 +1084,7 @@ mod test {
         assert_eq!(res.status(), StatusCode::Ok);
 
         // Socket.
-        let mut socket_url = url.join("mod/test").unwrap();
-        socket_url.set_scheme("ws").unwrap();
-        let mut conn = connect_async(socket_url).await.unwrap().0;
+        let mut conn = test_ws_client(url.join("mod/test").unwrap()).await;
         let msg = conn.next().await.unwrap().unwrap();
         let body: String = match msg {
             Message::Text(m) => serde_json::from_str(&m).unwrap(),
@@ -881,6 +1097,8 @@ mod test {
     /// Test route dispatching for routes with patterns containing different parmaeters
     #[async_std::test]
     async fn test_param_dispatch() {
+        setup_test();
+
         let mut app = App::<_, ServerError, StaticVer01>::with_state(RwLock::new(()));
         let api_toml = toml! {
             [meta]
@@ -908,12 +1126,7 @@ mod test {
         let port = pick_unused_port().unwrap();
         let url: Url = format!("http://localhost:{}", port).parse().unwrap();
         spawn(app.serve(format!("0.0.0.0:{}", port), VER_0_1));
-        wait_for_server(&url, SERVER_STARTUP_RETRIES, SERVER_STARTUP_SLEEP_MS).await;
-
-        let client: surf::Client = surf::Config::new()
-            .set_base_url(url.clone())
-            .try_into()
-            .unwrap();
+        let client = test_client(url.clone()).await;
 
         let mut res = client
             .get(url.join("mod/test/a/42").unwrap())
@@ -935,6 +1148,277 @@ mod test {
         assert_eq!(
             res.body_json::<(String, String)>().await.unwrap(),
             ("b".to_string(), "true".to_string())
+        );
+    }
+
+    #[async_std::test]
+    async fn test_versions() {
+        setup_test();
+
+        let mut app = App::<_, ServerError, StaticVer01>::with_state(RwLock::new(()));
+
+        // Create two different, non-consecutive major versions of an API. One method will be
+        // deleted in version 1, one will be added in version 3, and one will be present in both
+        // versions (with a different implementation).
+        let v1_toml = toml! {
+            [meta]
+            FORMAT_VERSION = "0.1.0"
+
+            [route.deleted]
+            PATH = ["/deleted"]
+
+            [route.unchanged]
+            PATH = ["/unchanged"]
+        };
+        let v3_toml = toml! {
+            [meta]
+            FORMAT_VERSION = "0.1.0"
+
+            [route.added]
+            PATH = ["/added"]
+
+            [route.unchanged]
+            PATH = ["/unchanged"]
+        };
+
+        {
+            let mut v1 = app.module::<ServerError>("mod", v1_toml.clone()).unwrap();
+            v1.with_version("1.0.0".parse().unwrap())
+                .get("deleted", |_req, _state| {
+                    async move { Ok("deleted v1") }.boxed()
+                })
+                .unwrap()
+                .get("unchanged", |_req, _state| {
+                    async move { Ok("unchanged v1") }.boxed()
+                })
+                .unwrap()
+                // Add a custom healthcheck for the old version so we can check healthcheck routing.
+                .with_health_check(|_state| {
+                    async move { HealthStatus::TemporarilyUnavailable }.boxed()
+                });
+        }
+        {
+            // Registering the same major version twice is an error.
+            let mut api = app.module::<ServerError>("mod", v1_toml).unwrap();
+            api.with_version("1.1.1".parse().unwrap());
+            assert_eq!(api.register().unwrap_err(), AppError::ModuleAlreadyExists);
+        }
+        {
+            let mut v3 = app.module::<ServerError>("mod", v3_toml.clone()).unwrap();
+            v3.with_version("3.0.0".parse().unwrap())
+                .get("added", |_req, _state| {
+                    async move { Ok("added v3") }.boxed()
+                })
+                .unwrap()
+                .get("unchanged", |_req, _state| {
+                    async move { Ok("unchanged v3") }.boxed()
+                })
+                .unwrap();
+        }
+
+        let port = pick_unused_port().unwrap();
+        let url: Url = format!("http://localhost:{}", port).parse().unwrap();
+        spawn(app.serve(format!("0.0.0.0:{}", port), VER_0_1));
+        let client = test_client(url.clone()).await;
+
+        // First check that we can call all the expected methods.
+        assert_eq!(
+            "deleted v1",
+            client
+                .get("mod/v1/deleted")
+                .send()
+                .await
+                .unwrap()
+                .body_json::<String>()
+                .await
+                .unwrap()
+        );
+        assert_eq!(
+            "unchanged v1",
+            client
+                .get("mod/v1/unchanged")
+                .send()
+                .await
+                .unwrap()
+                .body_json::<String>()
+                .await
+                .unwrap()
+        );
+        // For the v3 methods, we can query with or without a version prefix.
+        for prefix in ["", "/v3"] {
+            let span = tracing::info_span!("version", prefix);
+            let _enter = span.enter();
+
+            assert_eq!(
+                "added v3",
+                client
+                    .get(&format!("mod{prefix}/added"))
+                    .send()
+                    .await
+                    .unwrap()
+                    .body_json::<String>()
+                    .await
+                    .unwrap()
+            );
+            assert_eq!(
+                "unchanged v3",
+                client
+                    .get(&format!("mod{prefix}/unchanged"))
+                    .send()
+                    .await
+                    .unwrap()
+                    .body_json::<String>()
+                    .await
+                    .unwrap()
+            );
+        }
+
+        // Test documentation for invalid routes.
+        let check_docs = |version, route: &'static str| {
+            let client = &client;
+            async move {
+                let span = tracing::info_span!("check_docs", ?version, route);
+                let _enter = span.enter();
+                tracing::info!("test invalid route docs");
+
+                let prefix = match version {
+                    Some(v) => format!("/v{v}"),
+                    None => "".into(),
+                };
+
+                // Invalid route or no route with no version prefix redirects to documentation for
+                // the latest supported version.
+                let version = version.unwrap_or(3);
+
+                let mut res = client
+                    .get(&format!("mod{prefix}{route}"))
+                    .send()
+                    .await
+                    .unwrap();
+                let docs = res.body_string().await.unwrap();
+                if !route.is_empty() {
+                    assert!(
+                        docs.contains(&format!("No route matches {route}")),
+                        "{docs}"
+                    );
+                }
+                assert!(
+                    docs.contains(&format!("mod API {version}.0.0 Reference")),
+                    "{docs}"
+                );
+            }
+        };
+
+        for route in ["", "/deleted"] {
+            check_docs(None, route).await;
+        }
+        for route in ["", "/deleted"] {
+            check_docs(Some(3), route).await;
+        }
+        for route in ["", "/added"] {
+            check_docs(Some(1), route).await;
+        }
+
+        // Request with an unsupported version lists the supported versions.
+        let expected_html = html! {
+            "Unsupported version v2. Supported versions are:"
+            ul {
+                li {
+                    a href="/mod/v3" {"v3"}
+                }
+                li {
+                    a href="/mod/v1" {"v1"}
+                }
+            }
+        }
+        .into_string();
+        for route in ["", "/unchanged"] {
+            let span = tracing::info_span!("unsupported_version_docs", route);
+            let _enter = span.enter();
+            tracing::info!("test unsupported version docs");
+
+            let mut res = client.get(&format!("mod/v2{route}")).send().await.unwrap();
+            let docs = res.body_string().await.unwrap();
+            assert_eq!(docs, expected_html);
+        }
+
+        // Test version endpoints.
+        for version in [None, Some(1), Some(3)] {
+            let span = tracing::info_span!("version_endpoints", version);
+            let _enter = span.enter();
+            tracing::info!("test version endpoints");
+
+            let prefix = match version {
+                Some(v) => format!("/v{v}"),
+                None => "".into(),
+            };
+            let mut res = client
+                .get(&format!("mod{prefix}/version"))
+                .send()
+                .await
+                .unwrap();
+            assert_eq!(
+                res.body_json::<ApiVersion>()
+                    .await
+                    .unwrap()
+                    .api_version
+                    .unwrap()
+                    .major,
+                version.unwrap_or(3)
+            );
+        }
+
+        // Test the application version.
+        let mut res = client.get("version").send().await.unwrap();
+        assert_eq!(
+            res.body_json::<AppVersion>().await.unwrap().modules["mod"],
+            [
+                ApiVersion {
+                    api_version: Some("3.0.0".parse().unwrap()),
+                    spec_version: "0.1.0".parse().unwrap(),
+                },
+                ApiVersion {
+                    api_version: Some("1.0.0".parse().unwrap()),
+                    spec_version: "0.1.0".parse().unwrap(),
+                }
+            ]
+        );
+
+        // Test healthcheck endpoints.
+        for version in [None, Some(1), Some(3)] {
+            let span = tracing::info_span!("healthcheck_endpoints", version);
+            let _enter = span.enter();
+            tracing::info!("test healthcheck endpoints");
+
+            let prefix = match version {
+                Some(v) => format!("/v{v}"),
+                None => "".into(),
+            };
+            let mut res = client
+                .get(&format!("mod{prefix}/healthcheck"))
+                .send()
+                .await
+                .unwrap();
+            let health: HealthStatus = res.body_json().await.unwrap();
+            assert_eq!(health.status(), res.status());
+            assert_eq!(
+                health,
+                if version == Some(1) {
+                    HealthStatus::TemporarilyUnavailable
+                } else {
+                    HealthStatus::Available
+                }
+            );
+        }
+
+        // Test the application health.
+        let mut res = client.get("healthcheck").send().await.unwrap();
+        let health: AppHealth = res.body_json().await.unwrap();
+        assert_eq!(health.status, HealthStatus::Unhealthy);
+        assert_eq!(res.status(), StatusCode::ServiceUnavailable);
+        assert_eq!(
+            health.modules["mod"],
+            [(3, StatusCode::Ok), (1, StatusCode::ServiceUnavailable)].into()
         );
     }
 }

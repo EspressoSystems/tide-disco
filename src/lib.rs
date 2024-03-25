@@ -289,6 +289,7 @@ pub mod request;
 pub mod route;
 pub mod socket;
 pub mod status;
+pub mod testing;
 
 pub use api::Api;
 pub use app::App;

@@ -32,7 +32,7 @@ use tide::http::content::Accept;
 use versioned_binary_serialization::version::StaticVersionType;
 
 /// An error encountered when parsing or constructing an [Api].
-#[derive(Clone, Debug, Snafu)]
+#[derive(Clone, Debug, Snafu, PartialEq, Eq)]
 pub enum ApiError {
     Route { source: RouteParseError },
     ApiMustBeTable,
@@ -430,26 +430,15 @@ impl<State, Error, VER: StaticVersionType> Api<State, Error, VER> {
 
     /// Set the API version.
     ///
-    /// The version information will automatically be included in responses to `GET /version`.
+    /// The version information will automatically be included in responses to `GET /version`. This
+    /// version can also be used to serve multiple major versions of the same API simultaneously,
+    /// under a version prefix. For more information, see
+    /// [App::register_module](crate::App::register_module).
     ///
     /// This is the version of the application or sub-application which this instance of [Api]
-    /// represents. The versioning encompasses both the API specification passed to [new](Api::new)
-    /// and the Rust crate implementing the route handlers for the API. Changes to either of
-    /// these components should result in a change to the version.
-    ///
-    /// Since the API specification and the route handlers are usually packaged together, and since
-    /// Rust crates are versioned anyways using Cargo, it is a good idea to use the version of the
-    /// API crate found in Cargo.toml. This can be automatically found at build time using the
-    /// environment variable `CARGO_PKG_VERSION` and the [env] macro. As long as the following code
-    /// is contained in the API crate, it should result in a reasonable version:
-    ///
-    /// ```
-    /// # use versioned_binary_serialization::version::StaticVersion;
-    /// # type StaticVer01 = StaticVersion<0, 1>;
-    /// # fn ex(api: &mut tide_disco::Api<(), (), StaticVer01>) {
-    /// api.with_version(env!("CARGO_PKG_VERSION").parse().unwrap());
-    /// # }
-    /// ```
+    /// represents. The versioning corresponds to the API specification passed to [new](Api::new),
+    /// and may be different from the version of the Rust crate implementing the route handlers for
+    /// the API.
     pub fn with_version(&mut self, version: Version) -> &mut Self {
         self.api_version = Some(version);
         self
@@ -1333,15 +1322,12 @@ mod test {
         error::{Error, ServerError},
         healthcheck::HealthStatus,
         socket::Connection,
-        wait_for_server, App, StatusCode, Url, SERVER_STARTUP_RETRIES, SERVER_STARTUP_SLEEP_MS,
+        testing::{setup_test, test_client, test_ws_client, test_ws_client_with_headers},
+        App, StatusCode, Url,
     };
     use async_std::{sync::RwLock, task::spawn};
     use async_tungstenite::{
-        async_std::connect_async,
-        tungstenite::{
-            client::IntoClientRequest, http::header::*, protocol::frame::coding::CloseCode,
-            protocol::Message,
-        },
+        tungstenite::{http::header::*, protocol::frame::coding::CloseCode, protocol::Message},
         WebSocketStream,
     };
     use futures::{
@@ -1386,6 +1372,8 @@ mod test {
 
     #[async_std::test]
     async fn test_socket_endpoint() {
+        setup_test();
+
         let mut app = App::<_, ServerError, StaticVer01>::with_state(RwLock::new(()));
         let api_toml = toml! {
             [meta]
@@ -1446,17 +1434,13 @@ mod test {
         let port = pick_unused_port().unwrap();
         let url: Url = format!("http://localhost:{}", port).parse().unwrap();
         spawn(app.serve(format!("0.0.0.0:{}", port), VER_0_1));
-        wait_for_server(&url, SERVER_STARTUP_RETRIES, SERVER_STARTUP_SLEEP_MS).await;
-
-        let mut socket_url = url.join("mod/echo").unwrap();
-        socket_url.set_scheme("ws").unwrap();
 
         // Create a client that accepts JSON messages.
-        let mut socket_req = socket_url.clone().into_client_request().unwrap();
-        socket_req
-            .headers_mut()
-            .insert(ACCEPT, "application/json".parse().unwrap());
-        let mut conn = connect_async(socket_req).await.unwrap().0;
+        let mut conn = test_ws_client_with_headers(
+            url.join("mod/echo").unwrap(),
+            &[(ACCEPT, "application/json")],
+        )
+        .await;
 
         // Send a JSON message.
         conn.send(Message::Text(serde_json::to_string("hello").unwrap()))
@@ -1479,11 +1463,11 @@ mod test {
         );
 
         // Create a client that accepts binary messages.
-        let mut socket_req = socket_url.into_client_request().unwrap();
-        socket_req
-            .headers_mut()
-            .insert(ACCEPT, "application/octet-stream".parse().unwrap());
-        let mut conn = connect_async(socket_req).await.unwrap().0;
+        let mut conn = test_ws_client_with_headers(
+            url.join("mod/echo").unwrap(),
+            &[(ACCEPT, "application/octet-stream")],
+        )
+        .await;
 
         // Send a JSON message.
         conn.send(Message::Text(serde_json::to_string("hello").unwrap()))
@@ -1506,9 +1490,7 @@ mod test {
         );
 
         // Test a stream that exits normally.
-        let mut socket_url = url.join("mod/once").unwrap();
-        socket_url.set_scheme("ws").unwrap();
-        let mut conn = connect_async(socket_url).await.unwrap().0;
+        let mut conn = test_ws_client(url.join("mod/once").unwrap()).await;
         assert_eq!(
             conn.next().await.unwrap().unwrap(),
             Message::Text(serde_json::to_string("msg").unwrap())
@@ -1520,9 +1502,7 @@ mod test {
         check_stream_closed(conn).await;
 
         // Test a stream that errors.
-        let mut socket_url = url.join("mod/error").unwrap();
-        socket_url.set_scheme("ws").unwrap();
-        let mut conn = connect_async(socket_url).await.unwrap().0;
+        let mut conn = test_ws_client(url.join("mod/error").unwrap()).await;
         match conn.next().await.unwrap().unwrap() {
             Message::Close(Some(frame)) => {
                 assert_eq!(frame.code, CloseCode::Error);
@@ -1535,6 +1515,8 @@ mod test {
 
     #[async_std::test]
     async fn test_stream_endpoint() {
+        setup_test();
+
         let mut app = App::<_, ServerError, StaticVer01>::with_state(RwLock::new(()));
         let api_toml = toml! {
             [meta]
@@ -1572,13 +1554,9 @@ mod test {
         let port = pick_unused_port().unwrap();
         let url: Url = format!("http://localhost:{}", port).parse().unwrap();
         spawn(app.serve(format!("0.0.0.0:{}", port), VER_0_1));
-        wait_for_server(&url, SERVER_STARTUP_RETRIES, SERVER_STARTUP_SLEEP_MS).await;
 
         // Consume the `nat` stream.
-        let mut socket_url = url.join("mod/nat").unwrap();
-        socket_url.set_scheme("ws").unwrap();
-        let mut conn = connect_async(socket_url).await.unwrap().0;
-
+        let mut conn = test_ws_client(url.join("mod/nat").unwrap()).await;
         for i in 0..100 {
             assert_eq!(
                 conn.next().await.unwrap().unwrap(),
@@ -1587,10 +1565,7 @@ mod test {
         }
 
         // Test a finite stream.
-        let mut socket_url = url.join("mod/once").unwrap();
-        socket_url.set_scheme("ws").unwrap();
-        let mut conn = connect_async(socket_url).await.unwrap().0;
-
+        let mut conn = test_ws_client(url.join("mod/once").unwrap()).await;
         assert_eq!(
             conn.next().await.unwrap().unwrap(),
             Message::Text(serde_json::to_string(&0).unwrap())
@@ -1602,10 +1577,7 @@ mod test {
         check_stream_closed(conn).await;
 
         // Test a stream that errors.
-        let mut socket_url = url.join("mod/error").unwrap();
-        socket_url.set_scheme("ws").unwrap();
-        let mut conn = connect_async(socket_url).await.unwrap().0;
-
+        let mut conn = test_ws_client(url.join("mod/error").unwrap()).await;
         match conn.next().await.unwrap().unwrap() {
             Message::Close(Some(frame)) => {
                 assert_eq!(frame.code, CloseCode::Error);
@@ -1618,6 +1590,8 @@ mod test {
 
     #[async_std::test]
     async fn test_custom_healthcheck() {
+        setup_test();
+
         let mut app = App::<_, ServerError, StaticVer01>::with_state(HealthStatus::Available);
         let api_toml = toml! {
             [meta]
@@ -1633,12 +1607,9 @@ mod test {
         let port = pick_unused_port().unwrap();
         let url: Url = format!("http://localhost:{}", port).parse().unwrap();
         spawn(app.serve(format!("0.0.0.0:{}", port), VER_0_1));
-        wait_for_server(&url, SERVER_STARTUP_RETRIES, SERVER_STARTUP_SLEEP_MS).await;
+        let client = test_client(url).await;
 
-        let mut res = surf::get(format!("http://localhost:{}/mod/healthcheck", port))
-            .send()
-            .await
-            .unwrap();
+        let mut res = client.get("/mod/healthcheck").send().await.unwrap();
         assert_eq!(res.status(), StatusCode::Ok);
         assert_eq!(
             res.body_json::<HealthStatus>().await.unwrap(),
@@ -1648,6 +1619,8 @@ mod test {
 
     #[async_std::test]
     async fn test_metrics_endpoint() {
+        setup_test();
+
         struct State {
             metrics: Registry,
             counter: Counter,
@@ -1673,8 +1646,9 @@ mod test {
         };
         {
             let mut api = app.module::<ServerError>("mod", api_toml).unwrap();
-            api.metrics("metrics", |_req, state| {
+            api.metrics("metrics", |req, state| {
                 async move {
+                    tracing::info!(?req, "metrics called");
                     state.counter.inc();
                     Ok(Cow::Borrowed(&state.metrics))
                 }
@@ -1685,11 +1659,12 @@ mod test {
         let port = pick_unused_port().unwrap();
         let url: Url = format!("http://localhost:{port}").parse().unwrap();
         spawn(app.serve(format!("0.0.0.0:{port}"), VER_0_1));
-        wait_for_server(&url, SERVER_STARTUP_RETRIES, SERVER_STARTUP_SLEEP_MS).await;
+        let client = test_client(url).await;
 
         for i in 1..5 {
+            tracing::info!("making metrics request {i}");
             let expected = format!("# HELP counter count of how many times metrics have been exported\n# TYPE counter counter\ncounter {i}\n");
-            let mut res = surf::get(format!("{url}mod/metrics")).send().await.unwrap();
+            let mut res = client.get("mod/metrics").send().await.unwrap();
             assert_eq!(res.body_string().await.unwrap(), expected);
             assert_eq!(res.status(), StatusCode::Ok);
         }

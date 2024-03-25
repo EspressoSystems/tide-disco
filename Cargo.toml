@@ -7,9 +7,18 @@ description = "Discoverability for Tide"
 repository = "https://github.com/EspressoSystems/tide-disco"
 license-file = "LICENSE"
 
+[features]
+testing = ["async-compatibility-layer", "async-tungstenite"]
+
 [[example]]
 name = "hello-world"
 test = true
+required-features = ["testing"]
+
+[[example]]
+name = "versions"
+test = true
+required-features = ["testing"]
 
 [dependencies]
 anyhow = "1.0"
@@ -56,12 +65,16 @@ tracing-subscriber = { version = "0.3.18", features = ["env-filter", "json"] }
 url = "2.5.0"
 versioned-binary-serialization = { git = "https://github.com/EspressoSystems/versioned-binary-serialization.git", tag = "0.1.2" }
 
+# Dependencies enabled by feature `testing`
+async-compatibility-layer = { git = "https://github.com/EspressoSystems/async-compatibility-layer.git", tag = "1.4.2", features = ["logging-utils"], optional = true }
+async-tungstenite = { version = "0.25", features = ["async-std-runtime"], optional = true }
+
 [target.'cfg(not(windows))'.dependencies]
 signal-hook-async-std = "0.2.2"
 
 [dev-dependencies]
 ark-serialize = { version = "0.4", features = ["derive"] }
 ark-std = "0.4.0"
+async-compatibility-layer = { git = "https://github.com/EspressoSystems/async-compatibility-layer.git", tag = "1.4.2", features = ["logging-utils"] }
 async-tungstenite = { version = "0.25", features = ["async-std-runtime"] }
 portpicker = "0.1"
-tracing-test = "0.2"

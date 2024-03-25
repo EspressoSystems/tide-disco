@@ -5,6 +5,8 @@ on:
     branches:
       - main
   workflow_dispatch:
+env:
+  RUSTFLAGS: "--cfg async_executor_impl=\"async-std\" --cfg async_channel_impl=\"async-std\""
 
 jobs:
   coverage:
@@ -24,7 +26,7 @@ jobs:
       - name: Generate code coverage
         run: |
           mkdir coverage
-          cargo llvm-cov --workspace --lcov --output-path ./coverage/lcov.info
+          cargo llvm-cov --workspace --all-features --lcov --output-path ./coverage/lcov.info
         timeout-minutes: 240
 
       - name: Coveralls upload
