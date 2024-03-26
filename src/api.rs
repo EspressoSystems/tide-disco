@@ -1322,7 +1322,7 @@ mod test {
         error::{Error, ServerError},
         healthcheck::HealthStatus,
         socket::Connection,
-        testing::{setup_test, test_client, test_ws_client, test_ws_client_with_headers},
+        testing::{setup_test, test_ws_client, test_ws_client_with_headers, Client},
         App, StatusCode, Url,
     };
     use async_std::{sync::RwLock, task::spawn};
@@ -1607,12 +1607,12 @@ mod test {
         let port = pick_unused_port().unwrap();
         let url: Url = format!("http://localhost:{}", port).parse().unwrap();
         spawn(app.serve(format!("0.0.0.0:{}", port), VER_0_1));
-        let client = test_client(url).await;
+        let client = Client::new(url).await;
 
-        let mut res = client.get("/mod/healthcheck").send().await.unwrap();
+        let res = client.get("/mod/healthcheck").send().await.unwrap();
         assert_eq!(res.status(), StatusCode::Ok);
         assert_eq!(
-            res.body_json::<HealthStatus>().await.unwrap(),
+            res.json::<HealthStatus>().await.unwrap(),
             HealthStatus::Available
         );
     }
@@ -1659,14 +1659,14 @@ mod test {
         let port = pick_unused_port().unwrap();
         let url: Url = format!("http://localhost:{port}").parse().unwrap();
         spawn(app.serve(format!("0.0.0.0:{port}"), VER_0_1));
-        let client = test_client(url).await;
+        let client = Client::new(url).await;
 
         for i in 1..5 {
             tracing::info!("making metrics request {i}");
             let expected = format!("# HELP counter count of how many times metrics have been exported\n# TYPE counter counter\ncounter {i}\n");
-            let mut res = client.get("mod/metrics").send().await.unwrap();
-            assert_eq!(res.body_string().await.unwrap(), expected);
+            let res = client.get("mod/metrics").send().await.unwrap();
             assert_eq!(res.status(), StatusCode::Ok);
+            assert_eq!(res.text().await.unwrap(), expected);
         }
     }
 }

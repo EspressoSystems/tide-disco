@@ -51,7 +51,7 @@ mod test {
     use async_std::task::spawn;
     use portpicker::pick_unused_port;
     use tide_disco::{
-        testing::{setup_test, test_client},
+        testing::{setup_test, Client},
         StatusCode, Url,
     };
 
@@ -65,7 +65,7 @@ mod test {
         let port = pick_unused_port().unwrap();
         spawn(serve(port));
         let url = Url::parse(&format!("http://localhost:{}/", port)).unwrap();
-        let client = test_client(url).await;
+        let client = Client::new(url).await;
 
         assert_eq!(
             "deleted",
@@ -74,7 +74,7 @@ mod test {
                 .send()
                 .await
                 .unwrap()
-                .body_json::<String>()
+                .json::<String>()
                 .await
                 .unwrap()
         );
@@ -90,7 +90,7 @@ mod test {
                 .send()
                 .await
                 .unwrap()
-                .body_json::<String>()
+                .json::<String>()
                 .await
                 .unwrap()
         );
@@ -106,7 +106,7 @@ mod test {
                 .send()
                 .await
                 .unwrap()
-                .body_json::<String>()
+                .json::<String>()
                 .await
                 .unwrap()
         );

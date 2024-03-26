@@ -684,7 +684,12 @@ pub fn app_api_path(org_name: &str, app_name: &str) -> PathBuf {
 pub async fn wait_for_server(url: &Url, retries: u64, sleep_ms: u64) {
     let dur = Duration::from_millis(sleep_ms);
     for _ in 0..retries {
-        if surf::connect(url).send().await.is_ok() {
+        if reqwest::Client::new()
+            .head(url.clone())
+            .send()
+            .await
+            .is_ok()
+        {
             return;
         }
         sleep(dur).await;

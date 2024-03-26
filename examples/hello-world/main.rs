@@ -98,12 +98,12 @@ mod test {
     use super::*;
     use async_std::task::spawn;
     use portpicker::pick_unused_port;
-    use surf::Url;
     use tide_disco::{
         api::ApiVersion,
         app::{AppHealth, AppVersion},
         healthcheck::HealthStatus,
-        testing::{setup_test, test_client},
+        testing::{setup_test, Client},
+        Url,
     };
 
     #[async_std::test]
@@ -113,18 +113,18 @@ mod test {
         let port = pick_unused_port().unwrap();
         spawn(serve(port));
         let url = Url::parse(&format!("http://localhost:{}/hello/", port)).unwrap();
-        let client = test_client(url).await;
+        let client = Client::new(url).await;
 
-        let mut res = client.get("greeting/tester").send().await.unwrap();
+        let res = client.get("greeting/tester").send().await.unwrap();
         assert_eq!(res.status(), StatusCode::Ok);
-        assert_eq!(res.body_json::<String>().await.unwrap(), "Hello, tester");
+        assert_eq!(res.json::<String>().await.unwrap(), "Hello, tester");
 
         let res = client.post("greeting/Sup").send().await.unwrap();
         assert_eq!(res.status(), StatusCode::Ok);
 
-        let mut res = client.get("greeting/tester").send().await.unwrap();
+        let res = client.get("greeting/tester").send().await.unwrap();
         assert_eq!(res.status(), StatusCode::Ok);
-        assert_eq!(res.body_json::<String>().await.unwrap(), "Sup, tester");
+        assert_eq!(res.json::<String>().await.unwrap(), "Sup, tester");
     }
 
     #[async_std::test]
@@ -134,22 +134,22 @@ mod test {
         let port = pick_unused_port().unwrap();
         spawn(serve(port));
         let url = Url::parse(&format!("http://localhost:{}/", port)).unwrap();
-        let client = test_client(url).await;
+        let client = Client::new(url).await;
 
         // Check the API version.
-        let mut res = client.get("hello/version").send().await.unwrap();
+        let res = client.get("hello/version").send().await.unwrap();
         assert_eq!(res.status(), StatusCode::Ok);
         let api_version = ApiVersion {
             api_version: Some(env!("CARGO_PKG_VERSION").parse().unwrap()),
             spec_version: "0.1.0".parse().unwrap(),
         };
-        assert_eq!(res.body_json::<ApiVersion>().await.unwrap(), api_version);
+        assert_eq!(res.json::<ApiVersion>().await.unwrap(), api_version);
 
         // Check the overall version.
-        let mut res = client.get("version").send().await.unwrap();
+        let res = client.get("version").send().await.unwrap();
         assert_eq!(res.status(), StatusCode::Ok);
         assert_eq!(
-            res.body_json::<AppVersion>().await.unwrap(),
+            res.json::<AppVersion>().await.unwrap(),
             AppVersion {
                 app_version: Some(env!("CARGO_PKG_VERSION").parse().unwrap()),
                 disco_version: env!("CARGO_PKG_VERSION").parse().unwrap(),
@@ -165,22 +165,22 @@ mod test {
         let port = pick_unused_port().unwrap();
         spawn(serve(port));
         let url = Url::parse(&format!("http://localhost:{}/", port)).unwrap();
-        let client = test_client(url).await;
+        let client = Client::new(url).await;
 
         // Check the API health.
-        let mut res = client.get("hello/healthcheck").send().await.unwrap();
+        let res = client.get("hello/healthcheck").send().await.unwrap();
         assert_eq!(res.status(), StatusCode::Ok);
         // The example API does not have a custom healthcheck, so we just get the default response.
         assert_eq!(
-            res.body_json::<HealthStatus>().await.unwrap(),
+            res.json::<HealthStatus>().await.unwrap(),
             HealthStatus::Available
         );
 
         // Check the overall health.
-        let mut res = client.get("healthcheck").send().await.unwrap();
+        let res = client.get("healthcheck").send().await.unwrap();
         assert_eq!(res.status(), StatusCode::Ok);
         assert_eq!(
-            res.body_json::<AppHealth>().await.unwrap(),
+            res.json::<AppHealth>().await.unwrap(),
             AppHealth {
                 status: HealthStatus::Available,
                 modules: [("hello".to_string(), [(0, StatusCode::Ok)].into())].into(),

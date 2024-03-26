@@ -398,9 +398,9 @@ impl<
         let latest_version = *versions.last_key_value().unwrap().0;
 
         // Serve the documentation for the latest supported version at the root of the module.
-        server
-            .at(&prefix)
-            .all(tide::Redirect::new(format!("/{prefix}/v{latest_version}")));
+        server.at(&prefix).all(tide::Redirect::permanent(format!(
+            "/{prefix}/v{latest_version}"
+        )));
 
         // For requests that didn't match any specific endpoint, parse the version prefix. If there
         // is none, redirect to the latest supported version. If there is one and the request still
@@ -451,7 +451,10 @@ impl<
                     }
 
                     // The request has no version prefix, redirect to the latest supported version.
-                    Ok(tide::Redirect::new(format!("/{prefix}/v{latest_version}/{path}")).into())
+                    Ok(
+                        tide::Redirect::permanent(format!("/{prefix}/v{latest_version}/{path}"))
+                            .into(),
+                    )
                 }
             });
 
@@ -951,7 +954,7 @@ mod test {
         error::ServerError,
         metrics::Metrics,
         socket::Connection,
-        testing::{setup_test, test_client, test_ws_client},
+        testing::{setup_test, test_ws_client, Client},
         Url,
     };
     use async_std::{sync::RwLock, task::spawn};
@@ -1050,38 +1053,34 @@ mod test {
         let port = pick_unused_port().unwrap();
         let url: Url = format!("http://localhost:{}", port).parse().unwrap();
         spawn(app.serve(format!("0.0.0.0:{}", port), VER_0_1));
-        let client = test_client(url.clone()).await;
+        let client = Client::new(url.clone()).await;
 
         // Regular HTTP methods.
         for method in [Get, Post, Put, Delete] {
-            let mut res = client
-                .request(method, url.join("mod/test").unwrap())
+            let res = client
+                .request(method, "mod/test")
                 .header("Accept", "application/json")
                 .send()
                 .await
                 .unwrap();
             assert_eq!(res.status(), StatusCode::Ok);
-            assert_eq!(res.body_json::<String>().await.unwrap(), method.to_string());
+            assert_eq!(res.json::<String>().await.unwrap(), method.to_string());
         }
 
         // Metrics with Accept header.
-        let mut res = client
-            .get(url.join("mod/test").unwrap())
+        let res = client
+            .get("mod/test")
             .header("Accept", "text/plain")
             .send()
             .await
             .unwrap();
-        assert_eq!(res.body_string().await.unwrap(), "METRICS");
         assert_eq!(res.status(), StatusCode::Ok);
+        assert_eq!(res.text().await.unwrap(), "METRICS");
 
         // Metrics without Accept header.
-        let mut res = client
-            .get(url.join("mod/test").unwrap())
-            .send()
-            .await
-            .unwrap();
-        assert_eq!(res.body_string().await.unwrap(), "METRICS");
+        let res = client.get("mod/test").send().await.unwrap();
         assert_eq!(res.status(), StatusCode::Ok);
+        assert_eq!(res.text().await.unwrap(), "METRICS");
 
         // Socket.
         let mut conn = test_ws_client(url.join("mod/test").unwrap()).await;
@@ -1126,27 +1125,19 @@ mod test {
         let port = pick_unused_port().unwrap();
         let url: Url = format!("http://localhost:{}", port).parse().unwrap();
         spawn(app.serve(format!("0.0.0.0:{}", port), VER_0_1));
-        let client = test_client(url.clone()).await;
+        let client = Client::new(url.clone()).await;
 
-        let mut res = client
-            .get(url.join("mod/test/a/42").unwrap())
-            .send()
-            .await
-            .unwrap();
+        let res = client.get("mod/test/a/42").send().await.unwrap();
         assert_eq!(res.status(), StatusCode::Ok);
         assert_eq!(
-            res.body_json::<(String, String)>().await.unwrap(),
+            res.json::<(String, String)>().await.unwrap(),
             ("a".to_string(), "42".to_string())
         );
 
-        let mut res = client
-            .get(url.join("mod/test/b/true").unwrap())
-            .send()
-            .await
-            .unwrap();
+        let res = client.get("mod/test/b/true").send().await.unwrap();
         assert_eq!(res.status(), StatusCode::Ok);
         assert_eq!(
-            res.body_json::<(String, String)>().await.unwrap(),
+            res.json::<(String, String)>().await.unwrap(),
             ("b".to_string(), "true".to_string())
         );
     }
@@ -1219,7 +1210,7 @@ mod test {
         let port = pick_unused_port().unwrap();
         let url: Url = format!("http://localhost:{}", port).parse().unwrap();
         spawn(app.serve(format!("0.0.0.0:{}", port), VER_0_1));
-        let client = test_client(url.clone()).await;
+        let client = Client::new(url.clone()).await;
 
         // First check that we can call all the expected methods.
         assert_eq!(
@@ -1229,7 +1220,7 @@ mod test {
                 .send()
                 .await
                 .unwrap()
-                .body_json::<String>()
+                .json::<String>()
                 .await
                 .unwrap()
         );
@@ -1240,7 +1231,7 @@ mod test {
                 .send()
                 .await
                 .unwrap()
-                .body_json::<String>()
+                .json::<String>()
                 .await
                 .unwrap()
         );
@@ -1256,7 +1247,7 @@ mod test {
                     .send()
                     .await
                     .unwrap()
-                    .body_json::<String>()
+                    .json::<String>()
                     .await
                     .unwrap()
             );
@@ -1267,7 +1258,7 @@ mod test {
                     .send()
                     .await
                     .unwrap()
-                    .body_json::<String>()
+                    .json::<String>()
                     .await
                     .unwrap()
             );
@@ -1290,12 +1281,12 @@ mod test {
                 // the latest supported version.
                 let version = version.unwrap_or(3);
 
-                let mut res = client
+                let res = client
                     .get(&format!("mod{prefix}{route}"))
                     .send()
                     .await
                     .unwrap();
-                let docs = res.body_string().await.unwrap();
+                let docs = res.text().await.unwrap();
                 if !route.is_empty() {
                     assert!(
                         docs.contains(&format!("No route matches {route}")),
@@ -1337,8 +1328,8 @@ mod test {
             let _enter = span.enter();
             tracing::info!("test unsupported version docs");
 
-            let mut res = client.get(&format!("mod/v2{route}")).send().await.unwrap();
-            let docs = res.body_string().await.unwrap();
+            let res = client.get(&format!("mod/v2{route}")).send().await.unwrap();
+            let docs = res.text().await.unwrap();
             assert_eq!(docs, expected_html);
         }
 
@@ -1352,13 +1343,13 @@ mod test {
                 Some(v) => format!("/v{v}"),
                 None => "".into(),
             };
-            let mut res = client
+            let res = client
                 .get(&format!("mod{prefix}/version"))
                 .send()
                 .await
                 .unwrap();
             assert_eq!(
-                res.body_json::<ApiVersion>()
+                res.json::<ApiVersion>()
                     .await
                     .unwrap()
                     .api_version
@@ -1369,9 +1360,9 @@ mod test {
         }
 
         // Test the application version.
-        let mut res = client.get("version").send().await.unwrap();
+        let res = client.get("version").send().await.unwrap();
         assert_eq!(
-            res.body_json::<AppVersion>().await.unwrap().modules["mod"],
+            res.json::<AppVersion>().await.unwrap().modules["mod"],
             [
                 ApiVersion {
                     api_version: Some("3.0.0".parse().unwrap()),
@@ -1394,13 +1385,14 @@ mod test {
                 Some(v) => format!("/v{v}"),
                 None => "".into(),
             };
-            let mut res = client
+            let res = client
                 .get(&format!("mod{prefix}/healthcheck"))
                 .send()
                 .await
                 .unwrap();
-            let health: HealthStatus = res.body_json().await.unwrap();
-            assert_eq!(health.status(), res.status());
+            let status = res.status();
+            let health: HealthStatus = res.json().await.unwrap();
+            assert_eq!(health.status(), status);
             assert_eq!(
                 health,
                 if version == Some(1) {
@@ -1412,13 +1404,61 @@ mod test {
         }
 
         // Test the application health.
-        let mut res = client.get("healthcheck").send().await.unwrap();
-        let health: AppHealth = res.body_json().await.unwrap();
-        assert_eq!(health.status, HealthStatus::Unhealthy);
+        let res = client.get("healthcheck").send().await.unwrap();
         assert_eq!(res.status(), StatusCode::ServiceUnavailable);
+        let health: AppHealth = res.json().await.unwrap();
+        assert_eq!(health.status, HealthStatus::Unhealthy);
         assert_eq!(
             health.modules["mod"],
             [(3, StatusCode::Ok), (1, StatusCode::ServiceUnavailable)].into()
         );
+    }
+
+    #[async_std::test]
+    async fn test_post_redirect_idempotency() {
+        setup_test();
+
+        let mut app = App::<_, ServerError, StaticVer01>::with_state(RwLock::new(0));
+
+        let api_toml = toml! {
+            [meta]
+            FORMAT_VERSION = "0.1.0"
+
+            [route.test]
+            METHOD = "POST"
+            PATH = ["/test"]
+        };
+        {
+            let mut api = app.module::<ServerError>("mod", api_toml.clone()).unwrap();
+            api.post("test", |_req, state| {
+                async move {
+                    *state += 1;
+                    Ok(*state)
+                }
+                .boxed()
+            })
+            .unwrap();
+        }
+
+        let port = pick_unused_port().unwrap();
+        let url: Url = format!("http://localhost:{}", port).parse().unwrap();
+        spawn(app.serve(format!("0.0.0.0:{}", port), VER_0_1));
+        let client = Client::new(url.clone()).await;
+
+        for i in 1..3 {
+            // Request gets redirected to latest version of API and resent, but endpoint handler
+            // only executes once.
+            assert_eq!(
+                client
+                    .post("mod/test")
+                    .send()
+                    .await
+                    .unwrap()
+                    .json::<u64>()
+                    .await
+                    .unwrap(),
+                i
+            );
+        }
     }
 }

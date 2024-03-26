@@ -1,24 +1,50 @@
 #![cfg(any(test, feature = "testing"))]
 
-use crate::{wait_for_server, Url, SERVER_STARTUP_RETRIES, SERVER_STARTUP_SLEEP_MS};
+use crate::{http::Method, wait_for_server, Url, SERVER_STARTUP_RETRIES, SERVER_STARTUP_SLEEP_MS};
 use async_compatibility_layer::logging::{setup_backtrace, setup_logging};
 use async_tungstenite::{
     async_std::{connect_async, ConnectStream},
     tungstenite::{client::IntoClientRequest, http::header::*, Error as WsError},
     WebSocketStream,
 };
-use surf::{middleware::Redirect, Client, Config};
+use reqwest::RequestBuilder;
+use std::time::Duration;
+
+pub struct Client {
+    inner: reqwest::Client,
+    base_url: Url,
+}
+
+impl Client {
+    pub async fn new(base_url: Url) -> Self {
+        wait_for_server(&base_url, SERVER_STARTUP_RETRIES, SERVER_STARTUP_SLEEP_MS).await;
+        Self {
+            inner: reqwest::Client::builder()
+                .timeout(Duration::from_secs(60))
+                .build()
+                .unwrap(),
+            base_url,
+        }
+    }
+
+    pub fn request(&self, method: Method, path: &str) -> RequestBuilder {
+        let req_method: reqwest::Method = method.to_string().parse().unwrap();
+        self.inner
+            .request(req_method, self.base_url.join(path).unwrap())
+    }
+
+    pub fn get(&self, path: &str) -> RequestBuilder {
+        self.request(Method::Get, path)
+    }
+
+    pub fn post(&self, path: &str) -> RequestBuilder {
+        self.request(Method::Post, path)
+    }
+}
 
 pub fn setup_test() {
     setup_logging();
     setup_backtrace();
-}
-
-pub async fn test_client(url: Url) -> surf::Client {
-    wait_for_server(&url, SERVER_STARTUP_RETRIES, SERVER_STARTUP_SLEEP_MS).await;
-    Client::try_from(Config::new().set_base_url(url))
-        .unwrap()
-        .with(Redirect::default())
 }
 
 pub async fn test_ws_client(url: Url) -> WebSocketStream<ConnectStream> {
@@ -41,7 +67,7 @@ pub async fn test_ws_client_with_headers(
 
         match connect_async(req).await {
             Ok((conn, _)) => return conn,
-            Err(WsError::Http(res)) if res.status() == 302 => {
+            Err(WsError::Http(res)) if (301..=308).contains(&u16::from(res.status())) => {
                 let location = res.headers()["location"].to_str().unwrap();
                 tracing::info!(from = %url, to = %location, "WS handshake following redirect");
                 url.set_path(location);

@@ -476,6 +476,30 @@ impl PartialEq<StatusCode> for tide::StatusCode {
     }
 }
 
+impl From<StatusCode> for reqwest::StatusCode {
+    fn from(code: StatusCode) -> Self {
+        reqwest::StatusCode::from_u16(code.into()).unwrap()
+    }
+}
+
+impl From<reqwest::StatusCode> for StatusCode {
+    fn from(code: reqwest::StatusCode) -> Self {
+        code.as_u16().try_into().unwrap()
+    }
+}
+
+impl PartialEq<reqwest::StatusCode> for StatusCode {
+    fn eq(&self, other: &reqwest::StatusCode) -> bool {
+        *self == Self::from(*other)
+    }
+}
+
+impl PartialEq<StatusCode> for reqwest::StatusCode {
+    fn eq(&self, other: &StatusCode) -> bool {
+        *self == Self::from(*other)
+    }
+}
+
 impl Display for StatusCode {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         write!(f, "{}", *self as u16)
@@ -547,6 +571,10 @@ mod test {
                 tide::StatusCode::try_from(code).unwrap(),
                 tide::StatusCode::from(status)
             );
+            assert_eq!(
+                reqwest::StatusCode::from_u16(code).unwrap(),
+                reqwest::StatusCode::from(status)
+            );
             assert_eq!(code, u16::from(status));
 
             // Test binary round trip.
@@ -576,12 +604,25 @@ mod test {
 
             // Test equality.
             assert_eq!(status, tide::StatusCode::from(status));
+            assert_eq!(status, reqwest::StatusCode::from(status));
         }
 
         // Now iterate over all valid _Tide_ status codes, and ensure the ycan be converted to our
         // `StatusCode`.
         for code in 0u16.. {
             let Ok(status) = tide::StatusCode::try_from(code) else {
+                break;
+            };
+            assert_eq!(
+                StatusCode::try_from(code).unwrap(),
+                StatusCode::from(status)
+            );
+        }
+
+        // Now iterate over all valid _reqwest_ status codes, and ensure the ycan be converted to
+        // our `StatusCode`.
+        for code in 0u16.. {
+            let Ok(status) = reqwest::StatusCode::from_u16(code) else {
                 break;
             };
             assert_eq!(
