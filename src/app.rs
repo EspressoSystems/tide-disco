@@ -17,22 +17,25 @@ use crate::{
 use async_std::sync::Arc;
 use futures::future::{BoxFuture, FutureExt};
 use include_dir::{include_dir, Dir};
+use itertools::Itertools;
 use lazy_static::lazy_static;
 use maud::{html, PreEscaped};
 use semver::Version;
 use serde::{Deserialize, Serialize};
 use serde_with::{serde_as, DisplayFromStr};
 use snafu::{ResultExt, Snafu};
-use std::collections::{
-    btree_map::{BTreeMap, Entry as BTreeEntry},
-    hash_map::{Entry as HashEntry, HashMap},
+use std::{
+    collections::{
+        btree_map::{BTreeMap, Entry as BTreeEntry},
+        hash_map::{Entry as HashEntry, HashMap},
+    },
+    convert::Infallible,
+    env,
+    fmt::Display,
+    fs, io,
+    ops::{Deref, DerefMut},
+    path::PathBuf,
 };
-use std::convert::Infallible;
-use std::env;
-use std::fs;
-use std::io;
-use std::ops::{Deref, DerefMut};
-use std::path::PathBuf;
 use tide::{
     http::{headers::HeaderValue, mime},
     security::{CorsMiddleware, Origin},
@@ -298,6 +301,7 @@ impl<
     ) -> io::Result<()> {
         let state = Arc::new(self);
         let mut server = tide::Server::with_state(state.clone());
+        server.with(Self::version_middleware);
         server.with(add_error_body::<_, Error, VER>);
         server.with(
             CorsMiddleware::new()
@@ -330,32 +334,12 @@ impl<
                     .map_err(|err| Error::from_route_error::<Infallible>(err).into_tide_error())
             });
 
-        // Register catch-all routes for discoverability
-        {
-            server
-                .at("/")
-                .all(move |req: tide::Request<Arc<Self>>| async move {
-                    Ok(html! {
-                        "This is a Tide Disco app composed of the following modules:"
-                        (req.state().list_apis())
-                    })
-                });
-        }
-        {
-            server
-                .at("/*path")
-                .all(move |req: tide::Request<Arc<Self>>| async move {
-                    let docs = html! {
-                        "No route matches /" (req.param("path")?)
-                        br {}
-                        "This is a Tide Disco app composed of the following modules:"
-                        (req.state().list_apis())
-                    };
-                    Ok(tide::Response::builder(StatusCode::NotFound)
-                        .body(docs.into_string())
-                        .build())
-                });
-        }
+        // Serve documentation at the root URL for discoverability
+        server
+            .at("/")
+            .all(move |req: tide::Request<Arc<Self>>| async move {
+                Ok(tide::Response::from(Self::top_level_docs(req)))
+            });
 
         server.listen(listener).await
     }
@@ -371,7 +355,7 @@ impl<
                         // version, linking to documentation for that specific version.
                         @for version in versions.keys().rev() {
                             sup {
-                                a href=(format!("/{name}/v{version}")) {
+                                a href=(format!("/v{version}/{name}")) {
                                     (format!("[v{version}]"))
                                 }
                             }
@@ -394,70 +378,6 @@ impl<
         for (version, api) in versions {
             Self::register_api_version(server, &prefix, *version, api, bind_version)?;
         }
-
-        let latest_version = *versions.last_key_value().unwrap().0;
-
-        // Serve the documentation for the latest supported version at the root of the module.
-        server.at(&prefix).all(tide::Redirect::permanent(format!(
-            "/{prefix}/v{latest_version}"
-        )));
-
-        // For requests that didn't match any specific endpoint, parse the version prefix. If there
-        // is none, redirect to the latest supported version. If there is one and the request still
-        // didn't match, it is invalid. Try to serve helpful documentation.
-        server
-            .at(&prefix)
-            .at("*path")
-            .all(move |req: tide::Request<Arc<Self>>| {
-                let prefix = prefix.clone();
-                async move {
-                    let path = req.param("path")?;
-                    // Split the first path segment from the rest so we can check if the first
-                    // segment is a version prefix.
-                    let (first, rest) = path.split_once('/').unwrap_or((path, ""));
-
-                    // Check for a version prefix.
-                    if let Some(v) = first.strip_prefix('v').and_then(|v| v.parse().ok()) {
-                        let versions = &req.state().apis[&prefix];
-                        if let Some(api) = versions.get(&v) {
-                            // The request has a valid version prefix, but did not match any route
-                            // (hence this wildcard handler). Serve documentation for the intended
-                            // API version.
-                            let docs = html! {
-                                "No route matches /" (rest)
-                                br{}
-                                (api.documentation())
-                            };
-                            return Ok(tide::Response::builder(StatusCode::NotFound)
-                                .body(docs.into_string())
-                                .build());
-                        } else {
-                            // The request has a version prefix for an unsupported version. List
-                            // supported versions.
-                            let docs = html! {
-                                "Unsupported version v" (v) ". Supported versions are:"
-                                ul {
-                                    @for v in versions.keys().rev() {
-                                        li {
-                                            a href=(format!("/{prefix}/v{v}")) { "v" (v) }
-                                        }
-                                    }
-                                }
-                            };
-                            return Ok(tide::Response::builder(StatusCode::NotImplemented)
-                                .body(docs.into_string())
-                                .build());
-                        }
-                    }
-
-                    // The request has no version prefix, redirect to the latest supported version.
-                    Ok(
-                        tide::Redirect::permanent(format!("/{prefix}/v{latest_version}/{path}"))
-                            .into(),
-                    )
-                }
-            });
-
         Ok(())
     }
 
@@ -475,12 +395,12 @@ impl<
         #[allow(clippy::unnecessary_lazy_evaluations)]
         server
             .at("/public")
-            .at(prefix)
             .at(&format!("v{version}"))
+            .at(prefix)
             .serve_dir(api.public().unwrap_or_else(|| &DEFAULT_PUBLIC_PATH))?;
 
         // Register routes for this API.
-        let mut api_endpoint = server.at(&format!("{prefix}/v{version}"));
+        let mut api_endpoint = server.at(&format!("/v{version}/{prefix}"));
         for (path, routes) in api.routes_by_path() {
             let mut endpoint = api_endpoint.at(path);
             let routes = routes.collect::<Vec<_>>();
@@ -527,16 +447,39 @@ impl<
             }
         }
 
-        // Register automatic routes for this API: documentation, `healthcheck` and `version`.
+        // Register automatic routes for this API: documentation, `healthcheck` and `version`. Serve
+        // documentation at the root of the API (with or without a trailing slash).
+        for path in ["", "/"] {
+            let prefix = prefix.clone();
+            api_endpoint
+                .at(path)
+                .all(move |req: tide::Request<Arc<Self>>| {
+                    let prefix = prefix.clone();
+                    async move {
+                        let api = &req.state().clone().apis[&prefix][&version];
+                        Ok(api.documentation())
+                    }
+                });
+        }
         {
             let prefix = prefix.clone();
-            api_endpoint.all(move |req: tide::Request<Arc<Self>>| {
-                let prefix = prefix.clone();
-                async move {
-                    let api = &req.state().clone().apis[&prefix][&version];
-                    Ok(api.documentation())
-                }
-            });
+            api_endpoint
+                .at("*path")
+                .all(move |req: tide::Request<Arc<Self>>| {
+                    let prefix = prefix.clone();
+                    async move {
+                        // The request did not match any route. Serve documentation for the API.
+                        let api = &req.state().clone().apis[&prefix][&version];
+                        let docs = html! {
+                            "No route matches /" (req.param("path")?)
+                            br{}
+                            (api.documentation())
+                        };
+                        Ok(tide::Response::builder(StatusCode::NotFound)
+                            .body(docs.into_string())
+                            .build())
+                    }
+                });
         }
         {
             let prefix = prefix.clone();
@@ -701,6 +644,107 @@ impl<
                     .map_err(|err| err.into_tide_error())
             }
         });
+    }
+
+    /// Server middleware which returns redirect responses for requests lacking an explicit version
+    /// prefix.
+    fn version_middleware(
+        req: tide::Request<Arc<Self>>,
+        next: tide::Next<Arc<Self>>,
+    ) -> BoxFuture<tide::Result> {
+        async move {
+            let Some(mut path) = req.url().path_segments() else {
+                // If we can't parse the path, we can't run this middleware. Do our best by
+                // continuing the request processing lifecycle.
+                return Ok(next.run(req).await);
+            };
+            let Some(seg1) = path.next() else {
+                // This is the root URL, with no path segments. Nothing for this middleware to do.
+                return Ok(next.run(req).await);
+            };
+            if seg1.is_empty() {
+                // This is the root URL, with no path segments. Nothing for this middleware to do.
+                return Ok(next.run(req).await);
+            }
+
+            // The first segment is either a version identifier or an API identifier (implicitly
+            // requesting the latest version of the API). We handle these cases differently.
+            if let Some(version) = seg1.strip_prefix('v').and_then(|n| n.parse().ok()) {
+                // If the version identifier is present, we probably don't need a redirect. However,
+                // we still check if this is a valid version for the request API. If not, we will
+                // serve documentation listing the available versions.
+                let Some(api) = path.next() else {
+                    // A version identifier with no API is an error, serve documentation.
+                    return Ok(Self::top_level_error(
+                        req,
+                        StatusCode::BadRequest,
+                        "illegal version prefix without API specifier",
+                    ));
+                };
+                let Some(versions) = req.state().apis.get(api) else {
+                    let message = format!("No API matches /{api}");
+                    return Ok(Self::top_level_error(req, StatusCode::NotFound, message));
+                };
+                if versions.get(&version).is_none() {
+                    // This version is not supported, list suported versions.
+                    return Ok(html! {
+                        "Unsupported version v" (version) ". Supported versions are:"
+                        ul {
+                            @for v in versions.keys().rev() {
+                                li {
+                                    a href=(format!("/v{v}/{api}")) { "v" (v) }
+                                }
+                            }
+                        }
+                    }
+                    .into());
+                }
+
+                // This is a valid request with a specific version. It should be handled
+                // successfully by the route handlers for this API.
+                Ok(next.run(req).await)
+            } else {
+                // If the first path segment is not a version prefix, it is either the name of an
+                // API or one of the magic top-level endpoints (version, healthcheck), implicitly
+                // requesting the latest version. Validate the API and then redirect.
+                if ["version", "healthcheck"].contains(&seg1) {
+                    return Ok(next.run(req).await);
+                }
+                let Some(versions) = req.state().apis.get(seg1) else {
+                    let message = format!("No API matches /{seg1}");
+                    return Ok(Self::top_level_error(req, StatusCode::NotFound, message));
+                };
+
+                let latest_version = *versions.last_key_value().unwrap().0;
+                let path = path.join("/");
+                Ok(tide::Redirect::permanent(format!("/v{latest_version}/{seg1}/{path}")).into())
+            }
+        }
+        .boxed()
+    }
+
+    /// Top-level documentation about the app.
+    fn top_level_docs(req: tide::Request<Arc<Self>>) -> PreEscaped<String> {
+        html! {
+            br {}
+            "This is a Tide Disco app composed of the following modules:"
+            (req.state().list_apis())
+        }
+    }
+
+    /// Documentation served when there is a routing error at the app level.
+    fn top_level_error(
+        req: tide::Request<Arc<Self>>,
+        status: StatusCode,
+        message: impl Display,
+    ) -> tide::Response {
+        let docs = html! {
+            (message.to_string())
+            (Self::top_level_docs(req))
+        };
+        tide::Response::builder(status)
+            .body(docs.into_string())
+            .build()
     }
 }
 
@@ -1216,7 +1260,7 @@ mod test {
         assert_eq!(
             "deleted v1",
             client
-                .get("mod/v1/deleted")
+                .get("v1/mod/deleted")
                 .send()
                 .await
                 .unwrap()
@@ -1227,7 +1271,7 @@ mod test {
         assert_eq!(
             "unchanged v1",
             client
-                .get("mod/v1/unchanged")
+                .get("v1/mod/unchanged")
                 .send()
                 .await
                 .unwrap()
@@ -1243,7 +1287,7 @@ mod test {
             assert_eq!(
                 "added v3",
                 client
-                    .get(&format!("mod{prefix}/added"))
+                    .get(&format!("{prefix}/mod/added"))
                     .send()
                     .await
                     .unwrap()
@@ -1254,7 +1298,7 @@ mod test {
             assert_eq!(
                 "unchanged v3",
                 client
-                    .get(&format!("mod{prefix}/unchanged"))
+                    .get(&format!("{prefix}/mod/unchanged"))
                     .send()
                     .await
                     .unwrap()
@@ -1282,14 +1326,14 @@ mod test {
                 let version = version.unwrap_or(3);
 
                 let res = client
-                    .get(&format!("mod{prefix}{route}"))
+                    .get(&format!("{prefix}/mod/{route}"))
                     .send()
                     .await
                     .unwrap();
                 let docs = res.text().await.unwrap();
                 if !route.is_empty() {
                     assert!(
-                        docs.contains(&format!("No route matches {route}")),
+                        docs.contains(&format!("No route matches /{route}")),
                         "{docs}"
                     );
                 }
@@ -1300,13 +1344,13 @@ mod test {
             }
         };
 
-        for route in ["", "/deleted"] {
+        for route in ["", "deleted"] {
             check_docs(None, route).await;
         }
-        for route in ["", "/deleted"] {
+        for route in ["", "deleted"] {
             check_docs(Some(3), route).await;
         }
-        for route in ["", "/added"] {
+        for route in ["", "added"] {
             check_docs(Some(1), route).await;
         }
 
@@ -1315,10 +1359,10 @@ mod test {
             "Unsupported version v2. Supported versions are:"
             ul {
                 li {
-                    a href="/mod/v3" {"v3"}
+                    a href="/v3/mod" {"v3"}
                 }
                 li {
-                    a href="/mod/v1" {"v1"}
+                    a href="/v1/mod" {"v1"}
                 }
             }
         }
@@ -1328,7 +1372,7 @@ mod test {
             let _enter = span.enter();
             tracing::info!("test unsupported version docs");
 
-            let res = client.get(&format!("mod/v2{route}")).send().await.unwrap();
+            let res = client.get(&format!("/v2/mod{route}")).send().await.unwrap();
             let docs = res.text().await.unwrap();
             assert_eq!(docs, expected_html);
         }
@@ -1344,7 +1388,7 @@ mod test {
                 None => "".into(),
             };
             let res = client
-                .get(&format!("mod{prefix}/version"))
+                .get(&format!("{prefix}/mod/version"))
                 .send()
                 .await
                 .unwrap();
@@ -1386,7 +1430,7 @@ mod test {
                 None => "".into(),
             };
             let res = client
-                .get(&format!("mod{prefix}/healthcheck"))
+                .get(&format!("{prefix}/mod/healthcheck"))
                 .send()
                 .await
                 .unwrap();
@@ -1412,6 +1456,67 @@ mod test {
             health.modules["mod"],
             [(3, StatusCode::Ok), (1, StatusCode::ServiceUnavailable)].into()
         );
+    }
+
+    #[async_std::test]
+    async fn test_api_disco() {
+        setup_test();
+
+        // Test discoverability documentation when a request is for an unknown API.
+        let mut app = App::<_, ServerError, StaticVer01>::with_state(());
+        app.module::<ServerError>(
+            "the-correct-module",
+            toml! {
+                route = {}
+            },
+        )
+        .unwrap()
+        .with_version("1.0.0".parse().unwrap());
+
+        let port = pick_unused_port().unwrap();
+        let url: Url = format!("http://localhost:{}", port).parse().unwrap();
+        spawn(app.serve(format!("0.0.0.0:{}", port), VER_0_1));
+        let client = Client::new(url.clone()).await;
+
+        let expected_list_item = html! {
+            a href="/the-correct-module" {"the-correct-module"}
+            sup {
+                a href="/v1/the-correct-module" {"[v1]"}
+            }
+        }
+        .into_string();
+
+        for version_prefix in ["", "/v1"] {
+            let docs = client
+                .get(&format!("{version_prefix}/test"))
+                .send()
+                .await
+                .unwrap()
+                .text()
+                .await
+                .unwrap();
+            assert!(docs.contains("No API matches /test"), "{docs}");
+            assert!(docs.contains(&expected_list_item), "{docs}");
+        }
+
+        // Top level documentation.
+        let docs = client.get("").send().await.unwrap().text().await.unwrap();
+        assert!(!docs.contains("No API matches"), "{docs}");
+        assert!(docs.contains(&expected_list_item), "{docs}");
+
+        let docs = client
+            .get("/v1")
+            .send()
+            .await
+            .unwrap()
+            .text()
+            .await
+            .unwrap();
+        assert!(
+            docs.contains("illegal version prefix without API specifier"),
+            "{docs}"
+        );
+        assert!(docs.contains(&expected_list_item), "{docs}");
     }
 
     #[async_std::test]

@@ -1646,9 +1646,8 @@ mod test {
         };
         {
             let mut api = app.module::<ServerError>("mod", api_toml).unwrap();
-            api.metrics("metrics", |req, state| {
+            api.metrics("metrics", |_req, state| {
                 async move {
-                    tracing::info!(?req, "metrics called");
                     state.counter.inc();
                     Ok(Cow::Borrowed(&state.metrics))
                 }

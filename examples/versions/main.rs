@@ -70,7 +70,7 @@ mod test {
         assert_eq!(
             "deleted",
             client
-                .get("api/v1/deleted")
+                .get("v1/api/deleted")
                 .send()
                 .await
                 .unwrap()
@@ -80,13 +80,13 @@ mod test {
         );
         assert_eq!(
             StatusCode::NotFound,
-            client.get("api/v1/added").send().await.unwrap().status()
+            client.get("v1/api/added").send().await.unwrap().status()
         );
 
         assert_eq!(
             "added",
             client
-                .get("api/v2/added")
+                .get("v2/api/added")
                 .send()
                 .await
                 .unwrap()
@@ -96,7 +96,7 @@ mod test {
         );
         assert_eq!(
             StatusCode::NotFound,
-            client.get("api/v2/deleted").send().await.unwrap().status()
+            client.get("v2/api/deleted").send().await.unwrap().status()
         );
 
         assert_eq!(
