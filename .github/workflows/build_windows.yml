@@ -18,6 +18,8 @@ on:
       - main
       - release-*
   workflow_dispatch:
+env:
+  RUSTFLAGS: "--cfg async_executor_impl=\"async-std\" --cfg async_channel_impl=\"async-std\""
 
 jobs:
   windows:
@@ -35,6 +37,6 @@ jobs:
 
       - name: Test
         run: |
-          cargo test --workspace --release --no-run
-          cargo test --workspace --release --verbose -- --test-threads 2
+          cargo test --workspace --release --all-features --no-run
+          cargo test --workspace --release --all-features --verbose -- --test-threads 2
         timeout-minutes: 30

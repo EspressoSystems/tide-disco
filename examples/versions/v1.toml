@@ -1,0 +1,16 @@
+[meta]
+FORMAT_VERSION = "0.1.0"
+NAME = "versions"
+DESCRIPTION = """
+An example of API versioning.
+
+This file specifies v1 of an app which has since been updated to v2, removing the route `deleted`
+and changing some metadata. The associated tide-disco app serves both versions of the API
+simultaneously, under version prefixes.
+"""
+
+[route.deleted]
+PATH = ["deleted"]
+DOC = """
+This route will be deleted in version 2.
+"""
