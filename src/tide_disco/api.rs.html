@@ -1,5 +1,6 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/api.rs`."><title>api.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-ac92e1bbe349e143.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="tide_disco" data-themes="" data-resource-suffix="" data-rustdoc-version="1.76.0 (07dca489a 2024-02-04)" data-channel="1.76.0" data-search-js="search-2b6ce74ff89ae146.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-f2adc0d6ca4d09fb.js"></script><script defer src="../../static.files/src-script-39ed315d46fb705f.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-305769736d49e732.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-feafe1bb7466e4bd.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><div class="sidebar-resizer"></div>
-    <main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/api.rs`."><title>api.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-5bc39a1768837dd0.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="tide_disco" data-themes="" data-resource-suffix="" data-rustdoc-version="1.77.0 (aedd173a2 2024-03-17)" data-channel="1.77.0" data-search-js="search-dd67cee4cfa65049.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-4c98445ec4002617.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-48f368f3872407c8.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-04d5337699b92874.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title">
+            <h2>Files</h2></div></nav><div class="sidebar-resizer"></div>
+    <main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../tide_disco/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -1670,32 +1671,6 @@
 <a href="#1669" id="1669">1669</a>
 <a href="#1670" id="1670">1670</a>
 <a href="#1671" id="1671">1671</a>
-<a href="#1672" id="1672">1672</a>
-<a href="#1673" id="1673">1673</a>
-<a href="#1674" id="1674">1674</a>
-<a href="#1675" id="1675">1675</a>
-<a href="#1676" id="1676">1676</a>
-<a href="#1677" id="1677">1677</a>
-<a href="#1678" id="1678">1678</a>
-<a href="#1679" id="1679">1679</a>
-<a href="#1680" id="1680">1680</a>
-<a href="#1681" id="1681">1681</a>
-<a href="#1682" id="1682">1682</a>
-<a href="#1683" id="1683">1683</a>
-<a href="#1684" id="1684">1684</a>
-<a href="#1685" id="1685">1685</a>
-<a href="#1686" id="1686">1686</a>
-<a href="#1687" id="1687">1687</a>
-<a href="#1688" id="1688">1688</a>
-<a href="#1689" id="1689">1689</a>
-<a href="#1690" id="1690">1690</a>
-<a href="#1691" id="1691">1691</a>
-<a href="#1692" id="1692">1692</a>
-<a href="#1693" id="1693">1693</a>
-<a href="#1694" id="1694">1694</a>
-<a href="#1695" id="1695">1695</a>
-<a href="#1696" id="1696">1696</a>
-<a href="#1697" id="1697">1697</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright (c) 2022 Espresso Systems (espressosys.com)
 // This file is part of the tide-disco library.
 
@@ -1730,7 +1705,7 @@
 <span class="kw">use </span>versioned_binary_serialization::version::StaticVersionType;
 
 <span class="doccomment">/// An error encountered when parsing or constructing an [Api].
-</span><span class="attr">#[derive(Clone, Debug, Snafu)]
+</span><span class="attr">#[derive(Clone, Debug, Snafu, PartialEq, Eq)]
 </span><span class="kw">pub enum </span>ApiError {
     Route { source: RouteParseError },
     ApiMustBeTable,
@@ -2128,26 +2103,15 @@
 
     <span class="doccomment">/// Set the API version.
     ///
-    /// The version information will automatically be included in responses to `GET /version`.
+    /// The version information will automatically be included in responses to `GET /version`. This
+    /// version can also be used to serve multiple major versions of the same API simultaneously,
+    /// under a version prefix. For more information, see
+    /// [App::register_module](crate::App::register_module).
     ///
     /// This is the version of the application or sub-application which this instance of [Api]
-    /// represents. The versioning encompasses both the API specification passed to [new](Api::new)
-    /// and the Rust crate implementing the route handlers for the API. Changes to either of
-    /// these components should result in a change to the version.
-    ///
-    /// Since the API specification and the route handlers are usually packaged together, and since
-    /// Rust crates are versioned anyways using Cargo, it is a good idea to use the version of the
-    /// API crate found in Cargo.toml. This can be automatically found at build time using the
-    /// environment variable `CARGO_PKG_VERSION` and the [env] macro. As long as the following code
-    /// is contained in the API crate, it should result in a reasonable version:
-    ///
-    /// ```
-    /// # use versioned_binary_serialization::version::StaticVersion;
-    /// # type StaticVer01 = StaticVersion&lt;0, 1&gt;;
-    /// # fn ex(api: &amp;mut tide_disco::Api&lt;(), (), StaticVer01&gt;) {
-    /// api.with_version(env!("CARGO_PKG_VERSION").parse().unwrap());
-    /// # }
-    /// ```
+    /// represents. The versioning corresponds to the API specification passed to [new](Api::new),
+    /// and may be different from the version of the Rust crate implementing the route handlers for
+    /// the API.
     </span><span class="kw">pub fn </span>with_version(<span class="kw-2">&amp;mut </span><span class="self">self</span>, version: Version) -&gt; <span class="kw-2">&amp;mut </span><span class="self">Self </span>{
         <span class="self">self</span>.api_version = <span class="prelude-val">Some</span>(version);
         <span class="self">self
@@ -3031,15 +2995,12 @@
         error::{Error, ServerError},
         healthcheck::HealthStatus,
         socket::Connection,
-        wait_for_server, App, StatusCode, Url, SERVER_STARTUP_RETRIES, SERVER_STARTUP_SLEEP_MS,
+        testing::{setup_test, test_ws_client, test_ws_client_with_headers, Client},
+        App, StatusCode, Url,
     };
     <span class="kw">use </span>async_std::{sync::RwLock, task::spawn};
     <span class="kw">use </span>async_tungstenite::{
-        async_std::connect_async,
-        tungstenite::{
-            client::IntoClientRequest, http::header::<span class="kw-2">*</span>, protocol::frame::coding::CloseCode,
-            protocol::Message,
-        },
+        tungstenite::{http::header::<span class="kw-2">*</span>, protocol::frame::coding::CloseCode, protocol::Message},
         WebSocketStream,
     };
     <span class="kw">use </span>futures::{
@@ -3084,6 +3045,8 @@
 
     <span class="attr">#[async_std::test]
     </span><span class="kw">async fn </span>test_socket_endpoint() {
+        setup_test();
+
         <span class="kw">let </span><span class="kw-2">mut </span>app = App::&lt;<span class="kw">_</span>, ServerError, StaticVer01&gt;::with_state(RwLock::new(()));
         <span class="kw">let </span>api_toml = <span class="macro">toml! </span>{
             [meta]
@@ -3144,17 +3107,13 @@
         <span class="kw">let </span>port = pick_unused_port().unwrap();
         <span class="kw">let </span>url: Url = <span class="macro">format!</span>(<span class="string">"http://localhost:{}"</span>, port).parse().unwrap();
         spawn(app.serve(<span class="macro">format!</span>(<span class="string">"0.0.0.0:{}"</span>, port), VER_0_1));
-        wait_for_server(<span class="kw-2">&amp;</span>url, SERVER_STARTUP_RETRIES, SERVER_STARTUP_SLEEP_MS).<span class="kw">await</span>;
-
-        <span class="kw">let </span><span class="kw-2">mut </span>socket_url = url.join(<span class="string">"mod/echo"</span>).unwrap();
-        socket_url.set_scheme(<span class="string">"ws"</span>).unwrap();
 
         <span class="comment">// Create a client that accepts JSON messages.
-        </span><span class="kw">let </span><span class="kw-2">mut </span>socket_req = socket_url.clone().into_client_request().unwrap();
-        socket_req
-            .headers_mut()
-            .insert(ACCEPT, <span class="string">"application/json"</span>.parse().unwrap());
-        <span class="kw">let </span><span class="kw-2">mut </span>conn = connect_async(socket_req).<span class="kw">await</span>.unwrap().<span class="number">0</span>;
+        </span><span class="kw">let </span><span class="kw-2">mut </span>conn = test_ws_client_with_headers(
+            url.join(<span class="string">"mod/echo"</span>).unwrap(),
+            <span class="kw-2">&amp;</span>[(ACCEPT, <span class="string">"application/json"</span>)],
+        )
+        .<span class="kw">await</span>;
 
         <span class="comment">// Send a JSON message.
         </span>conn.send(Message::Text(serde_json::to_string(<span class="string">"hello"</span>).unwrap()))
@@ -3177,11 +3136,11 @@
         );
 
         <span class="comment">// Create a client that accepts binary messages.
-        </span><span class="kw">let </span><span class="kw-2">mut </span>socket_req = socket_url.into_client_request().unwrap();
-        socket_req
-            .headers_mut()
-            .insert(ACCEPT, <span class="string">"application/octet-stream"</span>.parse().unwrap());
-        <span class="kw">let </span><span class="kw-2">mut </span>conn = connect_async(socket_req).<span class="kw">await</span>.unwrap().<span class="number">0</span>;
+        </span><span class="kw">let </span><span class="kw-2">mut </span>conn = test_ws_client_with_headers(
+            url.join(<span class="string">"mod/echo"</span>).unwrap(),
+            <span class="kw-2">&amp;</span>[(ACCEPT, <span class="string">"application/octet-stream"</span>)],
+        )
+        .<span class="kw">await</span>;
 
         <span class="comment">// Send a JSON message.
         </span>conn.send(Message::Text(serde_json::to_string(<span class="string">"hello"</span>).unwrap()))
@@ -3204,9 +3163,7 @@
         );
 
         <span class="comment">// Test a stream that exits normally.
-        </span><span class="kw">let </span><span class="kw-2">mut </span>socket_url = url.join(<span class="string">"mod/once"</span>).unwrap();
-        socket_url.set_scheme(<span class="string">"ws"</span>).unwrap();
-        <span class="kw">let </span><span class="kw-2">mut </span>conn = connect_async(socket_url).<span class="kw">await</span>.unwrap().<span class="number">0</span>;
+        </span><span class="kw">let </span><span class="kw-2">mut </span>conn = test_ws_client(url.join(<span class="string">"mod/once"</span>).unwrap()).<span class="kw">await</span>;
         <span class="macro">assert_eq!</span>(
             conn.next().<span class="kw">await</span>.unwrap().unwrap(),
             Message::Text(serde_json::to_string(<span class="string">"msg"</span>).unwrap())
@@ -3218,9 +3175,7 @@
         check_stream_closed(conn).<span class="kw">await</span>;
 
         <span class="comment">// Test a stream that errors.
-        </span><span class="kw">let </span><span class="kw-2">mut </span>socket_url = url.join(<span class="string">"mod/error"</span>).unwrap();
-        socket_url.set_scheme(<span class="string">"ws"</span>).unwrap();
-        <span class="kw">let </span><span class="kw-2">mut </span>conn = connect_async(socket_url).<span class="kw">await</span>.unwrap().<span class="number">0</span>;
+        </span><span class="kw">let </span><span class="kw-2">mut </span>conn = test_ws_client(url.join(<span class="string">"mod/error"</span>).unwrap()).<span class="kw">await</span>;
         <span class="kw">match </span>conn.next().<span class="kw">await</span>.unwrap().unwrap() {
             Message::Close(<span class="prelude-val">Some</span>(frame)) =&gt; {
                 <span class="macro">assert_eq!</span>(frame.code, CloseCode::Error);
@@ -3233,6 +3188,8 @@
 
     <span class="attr">#[async_std::test]
     </span><span class="kw">async fn </span>test_stream_endpoint() {
+        setup_test();
+
         <span class="kw">let </span><span class="kw-2">mut </span>app = App::&lt;<span class="kw">_</span>, ServerError, StaticVer01&gt;::with_state(RwLock::new(()));
         <span class="kw">let </span>api_toml = <span class="macro">toml! </span>{
             [meta]
@@ -3270,13 +3227,9 @@
         <span class="kw">let </span>port = pick_unused_port().unwrap();
         <span class="kw">let </span>url: Url = <span class="macro">format!</span>(<span class="string">"http://localhost:{}"</span>, port).parse().unwrap();
         spawn(app.serve(<span class="macro">format!</span>(<span class="string">"0.0.0.0:{}"</span>, port), VER_0_1));
-        wait_for_server(<span class="kw-2">&amp;</span>url, SERVER_STARTUP_RETRIES, SERVER_STARTUP_SLEEP_MS).<span class="kw">await</span>;
 
         <span class="comment">// Consume the `nat` stream.
-        </span><span class="kw">let </span><span class="kw-2">mut </span>socket_url = url.join(<span class="string">"mod/nat"</span>).unwrap();
-        socket_url.set_scheme(<span class="string">"ws"</span>).unwrap();
-        <span class="kw">let </span><span class="kw-2">mut </span>conn = connect_async(socket_url).<span class="kw">await</span>.unwrap().<span class="number">0</span>;
-
+        </span><span class="kw">let </span><span class="kw-2">mut </span>conn = test_ws_client(url.join(<span class="string">"mod/nat"</span>).unwrap()).<span class="kw">await</span>;
         <span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..<span class="number">100 </span>{
             <span class="macro">assert_eq!</span>(
                 conn.next().<span class="kw">await</span>.unwrap().unwrap(),
@@ -3285,10 +3238,7 @@
         }
 
         <span class="comment">// Test a finite stream.
-        </span><span class="kw">let </span><span class="kw-2">mut </span>socket_url = url.join(<span class="string">"mod/once"</span>).unwrap();
-        socket_url.set_scheme(<span class="string">"ws"</span>).unwrap();
-        <span class="kw">let </span><span class="kw-2">mut </span>conn = connect_async(socket_url).<span class="kw">await</span>.unwrap().<span class="number">0</span>;
-
+        </span><span class="kw">let </span><span class="kw-2">mut </span>conn = test_ws_client(url.join(<span class="string">"mod/once"</span>).unwrap()).<span class="kw">await</span>;
         <span class="macro">assert_eq!</span>(
             conn.next().<span class="kw">await</span>.unwrap().unwrap(),
             Message::Text(serde_json::to_string(<span class="kw-2">&amp;</span><span class="number">0</span>).unwrap())
@@ -3300,10 +3250,7 @@
         check_stream_closed(conn).<span class="kw">await</span>;
 
         <span class="comment">// Test a stream that errors.
-        </span><span class="kw">let </span><span class="kw-2">mut </span>socket_url = url.join(<span class="string">"mod/error"</span>).unwrap();
-        socket_url.set_scheme(<span class="string">"ws"</span>).unwrap();
-        <span class="kw">let </span><span class="kw-2">mut </span>conn = connect_async(socket_url).<span class="kw">await</span>.unwrap().<span class="number">0</span>;
-
+        </span><span class="kw">let </span><span class="kw-2">mut </span>conn = test_ws_client(url.join(<span class="string">"mod/error"</span>).unwrap()).<span class="kw">await</span>;
         <span class="kw">match </span>conn.next().<span class="kw">await</span>.unwrap().unwrap() {
             Message::Close(<span class="prelude-val">Some</span>(frame)) =&gt; {
                 <span class="macro">assert_eq!</span>(frame.code, CloseCode::Error);
@@ -3316,6 +3263,8 @@
 
     <span class="attr">#[async_std::test]
     </span><span class="kw">async fn </span>test_custom_healthcheck() {
+        setup_test();
+
         <span class="kw">let </span><span class="kw-2">mut </span>app = App::&lt;<span class="kw">_</span>, ServerError, StaticVer01&gt;::with_state(HealthStatus::Available);
         <span class="kw">let </span>api_toml = <span class="macro">toml! </span>{
             [meta]
@@ -3331,21 +3280,20 @@
         <span class="kw">let </span>port = pick_unused_port().unwrap();
         <span class="kw">let </span>url: Url = <span class="macro">format!</span>(<span class="string">"http://localhost:{}"</span>, port).parse().unwrap();
         spawn(app.serve(<span class="macro">format!</span>(<span class="string">"0.0.0.0:{}"</span>, port), VER_0_1));
-        wait_for_server(<span class="kw-2">&amp;</span>url, SERVER_STARTUP_RETRIES, SERVER_STARTUP_SLEEP_MS).<span class="kw">await</span>;
+        <span class="kw">let </span>client = Client::new(url).<span class="kw">await</span>;
 
-        <span class="kw">let </span><span class="kw-2">mut </span>res = surf::get(<span class="macro">format!</span>(<span class="string">"http://localhost:{}/mod/healthcheck"</span>, port))
-            .send()
-            .<span class="kw">await
-            </span>.unwrap();
+        <span class="kw">let </span>res = client.get(<span class="string">"/mod/healthcheck"</span>).send().<span class="kw">await</span>.unwrap();
         <span class="macro">assert_eq!</span>(res.status(), StatusCode::Ok);
         <span class="macro">assert_eq!</span>(
-            res.body_json::&lt;HealthStatus&gt;().<span class="kw">await</span>.unwrap(),
+            res.json::&lt;HealthStatus&gt;().<span class="kw">await</span>.unwrap(),
             HealthStatus::Available
         );
     }
 
     <span class="attr">#[async_std::test]
     </span><span class="kw">async fn </span>test_metrics_endpoint() {
+        setup_test();
+
         <span class="kw">struct </span>State {
             metrics: Registry,
             counter: Counter,
@@ -3383,13 +3331,14 @@
         <span class="kw">let </span>port = pick_unused_port().unwrap();
         <span class="kw">let </span>url: Url = <span class="macro">format!</span>(<span class="string">"http://localhost:{port}"</span>).parse().unwrap();
         spawn(app.serve(<span class="macro">format!</span>(<span class="string">"0.0.0.0:{port}"</span>), VER_0_1));
-        wait_for_server(<span class="kw-2">&amp;</span>url, SERVER_STARTUP_RETRIES, SERVER_STARTUP_SLEEP_MS).<span class="kw">await</span>;
+        <span class="kw">let </span>client = Client::new(url).<span class="kw">await</span>;
 
         <span class="kw">for </span>i <span class="kw">in </span><span class="number">1</span>..<span class="number">5 </span>{
+            <span class="macro">tracing::info!</span>(<span class="string">"making metrics request {i}"</span>);
             <span class="kw">let </span>expected = <span class="macro">format!</span>(<span class="string">"# HELP counter count of how many times metrics have been exported\n# TYPE counter counter\ncounter {i}\n"</span>);
-            <span class="kw">let </span><span class="kw-2">mut </span>res = surf::get(<span class="macro">format!</span>(<span class="string">"{url}mod/metrics"</span>)).send().<span class="kw">await</span>.unwrap();
-            <span class="macro">assert_eq!</span>(res.body_string().<span class="kw">await</span>.unwrap(), expected);
+            <span class="kw">let </span>res = client.get(<span class="string">"mod/metrics"</span>).send().<span class="kw">await</span>.unwrap();
             <span class="macro">assert_eq!</span>(res.status(), StatusCode::Ok);
+            <span class="macro">assert_eq!</span>(res.text().<span class="kw">await</span>.unwrap(), expected);
         }
     }
 }

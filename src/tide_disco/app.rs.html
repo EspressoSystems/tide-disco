@@ -1,5 +1,6 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/app.rs`."><title>app.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-ac92e1bbe349e143.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="tide_disco" data-themes="" data-resource-suffix="" data-rustdoc-version="1.76.0 (07dca489a 2024-02-04)" data-channel="1.76.0" data-search-js="search-2b6ce74ff89ae146.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-f2adc0d6ca4d09fb.js"></script><script defer src="../../static.files/src-script-39ed315d46fb705f.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-305769736d49e732.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-feafe1bb7466e4bd.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><div class="sidebar-resizer"></div>
-    <main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/app.rs`."><title>app.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-5bc39a1768837dd0.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="tide_disco" data-themes="" data-resource-suffix="" data-rustdoc-version="1.77.0 (aedd173a2 2024-03-17)" data-channel="1.77.0" data-search-js="search-dd67cee4cfa65049.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-4c98445ec4002617.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-48f368f3872407c8.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-04d5337699b92874.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title">
+            <h2>Files</h2></div></nav><div class="sidebar-resizer"></div>
+    <main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../tide_disco/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -939,6 +940,635 @@
 <a href="#938" id="938">938</a>
 <a href="#939" id="939">939</a>
 <a href="#940" id="940">940</a>
+<a href="#941" id="941">941</a>
+<a href="#942" id="942">942</a>
+<a href="#943" id="943">943</a>
+<a href="#944" id="944">944</a>
+<a href="#945" id="945">945</a>
+<a href="#946" id="946">946</a>
+<a href="#947" id="947">947</a>
+<a href="#948" id="948">948</a>
+<a href="#949" id="949">949</a>
+<a href="#950" id="950">950</a>
+<a href="#951" id="951">951</a>
+<a href="#952" id="952">952</a>
+<a href="#953" id="953">953</a>
+<a href="#954" id="954">954</a>
+<a href="#955" id="955">955</a>
+<a href="#956" id="956">956</a>
+<a href="#957" id="957">957</a>
+<a href="#958" id="958">958</a>
+<a href="#959" id="959">959</a>
+<a href="#960" id="960">960</a>
+<a href="#961" id="961">961</a>
+<a href="#962" id="962">962</a>
+<a href="#963" id="963">963</a>
+<a href="#964" id="964">964</a>
+<a href="#965" id="965">965</a>
+<a href="#966" id="966">966</a>
+<a href="#967" id="967">967</a>
+<a href="#968" id="968">968</a>
+<a href="#969" id="969">969</a>
+<a href="#970" id="970">970</a>
+<a href="#971" id="971">971</a>
+<a href="#972" id="972">972</a>
+<a href="#973" id="973">973</a>
+<a href="#974" id="974">974</a>
+<a href="#975" id="975">975</a>
+<a href="#976" id="976">976</a>
+<a href="#977" id="977">977</a>
+<a href="#978" id="978">978</a>
+<a href="#979" id="979">979</a>
+<a href="#980" id="980">980</a>
+<a href="#981" id="981">981</a>
+<a href="#982" id="982">982</a>
+<a href="#983" id="983">983</a>
+<a href="#984" id="984">984</a>
+<a href="#985" id="985">985</a>
+<a href="#986" id="986">986</a>
+<a href="#987" id="987">987</a>
+<a href="#988" id="988">988</a>
+<a href="#989" id="989">989</a>
+<a href="#990" id="990">990</a>
+<a href="#991" id="991">991</a>
+<a href="#992" id="992">992</a>
+<a href="#993" id="993">993</a>
+<a href="#994" id="994">994</a>
+<a href="#995" id="995">995</a>
+<a href="#996" id="996">996</a>
+<a href="#997" id="997">997</a>
+<a href="#998" id="998">998</a>
+<a href="#999" id="999">999</a>
+<a href="#1000" id="1000">1000</a>
+<a href="#1001" id="1001">1001</a>
+<a href="#1002" id="1002">1002</a>
+<a href="#1003" id="1003">1003</a>
+<a href="#1004" id="1004">1004</a>
+<a href="#1005" id="1005">1005</a>
+<a href="#1006" id="1006">1006</a>
+<a href="#1007" id="1007">1007</a>
+<a href="#1008" id="1008">1008</a>
+<a href="#1009" id="1009">1009</a>
+<a href="#1010" id="1010">1010</a>
+<a href="#1011" id="1011">1011</a>
+<a href="#1012" id="1012">1012</a>
+<a href="#1013" id="1013">1013</a>
+<a href="#1014" id="1014">1014</a>
+<a href="#1015" id="1015">1015</a>
+<a href="#1016" id="1016">1016</a>
+<a href="#1017" id="1017">1017</a>
+<a href="#1018" id="1018">1018</a>
+<a href="#1019" id="1019">1019</a>
+<a href="#1020" id="1020">1020</a>
+<a href="#1021" id="1021">1021</a>
+<a href="#1022" id="1022">1022</a>
+<a href="#1023" id="1023">1023</a>
+<a href="#1024" id="1024">1024</a>
+<a href="#1025" id="1025">1025</a>
+<a href="#1026" id="1026">1026</a>
+<a href="#1027" id="1027">1027</a>
+<a href="#1028" id="1028">1028</a>
+<a href="#1029" id="1029">1029</a>
+<a href="#1030" id="1030">1030</a>
+<a href="#1031" id="1031">1031</a>
+<a href="#1032" id="1032">1032</a>
+<a href="#1033" id="1033">1033</a>
+<a href="#1034" id="1034">1034</a>
+<a href="#1035" id="1035">1035</a>
+<a href="#1036" id="1036">1036</a>
+<a href="#1037" id="1037">1037</a>
+<a href="#1038" id="1038">1038</a>
+<a href="#1039" id="1039">1039</a>
+<a href="#1040" id="1040">1040</a>
+<a href="#1041" id="1041">1041</a>
+<a href="#1042" id="1042">1042</a>
+<a href="#1043" id="1043">1043</a>
+<a href="#1044" id="1044">1044</a>
+<a href="#1045" id="1045">1045</a>
+<a href="#1046" id="1046">1046</a>
+<a href="#1047" id="1047">1047</a>
+<a href="#1048" id="1048">1048</a>
+<a href="#1049" id="1049">1049</a>
+<a href="#1050" id="1050">1050</a>
+<a href="#1051" id="1051">1051</a>
+<a href="#1052" id="1052">1052</a>
+<a href="#1053" id="1053">1053</a>
+<a href="#1054" id="1054">1054</a>
+<a href="#1055" id="1055">1055</a>
+<a href="#1056" id="1056">1056</a>
+<a href="#1057" id="1057">1057</a>
+<a href="#1058" id="1058">1058</a>
+<a href="#1059" id="1059">1059</a>
+<a href="#1060" id="1060">1060</a>
+<a href="#1061" id="1061">1061</a>
+<a href="#1062" id="1062">1062</a>
+<a href="#1063" id="1063">1063</a>
+<a href="#1064" id="1064">1064</a>
+<a href="#1065" id="1065">1065</a>
+<a href="#1066" id="1066">1066</a>
+<a href="#1067" id="1067">1067</a>
+<a href="#1068" id="1068">1068</a>
+<a href="#1069" id="1069">1069</a>
+<a href="#1070" id="1070">1070</a>
+<a href="#1071" id="1071">1071</a>
+<a href="#1072" id="1072">1072</a>
+<a href="#1073" id="1073">1073</a>
+<a href="#1074" id="1074">1074</a>
+<a href="#1075" id="1075">1075</a>
+<a href="#1076" id="1076">1076</a>
+<a href="#1077" id="1077">1077</a>
+<a href="#1078" id="1078">1078</a>
+<a href="#1079" id="1079">1079</a>
+<a href="#1080" id="1080">1080</a>
+<a href="#1081" id="1081">1081</a>
+<a href="#1082" id="1082">1082</a>
+<a href="#1083" id="1083">1083</a>
+<a href="#1084" id="1084">1084</a>
+<a href="#1085" id="1085">1085</a>
+<a href="#1086" id="1086">1086</a>
+<a href="#1087" id="1087">1087</a>
+<a href="#1088" id="1088">1088</a>
+<a href="#1089" id="1089">1089</a>
+<a href="#1090" id="1090">1090</a>
+<a href="#1091" id="1091">1091</a>
+<a href="#1092" id="1092">1092</a>
+<a href="#1093" id="1093">1093</a>
+<a href="#1094" id="1094">1094</a>
+<a href="#1095" id="1095">1095</a>
+<a href="#1096" id="1096">1096</a>
+<a href="#1097" id="1097">1097</a>
+<a href="#1098" id="1098">1098</a>
+<a href="#1099" id="1099">1099</a>
+<a href="#1100" id="1100">1100</a>
+<a href="#1101" id="1101">1101</a>
+<a href="#1102" id="1102">1102</a>
+<a href="#1103" id="1103">1103</a>
+<a href="#1104" id="1104">1104</a>
+<a href="#1105" id="1105">1105</a>
+<a href="#1106" id="1106">1106</a>
+<a href="#1107" id="1107">1107</a>
+<a href="#1108" id="1108">1108</a>
+<a href="#1109" id="1109">1109</a>
+<a href="#1110" id="1110">1110</a>
+<a href="#1111" id="1111">1111</a>
+<a href="#1112" id="1112">1112</a>
+<a href="#1113" id="1113">1113</a>
+<a href="#1114" id="1114">1114</a>
+<a href="#1115" id="1115">1115</a>
+<a href="#1116" id="1116">1116</a>
+<a href="#1117" id="1117">1117</a>
+<a href="#1118" id="1118">1118</a>
+<a href="#1119" id="1119">1119</a>
+<a href="#1120" id="1120">1120</a>
+<a href="#1121" id="1121">1121</a>
+<a href="#1122" id="1122">1122</a>
+<a href="#1123" id="1123">1123</a>
+<a href="#1124" id="1124">1124</a>
+<a href="#1125" id="1125">1125</a>
+<a href="#1126" id="1126">1126</a>
+<a href="#1127" id="1127">1127</a>
+<a href="#1128" id="1128">1128</a>
+<a href="#1129" id="1129">1129</a>
+<a href="#1130" id="1130">1130</a>
+<a href="#1131" id="1131">1131</a>
+<a href="#1132" id="1132">1132</a>
+<a href="#1133" id="1133">1133</a>
+<a href="#1134" id="1134">1134</a>
+<a href="#1135" id="1135">1135</a>
+<a href="#1136" id="1136">1136</a>
+<a href="#1137" id="1137">1137</a>
+<a href="#1138" id="1138">1138</a>
+<a href="#1139" id="1139">1139</a>
+<a href="#1140" id="1140">1140</a>
+<a href="#1141" id="1141">1141</a>
+<a href="#1142" id="1142">1142</a>
+<a href="#1143" id="1143">1143</a>
+<a href="#1144" id="1144">1144</a>
+<a href="#1145" id="1145">1145</a>
+<a href="#1146" id="1146">1146</a>
+<a href="#1147" id="1147">1147</a>
+<a href="#1148" id="1148">1148</a>
+<a href="#1149" id="1149">1149</a>
+<a href="#1150" id="1150">1150</a>
+<a href="#1151" id="1151">1151</a>
+<a href="#1152" id="1152">1152</a>
+<a href="#1153" id="1153">1153</a>
+<a href="#1154" id="1154">1154</a>
+<a href="#1155" id="1155">1155</a>
+<a href="#1156" id="1156">1156</a>
+<a href="#1157" id="1157">1157</a>
+<a href="#1158" id="1158">1158</a>
+<a href="#1159" id="1159">1159</a>
+<a href="#1160" id="1160">1160</a>
+<a href="#1161" id="1161">1161</a>
+<a href="#1162" id="1162">1162</a>
+<a href="#1163" id="1163">1163</a>
+<a href="#1164" id="1164">1164</a>
+<a href="#1165" id="1165">1165</a>
+<a href="#1166" id="1166">1166</a>
+<a href="#1167" id="1167">1167</a>
+<a href="#1168" id="1168">1168</a>
+<a href="#1169" id="1169">1169</a>
+<a href="#1170" id="1170">1170</a>
+<a href="#1171" id="1171">1171</a>
+<a href="#1172" id="1172">1172</a>
+<a href="#1173" id="1173">1173</a>
+<a href="#1174" id="1174">1174</a>
+<a href="#1175" id="1175">1175</a>
+<a href="#1176" id="1176">1176</a>
+<a href="#1177" id="1177">1177</a>
+<a href="#1178" id="1178">1178</a>
+<a href="#1179" id="1179">1179</a>
+<a href="#1180" id="1180">1180</a>
+<a href="#1181" id="1181">1181</a>
+<a href="#1182" id="1182">1182</a>
+<a href="#1183" id="1183">1183</a>
+<a href="#1184" id="1184">1184</a>
+<a href="#1185" id="1185">1185</a>
+<a href="#1186" id="1186">1186</a>
+<a href="#1187" id="1187">1187</a>
+<a href="#1188" id="1188">1188</a>
+<a href="#1189" id="1189">1189</a>
+<a href="#1190" id="1190">1190</a>
+<a href="#1191" id="1191">1191</a>
+<a href="#1192" id="1192">1192</a>
+<a href="#1193" id="1193">1193</a>
+<a href="#1194" id="1194">1194</a>
+<a href="#1195" id="1195">1195</a>
+<a href="#1196" id="1196">1196</a>
+<a href="#1197" id="1197">1197</a>
+<a href="#1198" id="1198">1198</a>
+<a href="#1199" id="1199">1199</a>
+<a href="#1200" id="1200">1200</a>
+<a href="#1201" id="1201">1201</a>
+<a href="#1202" id="1202">1202</a>
+<a href="#1203" id="1203">1203</a>
+<a href="#1204" id="1204">1204</a>
+<a href="#1205" id="1205">1205</a>
+<a href="#1206" id="1206">1206</a>
+<a href="#1207" id="1207">1207</a>
+<a href="#1208" id="1208">1208</a>
+<a href="#1209" id="1209">1209</a>
+<a href="#1210" id="1210">1210</a>
+<a href="#1211" id="1211">1211</a>
+<a href="#1212" id="1212">1212</a>
+<a href="#1213" id="1213">1213</a>
+<a href="#1214" id="1214">1214</a>
+<a href="#1215" id="1215">1215</a>
+<a href="#1216" id="1216">1216</a>
+<a href="#1217" id="1217">1217</a>
+<a href="#1218" id="1218">1218</a>
+<a href="#1219" id="1219">1219</a>
+<a href="#1220" id="1220">1220</a>
+<a href="#1221" id="1221">1221</a>
+<a href="#1222" id="1222">1222</a>
+<a href="#1223" id="1223">1223</a>
+<a href="#1224" id="1224">1224</a>
+<a href="#1225" id="1225">1225</a>
+<a href="#1226" id="1226">1226</a>
+<a href="#1227" id="1227">1227</a>
+<a href="#1228" id="1228">1228</a>
+<a href="#1229" id="1229">1229</a>
+<a href="#1230" id="1230">1230</a>
+<a href="#1231" id="1231">1231</a>
+<a href="#1232" id="1232">1232</a>
+<a href="#1233" id="1233">1233</a>
+<a href="#1234" id="1234">1234</a>
+<a href="#1235" id="1235">1235</a>
+<a href="#1236" id="1236">1236</a>
+<a href="#1237" id="1237">1237</a>
+<a href="#1238" id="1238">1238</a>
+<a href="#1239" id="1239">1239</a>
+<a href="#1240" id="1240">1240</a>
+<a href="#1241" id="1241">1241</a>
+<a href="#1242" id="1242">1242</a>
+<a href="#1243" id="1243">1243</a>
+<a href="#1244" id="1244">1244</a>
+<a href="#1245" id="1245">1245</a>
+<a href="#1246" id="1246">1246</a>
+<a href="#1247" id="1247">1247</a>
+<a href="#1248" id="1248">1248</a>
+<a href="#1249" id="1249">1249</a>
+<a href="#1250" id="1250">1250</a>
+<a href="#1251" id="1251">1251</a>
+<a href="#1252" id="1252">1252</a>
+<a href="#1253" id="1253">1253</a>
+<a href="#1254" id="1254">1254</a>
+<a href="#1255" id="1255">1255</a>
+<a href="#1256" id="1256">1256</a>
+<a href="#1257" id="1257">1257</a>
+<a href="#1258" id="1258">1258</a>
+<a href="#1259" id="1259">1259</a>
+<a href="#1260" id="1260">1260</a>
+<a href="#1261" id="1261">1261</a>
+<a href="#1262" id="1262">1262</a>
+<a href="#1263" id="1263">1263</a>
+<a href="#1264" id="1264">1264</a>
+<a href="#1265" id="1265">1265</a>
+<a href="#1266" id="1266">1266</a>
+<a href="#1267" id="1267">1267</a>
+<a href="#1268" id="1268">1268</a>
+<a href="#1269" id="1269">1269</a>
+<a href="#1270" id="1270">1270</a>
+<a href="#1271" id="1271">1271</a>
+<a href="#1272" id="1272">1272</a>
+<a href="#1273" id="1273">1273</a>
+<a href="#1274" id="1274">1274</a>
+<a href="#1275" id="1275">1275</a>
+<a href="#1276" id="1276">1276</a>
+<a href="#1277" id="1277">1277</a>
+<a href="#1278" id="1278">1278</a>
+<a href="#1279" id="1279">1279</a>
+<a href="#1280" id="1280">1280</a>
+<a href="#1281" id="1281">1281</a>
+<a href="#1282" id="1282">1282</a>
+<a href="#1283" id="1283">1283</a>
+<a href="#1284" id="1284">1284</a>
+<a href="#1285" id="1285">1285</a>
+<a href="#1286" id="1286">1286</a>
+<a href="#1287" id="1287">1287</a>
+<a href="#1288" id="1288">1288</a>
+<a href="#1289" id="1289">1289</a>
+<a href="#1290" id="1290">1290</a>
+<a href="#1291" id="1291">1291</a>
+<a href="#1292" id="1292">1292</a>
+<a href="#1293" id="1293">1293</a>
+<a href="#1294" id="1294">1294</a>
+<a href="#1295" id="1295">1295</a>
+<a href="#1296" id="1296">1296</a>
+<a href="#1297" id="1297">1297</a>
+<a href="#1298" id="1298">1298</a>
+<a href="#1299" id="1299">1299</a>
+<a href="#1300" id="1300">1300</a>
+<a href="#1301" id="1301">1301</a>
+<a href="#1302" id="1302">1302</a>
+<a href="#1303" id="1303">1303</a>
+<a href="#1304" id="1304">1304</a>
+<a href="#1305" id="1305">1305</a>
+<a href="#1306" id="1306">1306</a>
+<a href="#1307" id="1307">1307</a>
+<a href="#1308" id="1308">1308</a>
+<a href="#1309" id="1309">1309</a>
+<a href="#1310" id="1310">1310</a>
+<a href="#1311" id="1311">1311</a>
+<a href="#1312" id="1312">1312</a>
+<a href="#1313" id="1313">1313</a>
+<a href="#1314" id="1314">1314</a>
+<a href="#1315" id="1315">1315</a>
+<a href="#1316" id="1316">1316</a>
+<a href="#1317" id="1317">1317</a>
+<a href="#1318" id="1318">1318</a>
+<a href="#1319" id="1319">1319</a>
+<a href="#1320" id="1320">1320</a>
+<a href="#1321" id="1321">1321</a>
+<a href="#1322" id="1322">1322</a>
+<a href="#1323" id="1323">1323</a>
+<a href="#1324" id="1324">1324</a>
+<a href="#1325" id="1325">1325</a>
+<a href="#1326" id="1326">1326</a>
+<a href="#1327" id="1327">1327</a>
+<a href="#1328" id="1328">1328</a>
+<a href="#1329" id="1329">1329</a>
+<a href="#1330" id="1330">1330</a>
+<a href="#1331" id="1331">1331</a>
+<a href="#1332" id="1332">1332</a>
+<a href="#1333" id="1333">1333</a>
+<a href="#1334" id="1334">1334</a>
+<a href="#1335" id="1335">1335</a>
+<a href="#1336" id="1336">1336</a>
+<a href="#1337" id="1337">1337</a>
+<a href="#1338" id="1338">1338</a>
+<a href="#1339" id="1339">1339</a>
+<a href="#1340" id="1340">1340</a>
+<a href="#1341" id="1341">1341</a>
+<a href="#1342" id="1342">1342</a>
+<a href="#1343" id="1343">1343</a>
+<a href="#1344" id="1344">1344</a>
+<a href="#1345" id="1345">1345</a>
+<a href="#1346" id="1346">1346</a>
+<a href="#1347" id="1347">1347</a>
+<a href="#1348" id="1348">1348</a>
+<a href="#1349" id="1349">1349</a>
+<a href="#1350" id="1350">1350</a>
+<a href="#1351" id="1351">1351</a>
+<a href="#1352" id="1352">1352</a>
+<a href="#1353" id="1353">1353</a>
+<a href="#1354" id="1354">1354</a>
+<a href="#1355" id="1355">1355</a>
+<a href="#1356" id="1356">1356</a>
+<a href="#1357" id="1357">1357</a>
+<a href="#1358" id="1358">1358</a>
+<a href="#1359" id="1359">1359</a>
+<a href="#1360" id="1360">1360</a>
+<a href="#1361" id="1361">1361</a>
+<a href="#1362" id="1362">1362</a>
+<a href="#1363" id="1363">1363</a>
+<a href="#1364" id="1364">1364</a>
+<a href="#1365" id="1365">1365</a>
+<a href="#1366" id="1366">1366</a>
+<a href="#1367" id="1367">1367</a>
+<a href="#1368" id="1368">1368</a>
+<a href="#1369" id="1369">1369</a>
+<a href="#1370" id="1370">1370</a>
+<a href="#1371" id="1371">1371</a>
+<a href="#1372" id="1372">1372</a>
+<a href="#1373" id="1373">1373</a>
+<a href="#1374" id="1374">1374</a>
+<a href="#1375" id="1375">1375</a>
+<a href="#1376" id="1376">1376</a>
+<a href="#1377" id="1377">1377</a>
+<a href="#1378" id="1378">1378</a>
+<a href="#1379" id="1379">1379</a>
+<a href="#1380" id="1380">1380</a>
+<a href="#1381" id="1381">1381</a>
+<a href="#1382" id="1382">1382</a>
+<a href="#1383" id="1383">1383</a>
+<a href="#1384" id="1384">1384</a>
+<a href="#1385" id="1385">1385</a>
+<a href="#1386" id="1386">1386</a>
+<a href="#1387" id="1387">1387</a>
+<a href="#1388" id="1388">1388</a>
+<a href="#1389" id="1389">1389</a>
+<a href="#1390" id="1390">1390</a>
+<a href="#1391" id="1391">1391</a>
+<a href="#1392" id="1392">1392</a>
+<a href="#1393" id="1393">1393</a>
+<a href="#1394" id="1394">1394</a>
+<a href="#1395" id="1395">1395</a>
+<a href="#1396" id="1396">1396</a>
+<a href="#1397" id="1397">1397</a>
+<a href="#1398" id="1398">1398</a>
+<a href="#1399" id="1399">1399</a>
+<a href="#1400" id="1400">1400</a>
+<a href="#1401" id="1401">1401</a>
+<a href="#1402" id="1402">1402</a>
+<a href="#1403" id="1403">1403</a>
+<a href="#1404" id="1404">1404</a>
+<a href="#1405" id="1405">1405</a>
+<a href="#1406" id="1406">1406</a>
+<a href="#1407" id="1407">1407</a>
+<a href="#1408" id="1408">1408</a>
+<a href="#1409" id="1409">1409</a>
+<a href="#1410" id="1410">1410</a>
+<a href="#1411" id="1411">1411</a>
+<a href="#1412" id="1412">1412</a>
+<a href="#1413" id="1413">1413</a>
+<a href="#1414" id="1414">1414</a>
+<a href="#1415" id="1415">1415</a>
+<a href="#1416" id="1416">1416</a>
+<a href="#1417" id="1417">1417</a>
+<a href="#1418" id="1418">1418</a>
+<a href="#1419" id="1419">1419</a>
+<a href="#1420" id="1420">1420</a>
+<a href="#1421" id="1421">1421</a>
+<a href="#1422" id="1422">1422</a>
+<a href="#1423" id="1423">1423</a>
+<a href="#1424" id="1424">1424</a>
+<a href="#1425" id="1425">1425</a>
+<a href="#1426" id="1426">1426</a>
+<a href="#1427" id="1427">1427</a>
+<a href="#1428" id="1428">1428</a>
+<a href="#1429" id="1429">1429</a>
+<a href="#1430" id="1430">1430</a>
+<a href="#1431" id="1431">1431</a>
+<a href="#1432" id="1432">1432</a>
+<a href="#1433" id="1433">1433</a>
+<a href="#1434" id="1434">1434</a>
+<a href="#1435" id="1435">1435</a>
+<a href="#1436" id="1436">1436</a>
+<a href="#1437" id="1437">1437</a>
+<a href="#1438" id="1438">1438</a>
+<a href="#1439" id="1439">1439</a>
+<a href="#1440" id="1440">1440</a>
+<a href="#1441" id="1441">1441</a>
+<a href="#1442" id="1442">1442</a>
+<a href="#1443" id="1443">1443</a>
+<a href="#1444" id="1444">1444</a>
+<a href="#1445" id="1445">1445</a>
+<a href="#1446" id="1446">1446</a>
+<a href="#1447" id="1447">1447</a>
+<a href="#1448" id="1448">1448</a>
+<a href="#1449" id="1449">1449</a>
+<a href="#1450" id="1450">1450</a>
+<a href="#1451" id="1451">1451</a>
+<a href="#1452" id="1452">1452</a>
+<a href="#1453" id="1453">1453</a>
+<a href="#1454" id="1454">1454</a>
+<a href="#1455" id="1455">1455</a>
+<a href="#1456" id="1456">1456</a>
+<a href="#1457" id="1457">1457</a>
+<a href="#1458" id="1458">1458</a>
+<a href="#1459" id="1459">1459</a>
+<a href="#1460" id="1460">1460</a>
+<a href="#1461" id="1461">1461</a>
+<a href="#1462" id="1462">1462</a>
+<a href="#1463" id="1463">1463</a>
+<a href="#1464" id="1464">1464</a>
+<a href="#1465" id="1465">1465</a>
+<a href="#1466" id="1466">1466</a>
+<a href="#1467" id="1467">1467</a>
+<a href="#1468" id="1468">1468</a>
+<a href="#1469" id="1469">1469</a>
+<a href="#1470" id="1470">1470</a>
+<a href="#1471" id="1471">1471</a>
+<a href="#1472" id="1472">1472</a>
+<a href="#1473" id="1473">1473</a>
+<a href="#1474" id="1474">1474</a>
+<a href="#1475" id="1475">1475</a>
+<a href="#1476" id="1476">1476</a>
+<a href="#1477" id="1477">1477</a>
+<a href="#1478" id="1478">1478</a>
+<a href="#1479" id="1479">1479</a>
+<a href="#1480" id="1480">1480</a>
+<a href="#1481" id="1481">1481</a>
+<a href="#1482" id="1482">1482</a>
+<a href="#1483" id="1483">1483</a>
+<a href="#1484" id="1484">1484</a>
+<a href="#1485" id="1485">1485</a>
+<a href="#1486" id="1486">1486</a>
+<a href="#1487" id="1487">1487</a>
+<a href="#1488" id="1488">1488</a>
+<a href="#1489" id="1489">1489</a>
+<a href="#1490" id="1490">1490</a>
+<a href="#1491" id="1491">1491</a>
+<a href="#1492" id="1492">1492</a>
+<a href="#1493" id="1493">1493</a>
+<a href="#1494" id="1494">1494</a>
+<a href="#1495" id="1495">1495</a>
+<a href="#1496" id="1496">1496</a>
+<a href="#1497" id="1497">1497</a>
+<a href="#1498" id="1498">1498</a>
+<a href="#1499" id="1499">1499</a>
+<a href="#1500" id="1500">1500</a>
+<a href="#1501" id="1501">1501</a>
+<a href="#1502" id="1502">1502</a>
+<a href="#1503" id="1503">1503</a>
+<a href="#1504" id="1504">1504</a>
+<a href="#1505" id="1505">1505</a>
+<a href="#1506" id="1506">1506</a>
+<a href="#1507" id="1507">1507</a>
+<a href="#1508" id="1508">1508</a>
+<a href="#1509" id="1509">1509</a>
+<a href="#1510" id="1510">1510</a>
+<a href="#1511" id="1511">1511</a>
+<a href="#1512" id="1512">1512</a>
+<a href="#1513" id="1513">1513</a>
+<a href="#1514" id="1514">1514</a>
+<a href="#1515" id="1515">1515</a>
+<a href="#1516" id="1516">1516</a>
+<a href="#1517" id="1517">1517</a>
+<a href="#1518" id="1518">1518</a>
+<a href="#1519" id="1519">1519</a>
+<a href="#1520" id="1520">1520</a>
+<a href="#1521" id="1521">1521</a>
+<a href="#1522" id="1522">1522</a>
+<a href="#1523" id="1523">1523</a>
+<a href="#1524" id="1524">1524</a>
+<a href="#1525" id="1525">1525</a>
+<a href="#1526" id="1526">1526</a>
+<a href="#1527" id="1527">1527</a>
+<a href="#1528" id="1528">1528</a>
+<a href="#1529" id="1529">1529</a>
+<a href="#1530" id="1530">1530</a>
+<a href="#1531" id="1531">1531</a>
+<a href="#1532" id="1532">1532</a>
+<a href="#1533" id="1533">1533</a>
+<a href="#1534" id="1534">1534</a>
+<a href="#1535" id="1535">1535</a>
+<a href="#1536" id="1536">1536</a>
+<a href="#1537" id="1537">1537</a>
+<a href="#1538" id="1538">1538</a>
+<a href="#1539" id="1539">1539</a>
+<a href="#1540" id="1540">1540</a>
+<a href="#1541" id="1541">1541</a>
+<a href="#1542" id="1542">1542</a>
+<a href="#1543" id="1543">1543</a>
+<a href="#1544" id="1544">1544</a>
+<a href="#1545" id="1545">1545</a>
+<a href="#1546" id="1546">1546</a>
+<a href="#1547" id="1547">1547</a>
+<a href="#1548" id="1548">1548</a>
+<a href="#1549" id="1549">1549</a>
+<a href="#1550" id="1550">1550</a>
+<a href="#1551" id="1551">1551</a>
+<a href="#1552" id="1552">1552</a>
+<a href="#1553" id="1553">1553</a>
+<a href="#1554" id="1554">1554</a>
+<a href="#1555" id="1555">1555</a>
+<a href="#1556" id="1556">1556</a>
+<a href="#1557" id="1557">1557</a>
+<a href="#1558" id="1558">1558</a>
+<a href="#1559" id="1559">1559</a>
+<a href="#1560" id="1560">1560</a>
+<a href="#1561" id="1561">1561</a>
+<a href="#1562" id="1562">1562</a>
+<a href="#1563" id="1563">1563</a>
+<a href="#1564" id="1564">1564</a>
+<a href="#1565" id="1565">1565</a>
+<a href="#1566" id="1566">1566</a>
+<a href="#1567" id="1567">1567</a>
+<a href="#1568" id="1568">1568</a>
+<a href="#1569" id="1569">1569</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright (c) 2022 Espresso Systems (espressosys.com)
 // This file is part of the tide-disco library.
 
@@ -958,19 +1588,25 @@
 <span class="kw">use </span>async_std::sync::Arc;
 <span class="kw">use </span>futures::future::{BoxFuture, FutureExt};
 <span class="kw">use </span>include_dir::{include_dir, Dir};
+<span class="kw">use </span>itertools::Itertools;
 <span class="kw">use </span>lazy_static::lazy_static;
 <span class="kw">use </span>maud::{html, PreEscaped};
 <span class="kw">use </span>semver::Version;
 <span class="kw">use </span>serde::{Deserialize, Serialize};
 <span class="kw">use </span>serde_with::{serde_as, DisplayFromStr};
 <span class="kw">use </span>snafu::{ResultExt, Snafu};
-<span class="kw">use </span>std::collections::hash_map::{Entry, HashMap};
-<span class="kw">use </span>std::convert::Infallible;
-<span class="kw">use </span>std::env;
-<span class="kw">use </span>std::fs;
-<span class="kw">use </span>std::io;
-<span class="kw">use </span>std::ops::{Deref, DerefMut};
-<span class="kw">use </span>std::path::PathBuf;
+<span class="kw">use </span>std::{
+    collections::{
+        btree_map::{BTreeMap, Entry <span class="kw">as </span>BTreeEntry},
+        hash_map::{Entry <span class="kw">as </span>HashEntry, HashMap},
+    },
+    convert::Infallible,
+    env,
+    fmt::Display,
+    fs, io,
+    ops::{Deref, DerefMut},
+    path::PathBuf,
+};
 <span class="kw">use </span>tide::{
     http::{headers::HeaderValue, mime},
     security::{CorsMiddleware, Origin},
@@ -986,15 +1622,16 @@
 /// constructing an [Api] for each module and calling [App::register_module]. Once all of the
 /// desired modules are registered, the app can be converted into an asynchronous server task using
 /// [App::serve].
+</span><span class="attr">#[derive(Debug)]
 </span><span class="kw">pub struct </span>App&lt;State, Error, VER: StaticVersionType&gt; {
-    <span class="comment">// Map from base URL to module API.
-    </span>apis: HashMap&lt;String, Api&lt;State, Error, VER&gt;&gt;,
+    <span class="comment">// Map from base URL, major version to API.
+    </span>apis: HashMap&lt;String, BTreeMap&lt;u64, Api&lt;State, Error, VER&gt;&gt;&gt;,
     state: Arc&lt;State&gt;,
     app_version: <span class="prelude-ty">Option</span>&lt;Version&gt;,
 }
 
 <span class="doccomment">/// An error encountered while building an [App].
-</span><span class="attr">#[derive(Clone, Debug, Snafu)]
+</span><span class="attr">#[derive(Clone, Debug, Snafu, PartialEq, Eq)]
 </span><span class="kw">pub enum </span>AppError {
     Api { source: ApiError },
     ModuleAlreadyExists,
@@ -1016,6 +1653,12 @@
     }
 
     <span class="doccomment">/// Create and register an API module.
+    ///
+    /// Creates a new [`Api`] with the given `api` specification and returns an RAII guard for this
+    /// API. The guard can be used to access the API module, configure it, and populate its
+    /// handlers. When [`Module::register`] is called on the guard (or the guard is dropped), the
+    /// module will be registered in this [`App`] as if by calling
+    /// [`register_module`](Self::register_module).
     </span><span class="kw">pub fn </span>module&lt;<span class="lifetime">'a</span>, ModuleError&gt;(
         <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span><span class="self">self</span>,
         base_url: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>str,
@@ -1025,10 +1668,6 @@
         </span>Error: From&lt;ModuleError&gt;,
         ModuleError: <span class="lifetime">'static </span>+ Send + Sync,
     {
-        <span class="kw">if </span><span class="self">self</span>.apis.contains_key(base_url) {
-            <span class="kw">return </span><span class="prelude-val">Err</span>(AppError::ModuleAlreadyExists);
-        }
-
         <span class="prelude-val">Ok</span>(Module {
             app: <span class="self">self</span>,
             base_url,
@@ -1037,6 +1676,37 @@
     }
 
     <span class="doccomment">/// Register an API module.
+    ///
+    /// The module `api` will be registered as an implementation of the module hosted under the URL
+    /// prefix `base_url`.
+    ///
+    /// # Versioning
+    ///
+    /// Multiple versions of the same [`Api`] may be registered by calling this function several
+    /// times with the same `base_url`, and passing in different APIs which must have different
+    /// _major_ versions. The API version can be set using [`Api::with_version`].
+    ///
+    /// When multiple versions of the same API are registered, requests for endpoints directly under
+    /// the base URL, like `GET /base_url/endpoint`, will always be dispatched to the latest
+    /// available version of the API. There will in addition be an extension of `base_url` for each
+    /// major version registered, so `GET /base_url/v1/endpoint` will always dispatch to the
+    /// `endpoint` handler in the module with major version 1, if it exists, regardless of what the
+    /// latest version is.
+    ///
+    /// It is an error to register multiple versions of the same module with the same major version.
+    /// It is _not_ an error to register non-sequential versions of a module. For example, you could
+    /// have `/base_url/v2` and `/base_url/v4`, but not `v1` or `v3`. Requests for `v1` or `v3` will
+    /// simply fail.
+    ///
+    /// The intention of this functionality is to allow for non-disruptive breaking updates. Rather
+    /// than deploying a new major version of the API with breaking changes _in place of_ the old
+    /// version, breaking all your clients, you can continue to serve the old version for some
+    /// period of time under a version prefix. Clients can point at this version prefix until they
+    /// update their software to use the new version, on their own time.
+    ///
+    /// Note that non-breaking changes (e.g. new endpoints) can be deployed in place of an existing
+    /// API without even incrementing the major version. The need for serving two versions of an API
+    /// simultaneously only arises when you have breaking changes.
     </span><span class="kw">pub fn </span>register_module&lt;ModuleError&gt;(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
         base_url: <span class="kw-2">&amp;</span>str,
@@ -1046,14 +1716,28 @@
         </span>Error: From&lt;ModuleError&gt;,
         ModuleError: <span class="lifetime">'static </span>+ Send + Sync,
     {
+        <span class="kw">let </span><span class="kw-2">mut </span>api = api.map_err(Error::from);
+        api.set_name(base_url.to_string());
+
+        <span class="kw">let </span>major_version = <span class="kw">match </span>api.version().api_version {
+            <span class="prelude-val">Some</span>(version) =&gt; version.major,
+            <span class="prelude-val">None </span>=&gt; {
+                <span class="comment">// If no version is explicitly specified, default to 0.
+                </span><span class="number">0
+            </span>}
+        };
+
         <span class="kw">match </span><span class="self">self</span>.apis.entry(base_url.to_string()) {
-            Entry::Occupied(<span class="kw">_</span>) =&gt; {
-                <span class="kw">return </span><span class="prelude-val">Err</span>(AppError::ModuleAlreadyExists);
-            }
-            Entry::Vacant(e) =&gt; {
-                <span class="kw">let </span><span class="kw-2">mut </span>api = api.map_err(Error::from);
-                api.set_name(base_url.to_string());
-                e.insert(api);
+            HashEntry::Occupied(<span class="kw-2">mut </span>e) =&gt; <span class="kw">match </span>e.get_mut().entry(major_version) {
+                BTreeEntry::Occupied(<span class="kw">_</span>) =&gt; {
+                    <span class="kw">return </span><span class="prelude-val">Err</span>(AppError::ModuleAlreadyExists);
+                }
+                BTreeEntry::Vacant(e) =&gt; {
+                    e.insert(api);
+                }
+            },
+            HashEntry::Vacant(e) =&gt; {
+                e.insert([(major_version, api)].into());
             }
         }
 
@@ -1099,7 +1783,12 @@
             modules: <span class="self">self
                 </span>.apis
                 .iter()
-                .map(|(name, api)| (name.clone(), api.version()))
+                .map(|(name, versions)| {
+                    (
+                        name.clone(),
+                        versions.values().rev().map(|api| api.version()).collect(),
+                    )
+                })
                 .collect(),
         }
     }
@@ -1111,14 +1800,17 @@
     /// (due to type erasure) but can be queried using [module_health](Self::module_health) or by
     /// hitting the endpoint `GET /:module/healthcheck`.
     </span><span class="kw">pub async fn </span>health(<span class="kw-2">&amp;</span><span class="self">self</span>, req: RequestParams, state: <span class="kw-2">&amp;</span>State) -&gt; AppHealth {
-        <span class="kw">let </span><span class="kw-2">mut </span>modules = HashMap::new();
+        <span class="kw">let </span><span class="kw-2">mut </span>modules = BTreeMap::&lt;String, BTreeMap&lt;<span class="kw">_</span>, <span class="kw">_</span>&gt;&gt;::new();
         <span class="kw">let </span><span class="kw-2">mut </span>status = HealthStatus::Available;
-        <span class="kw">for </span>(name, api) <span class="kw">in </span><span class="kw-2">&amp;</span><span class="self">self</span>.apis {
-            <span class="kw">let </span>health = StatusCode::from(api.health(req.clone(), state).<span class="kw">await</span>.status());
-            <span class="kw">if </span>health != StatusCode::Ok {
-                status = HealthStatus::Unhealthy;
+        <span class="kw">for </span>(name, versions) <span class="kw">in </span><span class="kw-2">&amp;</span><span class="self">self</span>.apis {
+            <span class="kw">let </span>module = modules.entry(name.clone()).or_default();
+            <span class="kw">for </span>(version, api) <span class="kw">in </span>versions {
+                <span class="kw">let </span>health = StatusCode::from(api.health(req.clone(), state).<span class="kw">await</span>.status());
+                <span class="kw">if </span>health != StatusCode::Ok {
+                    status = HealthStatus::Unhealthy;
+                }
+                module.insert(<span class="kw-2">*</span>version, health);
             }
-            modules.insert(name.clone(), health);
         }
         AppHealth { status, modules }
     }
@@ -1130,14 +1822,22 @@
     /// registered healthcheck handler. If the module does not have an explicit healthcheck
     /// handler, the response will be a [HealthStatus].
     ///
-    /// If there is no module with the given name, returns [None].
+    /// `major_version` can be used to query the health status of a specific version of the desired
+    /// module. If it is not provided, the most recent supported version will be queried.
+    ///
+    /// If there is no module with the given name or version, returns [None].
     </span><span class="kw">pub async fn </span>module_health(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         req: RequestParams,
         state: <span class="kw-2">&amp;</span>State,
         module: <span class="kw-2">&amp;</span>str,
+        major_version: <span class="prelude-ty">Option</span>&lt;u64&gt;,
     ) -&gt; <span class="prelude-ty">Option</span>&lt;tide::Response&gt; {
-        <span class="kw">let </span>api = <span class="self">self</span>.apis.get(module)<span class="question-mark">?</span>;
+        <span class="kw">let </span>versions = <span class="self">self</span>.apis.get(module)<span class="question-mark">?</span>;
+        <span class="kw">let </span>api = <span class="kw">match </span>major_version {
+            <span class="prelude-val">Some</span>(v) =&gt; versions.get(<span class="kw-2">&amp;</span>v)<span class="question-mark">?</span>,
+            <span class="prelude-val">None </span>=&gt; versions.last_key_value()<span class="question-mark">?</span>.<span class="number">1</span>,
+        };
         <span class="prelude-val">Some</span>(api.health(req, state).<span class="kw">await</span>)
     }
 }
@@ -1172,17 +1872,7 @@
     ) -&gt; io::Result&lt;()&gt; {
         <span class="kw">let </span>state = Arc::new(<span class="self">self</span>);
         <span class="kw">let </span><span class="kw-2">mut </span>server = tide::Server::with_state(state.clone());
-        <span class="kw">for </span>(name, api) <span class="kw">in </span><span class="kw-2">&amp;</span>state.apis {
-            <span class="comment">// Clippy complains if the only non-trivial operation in an `unwrap_or_else` closure is
-            // a deref, but for `lazy_static` types, deref is an effectful operation that (in this
-            // case) causes a directory to be renamed and another extracted. We only want to execute
-            // this if we need to (if `api.public()` is `None`) so we disable the lint.
-            </span><span class="attr">#[allow(clippy::unnecessary_lazy_evaluations)]
-            </span>server
-                .at(<span class="string">"/public"</span>)
-                .at(name)
-                .serve_dir(api.public().unwrap_or_else(|| <span class="kw-2">&amp;</span>DEFAULT_PUBLIC_PATH))<span class="question-mark">?</span>;
-        }
+        server.with(<span class="self">Self</span>::version_middleware);
         server.with(add_error_body::&lt;<span class="kw">_</span>, Error, VER&gt;);
         server.with(
             CorsMiddleware::new()
@@ -1192,87 +1882,8 @@
                 .allow_credentials(<span class="bool-val">true</span>),
         );
 
-        <span class="kw">for </span>(prefix, api) <span class="kw">in </span><span class="kw-2">&amp;</span>state.apis {
-            <span class="comment">// Register routes for this API.
-            </span><span class="kw">let </span><span class="kw-2">mut </span>api_endpoint = server.at(prefix);
-            <span class="kw">for </span>(path, routes) <span class="kw">in </span>api.routes_by_path() {
-                <span class="kw">let </span><span class="kw-2">mut </span>endpoint = api_endpoint.at(path);
-                <span class="kw">let </span>routes = routes.collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
-
-                <span class="comment">// Register socket and metrics middlewares. These must be registered before any
-                // regular HTTP routes, because Tide only applies middlewares to routes which were
-                // already registered before the route handler.
-                </span><span class="kw">if let </span><span class="prelude-val">Some</span>(socket_route) =
-                    routes.iter().find(|route| route.method() == Method::Socket)
-                {
-                    <span class="comment">// If there is a socket route with this pattern, add the socket middleware to
-                    // all endpoints registered under this pattern, so that any request with any
-                    // method that has the socket upgrade headers will trigger a WebSockets upgrade.
-                    </span><span class="self">Self</span>::register_socket(prefix.to_owned(), <span class="kw-2">&amp;mut </span>endpoint, socket_route);
-                }
-                <span class="kw">if let </span><span class="prelude-val">Some</span>(metrics_route) = routes
-                    .iter()
-                    .find(|route| route.method() == Method::Metrics)
-                {
-                    <span class="comment">// If there is a metrics route with this pattern, add the metrics middleware to
-                    // all endpoints registered under this pattern, so that a request to this path
-                    // with the right headers will return metrics instead of going through the
-                    // normal method-based dispatching.
-                    </span><span class="self">Self</span>::register_metrics(
-                        prefix.to_owned(),
-                        <span class="kw-2">&amp;mut </span>endpoint,
-                        metrics_route,
-                        bind_version,
-                    );
-                }
-
-                <span class="comment">// Register the HTTP routes.
-                </span><span class="kw">for </span>route <span class="kw">in </span>routes {
-                    <span class="kw">if let </span>Method::Http(method) = route.method() {
-                        <span class="self">Self</span>::register_route(
-                            prefix.to_owned(),
-                            <span class="kw-2">&amp;mut </span>endpoint,
-                            route,
-                            method,
-                            bind_version,
-                        );
-                    }
-                }
-            }
-
-            <span class="comment">// Register automatic routes for this API: `healthcheck` and `version`.
-            </span>{
-                <span class="kw">let </span>prefix = prefix.clone();
-                server
-                    .at(<span class="kw-2">&amp;</span>prefix)
-                    .at(<span class="string">"healthcheck"</span>)
-                    .get(<span class="kw">move </span>|req: tide::Request&lt;Arc&lt;<span class="self">Self</span>&gt;&gt;| {
-                        <span class="kw">let </span>prefix = prefix.clone();
-                        <span class="kw">async move </span>{
-                            <span class="kw">let </span>api = <span class="kw-2">&amp;</span>req.state().clone().apis[<span class="kw-2">&amp;</span>prefix];
-                            <span class="kw">let </span>state = req.state().clone();
-                            <span class="prelude-val">Ok</span>(api
-                                .health(request_params(req, <span class="kw-2">&amp;</span>[]).<span class="kw">await</span><span class="question-mark">?</span>, <span class="kw-2">&amp;</span>state.state)
-                                .<span class="kw">await</span>)
-                        }
-                    });
-            }
-            {
-                <span class="kw">let </span>prefix = prefix.clone();
-                server
-                    .at(<span class="kw-2">&amp;</span>prefix)
-                    .at(<span class="string">"version"</span>)
-                    .get(<span class="kw">move </span>|req: tide::Request&lt;Arc&lt;<span class="self">Self</span>&gt;&gt;| {
-                        <span class="kw">let </span>prefix = prefix.clone();
-                        <span class="kw">async move </span>{
-                            <span class="kw">let </span>api = <span class="kw-2">&amp;</span>req.state().apis[<span class="kw-2">&amp;</span>prefix];
-                            <span class="kw">let </span>accept = RequestParams::accept_from_headers(<span class="kw-2">&amp;</span>req)<span class="question-mark">?</span>;
-                            respond_with(<span class="kw-2">&amp;</span>accept, api.version(), bind_version).map_err(|err| {
-                                Error::from_route_error::&lt;Infallible&gt;(err).into_tide_error()
-                            })
-                        }
-                    });
-            }
+        <span class="kw">for </span>(name, versions) <span class="kw">in </span><span class="kw-2">&amp;</span>state.apis {
+            <span class="self">Self</span>::register_api(<span class="kw-2">&amp;mut </span>server, name.clone(), versions, bind_version)<span class="question-mark">?</span>;
         }
 
         <span class="comment">// Register app-level automatic routes: `healthcheck` and `version`.
@@ -1294,34 +1905,12 @@
                     .map_err(|err| Error::from_route_error::&lt;Infallible&gt;(err).into_tide_error())
             });
 
-        <span class="comment">// Register catch-all routes for discoverability
-        </span>{
-            server
-                .at(<span class="string">"/"</span>)
-                .all(<span class="kw">move </span>|req: tide::Request&lt;Arc&lt;<span class="self">Self</span>&gt;&gt;| <span class="kw">async move </span>{
-                    <span class="prelude-val">Ok</span>(<span class="macro">html! </span>{
-                        <span class="string">"This is a Tide Disco app composed of the following modules:"
-                        </span>(req.state().list_apis())
-                    })
-                });
-        }
-        {
-            server
-                .at(<span class="string">"/*"</span>)
-                .all(<span class="kw">move </span>|req: tide::Request&lt;Arc&lt;<span class="self">Self</span>&gt;&gt;| <span class="kw">async move </span>{
-                    <span class="kw">let </span>api_name = req.url().path_segments().unwrap().next().unwrap();
-                    <span class="kw">let </span>state = req.state();
-                    <span class="kw">if let </span><span class="prelude-val">Some</span>(api) = state.apis.get(api_name) {
-                        <span class="prelude-val">Ok</span>(api.documentation())
-                    } <span class="kw">else </span>{
-                        <span class="prelude-val">Ok</span>(<span class="macro">html! </span>{
-                            <span class="string">"No valid route begins with \"" </span>(api_name) <span class="string">"\". Try routes beginning
-                            with one of the following API identifiers:"
-                            </span>(state.list_apis())
-                        })
-                    }
-                });
-        }
+        <span class="comment">// Serve documentation at the root URL for discoverability
+        </span>server
+            .at(<span class="string">"/"</span>)
+            .all(<span class="kw">move </span>|req: tide::Request&lt;Arc&lt;<span class="self">Self</span>&gt;&gt;| <span class="kw">async move </span>{
+                <span class="prelude-val">Ok</span>(tide::Response::from(<span class="self">Self</span>::top_level_docs(req)))
+            });
 
         server.listen(listener).<span class="kw">await
     </span>}
@@ -1329,19 +1918,177 @@
     <span class="kw">fn </span>list_apis(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Html {
         <span class="macro">html! </span>{
             ul {
-                @<span class="kw">for </span>(name, api) <span class="kw">in </span><span class="kw-2">&amp;</span><span class="self">self</span>.apis {
+                @<span class="kw">for </span>(name, versions) <span class="kw">in </span><span class="kw-2">&amp;</span><span class="self">self</span>.apis {
                     li {
-                        a href=(<span class="macro">format!</span>(<span class="string">"/{}"</span>, name)) {(name)}
+                        <span class="comment">// Link to the alias for the latest version as the primary link.
+                        </span>a href=(<span class="macro">format!</span>(<span class="string">"/{}"</span>, name)) {(name)}
+                        <span class="comment">// Add a superscript link (link a footnote) for each specific supported
+                        // version, linking to documentation for that specific version.
+                        </span>@<span class="kw">for </span>version <span class="kw">in </span>versions.keys().rev() {
+                            sup {
+                                a href=(<span class="macro">format!</span>(<span class="string">"/v{version}/{name}"</span>)) {
+                                    (<span class="macro">format!</span>(<span class="string">"[v{version}]"</span>))
+                                }
+                            }
+                        }
                         <span class="string">" "
-                        </span>(PreEscaped(api.short_description()))
+                        </span><span class="comment">// Take the description of the latest supported version.
+                        </span>(PreEscaped(versions.last_key_value().unwrap().<span class="number">1</span>.short_description()))
                     }
                 }
             }
         }
     }
 
+    <span class="kw">fn </span>register_api(
+        server: <span class="kw-2">&amp;mut </span>tide::Server&lt;Arc&lt;<span class="self">Self</span>&gt;&gt;,
+        prefix: String,
+        versions: <span class="kw-2">&amp;</span>BTreeMap&lt;u64, Api&lt;State, Error, VER&gt;&gt;,
+        bind_version: VER,
+    ) -&gt; io::Result&lt;()&gt; {
+        <span class="kw">for </span>(version, api) <span class="kw">in </span>versions {
+            <span class="self">Self</span>::register_api_version(server, <span class="kw-2">&amp;</span>prefix, <span class="kw-2">*</span>version, api, bind_version)<span class="question-mark">?</span>;
+        }
+        <span class="prelude-val">Ok</span>(())
+    }
+
+    <span class="kw">fn </span>register_api_version(
+        server: <span class="kw-2">&amp;mut </span>tide::Server&lt;Arc&lt;<span class="self">Self</span>&gt;&gt;,
+        prefix: <span class="kw-2">&amp;</span>String,
+        version: u64,
+        api: <span class="kw-2">&amp;</span>Api&lt;State, Error, VER&gt;,
+        bind_version: VER,
+    ) -&gt; io::Result&lt;()&gt; {
+        <span class="comment">// Clippy complains if the only non-trivial operation in an `unwrap_or_else` closure is
+        // a deref, but for `lazy_static` types, deref is an effectful operation that (in this
+        // case) causes a directory to be renamed and another extracted. We only want to execute
+        // this if we need to (if `api.public()` is `None`) so we disable the lint.
+        </span><span class="attr">#[allow(clippy::unnecessary_lazy_evaluations)]
+        </span>server
+            .at(<span class="string">"/public"</span>)
+            .at(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"v{version}"</span>))
+            .at(prefix)
+            .serve_dir(api.public().unwrap_or_else(|| <span class="kw-2">&amp;</span>DEFAULT_PUBLIC_PATH))<span class="question-mark">?</span>;
+
+        <span class="comment">// Register routes for this API.
+        </span><span class="kw">let </span><span class="kw-2">mut </span>api_endpoint = server.at(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"/v{version}/{prefix}"</span>));
+        <span class="kw">for </span>(path, routes) <span class="kw">in </span>api.routes_by_path() {
+            <span class="kw">let </span><span class="kw-2">mut </span>endpoint = api_endpoint.at(path);
+            <span class="kw">let </span>routes = routes.collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
+
+            <span class="comment">// Register socket and metrics middlewares. These must be registered before any
+            // regular HTTP routes, because Tide only applies middlewares to routes which were
+            // already registered before the route handler.
+            </span><span class="kw">if let </span><span class="prelude-val">Some</span>(socket_route) = routes.iter().find(|route| route.method() == Method::Socket)
+            {
+                <span class="comment">// If there is a socket route with this pattern, add the socket middleware to
+                // all endpoints registered under this pattern, so that any request with any
+                // method that has the socket upgrade headers will trigger a WebSockets upgrade.
+                </span><span class="self">Self</span>::register_socket(prefix.to_owned(), version, <span class="kw-2">&amp;mut </span>endpoint, socket_route);
+            }
+            <span class="kw">if let </span><span class="prelude-val">Some</span>(metrics_route) = routes
+                .iter()
+                .find(|route| route.method() == Method::Metrics)
+            {
+                <span class="comment">// If there is a metrics route with this pattern, add the metrics middleware to
+                // all endpoints registered under this pattern, so that a request to this path
+                // with the right headers will return metrics instead of going through the
+                // normal method-based dispatching.
+                </span><span class="self">Self</span>::register_metrics(
+                    prefix.to_owned(),
+                    version,
+                    <span class="kw-2">&amp;mut </span>endpoint,
+                    metrics_route,
+                    bind_version,
+                );
+            }
+
+            <span class="comment">// Register the HTTP routes.
+            </span><span class="kw">for </span>route <span class="kw">in </span>routes {
+                <span class="kw">if let </span>Method::Http(method) = route.method() {
+                    <span class="self">Self</span>::register_route(
+                        prefix.to_owned(),
+                        version,
+                        <span class="kw-2">&amp;mut </span>endpoint,
+                        route,
+                        method,
+                        bind_version,
+                    );
+                }
+            }
+        }
+
+        <span class="comment">// Register automatic routes for this API: documentation, `healthcheck` and `version`. Serve
+        // documentation at the root of the API (with or without a trailing slash).
+        </span><span class="kw">for </span>path <span class="kw">in </span>[<span class="string">""</span>, <span class="string">"/"</span>] {
+            <span class="kw">let </span>prefix = prefix.clone();
+            api_endpoint
+                .at(path)
+                .all(<span class="kw">move </span>|req: tide::Request&lt;Arc&lt;<span class="self">Self</span>&gt;&gt;| {
+                    <span class="kw">let </span>prefix = prefix.clone();
+                    <span class="kw">async move </span>{
+                        <span class="kw">let </span>api = <span class="kw-2">&amp;</span>req.state().clone().apis[<span class="kw-2">&amp;</span>prefix][<span class="kw-2">&amp;</span>version];
+                        <span class="prelude-val">Ok</span>(api.documentation())
+                    }
+                });
+        }
+        {
+            <span class="kw">let </span>prefix = prefix.clone();
+            api_endpoint
+                .at(<span class="string">"*path"</span>)
+                .all(<span class="kw">move </span>|req: tide::Request&lt;Arc&lt;<span class="self">Self</span>&gt;&gt;| {
+                    <span class="kw">let </span>prefix = prefix.clone();
+                    <span class="kw">async move </span>{
+                        <span class="comment">// The request did not match any route. Serve documentation for the API.
+                        </span><span class="kw">let </span>api = <span class="kw-2">&amp;</span>req.state().clone().apis[<span class="kw-2">&amp;</span>prefix][<span class="kw-2">&amp;</span>version];
+                        <span class="kw">let </span>docs = <span class="macro">html! </span>{
+                            <span class="string">"No route matches /" </span>(req.param(<span class="string">"path"</span>)<span class="question-mark">?</span>)
+                            br{}
+                            (api.documentation())
+                        };
+                        <span class="prelude-val">Ok</span>(tide::Response::builder(StatusCode::NotFound)
+                            .body(docs.into_string())
+                            .build())
+                    }
+                });
+        }
+        {
+            <span class="kw">let </span>prefix = prefix.clone();
+            api_endpoint
+                .at(<span class="string">"healthcheck"</span>)
+                .get(<span class="kw">move </span>|req: tide::Request&lt;Arc&lt;<span class="self">Self</span>&gt;&gt;| {
+                    <span class="kw">let </span>prefix = prefix.clone();
+                    <span class="kw">async move </span>{
+                        <span class="kw">let </span>api = <span class="kw-2">&amp;</span>req.state().clone().apis[<span class="kw-2">&amp;</span>prefix][<span class="kw-2">&amp;</span>version];
+                        <span class="kw">let </span>state = req.state().clone();
+                        <span class="prelude-val">Ok</span>(api
+                            .health(request_params(req, <span class="kw-2">&amp;</span>[]).<span class="kw">await</span><span class="question-mark">?</span>, <span class="kw-2">&amp;</span>state.state)
+                            .<span class="kw">await</span>)
+                    }
+                });
+        }
+        {
+            <span class="kw">let </span>prefix = prefix.clone();
+            api_endpoint
+                .at(<span class="string">"version"</span>)
+                .get(<span class="kw">move </span>|req: tide::Request&lt;Arc&lt;<span class="self">Self</span>&gt;&gt;| {
+                    <span class="kw">let </span>prefix = prefix.clone();
+                    <span class="kw">async move </span>{
+                        <span class="kw">let </span>api = <span class="kw-2">&amp;</span>req.state().apis[<span class="kw-2">&amp;</span>prefix][<span class="kw-2">&amp;</span>version];
+                        <span class="kw">let </span>accept = RequestParams::accept_from_headers(<span class="kw-2">&amp;</span>req)<span class="question-mark">?</span>;
+                        respond_with(<span class="kw-2">&amp;</span>accept, api.version(), bind_version).map_err(|err| {
+                            Error::from_route_error::&lt;Infallible&gt;(err).into_tide_error()
+                        })
+                    }
+                });
+        }
+
+        <span class="prelude-val">Ok</span>(())
+    }
+
     <span class="kw">fn </span>register_route(
         api: String,
+        version: u64,
         endpoint: <span class="kw-2">&amp;mut </span>tide::Route&lt;Arc&lt;<span class="self">Self</span>&gt;&gt;,
         route: <span class="kw-2">&amp;</span>Route&lt;State, Error, VER&gt;,
         method: http::Method,
@@ -1352,7 +2099,7 @@
             <span class="kw">let </span>name = name.clone();
             <span class="kw">let </span>api = api.clone();
             <span class="kw">async move </span>{
-                <span class="kw">let </span>route = <span class="kw-2">&amp;</span>req.state().clone().apis[<span class="kw-2">&amp;</span>api][<span class="kw-2">&amp;</span>name];
+                <span class="kw">let </span>route = <span class="kw-2">&amp;</span>req.state().clone().apis[<span class="kw-2">&amp;</span>api][<span class="kw-2">&amp;</span>version][<span class="kw-2">&amp;</span>name];
                 <span class="kw">let </span>state = <span class="kw-2">&amp;*</span>req.state().clone().state;
                 <span class="kw">let </span>req = request_params(req, route.params()).<span class="kw">await</span><span class="question-mark">?</span>;
                 route
@@ -1369,6 +2116,7 @@
 
     <span class="kw">fn </span>register_metrics(
         api: String,
+        version: u64,
         endpoint: <span class="kw-2">&amp;mut </span>tide::Route&lt;Arc&lt;<span class="self">Self</span>&gt;&gt;,
         route: <span class="kw-2">&amp;</span>Route&lt;State, Error, VER&gt;,
         bind_version: VER,
@@ -1381,6 +2129,7 @@
             </span>endpoint.with(MetricsMiddleware::new(
                 name.clone(),
                 api.clone(),
+                version,
                 bind_version,
             ));
         }
@@ -1394,11 +2143,12 @@
         // We register the default handler using `all`, which makes it act as a fallback handler.
         // This means if there are other, non-metrics routes with this same path, we will still
         // dispatch to them if the path is hit with the appropriate method.
-        </span><span class="self">Self</span>::register_fallback(api, endpoint, route);
+        </span><span class="self">Self</span>::register_fallback(api, version, endpoint, route);
     }
 
     <span class="kw">fn </span>register_socket(
         api: String,
+        version: u64,
         endpoint: <span class="kw-2">&amp;mut </span>tide::Route&lt;Arc&lt;<span class="self">Self</span>&gt;&gt;,
         route: <span class="kw-2">&amp;</span>Route&lt;State, Error, VER&gt;,
     ) {
@@ -1413,7 +2163,7 @@
                     <span class="kw">let </span>name = name.clone();
                     <span class="kw">let </span>api = api.clone();
                     <span class="kw">async move </span>{
-                        <span class="kw">let </span>route = <span class="kw-2">&amp;</span>req.state().clone().apis[<span class="kw-2">&amp;</span>api][<span class="kw-2">&amp;</span>name];
+                        <span class="kw">let </span>route = <span class="kw-2">&amp;</span>req.state().clone().apis[<span class="kw-2">&amp;</span>api][<span class="kw-2">&amp;</span>version][<span class="kw-2">&amp;</span>name];
                         <span class="kw">let </span>state = <span class="kw-2">&amp;*</span>req.state().clone().state;
                         <span class="kw">let </span>req = request_params(req, route.params()).<span class="kw">await</span><span class="question-mark">?</span>;
                         route
@@ -1441,11 +2191,12 @@
         // We register the default handler using `all`, which makes it act as a fallback handler.
         // This means if there are other, non-socket routes with this same path, we will still
         // dispatch to them if the path is hit with the appropriate method.
-        </span><span class="self">Self</span>::register_fallback(api, endpoint, route);
+        </span><span class="self">Self</span>::register_fallback(api, version, endpoint, route);
     }
 
     <span class="kw">fn </span>register_fallback(
         api: String,
+        version: u64,
         endpoint: <span class="kw-2">&amp;mut </span>tide::Route&lt;Arc&lt;<span class="self">Self</span>&gt;&gt;,
         route: <span class="kw-2">&amp;</span>Route&lt;State, Error, VER&gt;,
     ) {
@@ -1454,7 +2205,7 @@
             <span class="kw">let </span>name = name.clone();
             <span class="kw">let </span>api = api.clone();
             <span class="kw">async move </span>{
-                <span class="kw">let </span>route = <span class="kw-2">&amp;</span>req.state().clone().apis[<span class="kw-2">&amp;</span>api][<span class="kw-2">&amp;</span>name];
+                <span class="kw">let </span>route = <span class="kw-2">&amp;</span>req.state().clone().apis[<span class="kw-2">&amp;</span>api][<span class="kw-2">&amp;</span>version][<span class="kw-2">&amp;</span>name];
                 route
                     .default_handler()
                     .map_err(|err| <span class="kw">match </span>err {
@@ -1465,17 +2216,124 @@
             }
         });
     }
+
+    <span class="doccomment">/// Server middleware which returns redirect responses for requests lacking an explicit version
+    /// prefix.
+    </span><span class="kw">fn </span>version_middleware(
+        req: tide::Request&lt;Arc&lt;<span class="self">Self</span>&gt;&gt;,
+        next: tide::Next&lt;Arc&lt;<span class="self">Self</span>&gt;&gt;,
+    ) -&gt; BoxFuture&lt;tide::Result&gt; {
+        <span class="kw">async move </span>{
+            <span class="kw">let </span><span class="prelude-val">Some</span>(<span class="kw-2">mut </span>path) = req.url().path_segments() <span class="kw">else </span>{
+                <span class="comment">// If we can't parse the path, we can't run this middleware. Do our best by
+                // continuing the request processing lifecycle.
+                </span><span class="kw">return </span><span class="prelude-val">Ok</span>(next.run(req).<span class="kw">await</span>);
+            };
+            <span class="kw">let </span><span class="prelude-val">Some</span>(seg1) = path.next() <span class="kw">else </span>{
+                <span class="comment">// This is the root URL, with no path segments. Nothing for this middleware to do.
+                </span><span class="kw">return </span><span class="prelude-val">Ok</span>(next.run(req).<span class="kw">await</span>);
+            };
+            <span class="kw">if </span>seg1.is_empty() {
+                <span class="comment">// This is the root URL, with no path segments. Nothing for this middleware to do.
+                </span><span class="kw">return </span><span class="prelude-val">Ok</span>(next.run(req).<span class="kw">await</span>);
+            }
+
+            <span class="comment">// The first segment is either a version identifier or an API identifier (implicitly
+            // requesting the latest version of the API). We handle these cases differently.
+            </span><span class="kw">if let </span><span class="prelude-val">Some</span>(version) = seg1.strip_prefix(<span class="string">'v'</span>).and_then(|n| n.parse().ok()) {
+                <span class="comment">// If the version identifier is present, we probably don't need a redirect. However,
+                // we still check if this is a valid version for the request API. If not, we will
+                // serve documentation listing the available versions.
+                </span><span class="kw">let </span><span class="prelude-val">Some</span>(api) = path.next() <span class="kw">else </span>{
+                    <span class="comment">// A version identifier with no API is an error, serve documentation.
+                    </span><span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="self">Self</span>::top_level_error(
+                        req,
+                        StatusCode::BadRequest,
+                        <span class="string">"illegal version prefix without API specifier"</span>,
+                    ));
+                };
+                <span class="kw">let </span><span class="prelude-val">Some</span>(versions) = req.state().apis.get(api) <span class="kw">else </span>{
+                    <span class="kw">let </span>message = <span class="macro">format!</span>(<span class="string">"No API matches /{api}"</span>);
+                    <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="self">Self</span>::top_level_error(req, StatusCode::NotFound, message));
+                };
+                <span class="kw">if </span>versions.get(<span class="kw-2">&amp;</span>version).is_none() {
+                    <span class="comment">// This version is not supported, list suported versions.
+                    </span><span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="macro">html! </span>{
+                        <span class="string">"Unsupported version v" </span>(version) <span class="string">". Supported versions are:"
+                        </span>ul {
+                            @<span class="kw">for </span>v <span class="kw">in </span>versions.keys().rev() {
+                                li {
+                                    a href=(<span class="macro">format!</span>(<span class="string">"/v{v}/{api}"</span>)) { <span class="string">"v" </span>(v) }
+                                }
+                            }
+                        }
+                    }
+                    .into());
+                }
+
+                <span class="comment">// This is a valid request with a specific version. It should be handled
+                // successfully by the route handlers for this API.
+                </span><span class="prelude-val">Ok</span>(next.run(req).<span class="kw">await</span>)
+            } <span class="kw">else </span>{
+                <span class="comment">// If the first path segment is not a version prefix, it is either the name of an
+                // API or one of the magic top-level endpoints (version, healthcheck), implicitly
+                // requesting the latest version. Validate the API and then redirect.
+                </span><span class="kw">if </span>[<span class="string">"version"</span>, <span class="string">"healthcheck"</span>].contains(<span class="kw-2">&amp;</span>seg1) {
+                    <span class="kw">return </span><span class="prelude-val">Ok</span>(next.run(req).<span class="kw">await</span>);
+                }
+                <span class="kw">let </span><span class="prelude-val">Some</span>(versions) = req.state().apis.get(seg1) <span class="kw">else </span>{
+                    <span class="kw">let </span>message = <span class="macro">format!</span>(<span class="string">"No API matches /{seg1}"</span>);
+                    <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="self">Self</span>::top_level_error(req, StatusCode::NotFound, message));
+                };
+
+                <span class="kw">let </span>latest_version = <span class="kw-2">*</span>versions.last_key_value().unwrap().<span class="number">0</span>;
+                <span class="kw">let </span>path = path.join(<span class="string">"/"</span>);
+                <span class="prelude-val">Ok</span>(tide::Redirect::permanent(<span class="macro">format!</span>(<span class="string">"/v{latest_version}/{seg1}/{path}"</span>)).into())
+            }
+        }
+        .boxed()
+    }
+
+    <span class="doccomment">/// Top-level documentation about the app.
+    </span><span class="kw">fn </span>top_level_docs(req: tide::Request&lt;Arc&lt;<span class="self">Self</span>&gt;&gt;) -&gt; PreEscaped&lt;String&gt; {
+        <span class="macro">html! </span>{
+            br {}
+            <span class="string">"This is a Tide Disco app composed of the following modules:"
+            </span>(req.state().list_apis())
+        }
+    }
+
+    <span class="doccomment">/// Documentation served when there is a routing error at the app level.
+    </span><span class="kw">fn </span>top_level_error(
+        req: tide::Request&lt;Arc&lt;<span class="self">Self</span>&gt;&gt;,
+        status: StatusCode,
+        message: <span class="kw">impl </span>Display,
+    ) -&gt; tide::Response {
+        <span class="kw">let </span>docs = <span class="macro">html! </span>{
+            (message.to_string())
+            (<span class="self">Self</span>::top_level_docs(req))
+        };
+        tide::Response::builder(status)
+            .body(docs.into_string())
+            .build()
+    }
 }
 
 <span class="kw">struct </span>MetricsMiddleware&lt;VER: StaticVersionType&gt; {
     route: String,
     api: String,
+    api_version: u64,
     ver: VER,
 }
 
 <span class="kw">impl</span>&lt;VER: StaticVersionType&gt; MetricsMiddleware&lt;VER&gt; {
-    <span class="kw">fn </span>new(route: String, api: String, ver: VER) -&gt; <span class="self">Self </span>{
-        <span class="self">Self </span>{ route, api, ver }
+    <span class="kw">fn </span>new(route: String, api: String, api_version: u64, ver: VER) -&gt; <span class="self">Self </span>{
+        <span class="self">Self </span>{
+            route,
+            api,
+            api_version,
+            ver,
+        }
     }
 }
 
@@ -1497,6 +2355,7 @@
     {
         <span class="kw">let </span>route = <span class="self">self</span>.route.clone();
         <span class="kw">let </span>api = <span class="self">self</span>.api.clone();
+        <span class="kw">let </span>version = <span class="self">self</span>.api_version;
         <span class="kw">let </span>bind_version = <span class="self">self</span>.ver;
         <span class="kw">async move </span>{
             <span class="kw">if </span>req.method() != http::Method::Get {
@@ -1515,7 +2374,7 @@
             }
             <span class="comment">// This is a metrics request, abort the rest of the dispatching chain and run the
             // metrics handler.
-            </span><span class="kw">let </span>route = <span class="kw-2">&amp;</span>req.state().clone().apis[<span class="kw-2">&amp;</span>api][<span class="kw-2">&amp;</span>route];
+            </span><span class="kw">let </span>route = <span class="kw-2">&amp;</span>req.state().clone().apis[<span class="kw-2">&amp;</span>api][<span class="kw-2">&amp;</span>version][<span class="kw-2">&amp;</span>route];
             <span class="kw">let </span>state = <span class="kw-2">&amp;*</span>req.state().clone().state;
             <span class="kw">let </span>req = request_params(req, route.params()).<span class="kw">await</span><span class="question-mark">?</span>;
             route
@@ -1548,8 +2407,8 @@
     /// [HealthStatus::Available] if all of the application's modules are healthy, otherwise a
     /// [HealthStatus] variant with [status](HealthCheck::status) other than 200.
     </span><span class="kw">pub </span>status: HealthStatus,
-    <span class="doccomment">/// The status of each registered module.
-    </span><span class="kw">pub </span>modules: HashMap&lt;String, StatusCode&gt;,
+    <span class="doccomment">/// The status of each registered module, indexed by version.
+    </span><span class="kw">pub </span>modules: BTreeMap&lt;String, BTreeMap&lt;u64, StatusCode&gt;&gt;,
 }
 
 <span class="kw">impl </span>HealthCheck <span class="kw">for </span>AppHealth {
@@ -1562,8 +2421,10 @@
 </span><span class="attr">#[serde_as]
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 </span><span class="kw">pub struct </span>AppVersion {
-    <span class="doccomment">/// The version of each module registered with this application.
-    </span><span class="kw">pub </span>modules: HashMap&lt;String, ApiVersion&gt;,
+    <span class="doccomment">/// The supported versions of each module registered with this application.
+    ///
+    /// Versions for each module are ordered from newest to oldest.
+    </span><span class="kw">pub </span>modules: BTreeMap&lt;String, Vec&lt;ApiVersion&gt;&gt;,
 
     <span class="doccomment">/// The version of this application.
     </span><span class="attr">#[serde_as(<span class="kw">as </span>= <span class="string">"Option&lt;DisplayFromStr&gt;"</span>)]
@@ -1611,7 +2472,18 @@
     })
 }
 
-<span class="kw">pub struct </span>Module&lt;<span class="lifetime">'a</span>, State, Error, ModuleError, VER: StaticVersionType&gt;
+<span class="doccomment">/// RAII guard to ensure a module is registered after it is configured.
+///
+/// This type allows the owner to configure an [`Api`] module via the [`Deref`] and [`DerefMut`]
+/// traits. Once the API is configured, this object can be dropped, which will automatically
+/// register the module with the [`App`].
+///
+/// # Panics
+///
+/// Note that if anything goes wrong during module registration (for example, there is already an
+/// incompatible module registered with the same name), the drop implementation may panic. To handle
+/// errors without panicking, call [`register`](Self::register) explicitly.
+</span><span class="kw">pub struct </span>Module&lt;<span class="lifetime">'a</span>, State, Error, ModuleError, VER: StaticVersionType&gt;
 <span class="kw">where
     </span>State: <span class="lifetime">'static </span>+ Send + Sync,
     Error: <span class="lifetime">'static </span>+ From&lt;ModuleError&gt;,
@@ -1661,9 +2533,32 @@
     VER: <span class="lifetime">'static </span>+ Send + Sync,
 {
     <span class="kw">fn </span>drop(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
-        <span class="self">self</span>.app
-            .register_module(<span class="self">self</span>.base_url, <span class="self">self</span>.api.take().unwrap())
-            .unwrap();
+        <span class="self">self</span>.register_impl().unwrap();
+    }
+}
+
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, State, Error, ModuleError, VER&gt; Module&lt;<span class="lifetime">'a</span>, State, Error, ModuleError, VER&gt;
+<span class="kw">where
+    </span>State: <span class="lifetime">'static </span>+ Send + Sync,
+    Error: <span class="lifetime">'static </span>+ From&lt;ModuleError&gt;,
+    ModuleError: <span class="lifetime">'static </span>+ Send + Sync,
+    VER: <span class="lifetime">'static </span>+ Send + Sync + StaticVersionType,
+{
+    <span class="doccomment">/// Register this module with the linked app.
+    </span><span class="kw">pub fn </span>register(<span class="kw-2">mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;(), AppError&gt; {
+        <span class="self">self</span>.register_impl()
+    }
+
+    <span class="doccomment">/// Perform the logic of [`Self::register`] without consuming `self`, so this can be called from
+    /// `drop`.
+    </span><span class="kw">fn </span>register_impl(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;(), AppError&gt; {
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(api) = <span class="self">self</span>.api.take() {
+            <span class="self">self</span>.app.register_module(<span class="self">self</span>.base_url, api)<span class="question-mark">?</span>;
+            <span class="prelude-val">Ok</span>(())
+        } <span class="kw">else </span>{
+            <span class="comment">// Already registered.
+            </span><span class="prelude-val">Ok</span>(())
+        }
     }
 }
 
@@ -1671,11 +2566,14 @@
 </span><span class="kw">mod </span>test {
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
     <span class="kw">use crate</span>::{
-        error::ServerError, metrics::Metrics, socket::Connection, wait_for_server, Url,
-        SERVER_STARTUP_RETRIES, SERVER_STARTUP_SLEEP_MS,
+        error::ServerError,
+        metrics::Metrics,
+        socket::Connection,
+        testing::{setup_test, test_ws_client, Client},
+        Url,
     };
     <span class="kw">use </span>async_std::{sync::RwLock, task::spawn};
-    <span class="kw">use </span>async_tungstenite::{async_std::connect_async, tungstenite::Message};
+    <span class="kw">use </span>async_tungstenite::tungstenite::Message;
     <span class="kw">use </span>futures::{FutureExt, SinkExt, StreamExt};
     <span class="kw">use </span>portpicker::pick_unused_port;
     <span class="kw">use </span>std::borrow::Cow;
@@ -1700,6 +2598,8 @@
     <span class="doccomment">/// Test route dispatching for routes with the same path and different methods.
     </span><span class="attr">#[async_std::test]
     </span><span class="kw">async fn </span>test_method_dispatch() {
+        setup_test();
+
         <span class="kw">use </span><span class="kw">crate</span>::http::Method::<span class="kw-2">*</span>;
 
         <span class="kw">let </span><span class="kw-2">mut </span>app = App::&lt;<span class="kw">_</span>, ServerError, StaticVer01&gt;::with_state(RwLock::new(FakeMetrics));
@@ -1768,48 +2668,37 @@
         <span class="kw">let </span>port = pick_unused_port().unwrap();
         <span class="kw">let </span>url: Url = <span class="macro">format!</span>(<span class="string">"http://localhost:{}"</span>, port).parse().unwrap();
         spawn(app.serve(<span class="macro">format!</span>(<span class="string">"0.0.0.0:{}"</span>, port), VER_0_1));
-        wait_for_server(<span class="kw-2">&amp;</span>url, SERVER_STARTUP_RETRIES, SERVER_STARTUP_SLEEP_MS).<span class="kw">await</span>;
-
-        <span class="kw">let </span>client: surf::Client = surf::Config::new()
-            .set_base_url(url.clone())
-            .try_into()
-            .unwrap();
+        <span class="kw">let </span>client = Client::new(url.clone()).<span class="kw">await</span>;
 
         <span class="comment">// Regular HTTP methods.
         </span><span class="kw">for </span>method <span class="kw">in </span>[Get, Post, Put, Delete] {
-            <span class="kw">let </span><span class="kw-2">mut </span>res = client
-                .request(method, url.join(<span class="string">"mod/test"</span>).unwrap())
+            <span class="kw">let </span>res = client
+                .request(method, <span class="string">"mod/test"</span>)
                 .header(<span class="string">"Accept"</span>, <span class="string">"application/json"</span>)
                 .send()
                 .<span class="kw">await
                 </span>.unwrap();
             <span class="macro">assert_eq!</span>(res.status(), StatusCode::Ok);
-            <span class="macro">assert_eq!</span>(res.body_json::&lt;String&gt;().<span class="kw">await</span>.unwrap(), method.to_string());
+            <span class="macro">assert_eq!</span>(res.json::&lt;String&gt;().<span class="kw">await</span>.unwrap(), method.to_string());
         }
 
         <span class="comment">// Metrics with Accept header.
-        </span><span class="kw">let </span><span class="kw-2">mut </span>res = client
-            .get(url.join(<span class="string">"mod/test"</span>).unwrap())
+        </span><span class="kw">let </span>res = client
+            .get(<span class="string">"mod/test"</span>)
             .header(<span class="string">"Accept"</span>, <span class="string">"text/plain"</span>)
             .send()
             .<span class="kw">await
             </span>.unwrap();
-        <span class="macro">assert_eq!</span>(res.body_string().<span class="kw">await</span>.unwrap(), <span class="string">"METRICS"</span>);
         <span class="macro">assert_eq!</span>(res.status(), StatusCode::Ok);
+        <span class="macro">assert_eq!</span>(res.text().<span class="kw">await</span>.unwrap(), <span class="string">"METRICS"</span>);
 
         <span class="comment">// Metrics without Accept header.
-        </span><span class="kw">let </span><span class="kw-2">mut </span>res = client
-            .get(url.join(<span class="string">"mod/test"</span>).unwrap())
-            .send()
-            .<span class="kw">await
-            </span>.unwrap();
-        <span class="macro">assert_eq!</span>(res.body_string().<span class="kw">await</span>.unwrap(), <span class="string">"METRICS"</span>);
+        </span><span class="kw">let </span>res = client.get(<span class="string">"mod/test"</span>).send().<span class="kw">await</span>.unwrap();
         <span class="macro">assert_eq!</span>(res.status(), StatusCode::Ok);
+        <span class="macro">assert_eq!</span>(res.text().<span class="kw">await</span>.unwrap(), <span class="string">"METRICS"</span>);
 
         <span class="comment">// Socket.
-        </span><span class="kw">let </span><span class="kw-2">mut </span>socket_url = url.join(<span class="string">"mod/test"</span>).unwrap();
-        socket_url.set_scheme(<span class="string">"ws"</span>).unwrap();
-        <span class="kw">let </span><span class="kw-2">mut </span>conn = connect_async(socket_url).<span class="kw">await</span>.unwrap().<span class="number">0</span>;
+        </span><span class="kw">let </span><span class="kw-2">mut </span>conn = test_ws_client(url.join(<span class="string">"mod/test"</span>).unwrap()).<span class="kw">await</span>;
         <span class="kw">let </span>msg = conn.next().<span class="kw">await</span>.unwrap().unwrap();
         <span class="kw">let </span>body: String = <span class="kw">match </span>msg {
             Message::Text(m) =&gt; serde_json::from_str(<span class="kw-2">&amp;</span>m).unwrap(),
@@ -1822,6 +2711,8 @@
     <span class="doccomment">/// Test route dispatching for routes with patterns containing different parmaeters
     </span><span class="attr">#[async_std::test]
     </span><span class="kw">async fn </span>test_param_dispatch() {
+        setup_test();
+
         <span class="kw">let </span><span class="kw-2">mut </span>app = App::&lt;<span class="kw">_</span>, ServerError, StaticVer01&gt;::with_state(RwLock::new(()));
         <span class="kw">let </span>api_toml = <span class="macro">toml! </span>{
             [meta]
@@ -1849,34 +2740,402 @@
         <span class="kw">let </span>port = pick_unused_port().unwrap();
         <span class="kw">let </span>url: Url = <span class="macro">format!</span>(<span class="string">"http://localhost:{}"</span>, port).parse().unwrap();
         spawn(app.serve(<span class="macro">format!</span>(<span class="string">"0.0.0.0:{}"</span>, port), VER_0_1));
-        wait_for_server(<span class="kw-2">&amp;</span>url, SERVER_STARTUP_RETRIES, SERVER_STARTUP_SLEEP_MS).<span class="kw">await</span>;
+        <span class="kw">let </span>client = Client::new(url.clone()).<span class="kw">await</span>;
 
-        <span class="kw">let </span>client: surf::Client = surf::Config::new()
-            .set_base_url(url.clone())
-            .try_into()
-            .unwrap();
-
-        <span class="kw">let </span><span class="kw-2">mut </span>res = client
-            .get(url.join(<span class="string">"mod/test/a/42"</span>).unwrap())
-            .send()
-            .<span class="kw">await
-            </span>.unwrap();
+        <span class="kw">let </span>res = client.get(<span class="string">"mod/test/a/42"</span>).send().<span class="kw">await</span>.unwrap();
         <span class="macro">assert_eq!</span>(res.status(), StatusCode::Ok);
         <span class="macro">assert_eq!</span>(
-            res.body_json::&lt;(String, String)&gt;().<span class="kw">await</span>.unwrap(),
+            res.json::&lt;(String, String)&gt;().<span class="kw">await</span>.unwrap(),
             (<span class="string">"a"</span>.to_string(), <span class="string">"42"</span>.to_string())
         );
 
-        <span class="kw">let </span><span class="kw-2">mut </span>res = client
-            .get(url.join(<span class="string">"mod/test/b/true"</span>).unwrap())
-            .send()
-            .<span class="kw">await
-            </span>.unwrap();
+        <span class="kw">let </span>res = client.get(<span class="string">"mod/test/b/true"</span>).send().<span class="kw">await</span>.unwrap();
         <span class="macro">assert_eq!</span>(res.status(), StatusCode::Ok);
         <span class="macro">assert_eq!</span>(
-            res.body_json::&lt;(String, String)&gt;().<span class="kw">await</span>.unwrap(),
+            res.json::&lt;(String, String)&gt;().<span class="kw">await</span>.unwrap(),
             (<span class="string">"b"</span>.to_string(), <span class="string">"true"</span>.to_string())
         );
+    }
+
+    <span class="attr">#[async_std::test]
+    </span><span class="kw">async fn </span>test_versions() {
+        setup_test();
+
+        <span class="kw">let </span><span class="kw-2">mut </span>app = App::&lt;<span class="kw">_</span>, ServerError, StaticVer01&gt;::with_state(RwLock::new(()));
+
+        <span class="comment">// Create two different, non-consecutive major versions of an API. One method will be
+        // deleted in version 1, one will be added in version 3, and one will be present in both
+        // versions (with a different implementation).
+        </span><span class="kw">let </span>v1_toml = <span class="macro">toml! </span>{
+            [meta]
+            FORMAT_VERSION = <span class="string">"0.1.0"
+
+            </span>[route.deleted]
+            PATH = [<span class="string">"/deleted"</span>]
+
+            [route.unchanged]
+            PATH = [<span class="string">"/unchanged"</span>]
+        };
+        <span class="kw">let </span>v3_toml = <span class="macro">toml! </span>{
+            [meta]
+            FORMAT_VERSION = <span class="string">"0.1.0"
+
+            </span>[route.added]
+            PATH = [<span class="string">"/added"</span>]
+
+            [route.unchanged]
+            PATH = [<span class="string">"/unchanged"</span>]
+        };
+
+        {
+            <span class="kw">let </span><span class="kw-2">mut </span>v1 = app.module::&lt;ServerError&gt;(<span class="string">"mod"</span>, v1_toml.clone()).unwrap();
+            v1.with_version(<span class="string">"1.0.0"</span>.parse().unwrap())
+                .get(<span class="string">"deleted"</span>, |_req, _state| {
+                    <span class="kw">async move </span>{ <span class="prelude-val">Ok</span>(<span class="string">"deleted v1"</span>) }.boxed()
+                })
+                .unwrap()
+                .get(<span class="string">"unchanged"</span>, |_req, _state| {
+                    <span class="kw">async move </span>{ <span class="prelude-val">Ok</span>(<span class="string">"unchanged v1"</span>) }.boxed()
+                })
+                .unwrap()
+                <span class="comment">// Add a custom healthcheck for the old version so we can check healthcheck routing.
+                </span>.with_health_check(|_state| {
+                    <span class="kw">async move </span>{ HealthStatus::TemporarilyUnavailable }.boxed()
+                });
+        }
+        {
+            <span class="comment">// Registering the same major version twice is an error.
+            </span><span class="kw">let </span><span class="kw-2">mut </span>api = app.module::&lt;ServerError&gt;(<span class="string">"mod"</span>, v1_toml).unwrap();
+            api.with_version(<span class="string">"1.1.1"</span>.parse().unwrap());
+            <span class="macro">assert_eq!</span>(api.register().unwrap_err(), AppError::ModuleAlreadyExists);
+        }
+        {
+            <span class="kw">let </span><span class="kw-2">mut </span>v3 = app.module::&lt;ServerError&gt;(<span class="string">"mod"</span>, v3_toml.clone()).unwrap();
+            v3.with_version(<span class="string">"3.0.0"</span>.parse().unwrap())
+                .get(<span class="string">"added"</span>, |_req, _state| {
+                    <span class="kw">async move </span>{ <span class="prelude-val">Ok</span>(<span class="string">"added v3"</span>) }.boxed()
+                })
+                .unwrap()
+                .get(<span class="string">"unchanged"</span>, |_req, _state| {
+                    <span class="kw">async move </span>{ <span class="prelude-val">Ok</span>(<span class="string">"unchanged v3"</span>) }.boxed()
+                })
+                .unwrap();
+        }
+
+        <span class="kw">let </span>port = pick_unused_port().unwrap();
+        <span class="kw">let </span>url: Url = <span class="macro">format!</span>(<span class="string">"http://localhost:{}"</span>, port).parse().unwrap();
+        spawn(app.serve(<span class="macro">format!</span>(<span class="string">"0.0.0.0:{}"</span>, port), VER_0_1));
+        <span class="kw">let </span>client = Client::new(url.clone()).<span class="kw">await</span>;
+
+        <span class="comment">// First check that we can call all the expected methods.
+        </span><span class="macro">assert_eq!</span>(
+            <span class="string">"deleted v1"</span>,
+            client
+                .get(<span class="string">"v1/mod/deleted"</span>)
+                .send()
+                .<span class="kw">await
+                </span>.unwrap()
+                .json::&lt;String&gt;()
+                .<span class="kw">await
+                </span>.unwrap()
+        );
+        <span class="macro">assert_eq!</span>(
+            <span class="string">"unchanged v1"</span>,
+            client
+                .get(<span class="string">"v1/mod/unchanged"</span>)
+                .send()
+                .<span class="kw">await
+                </span>.unwrap()
+                .json::&lt;String&gt;()
+                .<span class="kw">await
+                </span>.unwrap()
+        );
+        <span class="comment">// For the v3 methods, we can query with or without a version prefix.
+        </span><span class="kw">for </span>prefix <span class="kw">in </span>[<span class="string">""</span>, <span class="string">"/v3"</span>] {
+            <span class="kw">let </span>span = <span class="macro">tracing::info_span!</span>(<span class="string">"version"</span>, prefix);
+            <span class="kw">let </span>_enter = span.enter();
+
+            <span class="macro">assert_eq!</span>(
+                <span class="string">"added v3"</span>,
+                client
+                    .get(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"{prefix}/mod/added"</span>))
+                    .send()
+                    .<span class="kw">await
+                    </span>.unwrap()
+                    .json::&lt;String&gt;()
+                    .<span class="kw">await
+                    </span>.unwrap()
+            );
+            <span class="macro">assert_eq!</span>(
+                <span class="string">"unchanged v3"</span>,
+                client
+                    .get(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"{prefix}/mod/unchanged"</span>))
+                    .send()
+                    .<span class="kw">await
+                    </span>.unwrap()
+                    .json::&lt;String&gt;()
+                    .<span class="kw">await
+                    </span>.unwrap()
+            );
+        }
+
+        <span class="comment">// Test documentation for invalid routes.
+        </span><span class="kw">let </span>check_docs = |version, route: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str| {
+            <span class="kw">let </span>client = <span class="kw-2">&amp;</span>client;
+            <span class="kw">async move </span>{
+                <span class="kw">let </span>span = <span class="macro">tracing::info_span!</span>(<span class="string">"check_docs"</span>, <span class="question-mark">?</span>version, route);
+                <span class="kw">let </span>_enter = span.enter();
+                <span class="macro">tracing::info!</span>(<span class="string">"test invalid route docs"</span>);
+
+                <span class="kw">let </span>prefix = <span class="kw">match </span>version {
+                    <span class="prelude-val">Some</span>(v) =&gt; <span class="macro">format!</span>(<span class="string">"/v{v}"</span>),
+                    <span class="prelude-val">None </span>=&gt; <span class="string">""</span>.into(),
+                };
+
+                <span class="comment">// Invalid route or no route with no version prefix redirects to documentation for
+                // the latest supported version.
+                </span><span class="kw">let </span>version = version.unwrap_or(<span class="number">3</span>);
+
+                <span class="kw">let </span>res = client
+                    .get(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"{prefix}/mod/{route}"</span>))
+                    .send()
+                    .<span class="kw">await
+                    </span>.unwrap();
+                <span class="kw">let </span>docs = res.text().<span class="kw">await</span>.unwrap();
+                <span class="kw">if </span>!route.is_empty() {
+                    <span class="macro">assert!</span>(
+                        docs.contains(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"No route matches /{route}"</span>)),
+                        <span class="string">"{docs}"
+                    </span>);
+                }
+                <span class="macro">assert!</span>(
+                    docs.contains(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"mod API {version}.0.0 Reference"</span>)),
+                    <span class="string">"{docs}"
+                </span>);
+            }
+        };
+
+        <span class="kw">for </span>route <span class="kw">in </span>[<span class="string">""</span>, <span class="string">"deleted"</span>] {
+            check_docs(<span class="prelude-val">None</span>, route).<span class="kw">await</span>;
+        }
+        <span class="kw">for </span>route <span class="kw">in </span>[<span class="string">""</span>, <span class="string">"deleted"</span>] {
+            check_docs(<span class="prelude-val">Some</span>(<span class="number">3</span>), route).<span class="kw">await</span>;
+        }
+        <span class="kw">for </span>route <span class="kw">in </span>[<span class="string">""</span>, <span class="string">"added"</span>] {
+            check_docs(<span class="prelude-val">Some</span>(<span class="number">1</span>), route).<span class="kw">await</span>;
+        }
+
+        <span class="comment">// Request with an unsupported version lists the supported versions.
+        </span><span class="kw">let </span>expected_html = <span class="macro">html! </span>{
+            <span class="string">"Unsupported version v2. Supported versions are:"
+            </span>ul {
+                li {
+                    a href=<span class="string">"/v3/mod" </span>{<span class="string">"v3"</span>}
+                }
+                li {
+                    a href=<span class="string">"/v1/mod" </span>{<span class="string">"v1"</span>}
+                }
+            }
+        }
+        .into_string();
+        <span class="kw">for </span>route <span class="kw">in </span>[<span class="string">""</span>, <span class="string">"/unchanged"</span>] {
+            <span class="kw">let </span>span = <span class="macro">tracing::info_span!</span>(<span class="string">"unsupported_version_docs"</span>, route);
+            <span class="kw">let </span>_enter = span.enter();
+            <span class="macro">tracing::info!</span>(<span class="string">"test unsupported version docs"</span>);
+
+            <span class="kw">let </span>res = client.get(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"/v2/mod{route}"</span>)).send().<span class="kw">await</span>.unwrap();
+            <span class="kw">let </span>docs = res.text().<span class="kw">await</span>.unwrap();
+            <span class="macro">assert_eq!</span>(docs, expected_html);
+        }
+
+        <span class="comment">// Test version endpoints.
+        </span><span class="kw">for </span>version <span class="kw">in </span>[<span class="prelude-val">None</span>, <span class="prelude-val">Some</span>(<span class="number">1</span>), <span class="prelude-val">Some</span>(<span class="number">3</span>)] {
+            <span class="kw">let </span>span = <span class="macro">tracing::info_span!</span>(<span class="string">"version_endpoints"</span>, version);
+            <span class="kw">let </span>_enter = span.enter();
+            <span class="macro">tracing::info!</span>(<span class="string">"test version endpoints"</span>);
+
+            <span class="kw">let </span>prefix = <span class="kw">match </span>version {
+                <span class="prelude-val">Some</span>(v) =&gt; <span class="macro">format!</span>(<span class="string">"/v{v}"</span>),
+                <span class="prelude-val">None </span>=&gt; <span class="string">""</span>.into(),
+            };
+            <span class="kw">let </span>res = client
+                .get(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"{prefix}/mod/version"</span>))
+                .send()
+                .<span class="kw">await
+                </span>.unwrap();
+            <span class="macro">assert_eq!</span>(
+                res.json::&lt;ApiVersion&gt;()
+                    .<span class="kw">await
+                    </span>.unwrap()
+                    .api_version
+                    .unwrap()
+                    .major,
+                version.unwrap_or(<span class="number">3</span>)
+            );
+        }
+
+        <span class="comment">// Test the application version.
+        </span><span class="kw">let </span>res = client.get(<span class="string">"version"</span>).send().<span class="kw">await</span>.unwrap();
+        <span class="macro">assert_eq!</span>(
+            res.json::&lt;AppVersion&gt;().<span class="kw">await</span>.unwrap().modules[<span class="string">"mod"</span>],
+            [
+                ApiVersion {
+                    api_version: <span class="prelude-val">Some</span>(<span class="string">"3.0.0"</span>.parse().unwrap()),
+                    spec_version: <span class="string">"0.1.0"</span>.parse().unwrap(),
+                },
+                ApiVersion {
+                    api_version: <span class="prelude-val">Some</span>(<span class="string">"1.0.0"</span>.parse().unwrap()),
+                    spec_version: <span class="string">"0.1.0"</span>.parse().unwrap(),
+                }
+            ]
+        );
+
+        <span class="comment">// Test healthcheck endpoints.
+        </span><span class="kw">for </span>version <span class="kw">in </span>[<span class="prelude-val">None</span>, <span class="prelude-val">Some</span>(<span class="number">1</span>), <span class="prelude-val">Some</span>(<span class="number">3</span>)] {
+            <span class="kw">let </span>span = <span class="macro">tracing::info_span!</span>(<span class="string">"healthcheck_endpoints"</span>, version);
+            <span class="kw">let </span>_enter = span.enter();
+            <span class="macro">tracing::info!</span>(<span class="string">"test healthcheck endpoints"</span>);
+
+            <span class="kw">let </span>prefix = <span class="kw">match </span>version {
+                <span class="prelude-val">Some</span>(v) =&gt; <span class="macro">format!</span>(<span class="string">"/v{v}"</span>),
+                <span class="prelude-val">None </span>=&gt; <span class="string">""</span>.into(),
+            };
+            <span class="kw">let </span>res = client
+                .get(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"{prefix}/mod/healthcheck"</span>))
+                .send()
+                .<span class="kw">await
+                </span>.unwrap();
+            <span class="kw">let </span>status = res.status();
+            <span class="kw">let </span>health: HealthStatus = res.json().<span class="kw">await</span>.unwrap();
+            <span class="macro">assert_eq!</span>(health.status(), status);
+            <span class="macro">assert_eq!</span>(
+                health,
+                <span class="kw">if </span>version == <span class="prelude-val">Some</span>(<span class="number">1</span>) {
+                    HealthStatus::TemporarilyUnavailable
+                } <span class="kw">else </span>{
+                    HealthStatus::Available
+                }
+            );
+        }
+
+        <span class="comment">// Test the application health.
+        </span><span class="kw">let </span>res = client.get(<span class="string">"healthcheck"</span>).send().<span class="kw">await</span>.unwrap();
+        <span class="macro">assert_eq!</span>(res.status(), StatusCode::ServiceUnavailable);
+        <span class="kw">let </span>health: AppHealth = res.json().<span class="kw">await</span>.unwrap();
+        <span class="macro">assert_eq!</span>(health.status, HealthStatus::Unhealthy);
+        <span class="macro">assert_eq!</span>(
+            health.modules[<span class="string">"mod"</span>],
+            [(<span class="number">3</span>, StatusCode::Ok), (<span class="number">1</span>, StatusCode::ServiceUnavailable)].into()
+        );
+    }
+
+    <span class="attr">#[async_std::test]
+    </span><span class="kw">async fn </span>test_api_disco() {
+        setup_test();
+
+        <span class="comment">// Test discoverability documentation when a request is for an unknown API.
+        </span><span class="kw">let </span><span class="kw-2">mut </span>app = App::&lt;<span class="kw">_</span>, ServerError, StaticVer01&gt;::with_state(());
+        app.module::&lt;ServerError&gt;(
+            <span class="string">"the-correct-module"</span>,
+            <span class="macro">toml! </span>{
+                route = {}
+            },
+        )
+        .unwrap()
+        .with_version(<span class="string">"1.0.0"</span>.parse().unwrap());
+
+        <span class="kw">let </span>port = pick_unused_port().unwrap();
+        <span class="kw">let </span>url: Url = <span class="macro">format!</span>(<span class="string">"http://localhost:{}"</span>, port).parse().unwrap();
+        spawn(app.serve(<span class="macro">format!</span>(<span class="string">"0.0.0.0:{}"</span>, port), VER_0_1));
+        <span class="kw">let </span>client = Client::new(url.clone()).<span class="kw">await</span>;
+
+        <span class="kw">let </span>expected_list_item = <span class="macro">html! </span>{
+            a href=<span class="string">"/the-correct-module" </span>{<span class="string">"the-correct-module"</span>}
+            sup {
+                a href=<span class="string">"/v1/the-correct-module" </span>{<span class="string">"[v1]"</span>}
+            }
+        }
+        .into_string();
+
+        <span class="kw">for </span>version_prefix <span class="kw">in </span>[<span class="string">""</span>, <span class="string">"/v1"</span>] {
+            <span class="kw">let </span>docs = client
+                .get(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"{version_prefix}/test"</span>))
+                .send()
+                .<span class="kw">await
+                </span>.unwrap()
+                .text()
+                .<span class="kw">await
+                </span>.unwrap();
+            <span class="macro">assert!</span>(docs.contains(<span class="string">"No API matches /test"</span>), <span class="string">"{docs}"</span>);
+            <span class="macro">assert!</span>(docs.contains(<span class="kw-2">&amp;</span>expected_list_item), <span class="string">"{docs}"</span>);
+        }
+
+        <span class="comment">// Top level documentation.
+        </span><span class="kw">let </span>docs = client.get(<span class="string">""</span>).send().<span class="kw">await</span>.unwrap().text().<span class="kw">await</span>.unwrap();
+        <span class="macro">assert!</span>(!docs.contains(<span class="string">"No API matches"</span>), <span class="string">"{docs}"</span>);
+        <span class="macro">assert!</span>(docs.contains(<span class="kw-2">&amp;</span>expected_list_item), <span class="string">"{docs}"</span>);
+
+        <span class="kw">let </span>docs = client
+            .get(<span class="string">"/v1"</span>)
+            .send()
+            .<span class="kw">await
+            </span>.unwrap()
+            .text()
+            .<span class="kw">await
+            </span>.unwrap();
+        <span class="macro">assert!</span>(
+            docs.contains(<span class="string">"illegal version prefix without API specifier"</span>),
+            <span class="string">"{docs}"
+        </span>);
+        <span class="macro">assert!</span>(docs.contains(<span class="kw-2">&amp;</span>expected_list_item), <span class="string">"{docs}"</span>);
+    }
+
+    <span class="attr">#[async_std::test]
+    </span><span class="kw">async fn </span>test_post_redirect_idempotency() {
+        setup_test();
+
+        <span class="kw">let </span><span class="kw-2">mut </span>app = App::&lt;<span class="kw">_</span>, ServerError, StaticVer01&gt;::with_state(RwLock::new(<span class="number">0</span>));
+
+        <span class="kw">let </span>api_toml = <span class="macro">toml! </span>{
+            [meta]
+            FORMAT_VERSION = <span class="string">"0.1.0"
+
+            </span>[route.test]
+            METHOD = <span class="string">"POST"
+            </span>PATH = [<span class="string">"/test"</span>]
+        };
+        {
+            <span class="kw">let </span><span class="kw-2">mut </span>api = app.module::&lt;ServerError&gt;(<span class="string">"mod"</span>, api_toml.clone()).unwrap();
+            api.post(<span class="string">"test"</span>, |_req, state| {
+                <span class="kw">async move </span>{
+                    <span class="kw-2">*</span>state += <span class="number">1</span>;
+                    <span class="prelude-val">Ok</span>(<span class="kw-2">*</span>state)
+                }
+                .boxed()
+            })
+            .unwrap();
+        }
+
+        <span class="kw">let </span>port = pick_unused_port().unwrap();
+        <span class="kw">let </span>url: Url = <span class="macro">format!</span>(<span class="string">"http://localhost:{}"</span>, port).parse().unwrap();
+        spawn(app.serve(<span class="macro">format!</span>(<span class="string">"0.0.0.0:{}"</span>, port), VER_0_1));
+        <span class="kw">let </span>client = Client::new(url.clone()).<span class="kw">await</span>;
+
+        <span class="kw">for </span>i <span class="kw">in </span><span class="number">1</span>..<span class="number">3 </span>{
+            <span class="comment">// Request gets redirected to latest version of API and resent, but endpoint handler
+            // only executes once.
+            </span><span class="macro">assert_eq!</span>(
+                client
+                    .post(<span class="string">"mod/test"</span>)
+                    .send()
+                    .<span class="kw">await
+                    </span>.unwrap()
+                    .json::&lt;u64&gt;()
+                    .<span class="kw">await
+                    </span>.unwrap(),
+                i
+            );
+        }
     }
 }
 </code></pre></div></section></main></body></html>
