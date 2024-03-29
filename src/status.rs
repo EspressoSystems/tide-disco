@@ -556,7 +556,7 @@ impl StatusCode {
 #[cfg(test)]
 mod test {
     use super::*;
-    use versioned_binary_serialization::{version::StaticVersion, BinarySerializer, Serializer};
+    use vbs::{version::StaticVersion, BinarySerializer, Serializer};
 
     type SerializerV01 = Serializer<StaticVersion<0, 1>>;
     #[test]

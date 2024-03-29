@@ -8,6 +8,7 @@ use crate::{
     healthcheck::{HealthCheck, HealthStatus},
     method::{Method, ReadState, WriteState},
     metrics::Metrics,
+    middleware::{error_handler, ErrorHandler},
     request::RequestParams,
     route::{self, *},
     socket, Html,
@@ -15,21 +16,26 @@ use crate::{
 use async_std::sync::Arc;
 use async_trait::async_trait;
 use derivative::Derivative;
-use derive_more::From;
-use futures::{future::BoxFuture, stream::BoxStream};
+use futures::{
+    future::{BoxFuture, FutureExt},
+    stream::BoxStream,
+};
 use maud::{html, PreEscaped};
 use semver::Version;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use serde_with::{serde_as, DisplayFromStr};
 use snafu::{OptionExt, ResultExt, Snafu};
-use std::borrow::Cow;
-use std::collections::hash_map::{Entry, HashMap, IntoValues, Values};
-use std::fmt::Display;
-use std::fs;
-use std::ops::Index;
-use std::path::{Path, PathBuf};
+use std::{
+    borrow::Cow,
+    collections::hash_map::{Entry, HashMap, IntoValues, Values},
+    fmt::Display,
+    fs,
+    marker::PhantomData,
+    ops::Index,
+    path::{Path, PathBuf},
+};
 use tide::http::content::Accept;
-use versioned_binary_serialization::version::StaticVersionType;
+use vbs::version::StaticVersionType;
 
 /// An error encountered when parsing or constructing an [Api].
 #[derive(Clone, Debug, Snafu, PartialEq, Eq)]
@@ -253,64 +259,160 @@ mod meta_defaults {
 /// TOML file and registered as a module of an [App](crate::App).
 #[derive(Derivative)]
 #[derivative(Debug(bound = ""))]
-pub struct Api<State, Error, VER: StaticVersionType> {
+pub struct Api<State, Error, VER> {
+    inner: ApiInner<State, Error>,
+    _version: PhantomData<VER>,
+}
+
+/// A version-erased description of an API.
+///
+/// This type contains all the details of the API, with the version of the binary serialization
+/// format type-erased and encapsulated into the route handlers. This type is used internally by
+/// [`App`], to allow dynamic registration of different versions of APIs with different versions of
+/// the binary format.
+///
+/// It is exposed publicly and manipulated _only_ via [`Api`], which wraps this type with a static
+/// format version type parameter, which provides compile-time enforcement of format version
+/// consistency as the API is being constructed, until it is registered with an [`App`] and
+/// type-erased.
+#[derive(Derivative)]
+#[derivative(Debug(bound = ""))]
+pub(crate) struct ApiInner<State, Error> {
     meta: Arc<ApiMetadata>,
     name: String,
-    routes: HashMap<String, Route<State, Error, VER>>,
+    routes: HashMap<String, Route<State, Error>>,
     routes_by_path: HashMap<String, Vec<String>>,
     #[derivative(Debug = "ignore")]
-    health_check: Option<HealthCheckHandler<State>>,
+    health_check: HealthCheckHandler<State>,
     api_version: Option<Version>,
+    /// Error handler encapsulating the serialization format version for errors.
+    ///
+    /// This field is optional so it can be bound late, potentially after a `map_err` changes the
+    /// error type. However, it will always be set after `Api::into_inner` is called.
+    #[derivative(Debug = "ignore")]
+    error_handler: Option<Arc<dyn ErrorHandler<Error>>>,
     public: Option<PathBuf>,
     short_description: String,
     long_description: String,
 }
 
-impl<'a, State, Error, VER: StaticVersionType> IntoIterator for &'a Api<State, Error, VER> {
-    type Item = &'a Route<State, Error, VER>;
-    type IntoIter = Values<'a, String, Route<State, Error, VER>>;
+impl<'a, State, Error> IntoIterator for &'a ApiInner<State, Error> {
+    type Item = &'a Route<State, Error>;
+    type IntoIter = Values<'a, String, Route<State, Error>>;
 
     fn into_iter(self) -> Self::IntoIter {
         self.routes.values()
     }
 }
 
-impl<State, Error, VER: StaticVersionType> IntoIterator for Api<State, Error, VER> {
-    type Item = Route<State, Error, VER>;
-    type IntoIter = IntoValues<String, Route<State, Error, VER>>;
+impl<State, Error> IntoIterator for ApiInner<State, Error> {
+    type Item = Route<State, Error>;
+    type IntoIter = IntoValues<String, Route<State, Error>>;
 
     fn into_iter(self) -> Self::IntoIter {
         self.routes.into_values()
     }
 }
 
-impl<State, Error, VER: StaticVersionType> Index<&str> for Api<State, Error, VER> {
-    type Output = Route<State, Error, VER>;
+impl<State, Error> Index<&str> for ApiInner<State, Error> {
+    type Output = Route<State, Error>;
 
-    fn index(&self, index: &str) -> &Route<State, Error, VER> {
+    fn index(&self, index: &str) -> &Route<State, Error> {
         &self.routes[index]
     }
 }
 
-/// Iterator for [routes_by_path](Api::routes_by_path).
+/// Iterator for [routes_by_path](ApiInner::routes_by_path).
 ///
 /// This type iterates over all of the routes that have a given path.
-/// [routes_by_path](Api::routes_by_path), in turn, returns an iterator over paths whose items
+/// [routes_by_path](ApiInner::routes_by_path), in turn, returns an iterator over paths whose items
 /// contain a [RoutesWithPath] iterator.
-pub struct RoutesWithPath<'a, State, Error, VER: StaticVersionType> {
+pub(crate) struct RoutesWithPath<'a, State, Error> {
     routes: std::slice::Iter<'a, String>,
-    api: &'a Api<State, Error, VER>,
+    api: &'a ApiInner<State, Error>,
 }
 
-impl<'a, State, Error, VER: StaticVersionType> Iterator for RoutesWithPath<'a, State, Error, VER> {
-    type Item = &'a Route<State, Error, VER>;
+impl<'a, State, Error> Iterator for RoutesWithPath<'a, State, Error> {
+    type Item = &'a Route<State, Error>;
 
     fn next(&mut self) -> Option<Self::Item> {
         Some(&self.api.routes[self.routes.next()?])
     }
 }
 
-impl<State, Error, VER: StaticVersionType> Api<State, Error, VER> {
+impl<State, Error> ApiInner<State, Error> {
+    /// Iterate over groups of routes with the same path.
+    pub(crate) fn routes_by_path(
+        &self,
+    ) -> impl Iterator<Item = (&str, RoutesWithPath<'_, State, Error>)> {
+        self.routes_by_path.iter().map(|(path, routes)| {
+            (
+                path.as_str(),
+                RoutesWithPath {
+                    routes: routes.iter(),
+                    api: self,
+                },
+            )
+        })
+    }
+
+    /// Check the health status of a server with the given state.
+    pub(crate) async fn health(&self, req: RequestParams, state: &State) -> tide::Response {
+        (self.health_check)(req, state).await
+    }
+
+    /// Get the version of this API.
+    pub(crate) fn version(&self) -> ApiVersion {
+        ApiVersion {
+            api_version: self.api_version.clone(),
+            spec_version: self.meta.format_version.clone(),
+        }
+    }
+
+    pub(crate) fn public(&self) -> Option<&PathBuf> {
+        self.public.as_ref()
+    }
+
+    pub(crate) fn set_name(&mut self, name: String) {
+        self.name = name;
+    }
+
+    /// Compose an HTML page documenting all the routes in this API.
+    pub(crate) fn documentation(&self) -> Html {
+        html! {
+            (PreEscaped(self.meta.html_top
+                .replace("{{NAME}}", &self.name)
+                .replace("{{SHORT_DESCRIPTION}}", &self.short_description)
+                .replace("{{LONG_DESCRIPTION}}", &self.long_description)
+                .replace("{{VERSION}}", &match &self.api_version {
+                    Some(version) => version.to_string(),
+                    None => "(no version)".to_string(),
+                })
+                .replace("{{FORMAT_VERSION}}", &self.meta.format_version.to_string())
+                .replace("{{PUBLIC}}", &format!("/public/{}", self.name))))
+            @for route in self.routes.values() {
+                (route.documentation())
+            }
+            (PreEscaped(&self.meta.html_bottom))
+        }
+    }
+
+    /// The short description of this API from the specification.
+    pub(crate) fn short_description(&self) -> &str {
+        &self.short_description
+    }
+
+    pub(crate) fn error_handler(&self) -> Arc<dyn ErrorHandler<Error>> {
+        self.error_handler.clone().unwrap()
+    }
+}
+
+impl<State, Error, VER> Api<State, Error, VER>
+where
+    State: 'static,
+    Error: 'static,
+    VER: StaticVersionType + 'static,
+{
     /// Parse an API from a TOML specification.
     pub fn new(api: impl Into<toml::Value>) -> Result<Self, ApiError> {
         let mut api = api.into();
@@ -386,15 +488,19 @@ impl<State, Error, VER: StaticVersionType> Api<State, Error, VER> {
         };
 
         Ok(Self {
-            name: meta.name.clone(),
-            meta,
-            routes,
-            routes_by_path,
-            health_check: None,
-            api_version: None,
-            public: None,
-            short_description,
-            long_description,
+            inner: ApiInner {
+                name: meta.name.clone(),
+                meta,
+                routes,
+                routes_by_path,
+                health_check: Box::new(Self::default_health_check),
+                api_version: None,
+                error_handler: None,
+                public: None,
+                short_description,
+                long_description,
+            },
+            _version: Default::default(),
         })
     }
 
@@ -413,21 +519,6 @@ impl<State, Error, VER: StaticVersionType> Api<State, Error, VER> {
         })?)
     }
 
-    /// Iterate over groups of routes with the same path.
-    pub fn routes_by_path(
-        &self,
-    ) -> impl Iterator<Item = (&str, RoutesWithPath<'_, State, Error, VER>)> {
-        self.routes_by_path.iter().map(|(path, routes)| {
-            (
-                path.as_str(),
-                RoutesWithPath {
-                    routes: routes.iter(),
-                    api: self,
-                },
-            )
-        })
-    }
-
     /// Set the API version.
     ///
     /// The version information will automatically be included in responses to `GET /version`. This
@@ -440,13 +531,13 @@ impl<State, Error, VER: StaticVersionType> Api<State, Error, VER> {
     /// and may be different from the version of the Rust crate implementing the route handlers for
     /// the API.
     pub fn with_version(&mut self, version: Version) -> &mut Self {
-        self.api_version = Some(version);
+        self.inner.api_version = Some(version);
         self
     }
 
     /// Serve the contents of `dir` at the URL `/public/{{NAME}}`.
     pub fn with_public(&mut self, dir: PathBuf) -> &mut Self {
-        self.public = Some(dir);
+        self.inner.public = Some(dir);
         self
     }
 
@@ -471,7 +562,7 @@ impl<State, Error, VER: StaticVersionType> Api<State, Error, VER> {
     /// ```
     /// use futures::FutureExt;
     /// # use tide_disco::Api;
-    /// # use versioned_binary_serialization::version::StaticVersion;
+    /// # use vbs::version::StaticVersion;
     ///
     /// type State = u64;
     /// type StaticVer01 = StaticVersion<0, 1>;
@@ -497,7 +588,7 @@ impl<State, Error, VER: StaticVersionType> Api<State, Error, VER> {
     /// use async_std::sync::Mutex;
     /// use futures::FutureExt;
     /// # use tide_disco::Api;
-    /// # use versioned_binary_serialization::version::StaticVersion;
+    /// # use vbs::version::StaticVersion;
     ///
     /// type State = Mutex<u64>;
     /// type StaticVer01 = StaticVersion<0, 1>;
@@ -549,7 +640,11 @@ impl<State, Error, VER: StaticVersionType> Api<State, Error, VER> {
         State: 'static + Send + Sync,
         VER: 'static + Send + Sync,
     {
-        let route = self.routes.get_mut(name).ok_or(ApiError::UndefinedRoute)?;
+        let route = self
+            .inner
+            .routes
+            .get_mut(name)
+            .ok_or(ApiError::UndefinedRoute)?;
         if route.has_handler() {
             return Err(ApiError::HandlerAlreadyRegistered);
         }
@@ -565,7 +660,7 @@ impl<State, Error, VER: StaticVersionType> Api<State, Error, VER> {
         // `set_fn_handler` only fails if the route is not an HTTP route; since we have already
         // checked that it is, this cannot fail.
         route
-            .set_fn_handler(handler)
+            .set_fn_handler(handler, VER::instance())
             .unwrap_or_else(|_| panic!("unexpected failure in set_fn_handler"));
 
         Ok(self)
@@ -587,7 +682,11 @@ impl<State, Error, VER: StaticVersionType> Api<State, Error, VER> {
         VER: 'static + Send + Sync + StaticVersionType,
     {
         assert!(method.is_http() && !method.is_mutable());
-        let route = self.routes.get_mut(name).ok_or(ApiError::UndefinedRoute)?;
+        let route = self
+            .inner
+            .routes
+            .get_mut(name)
+            .ok_or(ApiError::UndefinedRoute)?;
         if route.method() != method {
             return Err(ApiError::IncorrectMethod {
                 expected: method,
@@ -600,7 +699,7 @@ impl<State, Error, VER: StaticVersionType> Api<State, Error, VER> {
         // `set_handler` only fails if the route is not an HTTP route; since we have already checked
         // that it is, this cannot fail.
         route
-            .set_handler(ReadHandler::from(handler))
+            .set_handler(ReadHandler::<_, VER>::from(handler))
             .unwrap_or_else(|_| panic!("unexpected failure in set_handler"));
         Ok(self)
     }
@@ -632,7 +731,7 @@ impl<State, Error, VER: StaticVersionType> Api<State, Error, VER> {
     /// use async_std::sync::RwLock;
     /// use futures::FutureExt;
     /// # use tide_disco::Api;
-    /// # use versioned_binary_serialization::{Serializer, version::StaticVersion};
+    /// # use vbs::{Serializer, version::StaticVersion};
     ///
     /// type State = RwLock<u64>;
     /// type StaticVer01 = StaticVersion<0, 1>;
@@ -686,7 +785,11 @@ impl<State, Error, VER: StaticVersionType> Api<State, Error, VER> {
         VER: 'static + Send + Sync,
     {
         assert!(method.is_http() && method.is_mutable());
-        let route = self.routes.get_mut(name).ok_or(ApiError::UndefinedRoute)?;
+        let route = self
+            .inner
+            .routes
+            .get_mut(name)
+            .ok_or(ApiError::UndefinedRoute)?;
         if route.method() != method {
             return Err(ApiError::IncorrectMethod {
                 expected: method,
@@ -700,7 +803,7 @@ impl<State, Error, VER: StaticVersionType> Api<State, Error, VER> {
         // `set_handler` only fails if the route is not an HTTP route; since we have already checked
         // that it is, this cannot fail.
         route
-            .set_handler(WriteHandler::from(handler))
+            .set_handler(WriteHandler::<_, VER>::from(handler))
             .unwrap_or_else(|_| panic!("unexpected failure in set_handler"));
         Ok(self)
     }
@@ -733,7 +836,7 @@ impl<State, Error, VER: StaticVersionType> Api<State, Error, VER> {
     /// use async_std::sync::RwLock;
     /// use futures::FutureExt;
     /// # use tide_disco::Api;
-    /// # use versioned_binary_serialization::version::StaticVersion;
+    /// # use vbs::version::StaticVersion;
     ///
     /// type State = RwLock<u64>;
     /// type StaticVer01 = StaticVersion<0, 1>;
@@ -803,7 +906,7 @@ impl<State, Error, VER: StaticVersionType> Api<State, Error, VER> {
     /// use async_std::sync::RwLock;
     /// use futures::FutureExt;
     /// # use tide_disco::Api;
-    /// # use versioned_binary_serialization::version::StaticVersion;
+    /// # use vbs::version::StaticVersion;
     ///
     /// type State = RwLock<u64>;
     /// type StaticVer01 = StaticVersion<0, 1>;
@@ -872,7 +975,7 @@ impl<State, Error, VER: StaticVersionType> Api<State, Error, VER> {
     /// use async_std::sync::RwLock;
     /// use futures::FutureExt;
     /// # use tide_disco::Api;
-    /// # use versioned_binary_serialization::version::StaticVersion;
+    /// # use vbs::version::StaticVersion;
     ///
     /// type State = RwLock<Option<u64>>;
     /// type StaticVer01 = StaticVersion<0, 1>;
@@ -944,7 +1047,7 @@ impl<State, Error, VER: StaticVersionType> Api<State, Error, VER> {
     /// ```
     /// use futures::{FutureExt, SinkExt, StreamExt};
     /// use tide_disco::{error::ServerError, socket::Connection, Api};
-    /// # use versioned_binary_serialization::version::StaticVersion;
+    /// # use vbs::version::StaticVersion;
     ///
     /// # fn ex(api: &mut Api<(), ServerError, StaticVersion<0, 1>>) {
     /// api.socket("sum", |_req, mut conn: Connection<i32, i32, ServerError, StaticVersion<0, 1>>, _state| async move {
@@ -1021,7 +1124,11 @@ impl<State, Error, VER: StaticVersionType> Api<State, Error, VER> {
         name: &str,
         handler: socket::Handler<State, Error>,
     ) -> Result<&mut Self, ApiError> {
-        let route = self.routes.get_mut(name).ok_or(ApiError::UndefinedRoute)?;
+        let route = self
+            .inner
+            .routes
+            .get_mut(name)
+            .ok_or(ApiError::UndefinedRoute)?;
         if route.method() != Method::Socket {
             return Err(ApiError::IncorrectMethod {
                 expected: Method::Socket,
@@ -1074,7 +1181,7 @@ impl<State, Error, VER: StaticVersionType> Api<State, Error, VER> {
     /// # use futures::FutureExt;
     /// # use tide_disco::{api::{Api, ApiError}, error::ServerError};
     /// # use std::borrow::Cow;
-    /// # use versioned_binary_serialization::version::StaticVersion;
+    /// # use vbs::version::StaticVersion;
     /// use prometheus::{Counter, Registry};
     ///
     /// struct State {
@@ -1120,7 +1227,11 @@ impl<State, Error, VER: StaticVersionType> Api<State, Error, VER> {
         Error: 'static,
         VER: 'static + Send + Sync,
     {
-        let route = self.routes.get_mut(name).ok_or(ApiError::UndefinedRoute)?;
+        let route = self
+            .inner
+            .routes
+            .get_mut(name)
+            .ok_or(ApiError::UndefinedRoute)?;
         if route.method() != Method::Metrics {
             return Err(ApiError::IncorrectMethod {
                 expected: Method::Metrics,
@@ -1151,44 +1262,12 @@ impl<State, Error, VER: StaticVersionType> Api<State, Error, VER> {
         H: 'static + HealthCheck,
         VER: 'static + Send + Sync,
     {
-        self.health_check = Some(route::health_check_handler::<_, _, VER>(handler));
+        self.inner.health_check = route::health_check_handler::<_, _, VER>(handler);
         self
     }
 
-    /// Check the health status of a server with the given state.
-    pub async fn health(&self, req: RequestParams, state: &State) -> tide::Response {
-        if let Some(handler) = &self.health_check {
-            handler(req, state).await
-        } else {
-            // If there is no healthcheck handler registered, just return [HealthStatus::Available]
-            // by default; after all, if this handler is getting hit at all, the service must be up.
-            route::health_check_response::<_, VER>(
-                &req.accept().unwrap_or_else(|_| {
-                    // The healthcheck endpoint is not allowed to fail, so just use the default content
-                    // type if we can't parse the Accept header.
-                    let mut accept = Accept::new();
-                    accept.set_wildcard(true);
-                    accept
-                }),
-                HealthStatus::Available,
-            )
-        }
-    }
-
-    /// Get the version of this API.
-    pub fn version(&self) -> ApiVersion {
-        ApiVersion {
-            api_version: self.api_version.clone(),
-            spec_version: self.meta.format_version.clone(),
-        }
-    }
-
-    pub(crate) fn public(&self) -> Option<&PathBuf> {
-        self.public.as_ref()
-    }
-
     /// Create a new [Api] which is just like this one, except has a transformed `Error` type.
-    pub fn map_err<Error2>(
+    pub(crate) fn map_err<Error2>(
         self,
         f: impl 'static + Clone + Send + Sync + Fn(Error) -> Error2,
     ) -> Api<State, Error2, VER>
@@ -1196,52 +1275,55 @@ impl<State, Error, VER: StaticVersionType> Api<State, Error, VER> {
         Error: 'static + Send + Sync,
         Error2: 'static,
         State: 'static + Send + Sync,
-        VER: 'static + Send + Sync,
     {
         Api {
-            meta: self.meta,
-            name: self.name,
-            routes: self
-                .routes
-                .into_iter()
-                .map(|(name, route)| (name, route.map_err(f.clone())))
-                .collect(),
-            routes_by_path: self.routes_by_path,
-            health_check: self.health_check,
-            api_version: self.api_version,
-            public: self.public,
-            short_description: self.short_description,
-            long_description: self.long_description,
+            inner: ApiInner {
+                meta: self.inner.meta,
+                name: self.inner.name,
+                routes: self
+                    .inner
+                    .routes
+                    .into_iter()
+                    .map(|(name, route)| (name, route.map_err(f.clone())))
+                    .collect(),
+                routes_by_path: self.inner.routes_by_path,
+                health_check: self.inner.health_check,
+                api_version: self.inner.api_version,
+                error_handler: None,
+                public: self.inner.public,
+                short_description: self.inner.short_description,
+                long_description: self.inner.long_description,
+            },
+            _version: Default::default(),
         }
     }
 
-    pub(crate) fn set_name(&mut self, name: String) {
-        self.name = name;
+    pub(crate) fn into_inner(mut self) -> ApiInner<State, Error>
+    where
+        Error: crate::Error,
+    {
+        // This `into_inner` finalizes the error type for the API. At this point, ensure
+        // `error_handler` is set.
+        self.inner.error_handler = Some(error_handler::<Error, VER>());
+        self.inner
     }
 
-    /// Compose an HTML page documenting all the routes in this API.
-    pub fn documentation(&self) -> Html {
-        html! {
-            (PreEscaped(self.meta.html_top
-                .replace("{{NAME}}", &self.name)
-                .replace("{{SHORT_DESCRIPTION}}", &self.short_description)
-                .replace("{{LONG_DESCRIPTION}}", &self.long_description)
-                .replace("{{VERSION}}", &match &self.api_version {
-                    Some(version) => version.to_string(),
-                    None => "(no version)".to_string(),
-                })
-                .replace("{{FORMAT_VERSION}}", &self.meta.format_version.to_string())
-                .replace("{{PUBLIC}}", &format!("/public/{}", self.name))))
-            @for route in self.routes.values() {
-                (route.documentation())
-            }
-            (PreEscaped(&self.meta.html_bottom))
+    fn default_health_check(req: RequestParams, _state: &State) -> BoxFuture<tide::Response> {
+        async move {
+            // If there is no healthcheck handler registered, just return [HealthStatus::Available]
+            // by default; after all, if this handler is getting hit at all, the service must be up.
+            route::health_check_response::<_, VER>(
+                &req.accept().unwrap_or_else(|_| {
+                    // The healthcheck endpoint is not allowed to fail, so just use the default
+                    // content type if we can't parse the Accept header.
+                    let mut accept = Accept::new();
+                    accept.set_wildcard(true);
+                    accept
+                }),
+                HealthStatus::Available,
+            )
         }
-    }
-
-    /// The short description of this API from the specification.
-    pub fn short_description(&self) -> &str {
-        &self.short_description
+        .boxed()
     }
 }
 
@@ -1253,13 +1335,22 @@ impl<State, Error, VER: StaticVersionType> Api<State, Error, VER> {
 // by reference, and probably partly due to my lack of creativity. In any case, writing out the
 // closure object and [Handler] implementation by hand seems to convince Rust that this code is
 // memory safe.
-#[derive(From)]
-struct ReadHandler<F> {
+struct ReadHandler<F, VER> {
     handler: F,
+    _version: PhantomData<VER>,
+}
+
+impl<F, VER> From<F> for ReadHandler<F, VER> {
+    fn from(f: F) -> Self {
+        Self {
+            handler: f,
+            _version: Default::default(),
+        }
+    }
 }
 
 #[async_trait]
-impl<State, Error, F, R, VER> Handler<State, Error, VER> for ReadHandler<F>
+impl<State, Error, F, R, VER> Handler<State, Error> for ReadHandler<F, VER>
 where
     F: 'static
         + Send
@@ -1273,25 +1364,33 @@ where
         &self,
         req: RequestParams,
         state: &State,
-        bind_version: VER,
     ) -> Result<tide::Response, RouteError<Error>> {
         let accept = req.accept()?;
         response_from_result(
             &accept,
             state.read(|state| (self.handler)(req, state)).await,
-            bind_version,
+            VER::instance(),
         )
     }
 }
 
 // A manual closure that serves a similar purpose as [ReadHandler].
-#[derive(From)]
-struct WriteHandler<F> {
+struct WriteHandler<F, VER> {
     handler: F,
+    _version: PhantomData<VER>,
+}
+
+impl<F, VER> From<F> for WriteHandler<F, VER> {
+    fn from(f: F) -> Self {
+        Self {
+            handler: f,
+            _version: Default::default(),
+        }
+    }
 }
 
 #[async_trait]
-impl<State, Error, F, R, VER> Handler<State, Error, VER> for WriteHandler<F>
+impl<State, Error, F, R, VER> Handler<State, Error> for WriteHandler<F, VER>
 where
     F: 'static
         + Send
@@ -1305,13 +1404,12 @@ where
         &self,
         req: RequestParams,
         state: &State,
-        bind_version: VER,
     ) -> Result<tide::Response, RouteError<Error>> {
         let accept = req.accept()?;
         response_from_result(
             &accept,
             state.write(|state| (self.handler)(req, state)).await,
-            bind_version,
+            VER::instance(),
         )
     }
 }
@@ -1338,7 +1436,7 @@ mod test {
     use prometheus::{Counter, Registry};
     use std::borrow::Cow;
     use toml::toml;
-    use versioned_binary_serialization::{version::StaticVersion, BinarySerializer, Serializer};
+    use vbs::{version::StaticVersion, BinarySerializer, Serializer};
 
     #[cfg(windows)]
     use async_tungstenite::tungstenite::Error as WsError;
@@ -1347,7 +1445,6 @@ mod test {
 
     type StaticVer01 = StaticVersion<0, 1>;
     type SerializerV01 = Serializer<StaticVersion<0, 1>>;
-    const VER_0_1: StaticVer01 = StaticVersion {};
 
     async fn check_stream_closed<S>(mut conn: WebSocketStream<S>)
     where
@@ -1392,7 +1489,9 @@ mod test {
             METHOD = "SOCKET"
         };
         {
-            let mut api = app.module::<ServerError>("mod", api_toml).unwrap();
+            let mut api = app
+                .module::<ServerError, StaticVer01>("mod", api_toml)
+                .unwrap();
             api.socket(
                 "echo",
                 |_req, mut conn: Connection<String, String, _, StaticVer01>, _state| {
@@ -1433,7 +1532,7 @@ mod test {
         }
         let port = pick_unused_port().unwrap();
         let url: Url = format!("http://localhost:{}", port).parse().unwrap();
-        spawn(app.serve(format!("0.0.0.0:{}", port), VER_0_1));
+        spawn(app.serve(format!("0.0.0.0:{}", port)));
 
         // Create a client that accepts JSON messages.
         let mut conn = test_ws_client_with_headers(
@@ -1535,7 +1634,9 @@ mod test {
             METHOD = "SOCKET"
         };
         {
-            let mut api = app.module::<ServerError>("mod", api_toml).unwrap();
+            let mut api = app
+                .module::<ServerError, StaticVer01>("mod", api_toml)
+                .unwrap();
             api.stream("nat", |_req, _state| iter(0..).map(Ok).boxed())
                 .unwrap()
                 .stream("once", |_req, _state| once(async { Ok(0) }).boxed())
@@ -1553,7 +1654,7 @@ mod test {
         }
         let port = pick_unused_port().unwrap();
         let url: Url = format!("http://localhost:{}", port).parse().unwrap();
-        spawn(app.serve(format!("0.0.0.0:{}", port), VER_0_1));
+        spawn(app.serve(format!("0.0.0.0:{}", port)));
 
         // Consume the `nat` stream.
         let mut conn = test_ws_client(url.join("mod/nat").unwrap()).await;
@@ -1601,12 +1702,14 @@ mod test {
             PATH = ["/dummy"]
         };
         {
-            let mut api = app.module::<ServerError>("mod", api_toml).unwrap();
+            let mut api = app
+                .module::<ServerError, StaticVer01>("mod", api_toml)
+                .unwrap();
             api.with_health_check(|state| async move { *state }.boxed());
         }
         let port = pick_unused_port().unwrap();
         let url: Url = format!("http://localhost:{}", port).parse().unwrap();
-        spawn(app.serve(format!("0.0.0.0:{}", port), VER_0_1));
+        spawn(app.serve(format!("0.0.0.0:{}", port)));
         let client = Client::new(url).await;
 
         let res = client.get("/mod/healthcheck").send().await.unwrap();
@@ -1645,7 +1748,9 @@ mod test {
             METHOD = "METRICS"
         };
         {
-            let mut api = app.module::<ServerError>("mod", api_toml).unwrap();
+            let mut api = app
+                .module::<ServerError, StaticVer01>("mod", api_toml)
+                .unwrap();
             api.metrics("metrics", |_req, state| {
                 async move {
                     state.counter.inc();
@@ -1657,7 +1762,7 @@ mod test {
         }
         let port = pick_unused_port().unwrap();
         let url: Url = format!("http://localhost:{port}").parse().unwrap();
-        spawn(app.serve(format!("0.0.0.0:{port}"), VER_0_1));
+        spawn(app.serve(format!("0.0.0.0:{port}")));
         let client = Client::new(url).await;
 
         for i in 1..5 {

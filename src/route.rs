@@ -16,17 +16,18 @@ use crate::{
 use async_std::sync::Arc;
 use async_trait::async_trait;
 use derivative::Derivative;
-use derive_more::From;
 use futures::future::{BoxFuture, FutureExt};
 use maud::{html, PreEscaped};
 use serde::Serialize;
 use snafu::{OptionExt, Snafu};
-use std::borrow::Cow;
-use std::collections::HashMap;
-use std::convert::Infallible;
-use std::fmt::{self, Display, Formatter};
-use std::marker::PhantomData;
-use std::str::FromStr;
+use std::{
+    borrow::Cow,
+    collections::HashMap,
+    convert::Infallible,
+    fmt::{self, Display, Formatter},
+    marker::PhantomData,
+    str::FromStr,
+};
 use tide::{
     http::{
         self,
@@ -36,7 +37,7 @@ use tide::{
     Body,
 };
 use tide_websockets::WebSocketConnection;
-use versioned_binary_serialization::{version::StaticVersionType, BinarySerializer, Serializer};
+use vbs::{version::StaticVersionType, BinarySerializer, Serializer};
 
 /// An error returned by a route handler.
 ///
@@ -114,14 +115,11 @@ impl<E> From<RequestError> for RouteError<E> {
 /// return type of a handler function. The types which are preserved, `State` and `Error`, should be
 /// the same for all handlers in an API module.
 #[async_trait]
-pub(crate) trait Handler<State, Error, VER: StaticVersionType>:
-    'static + Send + Sync
-{
+pub(crate) trait Handler<State, Error>: 'static + Send + Sync {
     async fn handle(
         &self,
         req: RequestParams,
         state: &State,
-        bind_version: VER,
     ) -> Result<tide::Response, RouteError<Error>>;
 }
 
@@ -139,11 +137,16 @@ pub(crate) trait Handler<State, Error, VER: StaticVersionType>:
 ///
 /// [Like many function parameters](crate#boxed-futures) in [tide_disco](crate), the handler
 /// function is required to return a [BoxFuture].
-#[derive(From)]
-pub(crate) struct FnHandler<F>(F);
+pub(crate) struct FnHandler<F, VER>(F, PhantomData<VER>);
+
+impl<F, VER> From<F> for FnHandler<F, VER> {
+    fn from(f: F) -> Self {
+        Self(f, Default::default())
+    }
+}
 
 #[async_trait]
-impl<F, T, State, Error, VER> Handler<State, Error, VER> for FnHandler<F>
+impl<F, T, State, Error, VER> Handler<State, Error> for FnHandler<F, VER>
 where
     F: 'static + Send + Sync + Fn(RequestParams, &State) -> BoxFuture<'_, Result<T, Error>>,
     T: Serialize,
@@ -154,10 +157,9 @@ where
         &self,
         req: RequestParams,
         state: &State,
-        bind_version: VER,
     ) -> Result<tide::Response, RouteError<Error>> {
         let accept = req.accept()?;
-        response_from_result(&accept, (self.0)(req, state).await, bind_version)
+        response_from_result(&accept, (self.0)(req, state).await, VER::instance())
     }
 }
 
@@ -171,43 +173,36 @@ pub(crate) fn response_from_result<T: Serialize, Error, VER: StaticVersionType>(
 }
 
 #[async_trait]
-impl<
-        H: ?Sized + Handler<State, Error, VER>,
-        State: 'static + Send + Sync,
-        Error,
-        VER: 'static + Send + Sync + StaticVersionType,
-    > Handler<State, Error, VER> for Box<H>
+impl<H: ?Sized + Handler<State, Error>, State: 'static + Send + Sync, Error> Handler<State, Error>
+    for Box<H>
 {
     async fn handle(
         &self,
         req: RequestParams,
         state: &State,
-        bind_version: VER,
     ) -> Result<tide::Response, RouteError<Error>> {
-        (**self).handle(req, state, bind_version).await
+        (**self).handle(req, state).await
     }
 }
 
-enum RouteImplementation<State, Error, VER: StaticVersionType> {
+enum RouteImplementation<State, Error> {
     Http {
         method: http::Method,
-        handler: Option<Box<dyn Handler<State, Error, VER>>>,
+        handler: Option<Box<dyn Handler<State, Error>>>,
     },
     Socket {
         handler: Option<socket::Handler<State, Error>>,
     },
     Metrics {
-        handler: Option<Box<dyn Handler<State, Error, VER>>>,
+        handler: Option<Box<dyn Handler<State, Error>>>,
     },
 }
 
-impl<State, Error, VER: 'static + Send + Sync + StaticVersionType>
-    RouteImplementation<State, Error, VER>
-{
+impl<State, Error> RouteImplementation<State, Error> {
     fn map_err<Error2>(
         self,
         f: impl 'static + Send + Sync + Fn(Error) -> Error2,
-    ) -> RouteImplementation<State, Error2, VER>
+    ) -> RouteImplementation<State, Error2>
     where
         State: 'static + Send + Sync,
         Error: 'static + Send + Sync,
@@ -217,10 +212,10 @@ impl<State, Error, VER: 'static + Send + Sync + StaticVersionType>
             Self::Http { method, handler } => RouteImplementation::Http {
                 method,
                 handler: handler.map(|h| {
-                    let h: Box<dyn Handler<State, Error2, VER>> =
-                        Box::new(
-                            MapErr::<Box<dyn Handler<State, Error, VER>>, _, Error>::new(h, f),
-                        );
+                    let h: Box<dyn Handler<State, Error2>> =
+                        Box::new(MapErr::<Box<dyn Handler<State, Error>>, _, Error>::new(
+                            h, f,
+                        ));
                     h
                 }),
             },
@@ -229,10 +224,10 @@ impl<State, Error, VER: 'static + Send + Sync + StaticVersionType>
             },
             Self::Metrics { handler } => RouteImplementation::Metrics {
                 handler: handler.map(|h| {
-                    let h: Box<dyn Handler<State, Error2, VER>> =
-                        Box::new(
-                            MapErr::<Box<dyn Handler<State, Error, VER>>, _, Error>::new(h, f),
-                        );
+                    let h: Box<dyn Handler<State, Error2>> =
+                        Box::new(MapErr::<Box<dyn Handler<State, Error>>, _, Error>::new(
+                            h, f,
+                        ));
                     h
                 }),
             },
@@ -248,14 +243,14 @@ impl<State, Error, VER: 'static + Send + Sync + StaticVersionType>
 /// simply returns information about the route.
 #[derive(Derivative)]
 #[derivative(Debug(bound = ""))]
-pub struct Route<State, Error, VER: StaticVersionType> {
+pub(crate) struct Route<State, Error> {
     name: String,
     patterns: Vec<String>,
     params: Vec<RequestParam>,
     doc: String,
     meta: Arc<ApiMetadata>,
     #[derivative(Debug = "ignore")]
-    handler: RouteImplementation<State, Error, VER>,
+    handler: RouteImplementation<State, Error>,
 }
 
 #[derive(Clone, Copy, Debug, Snafu, PartialEq, Eq)]
@@ -273,7 +268,7 @@ pub enum RouteParseError {
     RouteMustBeTable,
 }
 
-impl<State, Error, VER: StaticVersionType> Route<State, Error, VER> {
+impl<State, Error> Route<State, Error> {
     /// Parse a [Route] from a TOML specification.
     ///
     /// The specification must be a table containing at least the following keys:
@@ -396,12 +391,11 @@ impl<State, Error, VER: StaticVersionType> Route<State, Error, VER> {
     pub fn map_err<Error2>(
         self,
         f: impl 'static + Send + Sync + Fn(Error) -> Error2,
-    ) -> Route<State, Error2, VER>
+    ) -> Route<State, Error2>
     where
         State: 'static + Send + Sync,
         Error: 'static + Send + Sync,
         Error2: 'static,
-        VER: 'static + Send + Sync,
     {
         Route {
             handler: self.handler.map_err(f),
@@ -440,10 +434,10 @@ impl<State, Error, VER: StaticVersionType> Route<State, Error, VER> {
     }
 }
 
-impl<State, Error, VER: StaticVersionType> Route<State, Error, VER> {
+impl<State, Error> Route<State, Error> {
     pub(crate) fn set_handler(
         &mut self,
-        h: impl Handler<State, Error, VER>,
+        h: impl Handler<State, Error>,
     ) -> Result<(), RouteError<Error>> {
         match &mut self.handler {
             RouteImplementation::Http { handler, .. } => {
@@ -456,14 +450,18 @@ impl<State, Error, VER: StaticVersionType> Route<State, Error, VER> {
         }
     }
 
-    pub(crate) fn set_fn_handler<F, T>(&mut self, handler: F) -> Result<(), RouteError<Error>>
+    pub(crate) fn set_fn_handler<F, T, VER>(
+        &mut self,
+        handler: F,
+        _: VER,
+    ) -> Result<(), RouteError<Error>>
     where
         F: 'static + Send + Sync + Fn(RequestParams, &State) -> BoxFuture<'_, Result<T, Error>>,
         T: Serialize,
         State: 'static + Send + Sync,
-        VER: 'static + Send + Sync,
+        VER: StaticVersionType + 'static,
     {
-        self.set_handler(FnHandler::from(handler))
+        self.set_handler(FnHandler::<F, VER>::from(handler))
     }
 
     pub(crate) fn set_socket_handler(
@@ -490,7 +488,6 @@ impl<State, Error, VER: StaticVersionType> Route<State, Error, VER> {
         T: 'static + Clone + metrics::Metrics,
         State: 'static + Send + Sync + ReadState,
         Error: 'static,
-        VER: 'static + Send + Sync,
     {
         match &mut self.handler {
             RouteImplementation::Metrics { handler, .. } => {
@@ -535,22 +532,20 @@ impl<State, Error, VER: StaticVersionType> Route<State, Error, VER> {
 }
 
 #[async_trait]
-impl<State, Error, VER: StaticVersionType> Handler<State, Error, VER> for Route<State, Error, VER>
+impl<State, Error> Handler<State, Error> for Route<State, Error>
 where
     Error: 'static,
     State: 'static + Send + Sync,
-    VER: 'static + Send + Sync,
 {
     async fn handle(
         &self,
         req: RequestParams,
         state: &State,
-        bind_version: VER,
     ) -> Result<tide::Response, RouteError<Error>> {
         match &self.handler {
             RouteImplementation::Http { handler, .. }
             | RouteImplementation::Metrics { handler, .. } => match handler {
-                Some(handler) => handler.handle(req, state, bind_version).await,
+                Some(handler) => handler.handle(req, state).await,
                 None => self.default_handler(),
             },
             RouteImplementation::Socket { .. } => Err(RouteError::IncorrectMethod {
@@ -560,7 +555,7 @@ where
     }
 }
 
-pub struct MapErr<H, F, E> {
+pub(crate) struct MapErr<H, F, E> {
     handler: H,
     map: F,
     _phantom: PhantomData<E>,
@@ -577,23 +572,21 @@ impl<H, F, E> MapErr<H, F, E> {
 }
 
 #[async_trait]
-impl<H, F, State, Error1, Error2, VER> Handler<State, Error2, VER> for MapErr<H, F, Error1>
+impl<H, F, State, Error1, Error2> Handler<State, Error2> for MapErr<H, F, Error1>
 where
-    H: Handler<State, Error1, VER>,
+    H: Handler<State, Error1>,
     F: 'static + Send + Sync + Fn(Error1) -> Error2,
     State: 'static + Send + Sync,
     Error1: 'static + Send + Sync,
     Error2: 'static,
-    VER: 'static + Send + Sync + StaticVersionType,
 {
     async fn handle(
         &self,
         req: RequestParams,
         state: &State,
-        bind_version: VER,
     ) -> Result<tide::Response, RouteError<Error2>> {
         self.handler
-            .handle(req, state, bind_version)
+            .handle(req, state)
             .await
             .map_err(|err| err.map_app_specific(&self.map))
     }

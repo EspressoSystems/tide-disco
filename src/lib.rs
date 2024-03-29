@@ -286,10 +286,12 @@ pub mod healthcheck;
 pub mod method;
 pub mod metrics;
 pub mod request;
-pub mod route;
 pub mod socket;
 pub mod status;
 pub mod testing;
+
+mod middleware;
+mod route;
 
 pub use api::Api;
 pub use app::App;

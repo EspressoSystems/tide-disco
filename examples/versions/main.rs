@@ -7,10 +7,9 @@
 use futures::FutureExt;
 use std::io;
 use tide_disco::{error::ServerError, Api, App};
-use versioned_binary_serialization::version::StaticVersion;
+use vbs::version::StaticVersion;
 
 type StaticVer01 = StaticVersion<0, 1>;
-const STATIC_VER: StaticVer01 = StaticVersion {};
 
 async fn serve(port: u16) -> io::Result<()> {
     let mut app = App::<_, ServerError, StaticVer01>::with_state(());
@@ -32,7 +31,7 @@ async fn serve(port: u16) -> io::Result<()> {
         .unwrap()
         .register_module("api", v2)
         .unwrap();
-    app.serve(format!("0.0.0.0:{}", port), STATIC_VER).await
+    app.serve(format!("0.0.0.0:{}", port)).await
 }
 
 #[async_std::main]

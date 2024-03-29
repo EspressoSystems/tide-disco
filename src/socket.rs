@@ -29,7 +29,7 @@ use tide_websockets::{
     tungstenite::protocol::frame::{coding::CloseCode, CloseFrame},
     Message, WebSocketConnection,
 };
-use versioned_binary_serialization::{version::StaticVersionType, BinarySerializer, Serializer};
+use vbs::{version::StaticVersionType, BinarySerializer, Serializer};
 
 /// An error returned by a socket handler.
 ///

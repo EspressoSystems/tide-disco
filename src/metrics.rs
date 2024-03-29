@@ -16,7 +16,6 @@ use derive_more::From;
 use futures::future::{BoxFuture, FutureExt};
 use prometheus::{Encoder, TextEncoder};
 use std::{borrow::Cow, error::Error, fmt::Debug};
-use versioned_binary_serialization::version::StaticVersionType;
 
 pub trait Metrics {
     type Error: Debug + Error;
@@ -55,19 +54,17 @@ impl Metrics for prometheus::Registry {
 pub(crate) struct Handler<F>(F);
 
 #[async_trait]
-impl<F, T, State, Error, VER: StaticVersionType> route::Handler<State, Error, VER> for Handler<F>
+impl<F, T, State, Error> route::Handler<State, Error> for Handler<F>
 where
     F: 'static + Send + Sync + Fn(RequestParams, &State::State) -> BoxFuture<Result<Cow<T>, Error>>,
     T: 'static + Clone + Metrics,
     State: 'static + Send + Sync + ReadState,
     Error: 'static,
-    VER: 'static + Send + Sync,
 {
     async fn handle(
         &self,
         req: RequestParams,
         state: &State,
-        _: VER,
     ) -> Result<tide::Response, RouteError<Error>> {
         let exported = state
             .read(|state| {
