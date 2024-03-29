@@ -47,7 +47,7 @@
 //! # fn main() -> Result<(), tide_disco::api::ApiError> {
 //! use tide_disco::Api;
 //! use tide_disco::error::ServerError;
-//! use versioned_binary_serialization::version::StaticVersion;
+//! use vbs::version::StaticVersion;
 //!
 //! type State = ();
 //! type Error = ServerError;
@@ -74,7 +74,7 @@
 //!
 //! ```no_run
 //! # use tide_disco::Api;
-//! # use versioned_binary_serialization::version::StaticVersion;
+//! # use vbs::version::StaticVersion;
 //! # type StaticVer01 = StaticVersion<0, 1>;
 //! # fn main() -> Result<(), tide_disco::api::ApiError> {
 //! # let spec: toml::Value = toml::from_str(std::str::from_utf8(&std::fs::read("/path/to/api.toml").unwrap()).unwrap()).unwrap();
@@ -92,7 +92,7 @@
 //! an [App]:
 //!
 //! ```no_run
-//! # use versioned_binary_serialization::version::StaticVersion;
+//! # use vbs::version::StaticVersion;
 //! # type State = ();
 //! # type Error = tide_disco::error::ServerError;
 //! # type StaticVer01 = StaticVersion<0, 1>;
@@ -100,14 +100,13 @@
 //! # let spec: toml::Value = toml::from_str(std::str::from_utf8(&std::fs::read("/path/to/api.toml").unwrap()).unwrap()).unwrap();
 //! # let api = tide_disco::Api::<State, Error, StaticVer01>::new(spec).unwrap();
 //! use tide_disco::App;
-//! use versioned_binary_serialization::version::StaticVersion;
+//! use vbs::version::StaticVersion;
 //!
 //! type StaticVer01 = StaticVersion<0, 1>;
-//! const VER_0_1: StaticVer01 = StaticVersion {};
 //!
 //! let mut app = App::<State, Error, StaticVer01>::with_state(());
 //! app.register_module("api", api);
-//! app.serve("http://localhost:8080", VER_0_1).await;
+//! app.serve("http://localhost:8080").await;
 //! # }
 //! ```
 //!
@@ -209,7 +208,7 @@
 //! use async_std::sync::RwLock;
 //! use futures::FutureExt;
 //! use tide_disco::Api;
-//! use versioned_binary_serialization::version::StaticVersion;
+//! use vbs::version::StaticVersion;
 //!
 //! type State = RwLock<u64>;
 //! type Error = ();
@@ -231,7 +230,7 @@
 //! use async_std::sync::RwLock;
 //! use futures::FutureExt;
 //! use tide_disco::{Api, RequestParams};
-//! use versioned_binary_serialization::version::StaticVersion;
+//! use vbs::version::StaticVersion;
 //!
 //! type State = RwLock<u64>;
 //! type Error = ();
