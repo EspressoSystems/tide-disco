@@ -7,12 +7,12 @@
 use futures::FutureExt;
 use std::io;
 use tide_disco::{error::ServerError, Api, App};
-use vbs::version::StaticVersion;
+use vbs::version::{StaticVersion, StaticVersionType};
 
 type StaticVer01 = StaticVersion<0, 1>;
 
 async fn serve(port: u16) -> io::Result<()> {
-    let mut app = App::<_, ServerError, StaticVer01>::with_state(());
+    let mut app = App::<_, ServerError>::with_state(());
     app.with_version(env!("CARGO_PKG_VERSION").parse().unwrap());
 
     let mut v1 =
@@ -31,7 +31,8 @@ async fn serve(port: u16) -> io::Result<()> {
         .unwrap()
         .register_module("api", v2)
         .unwrap();
-    app.serve(format!("0.0.0.0:{}", port)).await
+    app.serve(format!("0.0.0.0:{}", port), StaticVer01::instance())
+        .await
 }
 
 #[async_std::main]

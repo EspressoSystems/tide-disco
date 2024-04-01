@@ -100,13 +100,13 @@
 //! # let spec: toml::Value = toml::from_str(std::str::from_utf8(&std::fs::read("/path/to/api.toml").unwrap()).unwrap()).unwrap();
 //! # let api = tide_disco::Api::<State, Error, StaticVer01>::new(spec).unwrap();
 //! use tide_disco::App;
-//! use vbs::version::StaticVersion;
+//! use vbs::version::{StaticVersion, StaticVersionType};
 //!
 //! type StaticVer01 = StaticVersion<0, 1>;
 //!
-//! let mut app = App::<State, Error, StaticVer01>::with_state(());
+//! let mut app = App::<State, Error>::with_state(());
 //! app.register_module("api", api);
-//! app.serve("http://localhost:8080").await;
+//! app.serve("http://localhost:8080", StaticVer01::instance()).await;
 //! # }
 //! ```
 //!
