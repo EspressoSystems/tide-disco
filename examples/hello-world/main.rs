@@ -11,10 +11,9 @@ use snafu::Snafu;
 use std::io;
 use tide_disco::{Api, App, Error, RequestError, StatusCode};
 use tracing::info;
-use versioned_binary_serialization::version::StaticVersion;
+use vbs::version::StaticVersion;
 
 type StaticVer01 = StaticVersion<0, 1>;
-const STATIC_VER: StaticVer01 = StaticVersion {};
 
 #[derive(Clone, Debug, Deserialize, Serialize, Snafu)]
 enum HelloError {
@@ -79,7 +78,7 @@ async fn serve(port: u16) -> io::Result<()> {
     .unwrap();
 
     app.register_module("hello", api).unwrap();
-    app.serve(format!("0.0.0.0:{}", port), STATIC_VER).await
+    app.serve(format!("0.0.0.0:{}", port)).await
 }
 
 #[async_std::main]

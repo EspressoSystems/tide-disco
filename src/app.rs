@@ -5,12 +5,13 @@
 // along with the tide-disco library. If not, see <https://mit-license.org/>.
 
 use crate::{
-    api::{Api, ApiError, ApiVersion},
+    api::{Api, ApiError, ApiInner, ApiVersion},
     healthcheck::{HealthCheck, HealthStatus},
     http,
     method::Method,
-    request::{best_response_type, RequestParam, RequestParams},
-    route::{self, health_check_response, respond_with, Handler, Route, RouteError},
+    middleware::{request_params, AddErrorBody, MetricsMiddleware},
+    request::RequestParams,
+    route::{health_check_response, respond_with, Handler, Route, RouteError},
     socket::SocketError,
     Html, StatusCode,
 };
@@ -33,15 +34,16 @@ use std::{
     env,
     fmt::Display,
     fs, io,
+    marker::PhantomData,
     ops::{Deref, DerefMut},
     path::PathBuf,
 };
 use tide::{
-    http::{headers::HeaderValue, mime},
+    http::headers::HeaderValue,
     security::{CorsMiddleware, Origin},
 };
 use tide_websockets::WebSocket;
-use versioned_binary_serialization::version::StaticVersionType;
+use vbs::version::StaticVersionType;
 
 pub use tide::listener::{Listener, ToListener};
 
@@ -51,12 +53,17 @@ pub use tide::listener::{Listener, ToListener};
 /// constructing an [Api] for each module and calling [App::register_module]. Once all of the
 /// desired modules are registered, the app can be converted into an asynchronous server task using
 /// [App::serve].
+///
+/// Note that the [`App`] is bound to a binary serialization version `VER`. This format only applies
+/// to application-level endpoints like `/version` and `/healthcheck`. The binary format version in
+/// use by any given API module may differ, depending on the supported version of the API.
 #[derive(Debug)]
-pub struct App<State, Error, VER: StaticVersionType> {
+pub struct App<State, Error, VER> {
     // Map from base URL, major version to API.
-    apis: HashMap<String, BTreeMap<u64, Api<State, Error, VER>>>,
-    state: Arc<State>,
+    pub(crate) apis: HashMap<String, BTreeMap<u64, ApiInner<State, Error>>>,
+    pub(crate) state: Arc<State>,
     app_version: Option<Version>,
+    _version: PhantomData<VER>,
 }
 
 /// An error encountered while building an [App].
@@ -66,18 +73,14 @@ pub enum AppError {
     ModuleAlreadyExists,
 }
 
-impl<
-        State: Send + Sync + 'static,
-        Error: 'static,
-        VER: Send + Sync + 'static + StaticVersionType,
-    > App<State, Error, VER>
-{
+impl<State: Send + Sync + 'static, Error: 'static, VER> App<State, Error, VER> {
     /// Create a new [App] with a given state.
     pub fn with_state(state: State) -> Self {
         Self {
             apis: HashMap::new(),
             state: Arc::new(state),
             app_version: None,
+            _version: Default::default(),
         }
     }
 
@@ -88,14 +91,16 @@ impl<
     /// handlers. When [`Module::register`] is called on the guard (or the guard is dropped), the
     /// module will be registered in this [`App`] as if by calling
     /// [`register_module`](Self::register_module).
-    pub fn module<'a, ModuleError>(
+    pub fn module<'a, ModuleError, ModuleVersion>(
         &'a mut self,
         base_url: &'a str,
         api: impl Into<toml::Value>,
-    ) -> Result<Module<'a, State, Error, ModuleError, VER>, AppError>
+    ) -> Result<Module<'a, State, Error, VER, ModuleError, ModuleVersion>, AppError>
     where
-        Error: From<ModuleError>,
-        ModuleError: 'static + Send + Sync,
+        Error: crate::Error + From<ModuleError>,
+        VER: StaticVersionType + 'static,
+        ModuleError: Send + Sync + 'static,
+        ModuleVersion: StaticVersionType + 'static,
     {
         Ok(Module {
             app: self,
@@ -136,16 +141,17 @@ impl<
     /// Note that non-breaking changes (e.g. new endpoints) can be deployed in place of an existing
     /// API without even incrementing the major version. The need for serving two versions of an API
     /// simultaneously only arises when you have breaking changes.
-    pub fn register_module<ModuleError>(
+    pub fn register_module<ModuleError, ModuleVersion>(
         &mut self,
         base_url: &str,
-        api: Api<State, ModuleError, VER>,
+        api: Api<State, ModuleError, ModuleVersion>,
     ) -> Result<&mut Self, AppError>
     where
-        Error: From<ModuleError>,
-        ModuleError: 'static + Send + Sync,
+        Error: crate::Error + From<ModuleError>,
+        ModuleError: Send + Sync + 'static,
+        ModuleVersion: StaticVersionType + 'static,
     {
-        let mut api = api.map_err(Error::from);
+        let mut api = api.map_err(Error::from).into_inner();
         api.set_name(base_url.to_string());
 
         let major_version = match api.version().api_version {
@@ -193,7 +199,7 @@ impl<
     /// is contained in the application crate, it should result in a reasonable version:
     ///
     /// ```
-    /// # use versioned_binary_serialization::version::StaticVersion;
+    /// # use vbs::version::StaticVersion;
     /// # type StaticVer01 = StaticVersion<0, 1>;
     /// # fn ex(app: &mut tide_disco::App<(), (), StaticVer01>) {
     /// app.with_version(env!("CARGO_PKG_VERSION").parse().unwrap());
@@ -287,22 +293,18 @@ lazy_static! {
     };
 }
 
-impl<
-        State: Send + Sync + 'static,
-        Error: 'static + crate::Error,
-        VER: 'static + Send + Sync + StaticVersionType,
-    > App<State, Error, VER>
+impl<State, Error, VER> App<State, Error, VER>
+where
+    State: Send + Sync + 'static,
+    Error: 'static + crate::Error,
+    VER: StaticVersionType + Send + Sync + 'static,
 {
     /// Serve the [App] asynchronously.
-    pub async fn serve<L: ToListener<Arc<Self>>>(
-        self,
-        listener: L,
-        bind_version: VER,
-    ) -> io::Result<()> {
+    pub async fn serve<L: ToListener<Arc<Self>>>(self, listener: L) -> io::Result<()> {
         let state = Arc::new(self);
         let mut server = tide::Server::with_state(state.clone());
         server.with(Self::version_middleware);
-        server.with(add_error_body::<_, Error, VER>);
+        server.with(AddErrorBody::<Error>::with_version::<VER>());
         server.with(
             CorsMiddleware::new()
                 .allow_methods("GET, POST".parse::<HeaderValue>().unwrap())
@@ -312,7 +314,7 @@ impl<
         );
 
         for (name, versions) in &state.apis {
-            Self::register_api(&mut server, name.clone(), versions, bind_version)?;
+            Self::register_api(&mut server, name.clone(), versions)?;
         }
 
         // Register app-level automatic routes: `healthcheck` and `version`.
@@ -330,7 +332,7 @@ impl<
             .at("version")
             .get(move |req: tide::Request<Arc<Self>>| async move {
                 let accept = RequestParams::accept_from_headers(&req)?;
-                respond_with(&accept, req.state().version(), bind_version)
+                respond_with(&accept, req.state().version(), VER::instance())
                     .map_err(|err| Error::from_route_error::<Infallible>(err).into_tide_error())
             });
 
@@ -372,11 +374,10 @@ impl<
     fn register_api(
         server: &mut tide::Server<Arc<Self>>,
         prefix: String,
-        versions: &BTreeMap<u64, Api<State, Error, VER>>,
-        bind_version: VER,
+        versions: &BTreeMap<u64, ApiInner<State, Error>>,
     ) -> io::Result<()> {
         for (version, api) in versions {
-            Self::register_api_version(server, &prefix, *version, api, bind_version)?;
+            Self::register_api_version(server, &prefix, *version, api)?;
         }
         Ok(())
     }
@@ -385,8 +386,7 @@ impl<
         server: &mut tide::Server<Arc<Self>>,
         prefix: &String,
         version: u64,
-        api: &Api<State, Error, VER>,
-        bind_version: VER,
+        api: &ApiInner<State, Error>,
     ) -> io::Result<()> {
         // Clippy complains if the only non-trivial operation in an `unwrap_or_else` closure is
         // a deref, but for `lazy_static` types, deref is an effectful operation that (in this
@@ -401,6 +401,7 @@ impl<
 
         // Register routes for this API.
         let mut api_endpoint = server.at(&format!("/v{version}/{prefix}"));
+        api_endpoint.with(AddErrorBody::new(api.error_handler()));
         for (path, routes) in api.routes_by_path() {
             let mut endpoint = api_endpoint.at(path);
             let routes = routes.collect::<Vec<_>>();
@@ -423,26 +424,13 @@ impl<
                 // all endpoints registered under this pattern, so that a request to this path
                 // with the right headers will return metrics instead of going through the
                 // normal method-based dispatching.
-                Self::register_metrics(
-                    prefix.to_owned(),
-                    version,
-                    &mut endpoint,
-                    metrics_route,
-                    bind_version,
-                );
+                Self::register_metrics(prefix.to_owned(), version, &mut endpoint, metrics_route);
             }
 
             // Register the HTTP routes.
             for route in routes {
                 if let Method::Http(method) = route.method() {
-                    Self::register_route(
-                        prefix.to_owned(),
-                        version,
-                        &mut endpoint,
-                        route,
-                        method,
-                        bind_version,
-                    );
+                    Self::register_route(prefix.to_owned(), version, &mut endpoint, route, method);
                 }
             }
         }
@@ -505,7 +493,7 @@ impl<
                     async move {
                         let api = &req.state().apis[&prefix][&version];
                         let accept = RequestParams::accept_from_headers(&req)?;
-                        respond_with(&accept, api.version(), bind_version).map_err(|err| {
+                        respond_with(&accept, api.version(), VER::instance()).map_err(|err| {
                             Error::from_route_error::<Infallible>(err).into_tide_error()
                         })
                     }
@@ -519,9 +507,8 @@ impl<
         api: String,
         version: u64,
         endpoint: &mut tide::Route<Arc<Self>>,
-        route: &Route<State, Error, VER>,
+        route: &Route<State, Error>,
         method: http::Method,
-        bind_version: VER,
     ) {
         let name = route.name();
         endpoint.method(method, move |req: tide::Request<Arc<Self>>| {
@@ -532,7 +519,7 @@ impl<
                 let state = &*req.state().clone().state;
                 let req = request_params(req, route.params()).await?;
                 route
-                    .handle(req, state, bind_version)
+                    .handle(req, state)
                     .await
                     .map_err(|err| match err {
                         RouteError::AppSpecific(err) => err,
@@ -547,20 +534,14 @@ impl<
         api: String,
         version: u64,
         endpoint: &mut tide::Route<Arc<Self>>,
-        route: &Route<State, Error, VER>,
-        bind_version: VER,
+        route: &Route<State, Error>,
     ) {
         let name = route.name();
         if route.has_handler() {
             // If there is a metrics handler, add middleware to the endpoint to intercept the
             // request and respond with metrics, rather than the usual HTTP dispatching, if the
             // appropriate headers are set.
-            endpoint.with(MetricsMiddleware::new(
-                name.clone(),
-                api.clone(),
-                version,
-                bind_version,
-            ));
+            endpoint.with(MetricsMiddleware::new(name.clone(), api.clone(), version));
         }
 
         // Register a catch-all HTTP handler for the route, which serves the route documentation as
@@ -579,7 +560,7 @@ impl<
         api: String,
         version: u64,
         endpoint: &mut tide::Route<Arc<Self>>,
-        route: &Route<State, Error, VER>,
+        route: &Route<State, Error>,
     ) {
         let name = route.name();
         if route.has_handler() {
@@ -627,7 +608,7 @@ impl<
         api: String,
         version: u64,
         endpoint: &mut tide::Route<Arc<Self>>,
-        route: &Route<State, Error, VER>,
+        route: &Route<State, Error>,
     ) {
         let name = route.name();
         endpoint.all(move |req: tide::Request<Arc<Self>>| {
@@ -748,86 +729,6 @@ impl<
     }
 }
 
-struct MetricsMiddleware<VER: StaticVersionType> {
-    route: String,
-    api: String,
-    api_version: u64,
-    ver: VER,
-}
-
-impl<VER: StaticVersionType> MetricsMiddleware<VER> {
-    fn new(route: String, api: String, api_version: u64, ver: VER) -> Self {
-        Self {
-            route,
-            api,
-            api_version,
-            ver,
-        }
-    }
-}
-
-impl<State, Error, VER> tide::Middleware<Arc<App<State, Error, VER>>> for MetricsMiddleware<VER>
-where
-    State: Send + Sync + 'static,
-    Error: 'static + crate::Error,
-    VER: Send + Sync + 'static + StaticVersionType,
-{
-    fn handle<'a, 'b, 't>(
-        &'a self,
-        req: tide::Request<Arc<App<State, Error, VER>>>,
-        next: tide::Next<'b, Arc<App<State, Error, VER>>>,
-    ) -> BoxFuture<'t, tide::Result>
-    where
-        'a: 't,
-        'b: 't,
-        Self: 't,
-    {
-        let route = self.route.clone();
-        let api = self.api.clone();
-        let version = self.api_version;
-        let bind_version = self.ver;
-        async move {
-            if req.method() != http::Method::Get {
-                // Metrics only apply to GET requests. For other requests, proceed with normal
-                // dispatching.
-                return Ok(next.run(req).await);
-            }
-            // Look at the `Accept` header. If the requested content type is plaintext, we consider
-            // it a metrics request. Other endpoints have typed responses yielding either JSON or
-            // binary.
-            let accept = RequestParams::accept_from_headers(&req)?;
-            let reponse_ty =
-                best_response_type(&accept, &[mime::PLAIN, mime::JSON, mime::BYTE_STREAM])?;
-            if reponse_ty != mime::PLAIN {
-                return Ok(next.run(req).await);
-            }
-            // This is a metrics request, abort the rest of the dispatching chain and run the
-            // metrics handler.
-            let route = &req.state().clone().apis[&api][&version][&route];
-            let state = &*req.state().clone().state;
-            let req = request_params(req, route.params()).await?;
-            route
-                .handle(req, state, bind_version)
-                .await
-                .map_err(|err| match err {
-                    RouteError::AppSpecific(err) => err,
-                    _ => Error::from_route_error(err),
-                })
-                .map_err(|err| err.into_tide_error())
-        }
-        .boxed()
-    }
-}
-
-async fn request_params<State, Error: crate::Error, VER: StaticVersionType>(
-    req: tide::Request<Arc<App<State, Error, VER>>>,
-    params: &[RequestParam],
-) -> Result<RequestParams, tide::Error> {
-    RequestParams::new(req, params)
-        .await
-        .map_err(|err| Error::from_request_error(err).into_tide_error())
-}
-
 /// The health status of an application.
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct AppHealth {
@@ -864,43 +765,6 @@ pub struct AppVersion {
     pub disco_version: Version,
 }
 
-/// Server middleware which automatically populates the body of error responses.
-///
-/// If the response contains an error, the error is encoded into the [Error](crate::Error) type
-/// (either by downcasting if the server has generated an instance of [Error](crate::Error), or by
-/// converting to a [String] using [Display] if the error can not be downcasted to
-/// [Error](crate::Error)). The resulting [Error](crate::Error) is then serialized and used as the
-/// body of the response.
-///
-/// If the response does not contain an error, it is passed through unchanged.
-fn add_error_body<
-    T: Clone + Send + Sync + 'static,
-    E: crate::Error,
-    VER: Send + Sync + 'static + StaticVersionType,
->(
-    req: tide::Request<T>,
-    next: tide::Next<T>,
-) -> BoxFuture<tide::Result> {
-    Box::pin(async {
-        let accept = RequestParams::accept_from_headers(&req)?;
-        let mut res = next.run(req).await;
-        if let Some(error) = res.take_error() {
-            let error = E::from_server_error(error);
-            tracing::info!("responding with error: {}", error);
-            // Try to add the error to the response body using a format accepted by the client. If
-            // we cannot do that (for example, if the client requested a format that is incompatible
-            // with a serialized error) just add the error as a string using plaintext.
-            let (body, content_type) = route::response_body::<_, E, VER>(&accept, &error)
-                .unwrap_or_else(|_| (error.to_string().into(), mime::PLAIN));
-            res.set_body(body);
-            res.set_content_type(content_type);
-            Ok(res)
-        } else {
-            Ok(res)
-        }
-    })
-}
-
 /// RAII guard to ensure a module is registered after it is configured.
 ///
 /// This type allows the owner to configure an [`Api`] module via the [`Deref`] and [`DerefMut`]
@@ -912,66 +776,72 @@ fn add_error_body<
 /// Note that if anything goes wrong during module registration (for example, there is already an
 /// incompatible module registered with the same name), the drop implementation may panic. To handle
 /// errors without panicking, call [`register`](Self::register) explicitly.
-pub struct Module<'a, State, Error, ModuleError, VER: StaticVersionType>
+pub struct Module<'a, State, Error, VER, ModuleError, ModuleVersion>
 where
-    State: 'static + Send + Sync,
-    Error: 'static + From<ModuleError>,
-    ModuleError: 'static + Send + Sync,
-    VER: 'static + Send + Sync,
+    State: Send + Sync + 'static,
+    Error: crate::Error + From<ModuleError> + 'static,
+    VER: StaticVersionType + 'static,
+    ModuleError: Send + Sync + 'static,
+    ModuleVersion: StaticVersionType + 'static,
 {
     app: &'a mut App<State, Error, VER>,
     base_url: &'a str,
     // This is only an [Option] so we can [take] out of it during [drop].
-    api: Option<Api<State, ModuleError, VER>>,
+    api: Option<Api<State, ModuleError, ModuleVersion>>,
 }
 
-impl<'a, State, Error, ModuleError, VER: StaticVersionType> Deref
-    for Module<'a, State, Error, ModuleError, VER>
+impl<'a, State, Error, VER, ModuleError, ModuleVersion> Deref
+    for Module<'a, State, Error, VER, ModuleError, ModuleVersion>
 where
-    State: 'static + Send + Sync,
-    Error: 'static + From<ModuleError>,
-    ModuleError: 'static + Send + Sync,
-    VER: 'static + Send + Sync,
+    State: Send + Sync + 'static,
+    Error: crate::Error + From<ModuleError> + 'static,
+    VER: StaticVersionType + 'static,
+    ModuleError: Send + Sync + 'static,
+    ModuleVersion: StaticVersionType + 'static,
 {
-    type Target = Api<State, ModuleError, VER>;
+    type Target = Api<State, ModuleError, ModuleVersion>;
 
     fn deref(&self) -> &Self::Target {
         self.api.as_ref().unwrap()
     }
 }
 
-impl<'a, State, Error, ModuleError, VER: StaticVersionType> DerefMut
-    for Module<'a, State, Error, ModuleError, VER>
+impl<'a, State, Error, VER, ModuleError, ModuleVersion> DerefMut
+    for Module<'a, State, Error, VER, ModuleError, ModuleVersion>
 where
-    State: 'static + Send + Sync,
-    Error: 'static + From<ModuleError>,
-    ModuleError: 'static + Send + Sync,
-    VER: 'static + Send + Sync,
+    State: Send + Sync + 'static,
+    Error: crate::Error + From<ModuleError> + 'static,
+    VER: StaticVersionType + 'static,
+    ModuleError: Send + Sync + 'static,
+    ModuleVersion: StaticVersionType + 'static,
 {
     fn deref_mut(&mut self) -> &mut Self::Target {
         self.api.as_mut().unwrap()
     }
 }
 
-impl<'a, State, Error, ModuleError, VER: StaticVersionType> Drop
-    for Module<'a, State, Error, ModuleError, VER>
+impl<'a, State, Error, VER, ModuleError, ModuleVersion> Drop
+    for Module<'a, State, Error, VER, ModuleError, ModuleVersion>
 where
-    State: 'static + Send + Sync,
-    Error: 'static + From<ModuleError>,
-    ModuleError: 'static + Send + Sync,
-    VER: 'static + Send + Sync,
+    State: Send + Sync + 'static,
+    Error: crate::Error + From<ModuleError> + 'static,
+    VER: StaticVersionType + 'static,
+    ModuleError: Send + Sync + 'static,
+    ModuleVersion: StaticVersionType + 'static,
 {
     fn drop(&mut self) {
         self.register_impl().unwrap();
     }
 }
 
-impl<'a, State, Error, ModuleError, VER> Module<'a, State, Error, ModuleError, VER>
+impl<'a, State, Error, VER, ModuleError, ModuleVersion>
+    Module<'a, State, Error, VER, ModuleError, ModuleVersion>
 where
-    State: 'static + Send + Sync,
-    Error: 'static + From<ModuleError>,
-    ModuleError: 'static + Send + Sync,
-    VER: 'static + Send + Sync + StaticVersionType,
+    State: Send + Sync + 'static,
+    Error: crate::Error + From<ModuleError> + 'static,
+    VER: StaticVersionType + 'static,
+    ModuleError: Send + Sync + 'static,
+    ModuleVersion: StaticVersionType + 'static,
 {
     /// Register this module with the linked app.
     pub fn register(mut self) -> Result<(), AppError> {
@@ -995,7 +865,7 @@ where
 mod test {
     use super::*;
     use crate::{
-        error::ServerError,
+        error::{Error, ServerError},
         metrics::Metrics,
         socket::Connection,
         testing::{setup_test, test_ws_client, Client},
@@ -1005,13 +875,19 @@ mod test {
     use async_tungstenite::tungstenite::Message;
     use futures::{FutureExt, SinkExt, StreamExt};
     use portpicker::pick_unused_port;
-    use std::borrow::Cow;
+    use serde::de::DeserializeOwned;
+    use std::{borrow::Cow, fmt::Debug};
     use toml::toml;
-    use versioned_binary_serialization::{version::StaticVersion, BinarySerializer, Serializer};
+    use vbs::{version::StaticVersion, BinarySerializer, Serializer};
 
     type StaticVer01 = StaticVersion<0, 1>;
-    type SerializerV01 = Serializer<StaticVersion<0, 1>>;
-    const VER_0_1: StaticVer01 = StaticVersion {};
+    type SerializerV01 = Serializer<StaticVer01>;
+
+    type StaticVer02 = StaticVersion<0, 2>;
+    type SerializerV02 = Serializer<StaticVer02>;
+
+    type StaticVer03 = StaticVersion<0, 3>;
+    type SerializerV03 = Serializer<StaticVer03>;
 
     #[derive(Clone, Copy, Debug)]
     struct FakeMetrics;
@@ -1061,7 +937,9 @@ mod test {
             METHOD = "METRICS"
         };
         {
-            let mut api = app.module::<ServerError>("mod", api_toml).unwrap();
+            let mut api = app
+                .module::<ServerError, StaticVer01>("mod", api_toml)
+                .unwrap();
             api.get("get_test", |_req, _state| {
                 async move { Ok(Get.to_string()) }.boxed()
             })
@@ -1096,7 +974,7 @@ mod test {
         }
         let port = pick_unused_port().unwrap();
         let url: Url = format!("http://localhost:{}", port).parse().unwrap();
-        spawn(app.serve(format!("0.0.0.0:{}", port), VER_0_1));
+        spawn(app.serve(format!("0.0.0.0:{}", port)));
         let client = Client::new(url.clone()).await;
 
         // Regular HTTP methods.
@@ -1153,7 +1031,9 @@ mod test {
             ":b" = "Boolean"
         };
         {
-            let mut api = app.module::<ServerError>("mod", api_toml).unwrap();
+            let mut api = app
+                .module::<ServerError, StaticVer01>("mod", api_toml)
+                .unwrap();
             api.get("test", |req, _state| {
                 async move {
                     if let Some(a) = req.opt_integer_param::<_, i32>("a")? {
@@ -1168,7 +1048,7 @@ mod test {
         }
         let port = pick_unused_port().unwrap();
         let url: Url = format!("http://localhost:{}", port).parse().unwrap();
-        spawn(app.serve(format!("0.0.0.0:{}", port), VER_0_1));
+        spawn(app.serve(format!("0.0.0.0:{}", port)));
         let client = Client::new(url.clone()).await;
 
         let res = client.get("mod/test/a/42").send().await.unwrap();
@@ -1217,7 +1097,9 @@ mod test {
         };
 
         {
-            let mut v1 = app.module::<ServerError>("mod", v1_toml.clone()).unwrap();
+            let mut v1 = app
+                .module::<ServerError, StaticVer01>("mod", v1_toml.clone())
+                .unwrap();
             v1.with_version("1.0.0".parse().unwrap())
                 .get("deleted", |_req, _state| {
                     async move { Ok("deleted v1") }.boxed()
@@ -1234,12 +1116,16 @@ mod test {
         }
         {
             // Registering the same major version twice is an error.
-            let mut api = app.module::<ServerError>("mod", v1_toml).unwrap();
+            let mut api = app
+                .module::<ServerError, StaticVer01>("mod", v1_toml)
+                .unwrap();
             api.with_version("1.1.1".parse().unwrap());
             assert_eq!(api.register().unwrap_err(), AppError::ModuleAlreadyExists);
         }
         {
-            let mut v3 = app.module::<ServerError>("mod", v3_toml.clone()).unwrap();
+            let mut v3 = app
+                .module::<ServerError, StaticVer01>("mod", v3_toml.clone())
+                .unwrap();
             v3.with_version("3.0.0".parse().unwrap())
                 .get("added", |_req, _state| {
                     async move { Ok("added v3") }.boxed()
@@ -1253,7 +1139,7 @@ mod test {
 
         let port = pick_unused_port().unwrap();
         let url: Url = format!("http://localhost:{}", port).parse().unwrap();
-        spawn(app.serve(format!("0.0.0.0:{}", port), VER_0_1));
+        spawn(app.serve(format!("0.0.0.0:{}", port)));
         let client = Client::new(url.clone()).await;
 
         // First check that we can call all the expected methods.
@@ -1464,7 +1350,7 @@ mod test {
 
         // Test discoverability documentation when a request is for an unknown API.
         let mut app = App::<_, ServerError, StaticVer01>::with_state(());
-        app.module::<ServerError>(
+        app.module::<ServerError, StaticVer01>(
             "the-correct-module",
             toml! {
                 route = {}
@@ -1475,7 +1361,7 @@ mod test {
 
         let port = pick_unused_port().unwrap();
         let url: Url = format!("http://localhost:{}", port).parse().unwrap();
-        spawn(app.serve(format!("0.0.0.0:{}", port), VER_0_1));
+        spawn(app.serve(format!("0.0.0.0:{}", port)));
         let client = Client::new(url.clone()).await;
 
         let expected_list_item = html! {
@@ -1534,7 +1420,9 @@ mod test {
             PATH = ["/test"]
         };
         {
-            let mut api = app.module::<ServerError>("mod", api_toml.clone()).unwrap();
+            let mut api = app
+                .module::<ServerError, StaticVer01>("mod", api_toml.clone())
+                .unwrap();
             api.post("test", |_req, state| {
                 async move {
                     *state += 1;
@@ -1547,7 +1435,7 @@ mod test {
 
         let port = pick_unused_port().unwrap();
         let url: Url = format!("http://localhost:{}", port).parse().unwrap();
-        spawn(app.serve(format!("0.0.0.0:{}", port), VER_0_1));
+        spawn(app.serve(format!("0.0.0.0:{}", port)));
         let client = Client::new(url.clone()).await;
 
         for i in 1..3 {
@@ -1565,5 +1453,162 @@ mod test {
                 i
             );
         }
+    }
+
+    #[async_std::test]
+    async fn test_format_versions() {
+        // Register two modules with different binary format versions, each in turn different from
+        // the app-level version. Each module has two endpoints, one which always succeeds and one
+        // which always fails, so we can test error serialization.
+        let mut app = App::<_, ServerError, StaticVer01>::with_state(());
+        let api_toml = toml! {
+            [meta]
+            FORMAT_VERSION = "0.1.0"
+
+            [route.ok]
+            METHOD = "GET"
+            PATH = ["/ok"]
+
+            [route.err]
+            METHOD = "GET"
+            PATH = ["/err"]
+        };
+
+        fn init_api<VER: StaticVersionType + 'static>(api: &mut Api<(), ServerError, VER>) {
+            api.get("ok", |_req, _state| async move { Ok("ok") }.boxed())
+                .unwrap()
+                .get("err", |_req, _state| {
+                    async move {
+                        Err::<String, _>(ServerError::catch_all(
+                            StatusCode::InternalServerError,
+                            "err".into(),
+                        ))
+                    }
+                    .boxed()
+                })
+                .unwrap();
+        }
+
+        {
+            let mut api = app
+                .module::<ServerError, StaticVer02>("mod02", api_toml.clone())
+                .unwrap();
+            init_api(&mut api);
+        }
+        {
+            let mut api = app
+                .module::<ServerError, StaticVer03>("mod03", api_toml.clone())
+                .unwrap();
+            init_api(&mut api);
+        }
+
+        let port = pick_unused_port().unwrap();
+        let url: Url = format!("http://localhost:{}", port).parse().unwrap();
+        spawn(app.serve(format!("0.0.0.0:{}", port)));
+        let client = Client::new(url.clone()).await;
+
+        async fn get<S: BinarySerializer, T: DeserializeOwned>(
+            client: &Client,
+            endpoint: &str,
+            expected_status: StatusCode,
+        ) -> anyhow::Result<T> {
+            tracing::info!("GET {endpoint} ->");
+            let res = client
+                .get(endpoint)
+                .header("Accept", "application/octet-stream")
+                .send()
+                .await
+                .unwrap();
+            tracing::info!(?res, "<-");
+            assert_eq!(res.status(), expected_status);
+            let bytes = res.bytes().await.unwrap();
+            S::deserialize(&bytes)
+        }
+
+        #[tracing::instrument(skip(client))]
+        async fn check_ok<S: BinarySerializer>(
+            client: &Client,
+            endpoint: &str,
+            expected: impl Debug + DeserializeOwned + Eq,
+        ) {
+            tracing::info!("checking successful deserialization");
+            assert_eq!(
+                expected,
+                get::<S, _>(client, endpoint, StatusCode::Ok).await.unwrap()
+            );
+        }
+
+        check_ok::<SerializerV01>(
+            &client,
+            "healthcheck",
+            AppHealth {
+                status: HealthStatus::Available,
+                modules: [
+                    ("mod02".into(), [(0, StatusCode::Ok)].into()),
+                    ("mod03".into(), [(0, StatusCode::Ok)].into()),
+                ]
+                .into(),
+            },
+        )
+        .await;
+        check_ok::<SerializerV01>(
+            &client,
+            "version",
+            AppVersion {
+                app_version: None,
+                disco_version: env!("CARGO_PKG_VERSION").parse().unwrap(),
+                modules: [
+                    (
+                        "mod02".into(),
+                        vec![ApiVersion {
+                            spec_version: "0.1.0".parse().unwrap(),
+                            api_version: None,
+                        }],
+                    ),
+                    (
+                        "mod03".into(),
+                        vec![ApiVersion {
+                            spec_version: "0.1.0".parse().unwrap(),
+                            api_version: None,
+                        }],
+                    ),
+                ]
+                .into(),
+            },
+        )
+        .await;
+        check_ok::<SerializerV02>(&client, "mod02/ok", "ok".to_string()).await;
+        check_ok::<SerializerV03>(&client, "mod03/ok", "ok".to_string()).await;
+
+        #[tracing::instrument(skip(client))]
+        async fn check_wrong_version<S: BinarySerializer, T: Debug + DeserializeOwned>(
+            client: &Client,
+            endpoint: &str,
+        ) {
+            tracing::info!("checking deserialization fails with wrong version");
+            get::<S, T>(client, endpoint, StatusCode::Ok)
+                .await
+                .unwrap_err();
+        }
+
+        check_wrong_version::<SerializerV02, AppHealth>(&client, "healthcheck").await;
+        check_wrong_version::<SerializerV02, AppVersion>(&client, "version").await;
+        check_wrong_version::<SerializerV03, String>(&client, "mod02/ok").await;
+        check_wrong_version::<SerializerV01, String>(&client, "mod03/ok").await;
+
+        #[tracing::instrument(skip(client))]
+        async fn check_err<S: BinarySerializer>(client: &Client, endpoint: &str) {
+            tracing::info!("checking error deserialization");
+            tracing::info!("checking successful deserialization");
+            assert_eq!(
+                get::<S, ServerError>(client, endpoint, StatusCode::InternalServerError)
+                    .await
+                    .unwrap(),
+                ServerError::catch_all(StatusCode::InternalServerError, "err".into())
+            );
+        }
+
+        check_err::<SerializerV02>(&client, "mod02/err").await;
+        check_err::<SerializerV03>(&client, "mod03/err").await;
     }
 }

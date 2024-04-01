@@ -13,7 +13,7 @@ use std::fmt::Display;
 use strum_macros::EnumString;
 use tagged_base64::TaggedBase64;
 use tide::http::{self, content::Accept, mime::Mime, Headers};
-use versioned_binary_serialization::{version::StaticVersionType, BinarySerializer, Serializer};
+use vbs::{version::StaticVersionType, BinarySerializer, Serializer};
 
 #[derive(Clone, Debug, Snafu, Deserialize, Serialize)]
 pub enum RequestError {

@@ -64,7 +64,7 @@ tracing-futures = "0.2"
 tracing-log = "0.2"
 tracing-subscriber = { version = "0.3.18", features = ["env-filter", "json"] }
 url = "2.5.0"
-versioned-binary-serialization = { git = "https://github.com/EspressoSystems/versioned-binary-serialization.git", tag = "0.1.2" }
+vbs = { git = "https://github.com/EspressoSystems/versioned-binary-serialization.git", tag = "v0.1.4" }
 
 # Dependencies enabled by feature `testing`
 async-compatibility-layer = { git = "https://github.com/EspressoSystems/async-compatibility-layer.git", tag = "1.4.2", features = ["logging-utils"], optional = true }
