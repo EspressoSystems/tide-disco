@@ -4040,7 +4040,8 @@ dependencies = [
 [[package]]
 name = "vbs"
 version = "0.1.4"
-source = "git+https://github.com/EspressoSystems/versioned-binary-serialization.git?tag=v0.1.4#50c93e6dd650484688077542c467a134a033893c"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "971bcbd6c41e4e53fa9eab95b2a8ddaf1826be2f3e86b4101efebc8c3a17fde0"
 dependencies = [
  "anyhow",
  "bincode",
