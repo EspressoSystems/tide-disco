@@ -678,13 +678,6 @@
 <a href="#676" id="676">676</a>
 <a href="#677" id="677">677</a>
 <a href="#678" id="678">678</a>
-<a href="#679" id="679">679</a>
-<a href="#680" id="680">680</a>
-<a href="#681" id="681">681</a>
-<a href="#682" id="682">682</a>
-<a href="#683" id="683">683</a>
-<a href="#684" id="684">684</a>
-<a href="#685" id="685">685</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright (c) 2022 Espresso Systems (espressosys.com)
 // This file is part of the tide-disco library.
 
@@ -703,17 +696,18 @@
 <span class="kw">use </span>async_std::sync::Arc;
 <span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>derivative::Derivative;
-<span class="kw">use </span>derive_more::From;
 <span class="kw">use </span>futures::future::{BoxFuture, FutureExt};
 <span class="kw">use </span>maud::{html, PreEscaped};
 <span class="kw">use </span>serde::Serialize;
 <span class="kw">use </span>snafu::{OptionExt, Snafu};
-<span class="kw">use </span>std::borrow::Cow;
-<span class="kw">use </span>std::collections::HashMap;
-<span class="kw">use </span>std::convert::Infallible;
-<span class="kw">use </span>std::fmt::{<span class="self">self</span>, Display, Formatter};
-<span class="kw">use </span>std::marker::PhantomData;
-<span class="kw">use </span>std::str::FromStr;
+<span class="kw">use </span>std::{
+    borrow::Cow,
+    collections::HashMap,
+    convert::Infallible,
+    fmt::{<span class="self">self</span>, Display, Formatter},
+    marker::PhantomData,
+    str::FromStr,
+};
 <span class="kw">use </span>tide::{
     http::{
         <span class="self">self</span>,
@@ -723,7 +717,7 @@
     Body,
 };
 <span class="kw">use </span>tide_websockets::WebSocketConnection;
-<span class="kw">use </span>versioned_binary_serialization::{version::StaticVersionType, BinarySerializer, Serializer};
+<span class="kw">use </span>vbs::{version::StaticVersionType, BinarySerializer, Serializer};
 
 <span class="doccomment">/// An error returned by a route handler.
 ///
@@ -801,14 +795,11 @@
 /// return type of a handler function. The types which are preserved, `State` and `Error`, should be
 /// the same for all handlers in an API module.
 </span><span class="attr">#[async_trait]
-</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">trait </span>Handler&lt;State, Error, VER: StaticVersionType&gt;:
-    <span class="lifetime">'static </span>+ Send + Sync
-{
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">trait </span>Handler&lt;State, Error&gt;: <span class="lifetime">'static </span>+ Send + Sync {
     <span class="kw">async fn </span>handle(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         req: RequestParams,
         state: <span class="kw-2">&amp;</span>State,
-        bind_version: VER,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;tide::Response, RouteError&lt;Error&gt;&gt;;
 }
 
@@ -826,11 +817,16 @@
 ///
 /// [Like many function parameters](crate#boxed-futures) in [tide_disco](crate), the handler
 /// function is required to return a [BoxFuture].
-</span><span class="attr">#[derive(From)]
-</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>FnHandler&lt;F&gt;(F);
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>FnHandler&lt;F, VER&gt;(F, PhantomData&lt;VER&gt;);
+
+<span class="kw">impl</span>&lt;F, VER&gt; From&lt;F&gt; <span class="kw">for </span>FnHandler&lt;F, VER&gt; {
+    <span class="kw">fn </span>from(f: F) -&gt; <span class="self">Self </span>{
+        <span class="self">Self</span>(f, Default::default())
+    }
+}
 
 <span class="attr">#[async_trait]
-</span><span class="kw">impl</span>&lt;F, T, State, Error, VER&gt; Handler&lt;State, Error, VER&gt; <span class="kw">for </span>FnHandler&lt;F&gt;
+</span><span class="kw">impl</span>&lt;F, T, State, Error, VER&gt; Handler&lt;State, Error&gt; <span class="kw">for </span>FnHandler&lt;F, VER&gt;
 <span class="kw">where
     </span>F: <span class="lifetime">'static </span>+ Send + Sync + Fn(RequestParams, <span class="kw-2">&amp;</span>State) -&gt; BoxFuture&lt;<span class="lifetime">'_</span>, <span class="prelude-ty">Result</span>&lt;T, Error&gt;&gt;,
     T: Serialize,
@@ -841,10 +837,9 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         req: RequestParams,
         state: <span class="kw-2">&amp;</span>State,
-        bind_version: VER,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;tide::Response, RouteError&lt;Error&gt;&gt; {
         <span class="kw">let </span>accept = req.accept()<span class="question-mark">?</span>;
-        response_from_result(<span class="kw-2">&amp;</span>accept, (<span class="self">self</span>.<span class="number">0</span>)(req, state).<span class="kw">await</span>, bind_version)
+        response_from_result(<span class="kw-2">&amp;</span>accept, (<span class="self">self</span>.<span class="number">0</span>)(req, state).<span class="kw">await</span>, VER::instance())
     }
 }
 
@@ -858,43 +853,36 @@
 }
 
 <span class="attr">#[async_trait]
-</span><span class="kw">impl</span>&lt;
-        H: <span class="question-mark">?</span>Sized + Handler&lt;State, Error, VER&gt;,
-        State: <span class="lifetime">'static </span>+ Send + Sync,
-        Error,
-        VER: <span class="lifetime">'static </span>+ Send + Sync + StaticVersionType,
-    &gt; Handler&lt;State, Error, VER&gt; <span class="kw">for </span>Box&lt;H&gt;
+</span><span class="kw">impl</span>&lt;H: <span class="question-mark">?</span>Sized + Handler&lt;State, Error&gt;, State: <span class="lifetime">'static </span>+ Send + Sync, Error&gt; Handler&lt;State, Error&gt;
+    <span class="kw">for </span>Box&lt;H&gt;
 {
     <span class="kw">async fn </span>handle(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         req: RequestParams,
         state: <span class="kw-2">&amp;</span>State,
-        bind_version: VER,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;tide::Response, RouteError&lt;Error&gt;&gt; {
-        (<span class="kw-2">**</span><span class="self">self</span>).handle(req, state, bind_version).<span class="kw">await
+        (<span class="kw-2">**</span><span class="self">self</span>).handle(req, state).<span class="kw">await
     </span>}
 }
 
-<span class="kw">enum </span>RouteImplementation&lt;State, Error, VER: StaticVersionType&gt; {
+<span class="kw">enum </span>RouteImplementation&lt;State, Error&gt; {
     Http {
         method: http::Method,
-        handler: <span class="prelude-ty">Option</span>&lt;Box&lt;<span class="kw">dyn </span>Handler&lt;State, Error, VER&gt;&gt;&gt;,
+        handler: <span class="prelude-ty">Option</span>&lt;Box&lt;<span class="kw">dyn </span>Handler&lt;State, Error&gt;&gt;&gt;,
     },
     Socket {
         handler: <span class="prelude-ty">Option</span>&lt;socket::Handler&lt;State, Error&gt;&gt;,
     },
     Metrics {
-        handler: <span class="prelude-ty">Option</span>&lt;Box&lt;<span class="kw">dyn </span>Handler&lt;State, Error, VER&gt;&gt;&gt;,
+        handler: <span class="prelude-ty">Option</span>&lt;Box&lt;<span class="kw">dyn </span>Handler&lt;State, Error&gt;&gt;&gt;,
     },
 }
 
-<span class="kw">impl</span>&lt;State, Error, VER: <span class="lifetime">'static </span>+ Send + Sync + StaticVersionType&gt;
-    RouteImplementation&lt;State, Error, VER&gt;
-{
+<span class="kw">impl</span>&lt;State, Error&gt; RouteImplementation&lt;State, Error&gt; {
     <span class="kw">fn </span>map_err&lt;Error2&gt;(
         <span class="self">self</span>,
         f: <span class="kw">impl </span><span class="lifetime">'static </span>+ Send + Sync + Fn(Error) -&gt; Error2,
-    ) -&gt; RouteImplementation&lt;State, Error2, VER&gt;
+    ) -&gt; RouteImplementation&lt;State, Error2&gt;
     <span class="kw">where
         </span>State: <span class="lifetime">'static </span>+ Send + Sync,
         Error: <span class="lifetime">'static </span>+ Send + Sync,
@@ -904,10 +892,10 @@
             <span class="self">Self</span>::Http { method, handler } =&gt; RouteImplementation::Http {
                 method,
                 handler: handler.map(|h| {
-                    <span class="kw">let </span>h: Box&lt;<span class="kw">dyn </span>Handler&lt;State, Error2, VER&gt;&gt; =
-                        Box::new(
-                            MapErr::&lt;Box&lt;<span class="kw">dyn </span>Handler&lt;State, Error, VER&gt;&gt;, <span class="kw">_</span>, Error&gt;::new(h, f),
-                        );
+                    <span class="kw">let </span>h: Box&lt;<span class="kw">dyn </span>Handler&lt;State, Error2&gt;&gt; =
+                        Box::new(MapErr::&lt;Box&lt;<span class="kw">dyn </span>Handler&lt;State, Error&gt;&gt;, <span class="kw">_</span>, Error&gt;::new(
+                            h, f,
+                        ));
                     h
                 }),
             },
@@ -916,10 +904,10 @@
             },
             <span class="self">Self</span>::Metrics { handler } =&gt; RouteImplementation::Metrics {
                 handler: handler.map(|h| {
-                    <span class="kw">let </span>h: Box&lt;<span class="kw">dyn </span>Handler&lt;State, Error2, VER&gt;&gt; =
-                        Box::new(
-                            MapErr::&lt;Box&lt;<span class="kw">dyn </span>Handler&lt;State, Error, VER&gt;&gt;, <span class="kw">_</span>, Error&gt;::new(h, f),
-                        );
+                    <span class="kw">let </span>h: Box&lt;<span class="kw">dyn </span>Handler&lt;State, Error2&gt;&gt; =
+                        Box::new(MapErr::&lt;Box&lt;<span class="kw">dyn </span>Handler&lt;State, Error&gt;&gt;, <span class="kw">_</span>, Error&gt;::new(
+                            h, f,
+                        ));
                     h
                 }),
             },
@@ -935,14 +923,14 @@
 /// simply returns information about the route.
 </span><span class="attr">#[derive(Derivative)]
 #[derivative(Debug(bound = <span class="string">""</span>))]
-</span><span class="kw">pub struct </span>Route&lt;State, Error, VER: StaticVersionType&gt; {
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>Route&lt;State, Error&gt; {
     name: String,
     patterns: Vec&lt;String&gt;,
     params: Vec&lt;RequestParam&gt;,
     doc: String,
     meta: Arc&lt;ApiMetadata&gt;,
     <span class="attr">#[derivative(Debug = <span class="string">"ignore"</span>)]
-    </span>handler: RouteImplementation&lt;State, Error, VER&gt;,
+    </span>handler: RouteImplementation&lt;State, Error&gt;,
 }
 
 <span class="attr">#[derive(Clone, Copy, Debug, Snafu, PartialEq, Eq)]
@@ -960,7 +948,7 @@
     RouteMustBeTable,
 }
 
-<span class="kw">impl</span>&lt;State, Error, VER: StaticVersionType&gt; Route&lt;State, Error, VER&gt; {
+<span class="kw">impl</span>&lt;State, Error&gt; Route&lt;State, Error&gt; {
     <span class="doccomment">/// Parse a [Route] from a TOML specification.
     ///
     /// The specification must be a table containing at least the following keys:
@@ -1083,12 +1071,11 @@
     </span><span class="kw">pub fn </span>map_err&lt;Error2&gt;(
         <span class="self">self</span>,
         f: <span class="kw">impl </span><span class="lifetime">'static </span>+ Send + Sync + Fn(Error) -&gt; Error2,
-    ) -&gt; Route&lt;State, Error2, VER&gt;
+    ) -&gt; Route&lt;State, Error2&gt;
     <span class="kw">where
         </span>State: <span class="lifetime">'static </span>+ Send + Sync,
         Error: <span class="lifetime">'static </span>+ Send + Sync,
         Error2: <span class="lifetime">'static</span>,
-        VER: <span class="lifetime">'static </span>+ Send + Sync,
     {
         Route {
             handler: <span class="self">self</span>.handler.map_err(f),
@@ -1127,10 +1114,10 @@
     }
 }
 
-<span class="kw">impl</span>&lt;State, Error, VER: StaticVersionType&gt; Route&lt;State, Error, VER&gt; {
+<span class="kw">impl</span>&lt;State, Error&gt; Route&lt;State, Error&gt; {
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>set_handler(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-        h: <span class="kw">impl </span>Handler&lt;State, Error, VER&gt;,
+        h: <span class="kw">impl </span>Handler&lt;State, Error&gt;,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;(), RouteError&lt;Error&gt;&gt; {
         <span class="kw">match </span><span class="kw-2">&amp;mut </span><span class="self">self</span>.handler {
             RouteImplementation::Http { handler, .. } =&gt; {
@@ -1143,14 +1130,18 @@
         }
     }
 
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>set_fn_handler&lt;F, T&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, handler: F) -&gt; <span class="prelude-ty">Result</span>&lt;(), RouteError&lt;Error&gt;&gt;
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>set_fn_handler&lt;F, T, VER&gt;(
+        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
+        handler: F,
+        <span class="kw">_</span>: VER,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), RouteError&lt;Error&gt;&gt;
     <span class="kw">where
         </span>F: <span class="lifetime">'static </span>+ Send + Sync + Fn(RequestParams, <span class="kw-2">&amp;</span>State) -&gt; BoxFuture&lt;<span class="lifetime">'_</span>, <span class="prelude-ty">Result</span>&lt;T, Error&gt;&gt;,
         T: Serialize,
         State: <span class="lifetime">'static </span>+ Send + Sync,
-        VER: <span class="lifetime">'static </span>+ Send + Sync,
+        VER: StaticVersionType + <span class="lifetime">'static</span>,
     {
-        <span class="self">self</span>.set_handler(FnHandler::from(handler))
+        <span class="self">self</span>.set_handler(FnHandler::&lt;F, VER&gt;::from(handler))
     }
 
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>set_socket_handler(
@@ -1177,7 +1168,6 @@
         T: <span class="lifetime">'static </span>+ Clone + metrics::Metrics,
         State: <span class="lifetime">'static </span>+ Send + Sync + ReadState,
         Error: <span class="lifetime">'static</span>,
-        VER: <span class="lifetime">'static </span>+ Send + Sync,
     {
         <span class="kw">match </span><span class="kw-2">&amp;mut </span><span class="self">self</span>.handler {
             RouteImplementation::Metrics { handler, .. } =&gt; {
@@ -1222,22 +1212,20 @@
 }
 
 <span class="attr">#[async_trait]
-</span><span class="kw">impl</span>&lt;State, Error, VER: StaticVersionType&gt; Handler&lt;State, Error, VER&gt; <span class="kw">for </span>Route&lt;State, Error, VER&gt;
+</span><span class="kw">impl</span>&lt;State, Error&gt; Handler&lt;State, Error&gt; <span class="kw">for </span>Route&lt;State, Error&gt;
 <span class="kw">where
     </span>Error: <span class="lifetime">'static</span>,
     State: <span class="lifetime">'static </span>+ Send + Sync,
-    VER: <span class="lifetime">'static </span>+ Send + Sync,
 {
     <span class="kw">async fn </span>handle(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         req: RequestParams,
         state: <span class="kw-2">&amp;</span>State,
-        bind_version: VER,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;tide::Response, RouteError&lt;Error&gt;&gt; {
         <span class="kw">match </span><span class="kw-2">&amp;</span><span class="self">self</span>.handler {
             RouteImplementation::Http { handler, .. }
             | RouteImplementation::Metrics { handler, .. } =&gt; <span class="kw">match </span>handler {
-                <span class="prelude-val">Some</span>(handler) =&gt; handler.handle(req, state, bind_version).<span class="kw">await</span>,
+                <span class="prelude-val">Some</span>(handler) =&gt; handler.handle(req, state).<span class="kw">await</span>,
                 <span class="prelude-val">None </span>=&gt; <span class="self">self</span>.default_handler(),
             },
             RouteImplementation::Socket { .. } =&gt; <span class="prelude-val">Err</span>(RouteError::IncorrectMethod {
@@ -1247,7 +1235,7 @@
     }
 }
 
-<span class="kw">pub struct </span>MapErr&lt;H, F, E&gt; {
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>MapErr&lt;H, F, E&gt; {
     handler: H,
     map: F,
     _phantom: PhantomData&lt;E&gt;,
@@ -1264,23 +1252,21 @@
 }
 
 <span class="attr">#[async_trait]
-</span><span class="kw">impl</span>&lt;H, F, State, Error1, Error2, VER&gt; Handler&lt;State, Error2, VER&gt; <span class="kw">for </span>MapErr&lt;H, F, Error1&gt;
+</span><span class="kw">impl</span>&lt;H, F, State, Error1, Error2&gt; Handler&lt;State, Error2&gt; <span class="kw">for </span>MapErr&lt;H, F, Error1&gt;
 <span class="kw">where
-    </span>H: Handler&lt;State, Error1, VER&gt;,
+    </span>H: Handler&lt;State, Error1&gt;,
     F: <span class="lifetime">'static </span>+ Send + Sync + Fn(Error1) -&gt; Error2,
     State: <span class="lifetime">'static </span>+ Send + Sync,
     Error1: <span class="lifetime">'static </span>+ Send + Sync,
     Error2: <span class="lifetime">'static</span>,
-    VER: <span class="lifetime">'static </span>+ Send + Sync + StaticVersionType,
 {
     <span class="kw">async fn </span>handle(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         req: RequestParams,
         state: <span class="kw-2">&amp;</span>State,
-        bind_version: VER,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;tide::Response, RouteError&lt;Error2&gt;&gt; {
         <span class="self">self</span>.handler
-            .handle(req, state, bind_version)
+            .handle(req, state)
             .<span class="kw">await
             </span>.map_err(|err| err.map_app_specific(<span class="kw-2">&amp;</span><span class="self">self</span>.map))
     }

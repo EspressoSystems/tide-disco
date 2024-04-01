@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["ApiError"],"struct":["Api","ApiMetadata","ApiVersion","RoutesWithPath"]};
+window.SIDEBAR_ITEMS = {"enum":["ApiError"],"struct":["Api","ApiMetadata","ApiVersion"]};

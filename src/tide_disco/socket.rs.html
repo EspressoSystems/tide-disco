@@ -450,7 +450,7 @@
     tungstenite::protocol::frame::{coding::CloseCode, CloseFrame},
     Message, WebSocketConnection,
 };
-<span class="kw">use </span>versioned_binary_serialization::{version::StaticVersionType, BinarySerializer, Serializer};
+<span class="kw">use </span>vbs::{version::StaticVersionType, BinarySerializer, Serializer};
 
 <span class="doccomment">/// An error returned by a socket handler.
 ///

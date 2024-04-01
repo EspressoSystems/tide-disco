@@ -701,6 +701,7 @@
 <a href="#699" id="699">699</a>
 <a href="#700" id="700">700</a>
 <a href="#701" id="701">701</a>
+<a href="#702" id="702">702</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright (c) 2022 Espresso Systems (espressosys.com)
 // This file is part of the tide-disco library.
 
@@ -750,7 +751,7 @@
 //! # fn main() -&gt; Result&lt;(), tide_disco::api::ApiError&gt; {
 //! use tide_disco::Api;
 //! use tide_disco::error::ServerError;
-//! use versioned_binary_serialization::version::StaticVersion;
+//! use vbs::version::StaticVersion;
 //!
 //! type State = ();
 //! type Error = ServerError;
@@ -777,7 +778,7 @@
 //!
 //! ```no_run
 //! # use tide_disco::Api;
-//! # use versioned_binary_serialization::version::StaticVersion;
+//! # use vbs::version::StaticVersion;
 //! # type StaticVer01 = StaticVersion&lt;0, 1&gt;;
 //! # fn main() -&gt; Result&lt;(), tide_disco::api::ApiError&gt; {
 //! # let spec: toml::Value = toml::from_str(std::str::from_utf8(&amp;std::fs::read("/path/to/api.toml").unwrap()).unwrap()).unwrap();
@@ -795,7 +796,7 @@
 //! an [App]:
 //!
 //! ```no_run
-//! # use versioned_binary_serialization::version::StaticVersion;
+//! # use vbs::version::StaticVersion;
 //! # type State = ();
 //! # type Error = tide_disco::error::ServerError;
 //! # type StaticVer01 = StaticVersion&lt;0, 1&gt;;
@@ -803,14 +804,13 @@
 //! # let spec: toml::Value = toml::from_str(std::str::from_utf8(&amp;std::fs::read("/path/to/api.toml").unwrap()).unwrap()).unwrap();
 //! # let api = tide_disco::Api::&lt;State, Error, StaticVer01&gt;::new(spec).unwrap();
 //! use tide_disco::App;
-//! use versioned_binary_serialization::version::StaticVersion;
+//! use vbs::version::StaticVersion;
 //!
 //! type StaticVer01 = StaticVersion&lt;0, 1&gt;;
-//! const VER_0_1: StaticVer01 = StaticVersion {};
 //!
 //! let mut app = App::&lt;State, Error, StaticVer01&gt;::with_state(());
 //! app.register_module("api", api);
-//! app.serve("http://localhost:8080", VER_0_1).await;
+//! app.serve("http://localhost:8080").await;
 //! # }
 //! ```
 //!
@@ -912,7 +912,7 @@
 //! use async_std::sync::RwLock;
 //! use futures::FutureExt;
 //! use tide_disco::Api;
-//! use versioned_binary_serialization::version::StaticVersion;
+//! use vbs::version::StaticVersion;
 //!
 //! type State = RwLock&lt;u64&gt;;
 //! type Error = ();
@@ -934,7 +934,7 @@
 //! use async_std::sync::RwLock;
 //! use futures::FutureExt;
 //! use tide_disco::{Api, RequestParams};
-//! use versioned_binary_serialization::version::StaticVersion;
+//! use vbs::version::StaticVersion;
 //!
 //! type State = RwLock&lt;u64&gt;;
 //! type Error = ();
@@ -989,10 +989,12 @@
 <span class="kw">pub mod </span>method;
 <span class="kw">pub mod </span>metrics;
 <span class="kw">pub mod </span>request;
-<span class="kw">pub mod </span>route;
 <span class="kw">pub mod </span>socket;
 <span class="kw">pub mod </span>status;
 <span class="kw">pub mod </span>testing;
+
+<span class="kw">mod </span>middleware;
+<span class="kw">mod </span>route;
 
 <span class="kw">pub use </span>api::Api;
 <span class="kw">pub use </span>app::App;
