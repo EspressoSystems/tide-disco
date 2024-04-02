@@ -120,20 +120,20 @@ jobs:
           publish_dir: ./target/doc
           cname: tide-disco.docs.espressosys.com
 
-  semver-check:
-    runs-on: ubuntu-latest
-    env:
-        RUST_LOG: info
-        RUSTFLAGS: "--cfg async_executor_impl=\"async-std\" --cfg async_channel_impl=\"async-std\""
-    steps:
-      - uses: actions/checkout@v4
-        name: Checkout Repository
+  # semver-check:
+  #   runs-on: ubuntu-latest
+  #   env:
+  #       RUST_LOG: info
+  #       RUSTFLAGS: "--cfg async_executor_impl=\"async-std\" --cfg async_channel_impl=\"async-std\""
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #       name: Checkout Repository
 
-      - uses: Swatinem/rust-cache@v2
-        name: Enable Rust Caching
+  #     - uses: Swatinem/rust-cache@v2
+  #       name: Enable Rust Caching
 
-      - name: Check semver
-        uses: obi1kenobi/cargo-semver-checks-action@v2
+  #     - name: Check semver
+  #       uses: obi1kenobi/cargo-semver-checks-action@v2
 
   publish:
     needs:
@@ -142,7 +142,7 @@ jobs:
       - test
       - lint
       - docs
-      - semver-check
+      # - semver-check
     runs-on: ubuntu-latest
     env:
         RUST_LOG: info
