@@ -3353,7 +3353,8 @@ dependencies = [
 [[package]]
 name = "tagged-base64"
 version = "0.4.0"
-source = "git+https://github.com/EspressoSystems/tagged-base64.git?tag=v0.4.0#eb449140f2feb597983ebaf0ee2464ed6cee322a"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7b74bbf1db405a3fd2c6f8cd403bfa14727faa145925efe3012fa270b61551f1"
 dependencies = [
  "ark-serialize",
  "ark-std",
@@ -3368,7 +3369,8 @@ dependencies = [
 [[package]]
 name = "tagged-base64-macros"
 version = "0.4.0"
-source = "git+https://github.com/EspressoSystems/tagged-base64.git?tag=v0.4.0#eb449140f2feb597983ebaf0ee2464ed6cee322a"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bcdea3c0150898fad2f7196a173ec3264f7fc455ba570939163c558f48ae85ac"
 dependencies = [
  "quote",
  "syn 1.0.109",
@@ -4040,7 +4042,8 @@ dependencies = [
 [[package]]
 name = "vbs"
 version = "0.1.4"
-source = "git+https://github.com/EspressoSystems/versioned-binary-serialization.git?tag=v0.1.4#50c93e6dd650484688077542c467a134a033893c"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "971bcbd6c41e4e53fa9eab95b2a8ddaf1826be2f3e86b4101efebc8c3a17fde0"
 dependencies = [
  "anyhow",
  "bincode",

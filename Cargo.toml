@@ -54,7 +54,7 @@ signal-hook = "0.3.14"
 snafu = "0.8"
 strum = "0.26"
 strum_macros = "0.26"
-tagged-base64 = { git = "https://github.com/EspressoSystems/tagged-base64.git", tag = "v0.4.0" }
+tagged-base64 = "0.4"
 tide = { version = "0.16.0", default-features = false }
 tide-websockets = "0.4.0"
 toml = "0.8"
@@ -64,7 +64,7 @@ tracing-futures = "0.2"
 tracing-log = "0.2"
 tracing-subscriber = { version = "0.3.18", features = ["env-filter", "json"] }
 url = "2.5.0"
-vbs = { git = "https://github.com/EspressoSystems/versioned-binary-serialization.git", tag = "v0.1.4" }
+vbs = "0.1"
 
 # Dependencies enabled by feature `testing`
 async-compatibility-layer = { git = "https://github.com/EspressoSystems/async-compatibility-layer.git", tag = "1.4.2", features = ["logging-utils"], optional = true }
