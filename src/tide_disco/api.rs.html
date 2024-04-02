@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/api.rs`."><title>api.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-5bc39a1768837dd0.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="tide_disco" data-themes="" data-resource-suffix="" data-rustdoc-version="1.77.0 (aedd173a2 2024-03-17)" data-channel="1.77.0" data-search-js="search-dd67cee4cfa65049.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-4c98445ec4002617.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-48f368f3872407c8.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-04d5337699b92874.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/api.rs`."><title>api.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-5bc39a1768837dd0.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="tide_disco" data-themes="" data-resource-suffix="" data-rustdoc-version="1.77.1 (7cf61ebde 2024-03-27)" data-channel="1.77.1" data-search-js="search-dd67cee4cfa65049.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-4c98445ec4002617.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-48f368f3872407c8.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-04d5337699b92874.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title">
             <h2>Files</h2></div></nav><div class="sidebar-resizer"></div>
     <main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../tide_disco/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
@@ -1776,6 +1776,30 @@
 <a href="#1774" id="1774">1774</a>
 <a href="#1775" id="1775">1775</a>
 <a href="#1776" id="1776">1776</a>
+<a href="#1777" id="1777">1777</a>
+<a href="#1778" id="1778">1778</a>
+<a href="#1779" id="1779">1779</a>
+<a href="#1780" id="1780">1780</a>
+<a href="#1781" id="1781">1781</a>
+<a href="#1782" id="1782">1782</a>
+<a href="#1783" id="1783">1783</a>
+<a href="#1784" id="1784">1784</a>
+<a href="#1785" id="1785">1785</a>
+<a href="#1786" id="1786">1786</a>
+<a href="#1787" id="1787">1787</a>
+<a href="#1788" id="1788">1788</a>
+<a href="#1789" id="1789">1789</a>
+<a href="#1790" id="1790">1790</a>
+<a href="#1791" id="1791">1791</a>
+<a href="#1792" id="1792">1792</a>
+<a href="#1793" id="1793">1793</a>
+<a href="#1794" id="1794">1794</a>
+<a href="#1795" id="1795">1795</a>
+<a href="#1796" id="1796">1796</a>
+<a href="#1797" id="1797">1797</a>
+<a href="#1798" id="1798">1798</a>
+<a href="#1799" id="1799">1799</a>
+<a href="#1800" id="1800">1800</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright (c) 2022 Espresso Systems (espressosys.com)
 // This file is part of the tide-disco library.
 
@@ -1806,6 +1830,7 @@
 <span class="kw">use </span>std::{
     borrow::Cow,
     collections::hash_map::{Entry, HashMap, IntoValues, Values},
+    convert::Infallible,
     fmt::Display,
     fs,
     marker::PhantomData,
@@ -2069,9 +2094,21 @@
     /// error type. However, it will always be set after `Api::into_inner` is called.
     </span><span class="attr">#[derivative(Debug = <span class="string">"ignore"</span>)]
     </span>error_handler: <span class="prelude-ty">Option</span>&lt;Arc&lt;<span class="kw">dyn </span>ErrorHandler&lt;Error&gt;&gt;&gt;,
+    <span class="doccomment">/// Response handler encapsulating the serialization format version for version requests
+    </span><span class="attr">#[derivative(Debug = <span class="string">"ignore"</span>)]
+    </span>version_handler: Arc&lt;<span class="kw">dyn </span>VersionHandler&gt;,
     public: <span class="prelude-ty">Option</span>&lt;PathBuf&gt;,
     short_description: String,
     long_description: String,
+}
+
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">trait </span>VersionHandler:
+    Send + Sync + Fn(<span class="kw-2">&amp;</span>Accept, ApiVersion) -&gt; <span class="prelude-ty">Result</span>&lt;tide::Response, RouteError&lt;Infallible&gt;&gt;
+{
+}
+<span class="kw">impl</span>&lt;F&gt; VersionHandler <span class="kw">for </span>F <span class="kw">where
+    </span>F: Send + Sync + Fn(<span class="kw-2">&amp;</span>Accept, ApiVersion) -&gt; <span class="prelude-ty">Result</span>&lt;tide::Response, RouteError&lt;Infallible&gt;&gt;
+{
 }
 
 <span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, State, Error&gt; IntoIterator <span class="kw">for </span><span class="kw-2">&amp;</span><span class="lifetime">'a </span>ApiInner&lt;State, Error&gt; {
@@ -2183,6 +2220,10 @@
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>error_handler(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Arc&lt;<span class="kw">dyn </span>ErrorHandler&lt;Error&gt;&gt; {
         <span class="self">self</span>.error_handler.clone().unwrap()
     }
+
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>version_handler(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Arc&lt;<span class="kw">dyn </span>VersionHandler&gt; {
+        <span class="self">self</span>.version_handler.clone()
+    }
 }
 
 <span class="kw">impl</span>&lt;State, Error, VER&gt; Api&lt;State, Error, VER&gt;
@@ -2274,6 +2315,9 @@
                 health_check: Box::new(<span class="self">Self</span>::default_health_check),
                 api_version: <span class="prelude-val">None</span>,
                 error_handler: <span class="prelude-val">None</span>,
+                version_handler: Arc::new(|accept, version| {
+                    respond_with(accept, version, VER::instance())
+                }),
                 public: <span class="prelude-val">None</span>,
                 short_description,
                 long_description,
@@ -3068,6 +3112,7 @@
                 health_check: <span class="self">self</span>.inner.health_check,
                 api_version: <span class="self">self</span>.inner.api_version,
                 error_handler: <span class="prelude-val">None</span>,
+                version_handler: <span class="self">self</span>.inner.version_handler,
                 public: <span class="self">self</span>.inner.public,
                 short_description: <span class="self">self</span>.inner.short_description,
                 long_description: <span class="self">self</span>.inner.long_description,
@@ -3214,7 +3259,10 @@
     <span class="kw">use </span>prometheus::{Counter, Registry};
     <span class="kw">use </span>std::borrow::Cow;
     <span class="kw">use </span>toml::toml;
-    <span class="kw">use </span>vbs::{version::StaticVersion, BinarySerializer, Serializer};
+    <span class="kw">use </span>vbs::{
+        version::{StaticVersion, StaticVersionType},
+        BinarySerializer, Serializer,
+    };
 
     <span class="attr">#[cfg(windows)]
     </span><span class="kw">use </span>async_tungstenite::tungstenite::Error <span class="kw">as </span>WsError;
@@ -3249,7 +3297,7 @@
     </span><span class="kw">async fn </span>test_socket_endpoint() {
         setup_test();
 
-        <span class="kw">let </span><span class="kw-2">mut </span>app = App::&lt;<span class="kw">_</span>, ServerError, StaticVer01&gt;::with_state(RwLock::new(()));
+        <span class="kw">let </span><span class="kw-2">mut </span>app = App::&lt;<span class="kw">_</span>, ServerError&gt;::with_state(RwLock::new(()));
         <span class="kw">let </span>api_toml = <span class="macro">toml! </span>{
             [meta]
             FORMAT_VERSION = <span class="string">"0.1.0"
@@ -3310,7 +3358,7 @@
         }
         <span class="kw">let </span>port = pick_unused_port().unwrap();
         <span class="kw">let </span>url: Url = <span class="macro">format!</span>(<span class="string">"http://localhost:{}"</span>, port).parse().unwrap();
-        spawn(app.serve(<span class="macro">format!</span>(<span class="string">"0.0.0.0:{}"</span>, port)));
+        spawn(app.serve(<span class="macro">format!</span>(<span class="string">"0.0.0.0:{}"</span>, port), StaticVer01::instance()));
 
         <span class="comment">// Create a client that accepts JSON messages.
         </span><span class="kw">let </span><span class="kw-2">mut </span>conn = test_ws_client_with_headers(
@@ -3394,7 +3442,7 @@
     </span><span class="kw">async fn </span>test_stream_endpoint() {
         setup_test();
 
-        <span class="kw">let </span><span class="kw-2">mut </span>app = App::&lt;<span class="kw">_</span>, ServerError, StaticVer01&gt;::with_state(RwLock::new(()));
+        <span class="kw">let </span><span class="kw-2">mut </span>app = App::&lt;<span class="kw">_</span>, ServerError&gt;::with_state(RwLock::new(()));
         <span class="kw">let </span>api_toml = <span class="macro">toml! </span>{
             [meta]
             FORMAT_VERSION = <span class="string">"0.1.0"
@@ -3432,7 +3480,7 @@
         }
         <span class="kw">let </span>port = pick_unused_port().unwrap();
         <span class="kw">let </span>url: Url = <span class="macro">format!</span>(<span class="string">"http://localhost:{}"</span>, port).parse().unwrap();
-        spawn(app.serve(<span class="macro">format!</span>(<span class="string">"0.0.0.0:{}"</span>, port)));
+        spawn(app.serve(<span class="macro">format!</span>(<span class="string">"0.0.0.0:{}"</span>, port), StaticVer01::instance()));
 
         <span class="comment">// Consume the `nat` stream.
         </span><span class="kw">let </span><span class="kw-2">mut </span>conn = test_ws_client(url.join(<span class="string">"mod/nat"</span>).unwrap()).<span class="kw">await</span>;
@@ -3471,7 +3519,7 @@
     </span><span class="kw">async fn </span>test_custom_healthcheck() {
         setup_test();
 
-        <span class="kw">let </span><span class="kw-2">mut </span>app = App::&lt;<span class="kw">_</span>, ServerError, StaticVer01&gt;::with_state(HealthStatus::Available);
+        <span class="kw">let </span><span class="kw-2">mut </span>app = App::&lt;<span class="kw">_</span>, ServerError&gt;::with_state(HealthStatus::Available);
         <span class="kw">let </span>api_toml = <span class="macro">toml! </span>{
             [meta]
             FORMAT_VERSION = <span class="string">"0.1.0"
@@ -3487,7 +3535,7 @@
         }
         <span class="kw">let </span>port = pick_unused_port().unwrap();
         <span class="kw">let </span>url: Url = <span class="macro">format!</span>(<span class="string">"http://localhost:{}"</span>, port).parse().unwrap();
-        spawn(app.serve(<span class="macro">format!</span>(<span class="string">"0.0.0.0:{}"</span>, port)));
+        spawn(app.serve(<span class="macro">format!</span>(<span class="string">"0.0.0.0:{}"</span>, port), StaticVer01::instance()));
         <span class="kw">let </span>client = Client::new(url).<span class="kw">await</span>;
 
         <span class="kw">let </span>res = client.get(<span class="string">"/mod/healthcheck"</span>).send().<span class="kw">await</span>.unwrap();
@@ -3516,7 +3564,7 @@
         metrics.register(Box::new(counter.clone())).unwrap();
         <span class="kw">let </span>state = State { metrics, counter };
 
-        <span class="kw">let </span><span class="kw-2">mut </span>app = App::&lt;<span class="kw">_</span>, ServerError, StaticVer01&gt;::with_state(RwLock::new(state));
+        <span class="kw">let </span><span class="kw-2">mut </span>app = App::&lt;<span class="kw">_</span>, ServerError&gt;::with_state(RwLock::new(state));
         <span class="kw">let </span>api_toml = <span class="macro">toml! </span>{
             [meta]
             FORMAT_VERSION = <span class="string">"0.1.0"
@@ -3540,7 +3588,7 @@
         }
         <span class="kw">let </span>port = pick_unused_port().unwrap();
         <span class="kw">let </span>url: Url = <span class="macro">format!</span>(<span class="string">"http://localhost:{port}"</span>).parse().unwrap();
-        spawn(app.serve(<span class="macro">format!</span>(<span class="string">"0.0.0.0:{port}"</span>)));
+        spawn(app.serve(<span class="macro">format!</span>(<span class="string">"0.0.0.0:{port}"</span>), StaticVer01::instance()));
         <span class="kw">let </span>client = Client::new(url).<span class="kw">await</span>;
 
         <span class="kw">for </span>i <span class="kw">in </span><span class="number">1</span>..<span class="number">5 </span>{

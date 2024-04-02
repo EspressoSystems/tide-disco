@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/app.rs`."><title>app.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-5bc39a1768837dd0.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="tide_disco" data-themes="" data-resource-suffix="" data-rustdoc-version="1.77.0 (aedd173a2 2024-03-17)" data-channel="1.77.0" data-search-js="search-dd67cee4cfa65049.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-4c98445ec4002617.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-48f368f3872407c8.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-04d5337699b92874.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/app.rs`."><title>app.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-5bc39a1768837dd0.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="tide_disco" data-themes="" data-resource-suffix="" data-rustdoc-version="1.77.1 (7cf61ebde 2024-03-27)" data-channel="1.77.1" data-search-js="search-dd67cee4cfa65049.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-4c98445ec4002617.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-48f368f3872407c8.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-04d5337699b92874.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title">
             <h2>Files</h2></div></nav><div class="sidebar-resizer"></div>
     <main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../tide_disco/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
@@ -1613,7 +1613,6 @@
 <a href="#1611" id="1611">1611</a>
 <a href="#1612" id="1612">1612</a>
 <a href="#1613" id="1613">1613</a>
-<a href="#1614" id="1614">1614</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright (c) 2022 Espresso Systems (espressosys.com)
 // This file is part of the tide-disco library.
 
@@ -1650,7 +1649,6 @@
     env,
     fmt::Display,
     fs, io,
-    marker::PhantomData,
     ops::{Deref, DerefMut},
     path::PathBuf,
 };
@@ -1674,12 +1672,11 @@
 /// to application-level endpoints like `/version` and `/healthcheck`. The binary format version in
 /// use by any given API module may differ, depending on the supported version of the API.
 </span><span class="attr">#[derive(Debug)]
-</span><span class="kw">pub struct </span>App&lt;State, Error, VER&gt; {
+</span><span class="kw">pub struct </span>App&lt;State, Error&gt; {
     <span class="comment">// Map from base URL, major version to API.
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) apis: HashMap&lt;String, BTreeMap&lt;u64, ApiInner&lt;State, Error&gt;&gt;&gt;,
     <span class="kw">pub</span>(<span class="kw">crate</span>) state: Arc&lt;State&gt;,
     app_version: <span class="prelude-ty">Option</span>&lt;Version&gt;,
-    _version: PhantomData&lt;VER&gt;,
 }
 
 <span class="doccomment">/// An error encountered while building an [App].
@@ -1689,14 +1686,13 @@
     ModuleAlreadyExists,
 }
 
-<span class="kw">impl</span>&lt;State: Send + Sync + <span class="lifetime">'static</span>, Error: <span class="lifetime">'static</span>, VER&gt; App&lt;State, Error, VER&gt; {
+<span class="kw">impl</span>&lt;State: Send + Sync + <span class="lifetime">'static</span>, Error: <span class="lifetime">'static</span>&gt; App&lt;State, Error&gt; {
     <span class="doccomment">/// Create a new [App] with a given state.
     </span><span class="kw">pub fn </span>with_state(state: State) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
             apis: HashMap::new(),
             state: Arc::new(state),
             app_version: <span class="prelude-val">None</span>,
-            _version: Default::default(),
         }
     }
 
@@ -1711,10 +1707,9 @@
         <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span><span class="self">self</span>,
         base_url: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>str,
         api: <span class="kw">impl </span>Into&lt;toml::Value&gt;,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;Module&lt;<span class="lifetime">'a</span>, State, Error, VER, ModuleError, ModuleVersion&gt;, AppError&gt;
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;Module&lt;<span class="lifetime">'a</span>, State, Error, ModuleError, ModuleVersion&gt;, AppError&gt;
     <span class="kw">where
         </span>Error: <span class="kw">crate</span>::Error + From&lt;ModuleError&gt;,
-        VER: StaticVersionType + <span class="lifetime">'static</span>,
         ModuleError: Send + Sync + <span class="lifetime">'static</span>,
         ModuleVersion: StaticVersionType + <span class="lifetime">'static</span>,
     {
@@ -1817,7 +1812,7 @@
     /// ```
     /// # use vbs::version::StaticVersion;
     /// # type StaticVer01 = StaticVersion&lt;0, 1&gt;;
-    /// # fn ex(app: &amp;mut tide_disco::App&lt;(), (), StaticVer01&gt;) {
+    /// # fn ex(app: &amp;mut tide_disco::App&lt;(), ()&gt;) {
     /// app.with_version(env!("CARGO_PKG_VERSION").parse().unwrap());
     /// # }
     /// ```
@@ -1909,14 +1904,22 @@
     };
 }
 
-<span class="kw">impl</span>&lt;State, Error, VER&gt; App&lt;State, Error, VER&gt;
+<span class="kw">impl</span>&lt;State, Error&gt; App&lt;State, Error&gt;
 <span class="kw">where
     </span>State: Send + Sync + <span class="lifetime">'static</span>,
     Error: <span class="lifetime">'static </span>+ <span class="kw">crate</span>::Error,
-    VER: StaticVersionType + Send + Sync + <span class="lifetime">'static</span>,
 {
     <span class="doccomment">/// Serve the [App] asynchronously.
-    </span><span class="kw">pub async fn </span>serve&lt;L: ToListener&lt;Arc&lt;<span class="self">Self</span>&gt;&gt;&gt;(<span class="self">self</span>, listener: L) -&gt; io::Result&lt;()&gt; {
+    ///
+    /// `VER` controls the binary format version used for responses to top-level endpoints like
+    /// `/version` and `/healthcheck`. All endpoints for specific API modules will use the format
+    /// version of that module (`ModuleVersion` when the module was
+    /// [registered](Self::register_module)).
+    </span><span class="kw">pub async fn </span>serve&lt;L, VER&gt;(<span class="self">self</span>, listener: L, bind_version: VER) -&gt; io::Result&lt;()&gt;
+    <span class="kw">where
+        </span>L: ToListener&lt;Arc&lt;<span class="self">Self</span>&gt;&gt;,
+        VER: StaticVersionType + <span class="lifetime">'static</span>,
+    {
         <span class="kw">let </span>state = Arc::new(<span class="self">self</span>);
         <span class="kw">let </span><span class="kw-2">mut </span>server = tide::Server::with_state(state.clone());
         server.with(<span class="self">Self</span>::version_middleware);
@@ -1948,7 +1951,7 @@
             .at(<span class="string">"version"</span>)
             .get(<span class="kw">move </span>|req: tide::Request&lt;Arc&lt;<span class="self">Self</span>&gt;&gt;| <span class="kw">async move </span>{
                 <span class="kw">let </span>accept = RequestParams::accept_from_headers(<span class="kw-2">&amp;</span>req)<span class="question-mark">?</span>;
-                respond_with(<span class="kw-2">&amp;</span>accept, req.state().version(), VER::instance())
+                respond_with(<span class="kw-2">&amp;</span>accept, req.state().version(), bind_version)
                     .map_err(|err| Error::from_route_error::&lt;Infallible&gt;(err).into_tide_error())
             });
 
@@ -2109,9 +2112,8 @@
                     <span class="kw">async move </span>{
                         <span class="kw">let </span>api = <span class="kw-2">&amp;</span>req.state().apis[<span class="kw-2">&amp;</span>prefix][<span class="kw-2">&amp;</span>version];
                         <span class="kw">let </span>accept = RequestParams::accept_from_headers(<span class="kw-2">&amp;</span>req)<span class="question-mark">?</span>;
-                        respond_with(<span class="kw-2">&amp;</span>accept, api.version(), VER::instance()).map_err(|err| {
-                            Error::from_route_error::&lt;Infallible&gt;(err).into_tide_error()
-                        })
+                        api.version_handler()(<span class="kw-2">&amp;</span>accept, api.version())
+                            .map_err(|err| Error::from_route_error(err).into_tide_error())
                     }
                 });
         }
@@ -2392,26 +2394,24 @@
 /// Note that if anything goes wrong during module registration (for example, there is already an
 /// incompatible module registered with the same name), the drop implementation may panic. To handle
 /// errors without panicking, call [`register`](Self::register) explicitly.
-</span><span class="kw">pub struct </span>Module&lt;<span class="lifetime">'a</span>, State, Error, VER, ModuleError, ModuleVersion&gt;
+</span><span class="kw">pub struct </span>Module&lt;<span class="lifetime">'a</span>, State, Error, ModuleError, ModuleVersion&gt;
 <span class="kw">where
     </span>State: Send + Sync + <span class="lifetime">'static</span>,
     Error: <span class="kw">crate</span>::Error + From&lt;ModuleError&gt; + <span class="lifetime">'static</span>,
-    VER: StaticVersionType + <span class="lifetime">'static</span>,
     ModuleError: Send + Sync + <span class="lifetime">'static</span>,
     ModuleVersion: StaticVersionType + <span class="lifetime">'static</span>,
 {
-    app: <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span>App&lt;State, Error, VER&gt;,
+    app: <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span>App&lt;State, Error&gt;,
     base_url: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>str,
     <span class="comment">// This is only an [Option] so we can [take] out of it during [drop].
     </span>api: <span class="prelude-ty">Option</span>&lt;Api&lt;State, ModuleError, ModuleVersion&gt;&gt;,
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, State, Error, VER, ModuleError, ModuleVersion&gt; Deref
-    <span class="kw">for </span>Module&lt;<span class="lifetime">'a</span>, State, Error, VER, ModuleError, ModuleVersion&gt;
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, State, Error, ModuleError, ModuleVersion&gt; Deref
+    <span class="kw">for </span>Module&lt;<span class="lifetime">'a</span>, State, Error, ModuleError, ModuleVersion&gt;
 <span class="kw">where
     </span>State: Send + Sync + <span class="lifetime">'static</span>,
     Error: <span class="kw">crate</span>::Error + From&lt;ModuleError&gt; + <span class="lifetime">'static</span>,
-    VER: StaticVersionType + <span class="lifetime">'static</span>,
     ModuleError: Send + Sync + <span class="lifetime">'static</span>,
     ModuleVersion: StaticVersionType + <span class="lifetime">'static</span>,
 {
@@ -2422,12 +2422,11 @@
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, State, Error, VER, ModuleError, ModuleVersion&gt; DerefMut
-    <span class="kw">for </span>Module&lt;<span class="lifetime">'a</span>, State, Error, VER, ModuleError, ModuleVersion&gt;
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, State, Error, ModuleError, ModuleVersion&gt; DerefMut
+    <span class="kw">for </span>Module&lt;<span class="lifetime">'a</span>, State, Error, ModuleError, ModuleVersion&gt;
 <span class="kw">where
     </span>State: Send + Sync + <span class="lifetime">'static</span>,
     Error: <span class="kw">crate</span>::Error + From&lt;ModuleError&gt; + <span class="lifetime">'static</span>,
-    VER: StaticVersionType + <span class="lifetime">'static</span>,
     ModuleError: Send + Sync + <span class="lifetime">'static</span>,
     ModuleVersion: StaticVersionType + <span class="lifetime">'static</span>,
 {
@@ -2436,12 +2435,11 @@
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, State, Error, VER, ModuleError, ModuleVersion&gt; Drop
-    <span class="kw">for </span>Module&lt;<span class="lifetime">'a</span>, State, Error, VER, ModuleError, ModuleVersion&gt;
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, State, Error, ModuleError, ModuleVersion&gt; Drop
+    <span class="kw">for </span>Module&lt;<span class="lifetime">'a</span>, State, Error, ModuleError, ModuleVersion&gt;
 <span class="kw">where
     </span>State: Send + Sync + <span class="lifetime">'static</span>,
     Error: <span class="kw">crate</span>::Error + From&lt;ModuleError&gt; + <span class="lifetime">'static</span>,
-    VER: StaticVersionType + <span class="lifetime">'static</span>,
     ModuleError: Send + Sync + <span class="lifetime">'static</span>,
     ModuleVersion: StaticVersionType + <span class="lifetime">'static</span>,
 {
@@ -2450,12 +2448,11 @@
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, State, Error, VER, ModuleError, ModuleVersion&gt;
-    Module&lt;<span class="lifetime">'a</span>, State, Error, VER, ModuleError, ModuleVersion&gt;
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, State, Error, ModuleError, ModuleVersion&gt;
+    Module&lt;<span class="lifetime">'a</span>, State, Error, ModuleError, ModuleVersion&gt;
 <span class="kw">where
     </span>State: Send + Sync + <span class="lifetime">'static</span>,
     Error: <span class="kw">crate</span>::Error + From&lt;ModuleError&gt; + <span class="lifetime">'static</span>,
-    VER: StaticVersionType + <span class="lifetime">'static</span>,
     ModuleError: Send + Sync + <span class="lifetime">'static</span>,
     ModuleVersion: StaticVersionType + <span class="lifetime">'static</span>,
 {
@@ -2523,7 +2520,7 @@
 
         <span class="kw">use </span><span class="kw">crate</span>::http::Method::<span class="kw-2">*</span>;
 
-        <span class="kw">let </span><span class="kw-2">mut </span>app = App::&lt;<span class="kw">_</span>, ServerError, StaticVer01&gt;::with_state(RwLock::new(FakeMetrics));
+        <span class="kw">let </span><span class="kw-2">mut </span>app = App::&lt;<span class="kw">_</span>, ServerError&gt;::with_state(RwLock::new(FakeMetrics));
         <span class="kw">let </span>api_toml = <span class="macro">toml! </span>{
             [meta]
             FORMAT_VERSION = <span class="string">"0.1.0"
@@ -2590,7 +2587,7 @@
         }
         <span class="kw">let </span>port = pick_unused_port().unwrap();
         <span class="kw">let </span>url: Url = <span class="macro">format!</span>(<span class="string">"http://localhost:{}"</span>, port).parse().unwrap();
-        spawn(app.serve(<span class="macro">format!</span>(<span class="string">"0.0.0.0:{}"</span>, port)));
+        spawn(app.serve(<span class="macro">format!</span>(<span class="string">"0.0.0.0:{}"</span>, port), StaticVer01::instance()));
         <span class="kw">let </span>client = Client::new(url.clone()).<span class="kw">await</span>;
 
         <span class="comment">// Regular HTTP methods.
@@ -2636,7 +2633,7 @@
     </span><span class="kw">async fn </span>test_param_dispatch() {
         setup_test();
 
-        <span class="kw">let </span><span class="kw-2">mut </span>app = App::&lt;<span class="kw">_</span>, ServerError, StaticVer01&gt;::with_state(RwLock::new(()));
+        <span class="kw">let </span><span class="kw-2">mut </span>app = App::&lt;<span class="kw">_</span>, ServerError&gt;::with_state(RwLock::new(()));
         <span class="kw">let </span>api_toml = <span class="macro">toml! </span>{
             [meta]
             FORMAT_VERSION = <span class="string">"0.1.0"
@@ -2664,7 +2661,7 @@
         }
         <span class="kw">let </span>port = pick_unused_port().unwrap();
         <span class="kw">let </span>url: Url = <span class="macro">format!</span>(<span class="string">"http://localhost:{}"</span>, port).parse().unwrap();
-        spawn(app.serve(<span class="macro">format!</span>(<span class="string">"0.0.0.0:{}"</span>, port)));
+        spawn(app.serve(<span class="macro">format!</span>(<span class="string">"0.0.0.0:{}"</span>, port), StaticVer01::instance()));
         <span class="kw">let </span>client = Client::new(url.clone()).<span class="kw">await</span>;
 
         <span class="kw">let </span>res = client.get(<span class="string">"mod/test/a/42"</span>).send().<span class="kw">await</span>.unwrap();
@@ -2686,7 +2683,7 @@
     </span><span class="kw">async fn </span>test_versions() {
         setup_test();
 
-        <span class="kw">let </span><span class="kw-2">mut </span>app = App::&lt;<span class="kw">_</span>, ServerError, StaticVer01&gt;::with_state(RwLock::new(()));
+        <span class="kw">let </span><span class="kw-2">mut </span>app = App::&lt;<span class="kw">_</span>, ServerError&gt;::with_state(RwLock::new(()));
 
         <span class="comment">// Create two different, non-consecutive major versions of an API. One method will be
         // deleted in version 1, one will be added in version 3, and one will be present in both
@@ -2755,7 +2752,7 @@
 
         <span class="kw">let </span>port = pick_unused_port().unwrap();
         <span class="kw">let </span>url: Url = <span class="macro">format!</span>(<span class="string">"http://localhost:{}"</span>, port).parse().unwrap();
-        spawn(app.serve(<span class="macro">format!</span>(<span class="string">"0.0.0.0:{}"</span>, port)));
+        spawn(app.serve(<span class="macro">format!</span>(<span class="string">"0.0.0.0:{}"</span>, port), StaticVer01::instance()));
         <span class="kw">let </span>client = Client::new(url.clone()).<span class="kw">await</span>;
 
         <span class="comment">// First check that we can call all the expected methods.
@@ -2965,7 +2962,7 @@
         setup_test();
 
         <span class="comment">// Test discoverability documentation when a request is for an unknown API.
-        </span><span class="kw">let </span><span class="kw-2">mut </span>app = App::&lt;<span class="kw">_</span>, ServerError, StaticVer01&gt;::with_state(());
+        </span><span class="kw">let </span><span class="kw-2">mut </span>app = App::&lt;<span class="kw">_</span>, ServerError&gt;::with_state(());
         app.module::&lt;ServerError, StaticVer01&gt;(
             <span class="string">"the-correct-module"</span>,
             <span class="macro">toml! </span>{
@@ -2977,7 +2974,7 @@
 
         <span class="kw">let </span>port = pick_unused_port().unwrap();
         <span class="kw">let </span>url: Url = <span class="macro">format!</span>(<span class="string">"http://localhost:{}"</span>, port).parse().unwrap();
-        spawn(app.serve(<span class="macro">format!</span>(<span class="string">"0.0.0.0:{}"</span>, port)));
+        spawn(app.serve(<span class="macro">format!</span>(<span class="string">"0.0.0.0:{}"</span>, port), StaticVer01::instance()));
         <span class="kw">let </span>client = Client::new(url.clone()).<span class="kw">await</span>;
 
         <span class="kw">let </span>expected_list_item = <span class="macro">html! </span>{
@@ -3025,7 +3022,7 @@
     </span><span class="kw">async fn </span>test_post_redirect_idempotency() {
         setup_test();
 
-        <span class="kw">let </span><span class="kw-2">mut </span>app = App::&lt;<span class="kw">_</span>, ServerError, StaticVer01&gt;::with_state(RwLock::new(<span class="number">0</span>));
+        <span class="kw">let </span><span class="kw-2">mut </span>app = App::&lt;<span class="kw">_</span>, ServerError&gt;::with_state(RwLock::new(<span class="number">0</span>));
 
         <span class="kw">let </span>api_toml = <span class="macro">toml! </span>{
             [meta]
@@ -3051,7 +3048,7 @@
 
         <span class="kw">let </span>port = pick_unused_port().unwrap();
         <span class="kw">let </span>url: Url = <span class="macro">format!</span>(<span class="string">"http://localhost:{}"</span>, port).parse().unwrap();
-        spawn(app.serve(<span class="macro">format!</span>(<span class="string">"0.0.0.0:{}"</span>, port)));
+        spawn(app.serve(<span class="macro">format!</span>(<span class="string">"0.0.0.0:{}"</span>, port), StaticVer01::instance()));
         <span class="kw">let </span>client = Client::new(url.clone()).<span class="kw">await</span>;
 
         <span class="kw">for </span>i <span class="kw">in </span><span class="number">1</span>..<span class="number">3 </span>{
@@ -3076,7 +3073,7 @@
         <span class="comment">// Register two modules with different binary format versions, each in turn different from
         // the app-level version. Each module has two endpoints, one which always succeeds and one
         // which always fails, so we can test error serialization.
-        </span><span class="kw">let </span><span class="kw-2">mut </span>app = App::&lt;<span class="kw">_</span>, ServerError, StaticVer01&gt;::with_state(());
+        </span><span class="kw">let </span><span class="kw-2">mut </span>app = App::&lt;<span class="kw">_</span>, ServerError&gt;::with_state(());
         <span class="kw">let </span>api_toml = <span class="macro">toml! </span>{
             [meta]
             FORMAT_VERSION = <span class="string">"0.1.0"
@@ -3120,7 +3117,7 @@
 
         <span class="kw">let </span>port = pick_unused_port().unwrap();
         <span class="kw">let </span>url: Url = <span class="macro">format!</span>(<span class="string">"http://localhost:{}"</span>, port).parse().unwrap();
-        spawn(app.serve(<span class="macro">format!</span>(<span class="string">"0.0.0.0:{}"</span>, port)));
+        spawn(app.serve(<span class="macro">format!</span>(<span class="string">"0.0.0.0:{}"</span>, port), StaticVer01::instance()));
         <span class="kw">let </span>client = Client::new(url.clone()).<span class="kw">await</span>;
 
         <span class="kw">async fn </span>get&lt;S: BinarySerializer, T: DeserializeOwned&gt;(
@@ -3154,6 +3151,11 @@
             );
         }
 
+        <span class="kw">let </span>api_version = ApiVersion {
+            spec_version: <span class="string">"0.1.0"</span>.parse().unwrap(),
+            api_version: <span class="prelude-val">None</span>,
+        };
+
         check_ok::&lt;SerializerV01&gt;(
             <span class="kw-2">&amp;</span>client,
             <span class="string">"healthcheck"</span>,
@@ -3174,27 +3176,19 @@
                 app_version: <span class="prelude-val">None</span>,
                 disco_version: <span class="macro">env!</span>(<span class="string">"CARGO_PKG_VERSION"</span>).parse().unwrap(),
                 modules: [
-                    (
-                        <span class="string">"mod02"</span>.into(),
-                        <span class="macro">vec!</span>[ApiVersion {
-                            spec_version: <span class="string">"0.1.0"</span>.parse().unwrap(),
-                            api_version: <span class="prelude-val">None</span>,
-                        }],
-                    ),
-                    (
-                        <span class="string">"mod03"</span>.into(),
-                        <span class="macro">vec!</span>[ApiVersion {
-                            spec_version: <span class="string">"0.1.0"</span>.parse().unwrap(),
-                            api_version: <span class="prelude-val">None</span>,
-                        }],
-                    ),
+                    (<span class="string">"mod02"</span>.into(), <span class="macro">vec!</span>[api_version.clone()]),
+                    (<span class="string">"mod03"</span>.into(), <span class="macro">vec!</span>[api_version.clone()]),
                 ]
                 .into(),
             },
         )
         .<span class="kw">await</span>;
         check_ok::&lt;SerializerV02&gt;(<span class="kw-2">&amp;</span>client, <span class="string">"mod02/ok"</span>, <span class="string">"ok"</span>.to_string()).<span class="kw">await</span>;
+        check_ok::&lt;SerializerV02&gt;(<span class="kw-2">&amp;</span>client, <span class="string">"mod02/healthcheck"</span>, HealthStatus::Available).<span class="kw">await</span>;
+        check_ok::&lt;SerializerV02&gt;(<span class="kw-2">&amp;</span>client, <span class="string">"mod02/version"</span>, api_version.clone()).<span class="kw">await</span>;
         check_ok::&lt;SerializerV03&gt;(<span class="kw-2">&amp;</span>client, <span class="string">"mod03/ok"</span>, <span class="string">"ok"</span>.to_string()).<span class="kw">await</span>;
+        check_ok::&lt;SerializerV03&gt;(<span class="kw-2">&amp;</span>client, <span class="string">"mod03/healthcheck"</span>, HealthStatus::Available).<span class="kw">await</span>;
+        check_ok::&lt;SerializerV03&gt;(<span class="kw-2">&amp;</span>client, <span class="string">"mod03/version"</span>, api_version.clone()).<span class="kw">await</span>;
 
         <span class="attr">#[tracing::instrument(skip(client))]
         </span><span class="kw">async fn </span>check_wrong_version&lt;S: BinarySerializer, T: Debug + DeserializeOwned&gt;(
@@ -3210,7 +3204,11 @@
         check_wrong_version::&lt;SerializerV02, AppHealth&gt;(<span class="kw-2">&amp;</span>client, <span class="string">"healthcheck"</span>).<span class="kw">await</span>;
         check_wrong_version::&lt;SerializerV02, AppVersion&gt;(<span class="kw-2">&amp;</span>client, <span class="string">"version"</span>).<span class="kw">await</span>;
         check_wrong_version::&lt;SerializerV03, String&gt;(<span class="kw-2">&amp;</span>client, <span class="string">"mod02/ok"</span>).<span class="kw">await</span>;
+        check_wrong_version::&lt;SerializerV03, HealthStatus&gt;(<span class="kw-2">&amp;</span>client, <span class="string">"mod02/healthcheck"</span>).<span class="kw">await</span>;
+        check_wrong_version::&lt;SerializerV03, ApiVersion&gt;(<span class="kw-2">&amp;</span>client, <span class="string">"mod02/version"</span>).<span class="kw">await</span>;
         check_wrong_version::&lt;SerializerV01, String&gt;(<span class="kw-2">&amp;</span>client, <span class="string">"mod03/ok"</span>).<span class="kw">await</span>;
+        check_wrong_version::&lt;SerializerV01, HealthStatus&gt;(<span class="kw-2">&amp;</span>client, <span class="string">"mod03/healthcheck"</span>).<span class="kw">await</span>;
+        check_wrong_version::&lt;SerializerV01, ApiVersion&gt;(<span class="kw-2">&amp;</span>client, <span class="string">"mod03/version"</span>).<span class="kw">await</span>;
 
         <span class="attr">#[tracing::instrument(skip(client))]
         </span><span class="kw">async fn </span>check_err&lt;S: BinarySerializer&gt;(client: <span class="kw-2">&amp;</span>Client, endpoint: <span class="kw-2">&amp;</span>str) {
