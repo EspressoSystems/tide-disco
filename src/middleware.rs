@@ -113,16 +113,15 @@ impl MetricsMiddleware {
     }
 }
 
-impl<State, Error, VER> tide::Middleware<Arc<App<State, Error, VER>>> for MetricsMiddleware
+impl<State, Error> tide::Middleware<Arc<App<State, Error>>> for MetricsMiddleware
 where
     State: Send + Sync + 'static,
     Error: crate::Error + Send + Sync + 'static,
-    VER: StaticVersionType + Send + Sync + 'static,
 {
     fn handle<'a, 'b, 't>(
         &'a self,
-        req: tide::Request<Arc<App<State, Error, VER>>>,
-        next: tide::Next<'b, Arc<App<State, Error, VER>>>,
+        req: tide::Request<Arc<App<State, Error>>>,
+        next: tide::Next<'b, Arc<App<State, Error>>>,
     ) -> BoxFuture<'t, tide::Result>
     where
         'a: 't,
@@ -165,8 +164,8 @@ where
     }
 }
 
-pub(crate) async fn request_params<State, Error: crate::Error, VER: StaticVersionType>(
-    req: tide::Request<Arc<App<State, Error, VER>>>,
+pub(crate) async fn request_params<State, Error: crate::Error>(
+    req: tide::Request<Arc<App<State, Error>>>,
     params: &[RequestParam],
 ) -> Result<RequestParams, tide::Error> {
     RequestParams::new(req, params)

@@ -28,6 +28,7 @@ use snafu::{OptionExt, ResultExt, Snafu};
 use std::{
     borrow::Cow,
     collections::hash_map::{Entry, HashMap, IntoValues, Values},
+    convert::Infallible,
     fmt::Display,
     fs,
     marker::PhantomData,
@@ -291,9 +292,21 @@ pub(crate) struct ApiInner<State, Error> {
     /// error type. However, it will always be set after `Api::into_inner` is called.
     #[derivative(Debug = "ignore")]
     error_handler: Option<Arc<dyn ErrorHandler<Error>>>,
+    /// Response handler encapsulating the serialization format version for version requests
+    #[derivative(Debug = "ignore")]
+    version_handler: Arc<dyn VersionHandler>,
     public: Option<PathBuf>,
     short_description: String,
     long_description: String,
+}
+
+pub(crate) trait VersionHandler:
+    Send + Sync + Fn(&Accept, ApiVersion) -> Result<tide::Response, RouteError<Infallible>>
+{
+}
+impl<F> VersionHandler for F where
+    F: Send + Sync + Fn(&Accept, ApiVersion) -> Result<tide::Response, RouteError<Infallible>>
+{
 }
 
 impl<'a, State, Error> IntoIterator for &'a ApiInner<State, Error> {
@@ -405,6 +418,10 @@ impl<State, Error> ApiInner<State, Error> {
     pub(crate) fn error_handler(&self) -> Arc<dyn ErrorHandler<Error>> {
         self.error_handler.clone().unwrap()
     }
+
+    pub(crate) fn version_handler(&self) -> Arc<dyn VersionHandler> {
+        self.version_handler.clone()
+    }
 }
 
 impl<State, Error, VER> Api<State, Error, VER>
@@ -496,6 +513,9 @@ where
                 health_check: Box::new(Self::default_health_check),
                 api_version: None,
                 error_handler: None,
+                version_handler: Arc::new(|accept, version| {
+                    respond_with(accept, version, VER::instance())
+                }),
                 public: None,
                 short_description,
                 long_description,
@@ -1290,6 +1310,7 @@ where
                 health_check: self.inner.health_check,
                 api_version: self.inner.api_version,
                 error_handler: None,
+                version_handler: self.inner.version_handler,
                 public: self.inner.public,
                 short_description: self.inner.short_description,
                 long_description: self.inner.long_description,
@@ -1436,7 +1457,10 @@ mod test {
     use prometheus::{Counter, Registry};
     use std::borrow::Cow;
     use toml::toml;
-    use vbs::{version::StaticVersion, BinarySerializer, Serializer};
+    use vbs::{
+        version::{StaticVersion, StaticVersionType},
+        BinarySerializer, Serializer,
+    };
 
     #[cfg(windows)]
     use async_tungstenite::tungstenite::Error as WsError;
@@ -1471,7 +1495,7 @@ mod test {
     async fn test_socket_endpoint() {
         setup_test();
 
-        let mut app = App::<_, ServerError, StaticVer01>::with_state(RwLock::new(()));
+        let mut app = App::<_, ServerError>::with_state(RwLock::new(()));
         let api_toml = toml! {
             [meta]
             FORMAT_VERSION = "0.1.0"
@@ -1532,7 +1556,7 @@ mod test {
         }
         let port = pick_unused_port().unwrap();
         let url: Url = format!("http://localhost:{}", port).parse().unwrap();
-        spawn(app.serve(format!("0.0.0.0:{}", port)));
+        spawn(app.serve(format!("0.0.0.0:{}", port), StaticVer01::instance()));
 
         // Create a client that accepts JSON messages.
         let mut conn = test_ws_client_with_headers(
@@ -1616,7 +1640,7 @@ mod test {
     async fn test_stream_endpoint() {
         setup_test();
 
-        let mut app = App::<_, ServerError, StaticVer01>::with_state(RwLock::new(()));
+        let mut app = App::<_, ServerError>::with_state(RwLock::new(()));
         let api_toml = toml! {
             [meta]
             FORMAT_VERSION = "0.1.0"
@@ -1654,7 +1678,7 @@ mod test {
         }
         let port = pick_unused_port().unwrap();
         let url: Url = format!("http://localhost:{}", port).parse().unwrap();
-        spawn(app.serve(format!("0.0.0.0:{}", port)));
+        spawn(app.serve(format!("0.0.0.0:{}", port), StaticVer01::instance()));
 
         // Consume the `nat` stream.
         let mut conn = test_ws_client(url.join("mod/nat").unwrap()).await;
@@ -1693,7 +1717,7 @@ mod test {
     async fn test_custom_healthcheck() {
         setup_test();
 
-        let mut app = App::<_, ServerError, StaticVer01>::with_state(HealthStatus::Available);
+        let mut app = App::<_, ServerError>::with_state(HealthStatus::Available);
         let api_toml = toml! {
             [meta]
             FORMAT_VERSION = "0.1.0"
@@ -1709,7 +1733,7 @@ mod test {
         }
         let port = pick_unused_port().unwrap();
         let url: Url = format!("http://localhost:{}", port).parse().unwrap();
-        spawn(app.serve(format!("0.0.0.0:{}", port)));
+        spawn(app.serve(format!("0.0.0.0:{}", port), StaticVer01::instance()));
         let client = Client::new(url).await;
 
         let res = client.get("/mod/healthcheck").send().await.unwrap();
@@ -1738,7 +1762,7 @@ mod test {
         metrics.register(Box::new(counter.clone())).unwrap();
         let state = State { metrics, counter };
 
-        let mut app = App::<_, ServerError, StaticVer01>::with_state(RwLock::new(state));
+        let mut app = App::<_, ServerError>::with_state(RwLock::new(state));
         let api_toml = toml! {
             [meta]
             FORMAT_VERSION = "0.1.0"
@@ -1762,7 +1786,7 @@ mod test {
         }
         let port = pick_unused_port().unwrap();
         let url: Url = format!("http://localhost:{port}").parse().unwrap();
-        spawn(app.serve(format!("0.0.0.0:{port}")));
+        spawn(app.serve(format!("0.0.0.0:{port}"), StaticVer01::instance()));
         let client = Client::new(url).await;
 
         for i in 1..5 {

@@ -11,7 +11,7 @@ use snafu::Snafu;
 use std::io;
 use tide_disco::{Api, App, Error, RequestError, StatusCode};
 use tracing::info;
-use vbs::version::StaticVersion;
+use vbs::version::{StaticVersion, StaticVersionType};
 
 type StaticVer01 = StaticVersion<0, 1>;
 
@@ -42,7 +42,7 @@ impl From<RequestError> for HelloError {
 }
 
 async fn serve(port: u16) -> io::Result<()> {
-    let mut app = App::<_, HelloError, StaticVer01>::with_state(RwLock::new("Hello".to_string()));
+    let mut app = App::<_, HelloError>::with_state(RwLock::new("Hello".to_string()));
     app.with_version(env!("CARGO_PKG_VERSION").parse().unwrap());
 
     let mut api =
@@ -78,7 +78,8 @@ async fn serve(port: u16) -> io::Result<()> {
     .unwrap();
 
     app.register_module("hello", api).unwrap();
-    app.serve(format!("0.0.0.0:{}", port)).await
+    app.serve(format!("0.0.0.0:{}", port), StaticVer01::instance())
+        .await
 }
 
 #[async_std::main]
