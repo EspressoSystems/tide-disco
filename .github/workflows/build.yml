@@ -5,34 +5,63 @@ on:
     branches:
       - main
       - release-*
+    tags:
+      - v*.*.*
   pull_request:
+    branches:
+      - main
+      - release-*
   workflow_dispatch:
-env:
-  RUSTFLAGS: "--cfg async_executor_impl=\"async-std\" --cfg async_channel_impl=\"async-std\""
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  build:
+  lint:
     runs-on: ubuntu-latest
+    env:
+        RUST_LOG: info
     steps:
       - uses: actions/checkout@v4
         name: Checkout Repository
 
       - uses: Swatinem/rust-cache@v2
         name: Enable Rust Caching
-        with:
-          cache-on-failure: true
 
       - name: Format Check
         run: cargo fmt -- --check
 
-      - uses: actions-rs/clippy-check@v1
-        name: Clippy
+      - name: Clippy
+        uses: actions-rs-plus/clippy-check@v1
         with:
-          token: ${{ github.token }}
-          args: --workspace --all-features --all-targets -- -D warnings
+            token: ${{ github.token }}
+            args: --workspace --all-features --all-targets -- -D warnings
 
-      - name: Audit
-        run: cargo audit --ignore RUSTSEC-2023-0065
+  build:
+    runs-on: ubuntu-latest
+    env:
+        RUST_LOG: info
+    steps:
+      - uses: actions/checkout@v4
+        name: Checkout Repository
+
+      - uses: Swatinem/rust-cache@v2
+        name: Enable Rust Caching
+
+      - name: Build
+        run: cargo build --all-features --all-targets --release
+
+  build-windows:
+    runs-on: windows-2022
+    env:
+      RUST_LOG: info
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - uses: Swatinem/rust-cache@v2
+        name: Enable Rust Caching
 
       - name: Build
         run: |
@@ -44,9 +73,38 @@ jobs:
           cargo test --workspace --release --all-features --verbose -- --test-threads 2
         timeout-minutes: 30
 
+  test:
+    runs-on: ubuntu-latest
+    env:
+        RUST_LOG: info
+    steps:
+      - uses: actions/checkout@v4
+        name: Checkout Repository
+
+      - uses: Swatinem/rust-cache@v2
+        name: Enable Rust Caching
+
+      - name: Build tests
+        run: cargo test --workspace --release --all-features --no-run
+
+      - name: Test
+        run: cargo test --workspace --release --all-features --verbose -- --test-threads 2
+        timeout-minutes: 60
+
+  docs:
+    runs-on: ubuntu-latest
+    env:
+        RUST_LOG: info
+    steps:
+      - uses: actions/checkout@v4
+        name: Checkout Repository
+
+      - uses: Swatinem/rust-cache@v2
+        name: Enable Rust Caching
+
       - name: Generate Documentation
         run: |
-          cargo doc --no-deps --lib --release
+          cargo doc --no-deps --lib --release --all-features
           echo '<meta http-equiv="refresh" content="0; url=tide_disco">' > target/doc/index.html
 
       - name: Deploy Documentation
@@ -56,3 +114,33 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./target/doc
           cname: tide-disco.docs.espressosys.com
+
+  semver-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        name: Checkout Repository
+
+      - uses: Swatinem/rust-cache@v2
+        name: Enable Rust Caching
+
+      - name: Check semver
+        uses: obi1kenobi/cargo-semver-checks-action@v2
+
+  publish:
+    needs:
+      - build
+      - build-windows
+      - test
+      - lint
+      - docs
+      - semver-check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: katyo/publish-crates@v2
+        with:
+            # Only do an actual publish if this is a push to a release tag. Otherwise, do a dry run.
+            dry-run: ${{ !(github.event_name == 'push' && github.ref_type == 'tag') }}
+            ignore-unpublished-changes: true
+            registry-token: ${{ secrets.CARGO_REGISTRY_TOKEN }}
