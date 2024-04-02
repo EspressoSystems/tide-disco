@@ -22,6 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
         RUST_LOG: info
+        RUSTFLAGS: "--cfg async_executor_impl=\"async-std\" --cfg async_channel_impl=\"async-std\""
     steps:
       - uses: actions/checkout@v4
         name: Checkout Repository
@@ -42,6 +43,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
         RUST_LOG: info
+        RUSTFLAGS: "--cfg async_executor_impl=\"async-std\" --cfg async_channel_impl=\"async-std\""
     steps:
       - uses: actions/checkout@v4
         name: Checkout Repository
@@ -56,6 +58,7 @@ jobs:
     runs-on: windows-2022
     env:
       RUST_LOG: info
+      RUSTFLAGS: "--cfg async_executor_impl=\"async-std\" --cfg async_channel_impl=\"async-std\""
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -77,6 +80,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
         RUST_LOG: info
+        RUSTFLAGS: "--cfg async_executor_impl=\"async-std\" --cfg async_channel_impl=\"async-std\""
     steps:
       - uses: actions/checkout@v4
         name: Checkout Repository
@@ -95,6 +99,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
         RUST_LOG: info
+        RUSTFLAGS: "--cfg async_executor_impl=\"async-std\" --cfg async_channel_impl=\"async-std\""
     steps:
       - uses: actions/checkout@v4
         name: Checkout Repository
@@ -117,6 +122,9 @@ jobs:
 
   semver-check:
     runs-on: ubuntu-latest
+    env:
+        RUST_LOG: info
+        RUSTFLAGS: "--cfg async_executor_impl=\"async-std\" --cfg async_channel_impl=\"async-std\""
     steps:
       - uses: actions/checkout@v4
         name: Checkout Repository
@@ -136,6 +144,9 @@ jobs:
       - docs
       - semver-check
     runs-on: ubuntu-latest
+    env:
+        RUST_LOG: info
+        RUSTFLAGS: "--cfg async_executor_impl=\"async-std\" --cfg async_channel_impl=\"async-std\""
     steps:
       - uses: actions/checkout@v4
       - uses: katyo/publish-crates@v2
