@@ -34,7 +34,7 @@ jobs:
         run: cargo fmt -- --check
 
       - name: Clippy
-        uses: actions-rs-plus/clippy-check@v1
+        uses: actions-rs-plus/clippy-check@v2
         with:
             token: ${{ github.token }}
             args: --workspace --all-features --all-targets -- -D warnings
