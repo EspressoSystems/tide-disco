@@ -99,12 +99,12 @@ where
 
 pub(crate) struct MetricsMiddleware {
     route: String,
-    api: String,
+    api: Vec<String>,
     api_version: u64,
 }
 
 impl MetricsMiddleware {
-    pub(crate) fn new(route: String, api: String, api_version: u64) -> Self {
+    pub(crate) fn new(route: String, api: Vec<String>, api_version: u64) -> Self {
         Self {
             route,
             api,
@@ -148,7 +148,7 @@ where
             }
             // This is a metrics request, abort the rest of the dispatching chain and run the
             // metrics handler.
-            let route = &req.state().clone().apis[&api][&version][&route];
+            let route = &req.state().clone().modules[&api].versions[&version][&route];
             let state = &*req.state().clone().state;
             let req = request_params(req, route.params()).await?;
             route
