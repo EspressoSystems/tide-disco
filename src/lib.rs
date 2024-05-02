@@ -289,6 +289,7 @@ pub mod socket;
 pub mod status;
 pub mod testing;
 
+mod dispatch;
 mod middleware;
 mod route;
 
