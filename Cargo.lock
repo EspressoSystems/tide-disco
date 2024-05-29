@@ -3479,6 +3479,8 @@ dependencies = [
  "ark-serialize",
  "ark-std",
  "async-compatibility-layer",
+ "async-h1",
+ "async-lock 3.3.0",
  "async-std",
  "async-trait",
  "async-tungstenite 0.25.0",
