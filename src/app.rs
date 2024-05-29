@@ -667,7 +667,7 @@ where
                     let message = format!("No API matches /{}", path[1..].join("/"));
                     return Ok(Self::top_level_error(req, StatusCode::NotFound, message));
                 };
-                if module.versions.get(&version).is_none() {
+                if module.versions.contains_key(&version) {
                     // This version is not supported, list suported versions.
                     return Ok(html! {
                         "Unsupported version v" (version) ". Supported versions are:"

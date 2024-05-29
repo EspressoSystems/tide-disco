@@ -624,13 +624,13 @@ pub(crate) fn health_check_response<H: HealthCheck, VER: StaticVersionType>(
 ///
 /// Given a handler, this function can be used to derive a new, type-erased [HealthCheckHandler]
 /// that takes only [RequestParams] and returns a generic [tide::Response].
-pub(crate) fn health_check_handler<State, H, VER: StaticVersionType>(
+pub(crate) fn health_check_handler<State, H, VER>(
     handler: impl 'static + Send + Sync + Fn(&State) -> BoxFuture<H>,
 ) -> HealthCheckHandler<State>
 where
     State: 'static + Send + Sync,
     H: 'static + HealthCheck,
-    VER: 'static + Send + Sync,
+    VER: 'static + Send + Sync + StaticVersionType,
 {
     Box::new(move |req, state| {
         let accept = req.accept().unwrap_or_else(|_| {
