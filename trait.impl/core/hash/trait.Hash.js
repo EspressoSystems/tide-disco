@@ -1,3 +1,3 @@
 (function() {var implementors = {
-"tide_disco":[["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/1.77.2/core/hash/trait.Hash.html\" title=\"trait core::hash::Hash\">Hash</a> for <a class=\"enum\" href=\"tide_disco/status/enum.StatusCode.html\" title=\"enum tide_disco::status::StatusCode\">StatusCode</a>"]]
+"tide_disco":[["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/1.78.0/core/hash/trait.Hash.html\" title=\"trait core::hash::Hash\">Hash</a> for <a class=\"enum\" href=\"tide_disco/status/enum.StatusCode.html\" title=\"enum tide_disco::status::StatusCode\">StatusCode</a>"]]
 };if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

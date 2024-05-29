@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/app.rs`."><title>app.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-5bc39a1768837dd0.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="tide_disco" data-themes="" data-resource-suffix="" data-rustdoc-version="1.77.2 (25ef9e3d8 2024-04-09)" data-channel="1.77.2" data-search-js="search-dd67cee4cfa65049.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-4c98445ec4002617.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-48f368f3872407c8.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-04d5337699b92874.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/app.rs`."><title>app.rs - source</title><script> if (window.location.protocol !== "file:") document.write(`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2">`)</script><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-e935ef01ae1c1829.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="tide_disco" data-themes="" data-resource-suffix="" data-rustdoc-version="1.78.0 (9b00956e5 2024-04-29)" data-channel="1.78.0" data-search-js="search-42d8da7a6b9792c2.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-4c98445ec4002617.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-12cf3b4f4f9dc36d.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-04d5337699b92874.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title">
             <h2>Files</h2></div></nav><div class="sidebar-resizer"></div>
     <main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../tide_disco/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
@@ -1806,6 +1806,9 @@
 <a href="#1804" id="1804">1804</a>
 <a href="#1805" id="1805">1805</a>
 <a href="#1806" id="1806">1806</a>
+<a href="#1807" id="1807">1807</a>
+<a href="#1808" id="1808">1808</a>
+<a href="#1809" id="1809">1809</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright (c) 2022 Espresso Systems (espressosys.com)
 // This file is part of the tide-disco library.
 
@@ -2075,7 +2078,7 @@
 }
 
 <span class="kw">static </span>DEFAULT_PUBLIC_DIR: Dir&lt;<span class="lifetime">'_</span>&gt; = <span class="macro">include_dir!</span>(<span class="string">"$CARGO_MANIFEST_DIR/public/media"</span>);
-<span class="macro">lazy_static! </span>{
+<span class="macro">lazy_static!</span> {
     <span class="kw">static </span><span class="kw-2">ref </span>DEFAULT_PUBLIC_PATH: PathBuf = {
         <span class="comment">// The contents of the default public directory are included in the binary. The first time
         // the default directory is used, if ever, we extract them to a directory on the host file
@@ -2158,7 +2161,7 @@
     </span>}
 
     <span class="kw">fn </span>list_apis(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Html {
-        <span class="macro">html! </span>{
+        <span class="macro">html!</span> {
             ul {
                 @<span class="kw">for </span>module <span class="kw">in </span><span class="kw-2">&amp;</span><span class="self">self</span>.modules {
                     li {
@@ -2274,7 +2277,7 @@
                     <span class="kw">async move </span>{
                         <span class="comment">// The request did not match any route. Serve documentation for the API.
                         </span><span class="kw">let </span>api = <span class="kw-2">&amp;</span>req.state().clone().modules[<span class="kw-2">&amp;</span>prefix].versions[<span class="kw-2">&amp;</span>version];
-                        <span class="kw">let </span>docs = <span class="macro">html! </span>{
+                        <span class="kw">let </span>docs = <span class="macro">html!</span> {
                             <span class="string">"No route matches /" </span>(req.param(<span class="string">"path"</span>)<span class="question-mark">?</span>)
                             br{}
                             (api.documentation())
@@ -2475,9 +2478,9 @@
                     <span class="kw">let </span>message = <span class="macro">format!</span>(<span class="string">"No API matches /{}"</span>, path[<span class="number">1</span>..].join(<span class="string">"/"</span>));
                     <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="self">Self</span>::top_level_error(req, StatusCode::NotFound, message));
                 };
-                <span class="kw">if </span>module.versions.get(<span class="kw-2">&amp;</span>version).is_none() {
+                <span class="kw">if </span>!module.versions.contains_key(<span class="kw-2">&amp;</span>version) {
                     <span class="comment">// This version is not supported, list suported versions.
-                    </span><span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="macro">html! </span>{
+                    </span><span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="macro">html!</span> {
                         <span class="string">"Unsupported version v" </span>(version) <span class="string">". Supported versions are:"
                         </span>ul {
                             @<span class="kw">for </span>v <span class="kw">in </span>module.versions.keys().rev() {
@@ -2516,7 +2519,7 @@
 
     <span class="doccomment">/// Top-level documentation about the app.
     </span><span class="kw">fn </span>top_level_docs(req: tide::Request&lt;Arc&lt;<span class="self">Self</span>&gt;&gt;) -&gt; PreEscaped&lt;String&gt; {
-        <span class="macro">html! </span>{
+        <span class="macro">html!</span> {
             br {}
             <span class="string">"This is a Tide Disco app composed of the following modules:"
             </span>(req.state().list_apis())
@@ -2529,7 +2532,7 @@
         status: StatusCode,
         message: <span class="kw">impl </span>Display,
     ) -&gt; tide::Response {
-        <span class="kw">let </span>docs = <span class="macro">html! </span>{
+        <span class="kw">let </span>docs = <span class="macro">html!</span> {
             (message.to_string())
             (<span class="self">Self</span>::top_level_docs(req))
         };
@@ -2714,7 +2717,7 @@
         <span class="kw">use </span><span class="kw">crate</span>::http::Method::<span class="kw-2">*</span>;
 
         <span class="kw">let </span><span class="kw-2">mut </span>app = App::&lt;<span class="kw">_</span>, ServerError&gt;::with_state(RwLock::new(FakeMetrics));
-        <span class="kw">let </span>api_toml = <span class="macro">toml! </span>{
+        <span class="kw">let </span>api_toml = <span class="macro">toml!</span> {
             [meta]
             FORMAT_VERSION = <span class="string">"0.1.0"
 
@@ -2827,7 +2830,7 @@
         setup_test();
 
         <span class="kw">let </span><span class="kw-2">mut </span>app = App::&lt;<span class="kw">_</span>, ServerError&gt;::with_state(RwLock::new(()));
-        <span class="kw">let </span>api_toml = <span class="macro">toml! </span>{
+        <span class="kw">let </span>api_toml = <span class="macro">toml!</span> {
             [meta]
             FORMAT_VERSION = <span class="string">"0.1.0"
 
@@ -2881,7 +2884,7 @@
         <span class="comment">// Create two different, non-consecutive major versions of an API. One method will be
         // deleted in version 1, one will be added in version 3, and one will be present in both
         // versions (with a different implementation).
-        </span><span class="kw">let </span>v1_toml = <span class="macro">toml! </span>{
+        </span><span class="kw">let </span>v1_toml = <span class="macro">toml!</span> {
             [meta]
             FORMAT_VERSION = <span class="string">"0.1.0"
 
@@ -2891,7 +2894,7 @@
             [route.unchanged]
             PATH = [<span class="string">"/unchanged"</span>]
         };
-        <span class="kw">let </span>v3_toml = <span class="macro">toml! </span>{
+        <span class="kw">let </span>v3_toml = <span class="macro">toml!</span> {
             [meta]
             FORMAT_VERSION = <span class="string">"0.1.0"
 
@@ -3054,7 +3057,7 @@
         }
 
         <span class="comment">// Request with an unsupported version lists the supported versions.
-        </span><span class="kw">let </span>expected_html = <span class="macro">html! </span>{
+        </span><span class="kw">let </span>expected_html = <span class="macro">html!</span> {
             <span class="string">"Unsupported version v2. Supported versions are:"
             </span>ul {
                 li {
@@ -3165,7 +3168,7 @@
         </span><span class="kw">let </span><span class="kw-2">mut </span>app = App::&lt;<span class="kw">_</span>, ServerError&gt;::with_state(());
         app.module::&lt;ServerError, StaticVer01&gt;(
             <span class="string">"the-correct-module"</span>,
-            <span class="macro">toml! </span>{
+            <span class="macro">toml!</span> {
                 route = {}
             },
         )
@@ -3177,7 +3180,7 @@
         spawn(app.serve(<span class="macro">format!</span>(<span class="string">"0.0.0.0:{}"</span>, port), StaticVer01::instance()));
         <span class="kw">let </span>client = Client::new(url.clone()).<span class="kw">await</span>;
 
-        <span class="kw">let </span>expected_list_item = <span class="macro">html! </span>{
+        <span class="kw">let </span>expected_list_item = <span class="macro">html!</span> {
             a href=<span class="string">"/the-correct-module" </span>{<span class="string">"the-correct-module"</span>}
             sup {
                 a href=<span class="string">"/v1/the-correct-module" </span>{<span class="string">"[v1]"</span>}
@@ -3221,7 +3224,7 @@
 
         <span class="kw">let </span><span class="kw-2">mut </span>app = App::&lt;<span class="kw">_</span>, ServerError&gt;::with_state(RwLock::new(<span class="number">0</span>));
 
-        <span class="kw">let </span>api_toml = <span class="macro">toml! </span>{
+        <span class="kw">let </span>api_toml = <span class="macro">toml!</span> {
             [meta]
             FORMAT_VERSION = <span class="string">"0.1.0"
 
@@ -3273,7 +3276,7 @@
         // the app-level version. Each module has two endpoints, one which always succeeds and one
         // which always fails, so we can test error serialization.
         </span><span class="kw">let </span><span class="kw-2">mut </span>app = App::&lt;<span class="kw">_</span>, ServerError&gt;::with_state(());
-        <span class="kw">let </span>api_toml = <span class="macro">toml! </span>{
+        <span class="kw">let </span>api_toml = <span class="macro">toml!</span> {
             [meta]
             FORMAT_VERSION = <span class="string">"0.1.0"
 
@@ -3334,7 +3337,10 @@
             <span class="macro">tracing::info!</span>(<span class="question-mark">?</span>res, <span class="string">"&lt;-"</span>);
             <span class="macro">assert_eq!</span>(res.status(), expected_status);
             <span class="kw">let </span>bytes = res.bytes().<span class="kw">await</span>.unwrap();
-            S::deserialize(<span class="kw-2">&amp;</span>bytes)
+            anyhow::Context::context(
+                S::deserialize(<span class="kw-2">&amp;</span>bytes),
+                <span class="macro">format!</span>(<span class="string">"failed to deserialize bytes {bytes:?}"</span>),
+            )
         }
 
         <span class="attr">#[tracing::instrument(skip(client))]
@@ -3445,7 +3451,7 @@
             };
 
             <span class="kw">let </span><span class="kw-2">mut </span>app = App::&lt;<span class="kw">_</span>, ServerError&gt;::with_state(());
-            <span class="kw">let </span>toml = <span class="macro">toml! </span>{
+            <span class="kw">let </span>toml = <span class="macro">toml!</span> {
                 route = {}
             };
             app.module::&lt;ServerError, StaticVer01&gt;(api1, toml.clone())
@@ -3467,7 +3473,7 @@
         setup_test();
 
         <span class="comment">// If there is only one API, it should be possible to register it with an empty prefix.
-        </span><span class="kw">let </span>toml = <span class="macro">toml! </span>{
+        </span><span class="kw">let </span>toml = <span class="macro">toml!</span> {
             [route.test]
             PATH = [<span class="string">"/test"</span>]
         };
@@ -3518,7 +3524,7 @@
     </span><span class="kw">async fn </span>test_multi_segment() {
         setup_test();
 
-        <span class="kw">let </span>toml = <span class="macro">toml! </span>{
+        <span class="kw">let </span>toml = <span class="macro">toml!</span> {
             [route.test]
             PATH = [<span class="string">"/test"</span>]
         };
