@@ -667,7 +667,7 @@ where
                     let message = format!("No API matches /{}", path[1..].join("/"));
                     return Ok(Self::top_level_error(req, StatusCode::NotFound, message));
                 };
-                if module.versions.contains_key(&version) {
+                if !module.versions.contains_key(&version) {
                     // This version is not supported, list suported versions.
                     return Ok(html! {
                         "Unsupported version v" (version) ". Supported versions are:"
@@ -1526,7 +1526,10 @@ mod test {
             tracing::info!(?res, "<-");
             assert_eq!(res.status(), expected_status);
             let bytes = res.bytes().await.unwrap();
-            S::deserialize(&bytes)
+            anyhow::Context::context(
+                S::deserialize(&bytes),
+                format!("failed to deserialize bytes {bytes:?}"),
+            )
         }
 
         #[tracing::instrument(skip(client))]
