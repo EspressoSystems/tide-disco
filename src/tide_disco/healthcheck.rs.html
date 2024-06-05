@@ -71,7 +71,7 @@
 /// A type implementing [HealthCheck] may be returned from a healthcheck endpoint itself (via its
 /// [Serialize] implementation) as well as incorporated automatically into the global healthcheck
 /// endpoint for an app. The global healthcheck will fail if any of the module healthchecks return
-/// an implementation `h` of [HealthCheck] where `h.status() != StatusCode::Ok`.
+/// an implementation `h` of [HealthCheck] where `h.status() != StatusCode::OK`.
 ///
 /// We provide a standard implementation [HealthStatus] which has variants for common states an
 /// application might encounter. We recommend using this implementation as a standard, although it
@@ -80,7 +80,7 @@
 </span><span class="kw">pub trait </span>HealthCheck: Serialize {
     <span class="doccomment">/// The status of this health check.
     ///
-    /// Should return [StatusCode::Ok] if the status is considered healthy, and some other status
+    /// Should return [StatusCode::OK] if the status is considered healthy, and some other status
     /// code if it is not.
     </span><span class="kw">fn </span>status(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; StatusCode;
 }
@@ -109,8 +109,8 @@
             <span class="comment">// Return healthy in normal states even if the state is not `Available`, so that load
             // balances and health monitors don't kill the service while it is starting up or
             // gracefully shutting down.
-            </span><span class="self">Self</span>::Available | <span class="self">Self</span>::Initializing | <span class="self">Self</span>::ShuttingDown =&gt; StatusCode::Ok,
-            <span class="kw">_ </span>=&gt; StatusCode::ServiceUnavailable,
+            </span><span class="self">Self</span>::Available | <span class="self">Self</span>::Initializing | <span class="self">Self</span>::ShuttingDown =&gt; StatusCode::OK,
+            <span class="kw">_ </span>=&gt; StatusCode::SERVICE_UNAVAILABLE,
         }
     }
 }

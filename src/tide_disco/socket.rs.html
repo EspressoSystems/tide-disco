@@ -473,9 +473,9 @@
     <span class="kw">pub fn </span>status(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; StatusCode {
         <span class="kw">match </span><span class="self">self </span>{
             <span class="self">Self</span>::Request(<span class="kw">_</span>) | <span class="self">Self</span>::UnsupportedMessageType | <span class="self">Self</span>::IncorrectMethod { .. } =&gt; {
-                StatusCode::BadRequest
+                StatusCode::BAD_REQUEST
             }
-            <span class="kw">_ </span>=&gt; StatusCode::InternalServerError,
+            <span class="kw">_ </span>=&gt; StatusCode::INTERNAL_SERVER_ERROR,
         }
     }
 

@@ -2027,7 +2027,7 @@
 
     <span class="doccomment">/// Check the health of each registered module in response to a request.
     ///
-    /// The response includes a status code for each module, which will be [StatusCode::Ok] if the
+    /// The response includes a status code for each module, which will be [StatusCode::OK] if the
     /// module is healthy. Detailed health status from each module is not included in the response
     /// (due to type erasure) but can be queried using [module_health](Self::module_health) or by
     /// hitting the endpoint `GET /:module/healthcheck`.
@@ -2038,7 +2038,7 @@
             <span class="kw">let </span>versions_health = modules_health.entry(module.path()).or_default();
             <span class="kw">for </span>(version, api) <span class="kw">in </span><span class="kw-2">&amp;</span>module.versions {
                 <span class="kw">let </span>health = StatusCode::from(api.health(req.clone(), state).<span class="kw">await</span>.status());
-                <span class="kw">if </span>health != StatusCode::Ok {
+                <span class="kw">if </span>health != StatusCode::OK {
                     status = HealthStatus::Unhealthy;
                 }
                 versions_health.insert(<span class="kw-2">*</span>version, health);
@@ -2052,7 +2052,7 @@
 
     <span class="doccomment">/// Check the health of the named module.
     ///
-    /// The resulting [Response](tide::Response) has a status code which is [StatusCode::Ok] if the
+    /// The resulting [Response](tide::Response) has a status code which is [StatusCode::OK] if the
     /// module is healthy. The response body is constructed from the results of the module's
     /// registered healthcheck handler. If the module does not have an explicit healthcheck
     /// handler, the response will be a [HealthStatus].
@@ -2282,7 +2282,7 @@
                             br{}
                             (api.documentation())
                         };
-                        <span class="prelude-val">Ok</span>(tide::Response::builder(StatusCode::NotFound)
+                        <span class="prelude-val">Ok</span>(tide::Response::builder(StatusCode::NOT_FOUND)
                             .body(docs.into_string())
                             .build())
                     }
@@ -2476,7 +2476,7 @@
                 // serve documentation listing the available versions.
                 </span><span class="kw">let </span><span class="prelude-val">Some</span>(module) = req.state().modules.search(<span class="kw-2">&amp;</span>path[<span class="number">1</span>..]) <span class="kw">else </span>{
                     <span class="kw">let </span>message = <span class="macro">format!</span>(<span class="string">"No API matches /{}"</span>, path[<span class="number">1</span>..].join(<span class="string">"/"</span>));
-                    <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="self">Self</span>::top_level_error(req, StatusCode::NotFound, message));
+                    <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="self">Self</span>::top_level_error(req, StatusCode::NOT_FOUND, message));
                 };
                 <span class="kw">if </span>!module.versions.contains_key(<span class="kw-2">&amp;</span>version) {
                     <span class="comment">// This version is not supported, list suported versions.
@@ -2506,7 +2506,7 @@
                 }
                 <span class="kw">let </span><span class="prelude-val">Some</span>(module) = req.state().modules.search(<span class="kw-2">&amp;</span>path) <span class="kw">else </span>{
                     <span class="kw">let </span>message = <span class="macro">format!</span>(<span class="string">"No API matches /{}"</span>, path.join(<span class="string">"/"</span>));
-                    <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="self">Self</span>::top_level_error(req, StatusCode::NotFound, message));
+                    <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="self">Self</span>::top_level_error(req, StatusCode::NOT_FOUND, message));
                 };
 
                 <span class="kw">let </span>latest_version = <span class="kw-2">*</span>module.versions.last_key_value().unwrap().<span class="number">0</span>;
@@ -2794,7 +2794,7 @@
                 .send()
                 .<span class="kw">await
                 </span>.unwrap();
-            <span class="macro">assert_eq!</span>(res.status(), StatusCode::Ok);
+            <span class="macro">assert_eq!</span>(res.status(), StatusCode::OK);
             <span class="macro">assert_eq!</span>(res.json::&lt;String&gt;().<span class="kw">await</span>.unwrap(), method.to_string());
         }
 
@@ -2805,12 +2805,12 @@
             .send()
             .<span class="kw">await
             </span>.unwrap();
-        <span class="macro">assert_eq!</span>(res.status(), StatusCode::Ok);
+        <span class="macro">assert_eq!</span>(res.status(), StatusCode::OK);
         <span class="macro">assert_eq!</span>(res.text().<span class="kw">await</span>.unwrap(), <span class="string">"METRICS"</span>);
 
         <span class="comment">// Metrics without Accept header.
         </span><span class="kw">let </span>res = client.get(<span class="string">"mod/test"</span>).send().<span class="kw">await</span>.unwrap();
-        <span class="macro">assert_eq!</span>(res.status(), StatusCode::Ok);
+        <span class="macro">assert_eq!</span>(res.status(), StatusCode::OK);
         <span class="macro">assert_eq!</span>(res.text().<span class="kw">await</span>.unwrap(), <span class="string">"METRICS"</span>);
 
         <span class="comment">// Socket.
@@ -2861,14 +2861,14 @@
         <span class="kw">let </span>client = Client::new(url.clone()).<span class="kw">await</span>;
 
         <span class="kw">let </span>res = client.get(<span class="string">"mod/test/a/42"</span>).send().<span class="kw">await</span>.unwrap();
-        <span class="macro">assert_eq!</span>(res.status(), StatusCode::Ok);
+        <span class="macro">assert_eq!</span>(res.status(), StatusCode::OK);
         <span class="macro">assert_eq!</span>(
             res.json::&lt;(String, String)&gt;().<span class="kw">await</span>.unwrap(),
             (<span class="string">"a"</span>.to_string(), <span class="string">"42"</span>.to_string())
         );
 
         <span class="kw">let </span>res = client.get(<span class="string">"mod/test/b/true"</span>).send().<span class="kw">await</span>.unwrap();
-        <span class="macro">assert_eq!</span>(res.status(), StatusCode::Ok);
+        <span class="macro">assert_eq!</span>(res.status(), StatusCode::OK);
         <span class="macro">assert_eq!</span>(
             res.json::&lt;(String, String)&gt;().<span class="kw">await</span>.unwrap(),
             (<span class="string">"b"</span>.to_string(), <span class="string">"true"</span>.to_string())
@@ -3151,12 +3151,12 @@
 
         <span class="comment">// Test the application health.
         </span><span class="kw">let </span>res = client.get(<span class="string">"healthcheck"</span>).send().<span class="kw">await</span>.unwrap();
-        <span class="macro">assert_eq!</span>(res.status(), StatusCode::ServiceUnavailable);
+        <span class="macro">assert_eq!</span>(res.status(), StatusCode::SERVICE_UNAVAILABLE);
         <span class="kw">let </span>health: AppHealth = res.json().<span class="kw">await</span>.unwrap();
         <span class="macro">assert_eq!</span>(health.status, HealthStatus::Unhealthy);
         <span class="macro">assert_eq!</span>(
             health.modules[<span class="string">"mod"</span>],
-            [(<span class="number">3</span>, StatusCode::Ok), (<span class="number">1</span>, StatusCode::ServiceUnavailable)].into()
+            [(<span class="number">3</span>, StatusCode::OK), (<span class="number">1</span>, StatusCode::SERVICE_UNAVAILABLE)].into()
         );
     }
 
@@ -3295,7 +3295,7 @@
                 .get(<span class="string">"err"</span>, |_req, _state| {
                     <span class="kw">async move </span>{
                         <span class="prelude-val">Err</span>::&lt;String, <span class="kw">_</span>&gt;(ServerError::catch_all(
-                            StatusCode::InternalServerError,
+                            StatusCode::INTERNAL_SERVER_ERROR,
                             <span class="string">"err"</span>.into(),
                         ))
                     }
@@ -3352,7 +3352,7 @@
             <span class="macro">tracing::info!</span>(<span class="string">"checking successful deserialization"</span>);
             <span class="macro">assert_eq!</span>(
                 expected,
-                get::&lt;S, <span class="kw">_</span>&gt;(client, endpoint, StatusCode::Ok).<span class="kw">await</span>.unwrap()
+                get::&lt;S, <span class="kw">_</span>&gt;(client, endpoint, StatusCode::OK).<span class="kw">await</span>.unwrap()
             );
         }
 
@@ -3367,8 +3367,8 @@
             AppHealth {
                 status: HealthStatus::Available,
                 modules: [
-                    (<span class="string">"mod02"</span>.into(), [(<span class="number">0</span>, StatusCode::Ok)].into()),
-                    (<span class="string">"mod03"</span>.into(), [(<span class="number">0</span>, StatusCode::Ok)].into()),
+                    (<span class="string">"mod02"</span>.into(), [(<span class="number">0</span>, StatusCode::OK)].into()),
+                    (<span class="string">"mod03"</span>.into(), [(<span class="number">0</span>, StatusCode::OK)].into()),
                 ]
                 .into(),
             },
@@ -3401,7 +3401,7 @@
             endpoint: <span class="kw-2">&amp;</span>str,
         ) {
             <span class="macro">tracing::info!</span>(<span class="string">"checking deserialization fails with wrong version"</span>);
-            get::&lt;S, T&gt;(client, endpoint, StatusCode::Ok)
+            get::&lt;S, T&gt;(client, endpoint, StatusCode::OK)
                 .<span class="kw">await
                 </span>.unwrap_err();
         }
@@ -3420,10 +3420,10 @@
             <span class="macro">tracing::info!</span>(<span class="string">"checking error deserialization"</span>);
             <span class="macro">tracing::info!</span>(<span class="string">"checking successful deserialization"</span>);
             <span class="macro">assert_eq!</span>(
-                get::&lt;S, ServerError&gt;(client, endpoint, StatusCode::InternalServerError)
+                get::&lt;S, ServerError&gt;(client, endpoint, StatusCode::INTERNAL_SERVER_ERROR)
                     .<span class="kw">await
                     </span>.unwrap(),
-                ServerError::catch_all(StatusCode::InternalServerError, <span class="string">"err"</span>.into())
+                ServerError::catch_all(StatusCode::INTERNAL_SERVER_ERROR, <span class="string">"err"</span>.into())
             );
         }
 
@@ -3492,7 +3492,7 @@
         </span><span class="kw">let </span>res = client.get(<span class="string">"/test"</span>).send().<span class="kw">await</span>.unwrap();
         <span class="macro">assert_eq!</span>(
             res.status(),
-            StatusCode::Ok,
+            StatusCode::OK,
             <span class="string">"{}"</span>,
             res.text().<span class="kw">await</span>.unwrap()
         );
@@ -3503,14 +3503,14 @@
         // API-level endpoints, so that a singleton API behaves like a normal API, while app-level
         // stuff is reserved for non-trivial applications with more than one API.
         </span><span class="kw">let </span>res = client.get(<span class="string">"/healthcheck"</span>).send().<span class="kw">await</span>.unwrap();
-        <span class="macro">assert_eq!</span>(res.status(), StatusCode::Ok);
+        <span class="macro">assert_eq!</span>(res.status(), StatusCode::OK);
         <span class="macro">assert_eq!</span>(
             res.json::&lt;HealthStatus&gt;().<span class="kw">await</span>.unwrap(),
             HealthStatus::Available
         );
 
         <span class="kw">let </span>res = client.get(<span class="string">"/version"</span>).send().<span class="kw">await</span>.unwrap();
-        <span class="macro">assert_eq!</span>(res.status(), StatusCode::Ok);
+        <span class="macro">assert_eq!</span>(res.status(), StatusCode::OK);
         <span class="macro">assert_eq!</span>(
             res.json::&lt;ApiVersion&gt;().<span class="kw">await</span>.unwrap(),
             ApiVersion {
@@ -3550,7 +3550,7 @@
 
             <span class="comment">// Test an endpoint.
             </span><span class="kw">let </span>res = client.get(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"api/{api}/test"</span>)).send().<span class="kw">await</span>.unwrap();
-            <span class="macro">assert_eq!</span>(res.status(), StatusCode::Ok);
+            <span class="macro">assert_eq!</span>(res.status(), StatusCode::OK);
             <span class="macro">assert_eq!</span>(res.json::&lt;String&gt;().<span class="kw">await</span>.unwrap(), api);
 
             <span class="comment">// Test healthcheck.
@@ -3559,7 +3559,7 @@
                 .send()
                 .<span class="kw">await
                 </span>.unwrap();
-            <span class="macro">assert_eq!</span>(res.status(), StatusCode::Ok);
+            <span class="macro">assert_eq!</span>(res.status(), StatusCode::OK);
             <span class="macro">assert_eq!</span>(
                 res.json::&lt;HealthStatus&gt;().<span class="kw">await</span>.unwrap(),
                 HealthStatus::Available
@@ -3571,7 +3571,7 @@
                 .send()
                 .<span class="kw">await
                 </span>.unwrap();
-            <span class="macro">assert_eq!</span>(res.status(), StatusCode::Ok);
+            <span class="macro">assert_eq!</span>(res.status(), StatusCode::OK);
             <span class="macro">assert_eq!</span>(
                 res.json::&lt;ApiVersion&gt;().<span class="kw">await</span>.unwrap().api_version.unwrap(),
                 <span class="string">"0.1.0"</span>.parse().unwrap()
@@ -3580,14 +3580,14 @@
 
         <span class="comment">// Test app-level healthcheck.
         </span><span class="kw">let </span>res = client.get(<span class="string">"healthcheck"</span>).send().<span class="kw">await</span>.unwrap();
-        <span class="macro">assert_eq!</span>(res.status(), StatusCode::Ok);
+        <span class="macro">assert_eq!</span>(res.status(), StatusCode::OK);
         <span class="macro">assert_eq!</span>(
             res.json::&lt;AppHealth&gt;().<span class="kw">await</span>.unwrap(),
             AppHealth {
                 status: HealthStatus::Available,
                 modules: [
-                    (<span class="string">"api/a"</span>.into(), [(<span class="number">0</span>, StatusCode::Ok)].into()),
-                    (<span class="string">"api/b"</span>.into(), [(<span class="number">0</span>, StatusCode::Ok)].into()),
+                    (<span class="string">"api/a"</span>.into(), [(<span class="number">0</span>, StatusCode::OK)].into()),
+                    (<span class="string">"api/b"</span>.into(), [(<span class="number">0</span>, StatusCode::OK)].into()),
                 ]
                 .into()
             }
@@ -3595,7 +3595,7 @@
 
         <span class="comment">// Test app-level version.
         </span><span class="kw">let </span>res = client.get(<span class="string">"version"</span>).send().<span class="kw">await</span>.unwrap();
-        <span class="macro">assert_eq!</span>(res.status(), StatusCode::Ok);
+        <span class="macro">assert_eq!</span>(res.status(), StatusCode::OK);
         <span class="macro">assert_eq!</span>(
             res.json::&lt;AppVersion&gt;().<span class="kw">await</span>.unwrap().modules,
             [

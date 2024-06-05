@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["StatusCode"],"struct":["OutOfRangeError"]};
+window.SIDEBAR_ITEMS = {"struct":["StatusCode"]};

@@ -3347,7 +3347,7 @@
                 |_req, _conn: Connection&lt;(), (), <span class="kw">_</span>, StaticVer01&gt;, _state| {
                     <span class="kw">async move </span>{
                         <span class="prelude-val">Err</span>(ServerError::catch_all(
-                            StatusCode::InternalServerError,
+                            StatusCode::INTERNAL_SERVER_ERROR,
                             <span class="string">"an error message"</span>.to_string(),
                         ))
                     }
@@ -3471,7 +3471,7 @@
                     <span class="comment">// We intentionally return a stream that never terminates, to check that simply
                     // yielding an error causes the connection to terminate.
                     </span>repeat(<span class="prelude-val">Err</span>(ServerError::catch_all(
-                        StatusCode::InternalServerError,
+                        StatusCode::INTERNAL_SERVER_ERROR,
                         <span class="string">"an error message"</span>.to_string(),
                     )))
                     .boxed()
@@ -3539,7 +3539,7 @@
         <span class="kw">let </span>client = Client::new(url).<span class="kw">await</span>;
 
         <span class="kw">let </span>res = client.get(<span class="string">"/mod/healthcheck"</span>).send().<span class="kw">await</span>.unwrap();
-        <span class="macro">assert_eq!</span>(res.status(), StatusCode::Ok);
+        <span class="macro">assert_eq!</span>(res.status(), StatusCode::OK);
         <span class="macro">assert_eq!</span>(
             res.json::&lt;HealthStatus&gt;().<span class="kw">await</span>.unwrap(),
             HealthStatus::Available
@@ -3595,7 +3595,7 @@
             <span class="macro">tracing::info!</span>(<span class="string">"making metrics request {i}"</span>);
             <span class="kw">let </span>expected = <span class="macro">format!</span>(<span class="string">"# HELP counter count of how many times metrics have been exported\n# TYPE counter counter\ncounter {i}\n"</span>);
             <span class="kw">let </span>res = client.get(<span class="string">"mod/metrics"</span>).send().<span class="kw">await</span>.unwrap();
-            <span class="macro">assert_eq!</span>(res.status(), StatusCode::Ok);
+            <span class="macro">assert_eq!</span>(res.status(), StatusCode::OK);
             <span class="macro">assert_eq!</span>(res.text().<span class="kw">await</span>.unwrap(), expected);
         }
     }

@@ -1183,7 +1183,7 @@
     req: tide::Request&lt;AppServerState&gt;,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;tide::Response, tide::Error&gt; {
     <span class="kw">let </span>status = req.state().health_status.read().<span class="kw">await</span>;
-    <span class="prelude-val">Ok</span>(tide::Response::builder(StatusCode::Ok)
+    <span class="prelude-val">Ok</span>(tide::Response::builder(StatusCode::OK)
         .content_type(mime::JSON)
         .body(<span class="macro">tide::prelude::json!</span>({<span class="string">"status"</span>: status.as_ref() }))
         .build())

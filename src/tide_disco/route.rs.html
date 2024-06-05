@@ -757,9 +757,9 @@
     <span class="kw">pub fn </span>status(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; StatusCode {
         <span class="kw">match </span><span class="self">self </span>{
             <span class="self">Self</span>::Request(<span class="kw">_</span>) | <span class="self">Self</span>::UnsupportedContentType | <span class="self">Self</span>::IncorrectMethod { .. } =&gt; {
-                StatusCode::BadRequest
+                StatusCode::BAD_REQUEST
             }
-            <span class="kw">_ </span>=&gt; StatusCode::InternalServerError,
+            <span class="kw">_ </span>=&gt; StatusCode::INTERNAL_SERVER_ERROR,
         }
     }
 
@@ -1183,7 +1183,7 @@
     <span class="doccomment">/// Print documentation about the route, to aid the developer when the route is not yet
     /// implemented.
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>default_handler(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;tide::Response, RouteError&lt;Error&gt;&gt; {
-        <span class="prelude-val">Ok</span>(tide::Response::builder(StatusCode::NotImplemented)
+        <span class="prelude-val">Ok</span>(tide::Response::builder(StatusCode::NOT_IMPLEMENTED)
             .body(<span class="self">self</span>.documentation().into_string())
             .build())
     }
@@ -1351,7 +1351,7 @@
     <span class="kw">_</span>: VER,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;tide::Response, RouteError&lt;E&gt;&gt; {
     <span class="kw">let </span>(body, content_type) = response_body::&lt;<span class="kw">_</span>, <span class="kw">_</span>, VER&gt;(accept, body)<span class="question-mark">?</span>;
-    <span class="prelude-val">Ok</span>(tide::Response::builder(StatusCode::Ok)
+    <span class="prelude-val">Ok</span>(tide::Response::builder(StatusCode::OK)
         .body(body)
         .content_type(content_type)
         .build())

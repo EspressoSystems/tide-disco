@@ -267,7 +267,7 @@
 
 <span class="doccomment">/// TCP listener which accepts only a limited number of connections at a time.
 ///
-/// This listener is based on [`tide::listener::TcpListener`] and should match the semantics of that
+/// This listener is based on `tide::listener::TcpListener` and should match the semantics of that
 /// listener in every way, accept that when there are more simultaneous outstanding requests than
 /// the configured limit, excess requests will fail immediately with error code 429 (Too Many
 /// Requests).
@@ -356,7 +356,7 @@
                             </span>} <span class="kw">else </span>{
                                 <span class="comment">// Otherwise, we are rate limited. Respond immediately with an
                                 // error.
-                                </span><span class="prelude-val">Ok</span>(http::Response::new(StatusCode::TooManyRequests))
+                                </span><span class="prelude-val">Ok</span>(http::Response::new(StatusCode::TOO_MANY_REQUESTS))
                             }
                         });
 
@@ -466,11 +466,11 @@
 
         <span class="comment">// The next request gets rate limited.
         </span><span class="kw">let </span>res = client.get(<span class="string">"mod/test"</span>).send().<span class="kw">await</span>.unwrap();
-        <span class="macro">assert_eq!</span>(StatusCode::TooManyRequests, res.status());
+        <span class="macro">assert_eq!</span>(StatusCode::TOO_MANY_REQUESTS, res.status());
 
         <span class="comment">// The other requests eventually complete successfully.
         </span><span class="kw">for </span>res <span class="kw">in </span>try_join_all(reqs).<span class="kw">await</span>.unwrap() {
-            <span class="macro">assert_eq!</span>(StatusCode::Ok, res.status());
+            <span class="macro">assert_eq!</span>(StatusCode::OK, res.status());
         }
     }
 }
