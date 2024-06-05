@@ -50,8 +50,8 @@ impl HealthCheck for HealthStatus {
             // Return healthy in normal states even if the state is not `Available`, so that load
             // balances and health monitors don't kill the service while it is starting up or
             // gracefully shutting down.
-            Self::Available | Self::Initializing | Self::ShuttingDown => StatusCode::Ok,
-            _ => StatusCode::ServiceUnavailable,
+            Self::Available | Self::Initializing | Self::ShuttingDown => StatusCode::OK,
+            _ => StatusCode::SERVICE_UNAVAILABLE,
         }
     }
 }

@@ -477,7 +477,7 @@ pub async fn healthcheck(
     req: tide::Request<AppServerState>,
 ) -> Result<tide::Response, tide::Error> {
     let status = req.state().health_status.read().await;
-    Ok(tide::Response::builder(StatusCode::Ok)
+    Ok(tide::Response::builder(StatusCode::OK)
         .content_type(mime::JSON)
         .body(tide::prelude::json!({"status": status.as_ref() }))
         .build())

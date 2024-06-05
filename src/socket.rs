@@ -52,9 +52,9 @@ impl<E> SocketError<E> {
     pub fn status(&self) -> StatusCode {
         match self {
             Self::Request(_) | Self::UnsupportedMessageType | Self::IncorrectMethod { .. } => {
-                StatusCode::BadRequest
+                StatusCode::BAD_REQUEST
             }
-            _ => StatusCode::InternalServerError,
+            _ => StatusCode::INTERNAL_SERVER_ERROR,
         }
     }
 
