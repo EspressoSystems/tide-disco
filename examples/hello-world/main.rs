@@ -37,7 +37,7 @@ impl tide_disco::Error for HelloError {
 
 impl From<RequestError> for HelloError {
     fn from(err: RequestError) -> Self {
-        Self::catch_all(StatusCode::BadRequest, err.to_string())
+        Self::catch_all(StatusCode::BAD_REQUEST, err.to_string())
     }
 }
 
@@ -116,14 +116,14 @@ mod test {
         let client = Client::new(url).await;
 
         let res = client.get("greeting/tester").send().await.unwrap();
-        assert_eq!(res.status(), StatusCode::Ok);
+        assert_eq!(res.status(), StatusCode::OK);
         assert_eq!(res.json::<String>().await.unwrap(), "Hello, tester");
 
         let res = client.post("greeting/Sup").send().await.unwrap();
-        assert_eq!(res.status(), StatusCode::Ok);
+        assert_eq!(res.status(), StatusCode::OK);
 
         let res = client.get("greeting/tester").send().await.unwrap();
-        assert_eq!(res.status(), StatusCode::Ok);
+        assert_eq!(res.status(), StatusCode::OK);
         assert_eq!(res.json::<String>().await.unwrap(), "Sup, tester");
     }
 
@@ -138,7 +138,7 @@ mod test {
 
         // Check the API version.
         let res = client.get("hello/version").send().await.unwrap();
-        assert_eq!(res.status(), StatusCode::Ok);
+        assert_eq!(res.status(), StatusCode::OK);
         let api_version = ApiVersion {
             api_version: Some(env!("CARGO_PKG_VERSION").parse().unwrap()),
             spec_version: "0.1.0".parse().unwrap(),
@@ -147,7 +147,7 @@ mod test {
 
         // Check the overall version.
         let res = client.get("version").send().await.unwrap();
-        assert_eq!(res.status(), StatusCode::Ok);
+        assert_eq!(res.status(), StatusCode::OK);
         assert_eq!(
             res.json::<AppVersion>().await.unwrap(),
             AppVersion {
@@ -169,7 +169,7 @@ mod test {
 
         // Check the API health.
         let res = client.get("hello/healthcheck").send().await.unwrap();
-        assert_eq!(res.status(), StatusCode::Ok);
+        assert_eq!(res.status(), StatusCode::OK);
         // The example API does not have a custom healthcheck, so we just get the default response.
         assert_eq!(
             res.json::<HealthStatus>().await.unwrap(),
@@ -178,12 +178,12 @@ mod test {
 
         // Check the overall health.
         let res = client.get("healthcheck").send().await.unwrap();
-        assert_eq!(res.status(), StatusCode::Ok);
+        assert_eq!(res.status(), StatusCode::OK);
         assert_eq!(
             res.json::<AppHealth>().await.unwrap(),
             AppHealth {
                 status: HealthStatus::Available,
-                modules: [("hello".to_string(), [(0, StatusCode::Ok)].into())].into(),
+                modules: [("hello".to_string(), [(0, StatusCode::OK)].into())].into(),
             }
         )
     }

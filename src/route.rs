@@ -77,9 +77,9 @@ impl<E> RouteError<E> {
     pub fn status(&self) -> StatusCode {
         match self {
             Self::Request(_) | Self::UnsupportedContentType | Self::IncorrectMethod { .. } => {
-                StatusCode::BadRequest
+                StatusCode::BAD_REQUEST
             }
-            _ => StatusCode::InternalServerError,
+            _ => StatusCode::INTERNAL_SERVER_ERROR,
         }
     }
 
@@ -503,7 +503,7 @@ impl<State, Error> Route<State, Error> {
     /// Print documentation about the route, to aid the developer when the route is not yet
     /// implemented.
     pub(crate) fn default_handler(&self) -> Result<tide::Response, RouteError<Error>> {
-        Ok(tide::Response::builder(StatusCode::NotImplemented)
+        Ok(tide::Response::builder(StatusCode::NOT_IMPLEMENTED)
             .body(self.documentation().into_string())
             .build())
     }
@@ -671,7 +671,7 @@ pub(crate) fn respond_with<T: Serialize, E, VER: StaticVersionType>(
     _: VER,
 ) -> Result<tide::Response, RouteError<E>> {
     let (body, content_type) = response_body::<_, _, VER>(accept, body)?;
-    Ok(tide::Response::builder(StatusCode::Ok)
+    Ok(tide::Response::builder(StatusCode::OK)
         .body(body)
         .content_type(content_type)
         .build())

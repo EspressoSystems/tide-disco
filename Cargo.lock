@@ -2092,17 +2092,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "num-derive"
-version = "0.4.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ed3955f1a9c7c0c15e092f9c887db08b1fc683305fdf6eb6684f22555355e202"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn 2.0.53",
-]
-
-[[package]]
 name = "num-integer"
 version = "0.1.45"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3473,7 +3462,7 @@ dependencies = [
 
 [[package]]
 name = "tide-disco"
-version = "0.7.0"
+version = "0.8.0"
 dependencies = [
  "anyhow",
  "ark-serialize",
@@ -3499,8 +3488,6 @@ dependencies = [
  "libc",
  "markdown",
  "maud",
- "num-derive",
- "num-traits",
  "parking_lot",
  "portpicker",
  "prometheus",

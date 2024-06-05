@@ -216,7 +216,7 @@ impl<State: Send + Sync + 'static, Error: 'static> App<State, Error> {
 
     /// Check the health of each registered module in response to a request.
     ///
-    /// The response includes a status code for each module, which will be [StatusCode::Ok] if the
+    /// The response includes a status code for each module, which will be [StatusCode::OK] if the
     /// module is healthy. Detailed health status from each module is not included in the response
     /// (due to type erasure) but can be queried using [module_health](Self::module_health) or by
     /// hitting the endpoint `GET /:module/healthcheck`.
@@ -227,7 +227,7 @@ impl<State: Send + Sync + 'static, Error: 'static> App<State, Error> {
             let versions_health = modules_health.entry(module.path()).or_default();
             for (version, api) in &module.versions {
                 let health = StatusCode::from(api.health(req.clone(), state).await.status());
-                if health != StatusCode::Ok {
+                if health != StatusCode::OK {
                     status = HealthStatus::Unhealthy;
                 }
                 versions_health.insert(*version, health);
@@ -241,7 +241,7 @@ impl<State: Send + Sync + 'static, Error: 'static> App<State, Error> {
 
     /// Check the health of the named module.
     ///
-    /// The resulting [Response](tide::Response) has a status code which is [StatusCode::Ok] if the
+    /// The resulting [Response](tide::Response) has a status code which is [StatusCode::OK] if the
     /// module is healthy. The response body is constructed from the results of the module's
     /// registered healthcheck handler. If the module does not have an explicit healthcheck
     /// handler, the response will be a [HealthStatus].
@@ -471,7 +471,7 @@ where
                             br{}
                             (api.documentation())
                         };
-                        Ok(tide::Response::builder(StatusCode::NotFound)
+                        Ok(tide::Response::builder(StatusCode::NOT_FOUND)
                             .body(docs.into_string())
                             .build())
                     }
@@ -665,7 +665,7 @@ where
                 // serve documentation listing the available versions.
                 let Some(module) = req.state().modules.search(&path[1..]) else {
                     let message = format!("No API matches /{}", path[1..].join("/"));
-                    return Ok(Self::top_level_error(req, StatusCode::NotFound, message));
+                    return Ok(Self::top_level_error(req, StatusCode::NOT_FOUND, message));
                 };
                 if !module.versions.contains_key(&version) {
                     // This version is not supported, list suported versions.
@@ -695,7 +695,7 @@ where
                 }
                 let Some(module) = req.state().modules.search(&path) else {
                     let message = format!("No API matches /{}", path.join("/"));
-                    return Ok(Self::top_level_error(req, StatusCode::NotFound, message));
+                    return Ok(Self::top_level_error(req, StatusCode::NOT_FOUND, message));
                 };
 
                 let latest_version = *module.versions.last_key_value().unwrap().0;
@@ -983,7 +983,7 @@ mod test {
                 .send()
                 .await
                 .unwrap();
-            assert_eq!(res.status(), StatusCode::Ok);
+            assert_eq!(res.status(), StatusCode::OK);
             assert_eq!(res.json::<String>().await.unwrap(), method.to_string());
         }
 
@@ -994,12 +994,12 @@ mod test {
             .send()
             .await
             .unwrap();
-        assert_eq!(res.status(), StatusCode::Ok);
+        assert_eq!(res.status(), StatusCode::OK);
         assert_eq!(res.text().await.unwrap(), "METRICS");
 
         // Metrics without Accept header.
         let res = client.get("mod/test").send().await.unwrap();
-        assert_eq!(res.status(), StatusCode::Ok);
+        assert_eq!(res.status(), StatusCode::OK);
         assert_eq!(res.text().await.unwrap(), "METRICS");
 
         // Socket.
@@ -1050,14 +1050,14 @@ mod test {
         let client = Client::new(url.clone()).await;
 
         let res = client.get("mod/test/a/42").send().await.unwrap();
-        assert_eq!(res.status(), StatusCode::Ok);
+        assert_eq!(res.status(), StatusCode::OK);
         assert_eq!(
             res.json::<(String, String)>().await.unwrap(),
             ("a".to_string(), "42".to_string())
         );
 
         let res = client.get("mod/test/b/true").send().await.unwrap();
-        assert_eq!(res.status(), StatusCode::Ok);
+        assert_eq!(res.status(), StatusCode::OK);
         assert_eq!(
             res.json::<(String, String)>().await.unwrap(),
             ("b".to_string(), "true".to_string())
@@ -1340,12 +1340,12 @@ mod test {
 
         // Test the application health.
         let res = client.get("healthcheck").send().await.unwrap();
-        assert_eq!(res.status(), StatusCode::ServiceUnavailable);
+        assert_eq!(res.status(), StatusCode::SERVICE_UNAVAILABLE);
         let health: AppHealth = res.json().await.unwrap();
         assert_eq!(health.status, HealthStatus::Unhealthy);
         assert_eq!(
             health.modules["mod"],
-            [(3, StatusCode::Ok), (1, StatusCode::ServiceUnavailable)].into()
+            [(3, StatusCode::OK), (1, StatusCode::SERVICE_UNAVAILABLE)].into()
         );
     }
 
@@ -1484,7 +1484,7 @@ mod test {
                 .get("err", |_req, _state| {
                     async move {
                         Err::<String, _>(ServerError::catch_all(
-                            StatusCode::InternalServerError,
+                            StatusCode::INTERNAL_SERVER_ERROR,
                             "err".into(),
                         ))
                     }
@@ -1541,7 +1541,7 @@ mod test {
             tracing::info!("checking successful deserialization");
             assert_eq!(
                 expected,
-                get::<S, _>(client, endpoint, StatusCode::Ok).await.unwrap()
+                get::<S, _>(client, endpoint, StatusCode::OK).await.unwrap()
             );
         }
 
@@ -1556,8 +1556,8 @@ mod test {
             AppHealth {
                 status: HealthStatus::Available,
                 modules: [
-                    ("mod02".into(), [(0, StatusCode::Ok)].into()),
-                    ("mod03".into(), [(0, StatusCode::Ok)].into()),
+                    ("mod02".into(), [(0, StatusCode::OK)].into()),
+                    ("mod03".into(), [(0, StatusCode::OK)].into()),
                 ]
                 .into(),
             },
@@ -1590,7 +1590,7 @@ mod test {
             endpoint: &str,
         ) {
             tracing::info!("checking deserialization fails with wrong version");
-            get::<S, T>(client, endpoint, StatusCode::Ok)
+            get::<S, T>(client, endpoint, StatusCode::OK)
                 .await
                 .unwrap_err();
         }
@@ -1609,10 +1609,10 @@ mod test {
             tracing::info!("checking error deserialization");
             tracing::info!("checking successful deserialization");
             assert_eq!(
-                get::<S, ServerError>(client, endpoint, StatusCode::InternalServerError)
+                get::<S, ServerError>(client, endpoint, StatusCode::INTERNAL_SERVER_ERROR)
                     .await
                     .unwrap(),
-                ServerError::catch_all(StatusCode::InternalServerError, "err".into())
+                ServerError::catch_all(StatusCode::INTERNAL_SERVER_ERROR, "err".into())
             );
         }
 
@@ -1681,7 +1681,7 @@ mod test {
         let res = client.get("/test").send().await.unwrap();
         assert_eq!(
             res.status(),
-            StatusCode::Ok,
+            StatusCode::OK,
             "{}",
             res.text().await.unwrap()
         );
@@ -1692,14 +1692,14 @@ mod test {
         // API-level endpoints, so that a singleton API behaves like a normal API, while app-level
         // stuff is reserved for non-trivial applications with more than one API.
         let res = client.get("/healthcheck").send().await.unwrap();
-        assert_eq!(res.status(), StatusCode::Ok);
+        assert_eq!(res.status(), StatusCode::OK);
         assert_eq!(
             res.json::<HealthStatus>().await.unwrap(),
             HealthStatus::Available
         );
 
         let res = client.get("/version").send().await.unwrap();
-        assert_eq!(res.status(), StatusCode::Ok);
+        assert_eq!(res.status(), StatusCode::OK);
         assert_eq!(
             res.json::<ApiVersion>().await.unwrap(),
             ApiVersion {
@@ -1739,7 +1739,7 @@ mod test {
 
             // Test an endpoint.
             let res = client.get(&format!("api/{api}/test")).send().await.unwrap();
-            assert_eq!(res.status(), StatusCode::Ok);
+            assert_eq!(res.status(), StatusCode::OK);
             assert_eq!(res.json::<String>().await.unwrap(), api);
 
             // Test healthcheck.
@@ -1748,7 +1748,7 @@ mod test {
                 .send()
                 .await
                 .unwrap();
-            assert_eq!(res.status(), StatusCode::Ok);
+            assert_eq!(res.status(), StatusCode::OK);
             assert_eq!(
                 res.json::<HealthStatus>().await.unwrap(),
                 HealthStatus::Available
@@ -1760,7 +1760,7 @@ mod test {
                 .send()
                 .await
                 .unwrap();
-            assert_eq!(res.status(), StatusCode::Ok);
+            assert_eq!(res.status(), StatusCode::OK);
             assert_eq!(
                 res.json::<ApiVersion>().await.unwrap().api_version.unwrap(),
                 "0.1.0".parse().unwrap()
@@ -1769,14 +1769,14 @@ mod test {
 
         // Test app-level healthcheck.
         let res = client.get("healthcheck").send().await.unwrap();
-        assert_eq!(res.status(), StatusCode::Ok);
+        assert_eq!(res.status(), StatusCode::OK);
         assert_eq!(
             res.json::<AppHealth>().await.unwrap(),
             AppHealth {
                 status: HealthStatus::Available,
                 modules: [
-                    ("api/a".into(), [(0, StatusCode::Ok)].into()),
-                    ("api/b".into(), [(0, StatusCode::Ok)].into()),
+                    ("api/a".into(), [(0, StatusCode::OK)].into()),
+                    ("api/b".into(), [(0, StatusCode::OK)].into()),
                 ]
                 .into()
             }
@@ -1784,7 +1784,7 @@ mod test {
 
         // Test app-level version.
         let res = client.get("version").send().await.unwrap();
-        assert_eq!(res.status(), StatusCode::Ok);
+        assert_eq!(res.status(), StatusCode::OK);
         assert_eq!(
             res.json::<AppVersion>().await.unwrap().modules,
             [

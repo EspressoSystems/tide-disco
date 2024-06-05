@@ -27,11 +27,11 @@ pub trait Error: std::error::Error + Serialize + DeserializeOwned + Send + Sync 
     fn status(&self) -> StatusCode;
 
     fn from_io_error(source: IoError) -> Self {
-        Self::catch_all(StatusCode::InternalServerError, source.to_string())
+        Self::catch_all(StatusCode::INTERNAL_SERVER_ERROR, source.to_string())
     }
 
     fn from_config_error(source: ConfigError) -> Self {
-        Self::catch_all(StatusCode::InternalServerError, source.to_string())
+        Self::catch_all(StatusCode::INTERNAL_SERVER_ERROR, source.to_string())
     }
 
     fn from_route_error<E: Display>(source: RouteError<E>) -> Self {
@@ -39,7 +39,7 @@ pub trait Error: std::error::Error + Serialize + DeserializeOwned + Send + Sync 
     }
 
     fn from_request_error(source: RequestError) -> Self {
-        Self::catch_all(StatusCode::BadRequest, source.to_string())
+        Self::catch_all(StatusCode::BAD_REQUEST, source.to_string())
     }
 
     fn from_socket_error<E: Display>(source: SocketError<E>) -> Self {

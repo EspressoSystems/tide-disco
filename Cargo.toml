@@ -1,6 +1,6 @@
 [package]
 name = "tide-disco"
-version = "0.7.0"
+version = "0.8.0"
 edition = "2021"
 authors = ["Espresso Systems <hello@espressosys.com>"]
 description = "Discoverability for Tide"
@@ -41,8 +41,6 @@ lazy_static = "1.4"
 libc = "0.2"
 markdown = "0.3"
 maud = { version = "0.26", features = ["tide"] }
-num-derive = "0.4"
-num-traits = "0.2"
 parking_lot = "0.12"
 prometheus = "0.13"
 reqwest = { version = "0.12", features = ["json"] }

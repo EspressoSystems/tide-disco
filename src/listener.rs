@@ -28,7 +28,7 @@ use tide::{
 
 /// TCP listener which accepts only a limited number of connections at a time.
 ///
-/// This listener is based on [`tide::listener::TcpListener`] and should match the semantics of that
+/// This listener is based on `tide::listener::TcpListener` and should match the semantics of that
 /// listener in every way, accept that when there are more simultaneous outstanding requests than
 /// the configured limit, excess requests will fail immediately with error code 429 (Too Many
 /// Requests).
@@ -117,7 +117,7 @@ where
                             } else {
                                 // Otherwise, we are rate limited. Respond immediately with an
                                 // error.
-                                Ok(http::Response::new(StatusCode::TooManyRequests))
+                                Ok(http::Response::new(StatusCode::TOO_MANY_REQUESTS))
                             }
                         });
 
@@ -227,11 +227,11 @@ mod test {
 
         // The next request gets rate limited.
         let res = client.get("mod/test").send().await.unwrap();
-        assert_eq!(StatusCode::TooManyRequests, res.status());
+        assert_eq!(StatusCode::TOO_MANY_REQUESTS, res.status());
 
         // The other requests eventually complete successfully.
         for res in try_join_all(reqs).await.unwrap() {
-            assert_eq!(StatusCode::Ok, res.status());
+            assert_eq!(StatusCode::OK, res.status());
         }
     }
 }

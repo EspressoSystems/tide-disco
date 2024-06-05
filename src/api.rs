@@ -1545,7 +1545,7 @@ mod test {
                 |_req, _conn: Connection<(), (), _, StaticVer01>, _state| {
                     async move {
                         Err(ServerError::catch_all(
-                            StatusCode::InternalServerError,
+                            StatusCode::INTERNAL_SERVER_ERROR,
                             "an error message".to_string(),
                         ))
                     }
@@ -1669,7 +1669,7 @@ mod test {
                     // We intentionally return a stream that never terminates, to check that simply
                     // yielding an error causes the connection to terminate.
                     repeat(Err(ServerError::catch_all(
-                        StatusCode::InternalServerError,
+                        StatusCode::INTERNAL_SERVER_ERROR,
                         "an error message".to_string(),
                     )))
                     .boxed()
@@ -1737,7 +1737,7 @@ mod test {
         let client = Client::new(url).await;
 
         let res = client.get("/mod/healthcheck").send().await.unwrap();
-        assert_eq!(res.status(), StatusCode::Ok);
+        assert_eq!(res.status(), StatusCode::OK);
         assert_eq!(
             res.json::<HealthStatus>().await.unwrap(),
             HealthStatus::Available
@@ -1793,7 +1793,7 @@ mod test {
             tracing::info!("making metrics request {i}");
             let expected = format!("# HELP counter count of how many times metrics have been exported\n# TYPE counter counter\ncounter {i}\n");
             let res = client.get("mod/metrics").send().await.unwrap();
-            assert_eq!(res.status(), StatusCode::Ok);
+            assert_eq!(res.status(), StatusCode::OK);
             assert_eq!(res.text().await.unwrap(), expected);
         }
     }

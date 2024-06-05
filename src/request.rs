@@ -229,7 +229,7 @@ impl RequestParams {
     ///
     /// impl From<RequestError> for ApiError {
     ///     fn from(err: RequestError) -> Self {
-    ///         Self::catch_all(StatusCode::BadRequest, err.to_string())
+    ///         Self::catch_all(StatusCode::BAD_REQUEST, err.to_string())
     ///     }
     /// }
     ///
