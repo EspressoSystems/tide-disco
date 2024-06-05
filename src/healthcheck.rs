@@ -12,7 +12,7 @@ use serde::{Deserialize, Serialize};
 /// A type implementing [HealthCheck] may be returned from a healthcheck endpoint itself (via its
 /// [Serialize] implementation) as well as incorporated automatically into the global healthcheck
 /// endpoint for an app. The global healthcheck will fail if any of the module healthchecks return
-/// an implementation `h` of [HealthCheck] where `h.status() != StatusCode::Ok`.
+/// an implementation `h` of [HealthCheck] where `h.status() != StatusCode::OK`.
 ///
 /// We provide a standard implementation [HealthStatus] which has variants for common states an
 /// application might encounter. We recommend using this implementation as a standard, although it
@@ -21,7 +21,7 @@ use serde::{Deserialize, Serialize};
 pub trait HealthCheck: Serialize {
     /// The status of this health check.
     ///
-    /// Should return [StatusCode::Ok] if the status is considered healthy, and some other status
+    /// Should return [StatusCode::OK] if the status is considered healthy, and some other status
     /// code if it is not.
     fn status(&self) -> StatusCode;
 }
