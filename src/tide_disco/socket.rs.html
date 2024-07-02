@@ -1,6 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/socket.rs`."><title>socket.rs - source</title><script> if (window.location.protocol !== "file:") document.write(`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2">`)</script><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-e935ef01ae1c1829.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="tide_disco" data-themes="" data-resource-suffix="" data-rustdoc-version="1.78.0 (9b00956e5 2024-04-29)" data-channel="1.78.0" data-search-js="search-42d8da7a6b9792c2.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-4c98445ec4002617.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-12cf3b4f4f9dc36d.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-04d5337699b92874.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title">
-            <h2>Files</h2></div></nav><div class="sidebar-resizer"></div>
-    <main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../tide_disco/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/socket.rs`."><title>socket.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="tide_disco" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0 (129f3b996 2024-06-10)" data-channel="1.79.0" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../tide_disco/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -413,12 +411,6 @@
 <a href="#411" id="411">411</a>
 <a href="#412" id="412">412</a>
 <a href="#413" id="413">413</a>
-<a href="#414" id="414">414</a>
-<a href="#415" id="415">415</a>
-<a href="#416" id="416">416</a>
-<a href="#417" id="417">417</a>
-<a href="#418" id="418">418</a>
-<a href="#419" id="419">419</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright (c) 2022 Espresso Systems (espressosys.com)
 // This file is part of the tide-disco library.
 
@@ -441,6 +433,7 @@
     task::{Context, Poll},
     FutureExt, Sink, SinkExt, Stream, StreamExt, TryFutureExt,
 };
+<span class="kw">use </span>pin_project::pin_project;
 <span class="kw">use </span>serde::{de::DeserializeOwned, Serialize};
 <span class="kw">use </span>std::borrow::Cow;
 <span class="kw">use </span>std::fmt::{<span class="self">self</span>, Display, Formatter};
@@ -554,8 +547,10 @@
 ///
 /// [Connection] implements [Stream], which can be used to receive `FromClient` messages from the
 /// client, and [Sink] which can be used to send `ToClient` messages to the client.
+</span><span class="attr">#[pin_project]
 </span><span class="kw">pub struct </span>Connection&lt;ToClient: <span class="question-mark">?</span>Sized, FromClient, Error, VER: StaticVersionType&gt; {
-    conn: WebSocketConnection,
+    <span class="attr">#[pin]
+    </span>conn: WebSocketConnection,
     <span class="comment">// [Sink] wrapper around `conn`
     </span>sink: Pin&lt;Box&lt;<span class="kw">dyn </span>Send + Sink&lt;Message, Error = SocketError&lt;Error&gt;&gt;&gt;&gt;,
     accept: MessageType,
@@ -571,7 +566,7 @@
     <span class="kw">fn </span>poll_next(<span class="self">self</span>: Pin&lt;<span class="kw-2">&amp;mut </span><span class="self">Self</span>&gt;, cx: <span class="kw-2">&amp;mut </span>Context&lt;<span class="lifetime">'_</span>&gt;) -&gt; Poll&lt;<span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>::Item&gt;&gt; {
         <span class="comment">// Get a `Pin&lt;&amp;mut WebSocketConnection&gt;` for the underlying connection, so we can use the
         // `Stream` implementation of that field.
-        </span><span class="kw">match </span><span class="self">self</span>.pinned_inner().poll_next(cx) {
+        </span><span class="kw">match </span><span class="self">self</span>.project().conn.poll_next(cx) {
             Poll::Ready(<span class="prelude-val">None</span>) =&gt; Poll::Ready(<span class="prelude-val">None</span>),
             Poll::Ready(<span class="prelude-val">Some</span>(<span class="prelude-val">Err</span>(err))) =&gt; Poll::Ready(<span class="prelude-val">Some</span>(<span class="prelude-val">Err</span>(err.into()))),
             Poll::Ready(<span class="prelude-val">Some</span>(<span class="prelude-val">Ok</span>(msg))) =&gt; Poll::Ready(<span class="prelude-val">Some</span>(<span class="kw">match </span>msg {
@@ -615,29 +610,25 @@
     }
 }
 
-<span class="kw">impl</span>&lt;ToClient: <span class="question-mark">?</span>Sized, FromClient, Error, VER: StaticVersionType&gt; Drop
-    <span class="kw">for </span>Connection&lt;ToClient, FromClient, Error, VER&gt;
+<span class="kw">impl</span>&lt;ToClient: Serialize, FromClient, E, VER: StaticVersionType&gt; Sink&lt;ToClient&gt;
+    <span class="kw">for </span>Connection&lt;ToClient, FromClient, E, VER&gt;
 {
-    <span class="kw">fn </span>drop(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
-        <span class="comment">// This is the idiomatic way to implement [drop] for a type that uses pinning. Since [drop]
-        // is implicitly called with `&amp;mut self` even on types that were pinned, we place any
-        // implementation inside [inner_drop], which takes `Pin&lt;&amp;mut Self&gt;`, when the commpiler will
-        // be able to check that we do not do anything that we couldn't have done on a
-        // `Pin&lt;&amp;mut Self&gt;`.
-        //
-        // The [drop] implementation for this type is trivial, and it would be safe to use the
-        // automatically generated [drop] implementation, but we nonetheless implement [drop]
-        // explicitly in the idiomatic fashion so that it is impossible to accidentally implement an
-        // unsafe version of [drop] for this type in the future.
+    <span class="kw">type </span>Error = SocketError&lt;E&gt;;
 
-        // `new_unchecked` is okay because we know this value is never used again after being
-        // dropped.
-        </span>inner_drop(<span class="kw">unsafe </span>{ Pin::new_unchecked(<span class="self">self</span>) });
-        <span class="kw">fn </span>inner_drop&lt;ToClient: <span class="question-mark">?</span>Sized, FromClient, Error, VER: StaticVersionType&gt;(
-            _this: Pin&lt;<span class="kw-2">&amp;mut </span>Connection&lt;ToClient, FromClient, Error, VER&gt;&gt;,
-        ) {
-            <span class="comment">// Any logic goes here.
-        </span>}
+    <span class="kw">fn </span>poll_ready(<span class="self">self</span>: Pin&lt;<span class="kw-2">&amp;mut </span><span class="self">Self</span>&gt;, cx: <span class="kw-2">&amp;mut </span>Context&lt;<span class="lifetime">'_</span>&gt;) -&gt; Poll&lt;<span class="prelude-ty">Result</span>&lt;(), <span class="self">Self</span>::Error&gt;&gt; {
+        Sink::&lt;<span class="kw-2">&amp;</span>ToClient&gt;::poll_ready(<span class="self">self</span>, cx)
+    }
+
+    <span class="kw">fn </span>start_send(<span class="self">self</span>: Pin&lt;<span class="kw-2">&amp;mut </span><span class="self">Self</span>&gt;, item: ToClient) -&gt; <span class="prelude-ty">Result</span>&lt;(), <span class="self">Self</span>::Error&gt; {
+        <span class="self">self</span>.start_send(<span class="kw-2">&amp;</span>item)
+    }
+
+    <span class="kw">fn </span>poll_flush(<span class="self">self</span>: Pin&lt;<span class="kw-2">&amp;mut </span><span class="self">Self</span>&gt;, cx: <span class="kw-2">&amp;mut </span>Context&lt;<span class="lifetime">'_</span>&gt;) -&gt; Poll&lt;<span class="prelude-ty">Result</span>&lt;(), <span class="self">Self</span>::Error&gt;&gt; {
+        Sink::&lt;<span class="kw-2">&amp;</span>ToClient&gt;::poll_flush(<span class="self">self</span>, cx)
+    }
+
+    <span class="kw">fn </span>poll_close(<span class="self">self</span>: Pin&lt;<span class="kw-2">&amp;mut </span><span class="self">Self</span>&gt;, cx: <span class="kw-2">&amp;mut </span>Context&lt;<span class="lifetime">'_</span>&gt;) -&gt; Poll&lt;<span class="prelude-ty">Result</span>&lt;(), <span class="self">Self</span>::Error&gt;&gt; {
+        Sink::&lt;<span class="kw-2">&amp;</span>ToClient&gt;::poll_close(<span class="self">self</span>, cx)
     }
 }
 
@@ -654,39 +645,34 @@
             <span class="macro">unreachable!</span>()
         };
         <span class="prelude-val">Ok</span>(<span class="self">Self </span>{
-            sink: Box::pin(sink::unfold(
-                (conn.clone(), ty),
-                |(conn, accept), msg| <span class="kw">async move </span>{
-                    conn.send(msg).<span class="kw">await</span><span class="question-mark">?</span>;
-                    <span class="prelude-val">Ok</span>((conn, accept))
-                },
-            )),
+            sink: <span class="self">Self</span>::sink(conn.clone()),
             conn,
             accept: ty,
             _phantom: Default::default(),
         })
     }
 
-    <span class="doccomment">/// Project a `Pin&lt;&amp;mut Self&gt;` to a pinned reference to the underlying connection.
-    </span><span class="kw">fn </span>pinned_inner(<span class="self">self</span>: Pin&lt;<span class="kw-2">&amp;mut </span><span class="self">Self</span>&gt;) -&gt; Pin&lt;<span class="kw-2">&amp;mut </span>WebSocketConnection&gt; {
-        <span class="comment">// # Soundness
-        //
-        // This implements _structural pinning_ for [Connection]. This comes with some requirements
-        // to maintain safety, as described at
-        // https://doc.rust-lang.org/std/pin/index.html#pinning-is-structural-for-field:
-        //
-        // 1. The struct must only be [Unpin] if all the structural fields are [Unpin]. This is the
-        //    default, and we don't explicitly implement [Unpin] for [Connection].
-        // 2. The destructor of the struct must not move structural fields out of its argument. This
-        //    is enforced by the compiler in our [Drop] implementation, which follows the idiom for
-        //    safe [Drop] implementations for pinned structs.
-        // 3. You must make sure that you uphold the [Drop] guarantee: once your struct is pinned,
-        //    the memory that contains the content is not overwritten or deallocated without calling
-        //    the content’s destructors. This is also enforced by our [Drop] implementation.
-        // 4. You must not offer any other operations that could lead to data being moved out of the
-        //    structural fields when your type is pinned. There are no operations on this type that
-        //    move out of `conn`.
-        </span><span class="kw">unsafe </span>{ <span class="self">self</span>.map_unchecked_mut(|s| <span class="kw-2">&amp;mut </span>s.conn) }
+    <span class="doccomment">/// Wrap a `WebSocketConnection` in a type that implements `Sink&lt;Message&gt;`.
+    </span><span class="kw">fn </span>sink(
+        conn: WebSocketConnection,
+    ) -&gt; Pin&lt;Box&lt;<span class="kw">dyn </span>Send + Sink&lt;Message, Error = SocketError&lt;E&gt;&gt;&gt;&gt; {
+        Box::pin(sink::unfold(conn, |conn, msg| <span class="kw">async move </span>{
+            conn.send(msg).<span class="kw">await</span><span class="question-mark">?</span>;
+            <span class="prelude-val">Ok</span>(conn)
+        }))
+    }
+}
+
+<span class="kw">impl</span>&lt;ToClient: <span class="question-mark">?</span>Sized, FromClient, E, VER: StaticVersionType&gt; Clone
+    <span class="kw">for </span>Connection&lt;ToClient, FromClient, E, VER&gt;
+{
+    <span class="kw">fn </span>clone(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="self">Self </span>{
+        <span class="self">Self </span>{
+            sink: <span class="self">Self</span>::sink(<span class="self">self</span>.conn.clone()),
+            conn: <span class="self">self</span>.conn.clone(),
+            accept: <span class="self">self</span>.accept,
+            _phantom: Default::default(),
+        }
     }
 }
 

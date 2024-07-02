@@ -1,6 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/api.rs`."><title>api.rs - source</title><script> if (window.location.protocol !== "file:") document.write(`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2">`)</script><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-e935ef01ae1c1829.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="tide_disco" data-themes="" data-resource-suffix="" data-rustdoc-version="1.78.0 (9b00956e5 2024-04-29)" data-channel="1.78.0" data-search-js="search-42d8da7a6b9792c2.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-4c98445ec4002617.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-12cf3b4f4f9dc36d.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-04d5337699b92874.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title">
-            <h2>Files</h2></div></nav><div class="sidebar-resizer"></div>
-    <main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../tide_disco/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/api.rs`."><title>api.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="tide_disco" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0 (129f3b996 2024-06-10)" data-channel="1.79.0" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../tide_disco/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -1800,6 +1798,88 @@
 <a href="#1798" id="1798">1798</a>
 <a href="#1799" id="1799">1799</a>
 <a href="#1800" id="1800">1800</a>
+<a href="#1801" id="1801">1801</a>
+<a href="#1802" id="1802">1802</a>
+<a href="#1803" id="1803">1803</a>
+<a href="#1804" id="1804">1804</a>
+<a href="#1805" id="1805">1805</a>
+<a href="#1806" id="1806">1806</a>
+<a href="#1807" id="1807">1807</a>
+<a href="#1808" id="1808">1808</a>
+<a href="#1809" id="1809">1809</a>
+<a href="#1810" id="1810">1810</a>
+<a href="#1811" id="1811">1811</a>
+<a href="#1812" id="1812">1812</a>
+<a href="#1813" id="1813">1813</a>
+<a href="#1814" id="1814">1814</a>
+<a href="#1815" id="1815">1815</a>
+<a href="#1816" id="1816">1816</a>
+<a href="#1817" id="1817">1817</a>
+<a href="#1818" id="1818">1818</a>
+<a href="#1819" id="1819">1819</a>
+<a href="#1820" id="1820">1820</a>
+<a href="#1821" id="1821">1821</a>
+<a href="#1822" id="1822">1822</a>
+<a href="#1823" id="1823">1823</a>
+<a href="#1824" id="1824">1824</a>
+<a href="#1825" id="1825">1825</a>
+<a href="#1826" id="1826">1826</a>
+<a href="#1827" id="1827">1827</a>
+<a href="#1828" id="1828">1828</a>
+<a href="#1829" id="1829">1829</a>
+<a href="#1830" id="1830">1830</a>
+<a href="#1831" id="1831">1831</a>
+<a href="#1832" id="1832">1832</a>
+<a href="#1833" id="1833">1833</a>
+<a href="#1834" id="1834">1834</a>
+<a href="#1835" id="1835">1835</a>
+<a href="#1836" id="1836">1836</a>
+<a href="#1837" id="1837">1837</a>
+<a href="#1838" id="1838">1838</a>
+<a href="#1839" id="1839">1839</a>
+<a href="#1840" id="1840">1840</a>
+<a href="#1841" id="1841">1841</a>
+<a href="#1842" id="1842">1842</a>
+<a href="#1843" id="1843">1843</a>
+<a href="#1844" id="1844">1844</a>
+<a href="#1845" id="1845">1845</a>
+<a href="#1846" id="1846">1846</a>
+<a href="#1847" id="1847">1847</a>
+<a href="#1848" id="1848">1848</a>
+<a href="#1849" id="1849">1849</a>
+<a href="#1850" id="1850">1850</a>
+<a href="#1851" id="1851">1851</a>
+<a href="#1852" id="1852">1852</a>
+<a href="#1853" id="1853">1853</a>
+<a href="#1854" id="1854">1854</a>
+<a href="#1855" id="1855">1855</a>
+<a href="#1856" id="1856">1856</a>
+<a href="#1857" id="1857">1857</a>
+<a href="#1858" id="1858">1858</a>
+<a href="#1859" id="1859">1859</a>
+<a href="#1860" id="1860">1860</a>
+<a href="#1861" id="1861">1861</a>
+<a href="#1862" id="1862">1862</a>
+<a href="#1863" id="1863">1863</a>
+<a href="#1864" id="1864">1864</a>
+<a href="#1865" id="1865">1865</a>
+<a href="#1866" id="1866">1866</a>
+<a href="#1867" id="1867">1867</a>
+<a href="#1868" id="1868">1868</a>
+<a href="#1869" id="1869">1869</a>
+<a href="#1870" id="1870">1870</a>
+<a href="#1871" id="1871">1871</a>
+<a href="#1872" id="1872">1872</a>
+<a href="#1873" id="1873">1873</a>
+<a href="#1874" id="1874">1874</a>
+<a href="#1875" id="1875">1875</a>
+<a href="#1876" id="1876">1876</a>
+<a href="#1877" id="1877">1877</a>
+<a href="#1878" id="1878">1878</a>
+<a href="#1879" id="1879">1879</a>
+<a href="#1880" id="1880">1880</a>
+<a href="#1881" id="1881">1881</a>
+<a href="#1882" id="1882">1882</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright (c) 2022 Espresso Systems (espressosys.com)
 // This file is part of the tide-disco library.
 
@@ -2882,8 +2962,90 @@
     /// }.boxed());
     /// # }
     /// ```
-    </span><span class="comment">//
-    </span><span class="doccomment">/// # Errors
+    ///
+    /// In some cases, it may be desirable to handle messages to and from the client in separate
+    /// tasks. There are two ways of doing this:
+    ///
+    /// ## Split the connection into separate stream and sink
+    ///
+    /// ```
+    /// use async_std::task::spawn;
+    /// use futures::{future::{join, FutureExt}, sink::SinkExt, stream::StreamExt};
+    /// use tide_disco::{error::ServerError, socket::Connection, Api};
+    /// # use vbs::version::StaticVersion;
+    ///
+    /// # fn ex(api: &amp;mut Api&lt;(), ServerError, StaticVersion&lt;0, 1&gt;&gt;) {
+    /// api.socket("endpoint", |_req, mut conn: Connection&lt;i32, i32, ServerError, StaticVersion&lt;0, 1&gt;&gt;, _state| async move {
+    ///     let (mut sink, mut stream) = conn.split();
+    ///     let recv = spawn(async move {
+    ///         while let Some(Ok(msg)) = stream.next().await {
+    ///             // Handle message from client.
+    ///         }
+    ///     });
+    ///     let send = spawn(async move {
+    ///         loop {
+    ///             let msg = // get message to send to client
+    /// #               0;
+    ///             sink.send(msg).await;
+    ///         }
+    ///     });
+    ///
+    ///     join(send, recv).await;
+    ///     Ok(())
+    /// }.boxed());
+    /// # }
+    /// ```
+    ///
+    /// This approach requires messages to be sent to the client by value, consuming the message.
+    /// This is because, if we were to use the `Sync&lt;&amp;ToClient&gt;` implementation for `Connection`,
+    /// the lifetime for `&amp;ToClient` would be fixed after `split` is called, since the lifetime
+    /// appears in the return type, `SplitSink&lt;Connection&lt;...&gt;, &amp;ToClient&gt;`. Thus, this lifetime
+    /// outlives any scoped local variables created after the `split` call, such as `msg` in the
+    /// `loop`.
+    ///
+    /// If we want to use the message after sending it to the client, we would have to clone it,
+    /// which may be inefficient or impossible. Thus, there is another approach:
+    ///
+    /// ## Clone the connection
+    ///
+    /// ```
+    /// use async_std::task::spawn;
+    /// use futures::{future::{join, FutureExt}, sink::SinkExt, stream::StreamExt};
+    /// use tide_disco::{error::ServerError, socket::Connection, Api};
+    /// # use vbs::version::StaticVersion;
+    ///
+    /// # fn ex(api: &amp;mut Api&lt;(), ServerError, StaticVersion&lt;0, 1&gt;&gt;) {
+    /// api.socket("endpoint", |_req, mut conn: Connection&lt;i32, i32, ServerError, StaticVersion&lt;0, 1&gt;&gt;, _state| async move {
+    ///     let recv = {
+    ///         let mut conn = conn.clone();
+    ///         spawn(async move {
+    ///             while let Some(Ok(msg)) = conn.next().await {
+    ///                 // Handle message from client.
+    ///             }
+    ///         })
+    ///     };
+    ///     let send = spawn(async move {
+    ///         loop {
+    ///             let msg = // get message to send to client
+    /// #               0;
+    ///             conn.send(&amp;msg).await;
+    ///             // msg is still live at this point.
+    ///             drop(msg);
+    ///         }
+    ///     });
+    ///
+    ///     join(send, recv).await;
+    ///     Ok(())
+    /// }.boxed());
+    /// # }
+    /// ```
+    ///
+    /// Depending on the exact situation, this method may end up being more verbose than the
+    /// previous example. But it allows us to retain the higher-ranked trait bound `conn: for&lt;'a&gt;
+    /// Sink&lt;&amp;'a ToClient&gt;` instead of fixing the lifetime, which can prevent an unnecessary clone
+    /// in certain situations.
+    ///
+    /// # Errors
     ///
     /// If the route `name` does not exist in the API specification, or if the route already has a
     /// handler registered, an error is returned. Note that all routes are initialized with a
@@ -3333,7 +3495,7 @@
             .unwrap()
             .socket(
                 <span class="string">"once"</span>,
-                |_req, <span class="kw-2">mut </span>conn: Connection&lt;<span class="kw">_</span>, (), <span class="kw">_</span>, StaticVer01&gt;, _state| {
+                |_req, <span class="kw-2">mut </span>conn: Connection&lt;str, (), <span class="kw">_</span>, StaticVer01&gt;, _state| {
                     <span class="kw">async move </span>{
                         conn.send(<span class="string">"msg"</span>).boxed().<span class="kw">await</span><span class="question-mark">?</span>;
                         <span class="prelude-val">Ok</span>(())
