@@ -956,7 +956,7 @@ mod test {
             .unwrap()
             .socket(
                 "socket_test",
-                |_req, mut conn: Connection<_, (), _, StaticVer01>, _state| {
+                |_req, mut conn: Connection<str, (), _, StaticVer01>, _state| {
                     async move {
                         conn.send("SOCKET").await.unwrap();
                         Ok(())

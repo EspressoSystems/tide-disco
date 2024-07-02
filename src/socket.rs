@@ -194,6 +194,28 @@ impl<ToClient: Serialize + ?Sized, FromClient, E, VER: StaticVersionType> Sink<&
     }
 }
 
+impl<ToClient: Serialize, FromClient, E, VER: StaticVersionType> Sink<ToClient>
+    for Connection<ToClient, FromClient, E, VER>
+{
+    type Error = SocketError<E>;
+
+    fn poll_ready(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Result<(), Self::Error>> {
+        Sink::<&ToClient>::poll_ready(self, cx)
+    }
+
+    fn start_send(self: Pin<&mut Self>, item: ToClient) -> Result<(), Self::Error> {
+        self.start_send(&item)
+    }
+
+    fn poll_flush(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Result<(), Self::Error>> {
+        Sink::<&ToClient>::poll_flush(self, cx)
+    }
+
+    fn poll_close(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Result<(), Self::Error>> {
+        Sink::<&ToClient>::poll_close(self, cx)
+    }
+}
+
 impl<ToClient: ?Sized, FromClient, Error, VER: StaticVersionType> Drop
     for Connection<ToClient, FromClient, Error, VER>
 {
@@ -233,17 +255,21 @@ impl<ToClient: ?Sized, FromClient, E, VER: StaticVersionType>
             unreachable!()
         };
         Ok(Self {
-            sink: Box::pin(sink::unfold(
-                (conn.clone(), ty),
-                |(conn, accept), msg| async move {
-                    conn.send(msg).await?;
-                    Ok((conn, accept))
-                },
-            )),
+            sink: Self::sink(conn.clone()),
             conn,
             accept: ty,
             _phantom: Default::default(),
         })
+    }
+
+    /// Wrap a `WebSocketConnection` in a type that implements `Sink<Message>`.
+    fn sink(
+        conn: WebSocketConnection,
+    ) -> Pin<Box<dyn Send + Sink<Message, Error = SocketError<E>>>> {
+        Box::pin(sink::unfold(conn, |conn, msg| async move {
+            conn.send(msg).await?;
+            Ok(conn)
+        }))
     }
 
     /// Project a `Pin<&mut Self>` to a pinned reference to the underlying connection.
@@ -266,6 +292,19 @@ impl<ToClient: ?Sized, FromClient, E, VER: StaticVersionType>
         //    structural fields when your type is pinned. There are no operations on this type that
         //    move out of `conn`.
         unsafe { self.map_unchecked_mut(|s| &mut s.conn) }
+    }
+}
+
+impl<ToClient: ?Sized, FromClient, E, VER: StaticVersionType> Clone
+    for Connection<ToClient, FromClient, E, VER>
+{
+    fn clone(&self) -> Self {
+        Self {
+            sink: Self::sink(self.conn.clone()),
+            conn: self.conn.clone(),
+            accept: self.accept,
+            _phantom: Default::default(),
+        }
     }
 }
 
