@@ -3489,6 +3489,7 @@ dependencies = [
  "markdown",
  "maud",
  "parking_lot",
+ "pin-project",
  "portpicker",
  "prometheus",
  "reqwest",
