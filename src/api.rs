@@ -1080,7 +1080,89 @@ where
     /// }.boxed());
     /// # }
     /// ```
-    //
+    ///
+    /// In some cases, it may be desirable to handle messages to and from the client in separate
+    /// tasks. There are two ways of doing this:
+    ///
+    /// ## Split the connection into separate stream and sink
+    ///
+    /// ```
+    /// use async_std::task::spawn;
+    /// use futures::{future::{join, FutureExt}, sink::SinkExt, stream::StreamExt};
+    /// use tide_disco::{error::ServerError, socket::Connection, Api};
+    /// # use vbs::version::StaticVersion;
+    ///
+    /// # fn ex(api: &mut Api<(), ServerError, StaticVersion<0, 1>>) {
+    /// api.socket("endpoint", |_req, mut conn: Connection<i32, i32, ServerError, StaticVersion<0, 1>>, _state| async move {
+    ///     let (mut sink, mut stream) = conn.split();
+    ///     let recv = spawn(async move {
+    ///         while let Some(Ok(msg)) = stream.next().await {
+    ///             // Handle message from client.
+    ///         }
+    ///     });
+    ///     let send = spawn(async move {
+    ///         loop {
+    ///             let msg = // get message to send to client
+    /// #               0;
+    ///             sink.send(msg).await;
+    ///         }
+    ///     });
+    ///
+    ///     join(send, recv).await;
+    ///     Ok(())
+    /// }.boxed());
+    /// # }
+    /// ```
+    ///
+    /// This approach requires messages to be sent to the client by value, consuming the message.
+    /// This is because, if we were to use the `Sync<&ToClient>` implementation for `Connection`,
+    /// the lifetime for `&ToClient` would be fixed after `split` is called, since the lifetime
+    /// appears in the return type, `SplitSink<Connection<...>, &ToClient>`. Thus, this lifetime
+    /// outlives any scoped local variables created after the `split` call, such as `msg` in the
+    /// `loop`.
+    ///
+    /// If we want to use the message after sending it to the client, we would have to clone it,
+    /// which may be inefficient or impossible. Thus, there is another approach:
+    ///
+    /// ## Clone the connection
+    ///
+    /// ```
+    /// use async_std::task::spawn;
+    /// use futures::{future::{join, FutureExt}, sink::SinkExt, stream::StreamExt};
+    /// use tide_disco::{error::ServerError, socket::Connection, Api};
+    /// # use vbs::version::StaticVersion;
+    ///
+    /// # fn ex(api: &mut Api<(), ServerError, StaticVersion<0, 1>>) {
+    /// api.socket("endpoint", |_req, mut conn: Connection<i32, i32, ServerError, StaticVersion<0, 1>>, _state| async move {
+    ///     let recv = {
+    ///         let mut conn = conn.clone();
+    ///         spawn(async move {
+    ///             while let Some(Ok(msg)) = conn.next().await {
+    ///                 // Handle message from client.
+    ///             }
+    ///         })
+    ///     };
+    ///     let send = spawn(async move {
+    ///         loop {
+    ///             let msg = // get message to send to client
+    /// #               0;
+    ///             conn.send(&msg).await;
+    ///             // msg is still live at this point.
+    ///             drop(msg);
+    ///         }
+    ///     });
+    ///
+    ///     join(send, recv).await;
+    ///     Ok(())
+    /// }.boxed());
+    /// # }
+    /// ```
+    ///
+    /// Depending on the exact situation, this method may end up being more verbose than the
+    /// previous example. But it allows us to retain the higher-ranked trait bound `conn: for<'a>
+    /// Sink<&'a ToClient>` instead of fixing the lifetime, which can prevent an unnecessary clone
+    /// in certain situations.
+    ///
     /// # Errors
     ///
     /// If the route `name` does not exist in the API specification, or if the route already has a
@@ -1531,7 +1613,7 @@ mod test {
             .unwrap()
             .socket(
                 "once",
-                |_req, mut conn: Connection<_, (), _, StaticVer01>, _state| {
+                |_req, mut conn: Connection<str, (), _, StaticVer01>, _state| {
                     async move {
                         conn.send("msg").boxed().await?;
                         Ok(())

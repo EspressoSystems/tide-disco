@@ -3462,7 +3462,7 @@ dependencies = [
 
 [[package]]
 name = "tide-disco"
-version = "0.8.0"
+version = "0.9.0"
 dependencies = [
  "anyhow",
  "ark-serialize",
@@ -3489,6 +3489,7 @@ dependencies = [
  "markdown",
  "maud",
  "parking_lot",
+ "pin-project",
  "portpicker",
  "prometheus",
  "reqwest",

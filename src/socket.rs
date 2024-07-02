@@ -20,6 +20,7 @@ use futures::{
     task::{Context, Poll},
     FutureExt, Sink, SinkExt, Stream, StreamExt, TryFutureExt,
 };
+use pin_project::pin_project;
 use serde::{de::DeserializeOwned, Serialize};
 use std::borrow::Cow;
 use std::fmt::{self, Display, Formatter};
@@ -133,7 +134,9 @@ enum MessageType {
 ///
 /// [Connection] implements [Stream], which can be used to receive `FromClient` messages from the
 /// client, and [Sink] which can be used to send `ToClient` messages to the client.
+#[pin_project]
 pub struct Connection<ToClient: ?Sized, FromClient, Error, VER: StaticVersionType> {
+    #[pin]
     conn: WebSocketConnection,
     // [Sink] wrapper around `conn`
     sink: Pin<Box<dyn Send + Sink<Message, Error = SocketError<Error>>>>,
@@ -150,7 +153,7 @@ impl<ToClient: ?Sized, FromClient: DeserializeOwned, E, VER: StaticVersionType> 
     fn poll_next(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Option<Self::Item>> {
         // Get a `Pin<&mut WebSocketConnection>` for the underlying connection, so we can use the
         // `Stream` implementation of that field.
-        match self.pinned_inner().poll_next(cx) {
+        match self.project().conn.poll_next(cx) {
             Poll::Ready(None) => Poll::Ready(None),
             Poll::Ready(Some(Err(err))) => Poll::Ready(Some(Err(err.into()))),
             Poll::Ready(Some(Ok(msg))) => Poll::Ready(Some(match msg {
@@ -194,29 +197,25 @@ impl<ToClient: Serialize + ?Sized, FromClient, E, VER: StaticVersionType> Sink<&
     }
 }
 
-impl<ToClient: ?Sized, FromClient, Error, VER: StaticVersionType> Drop
-    for Connection<ToClient, FromClient, Error, VER>
+impl<ToClient: Serialize, FromClient, E, VER: StaticVersionType> Sink<ToClient>
+    for Connection<ToClient, FromClient, E, VER>
 {
-    fn drop(&mut self) {
-        // This is the idiomatic way to implement [drop] for a type that uses pinning. Since [drop]
-        // is implicitly called with `&mut self` even on types that were pinned, we place any
-        // implementation inside [inner_drop], which takes `Pin<&mut Self>`, when the commpiler will
-        // be able to check that we do not do anything that we couldn't have done on a
-        // `Pin<&mut Self>`.
-        //
-        // The [drop] implementation for this type is trivial, and it would be safe to use the
-        // automatically generated [drop] implementation, but we nonetheless implement [drop]
-        // explicitly in the idiomatic fashion so that it is impossible to accidentally implement an
-        // unsafe version of [drop] for this type in the future.
+    type Error = SocketError<E>;
 
-        // `new_unchecked` is okay because we know this value is never used again after being
-        // dropped.
-        inner_drop(unsafe { Pin::new_unchecked(self) });
-        fn inner_drop<ToClient: ?Sized, FromClient, Error, VER: StaticVersionType>(
-            _this: Pin<&mut Connection<ToClient, FromClient, Error, VER>>,
-        ) {
-            // Any logic goes here.
-        }
+    fn poll_ready(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Result<(), Self::Error>> {
+        Sink::<&ToClient>::poll_ready(self, cx)
+    }
+
+    fn start_send(self: Pin<&mut Self>, item: ToClient) -> Result<(), Self::Error> {
+        self.start_send(&item)
+    }
+
+    fn poll_flush(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Result<(), Self::Error>> {
+        Sink::<&ToClient>::poll_flush(self, cx)
+    }
+
+    fn poll_close(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Result<(), Self::Error>> {
+        Sink::<&ToClient>::poll_close(self, cx)
     }
 }
 
@@ -233,39 +232,34 @@ impl<ToClient: ?Sized, FromClient, E, VER: StaticVersionType>
             unreachable!()
         };
         Ok(Self {
-            sink: Box::pin(sink::unfold(
-                (conn.clone(), ty),
-                |(conn, accept), msg| async move {
-                    conn.send(msg).await?;
-                    Ok((conn, accept))
-                },
-            )),
+            sink: Self::sink(conn.clone()),
             conn,
             accept: ty,
             _phantom: Default::default(),
         })
     }
 
-    /// Project a `Pin<&mut Self>` to a pinned reference to the underlying connection.
-    fn pinned_inner(self: Pin<&mut Self>) -> Pin<&mut WebSocketConnection> {
-        // # Soundness
-        //
-        // This implements _structural pinning_ for [Connection]. This comes with some requirements
-        // to maintain safety, as described at
-        // https://doc.rust-lang.org/std/pin/index.html#pinning-is-structural-for-field:
-        //
-        // 1. The struct must only be [Unpin] if all the structural fields are [Unpin]. This is the
-        //    default, and we don't explicitly implement [Unpin] for [Connection].
-        // 2. The destructor of the struct must not move structural fields out of its argument. This
-        //    is enforced by the compiler in our [Drop] implementation, which follows the idiom for
-        //    safe [Drop] implementations for pinned structs.
-        // 3. You must make sure that you uphold the [Drop] guarantee: once your struct is pinned,
-        //    the memory that contains the content is not overwritten or deallocated without calling
-        //    the content’s destructors. This is also enforced by our [Drop] implementation.
-        // 4. You must not offer any other operations that could lead to data being moved out of the
-        //    structural fields when your type is pinned. There are no operations on this type that
-        //    move out of `conn`.
-        unsafe { self.map_unchecked_mut(|s| &mut s.conn) }
+    /// Wrap a `WebSocketConnection` in a type that implements `Sink<Message>`.
+    fn sink(
+        conn: WebSocketConnection,
+    ) -> Pin<Box<dyn Send + Sink<Message, Error = SocketError<E>>>> {
+        Box::pin(sink::unfold(conn, |conn, msg| async move {
+            conn.send(msg).await?;
+            Ok(conn)
+        }))
+    }
+}
+
+impl<ToClient: ?Sized, FromClient, E, VER: StaticVersionType> Clone
+    for Connection<ToClient, FromClient, E, VER>
+{
+    fn clone(&self) -> Self {
+        Self {
+            sink: Self::sink(self.conn.clone()),
+            conn: self.conn.clone(),
+            accept: self.accept,
+            _phantom: Default::default(),
+        }
     }
 }
 
