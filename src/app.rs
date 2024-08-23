@@ -700,7 +700,7 @@ where
 
                 let latest_version = *module.versions.last_key_value().unwrap().0;
                 let path = path.join("/");
-                Ok(tide::Redirect::permanent(format!("/v{latest_version}/{path}")).into())
+                Ok(tide::Redirect::temporary(format!("/v{latest_version}/{path}")).into())
             }
         }
         .boxed()
