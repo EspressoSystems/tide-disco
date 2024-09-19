@@ -274,7 +274,7 @@ lazy_static! {
         // system and return the path to that directory.
         let path = dirs::data_local_dir()
             .unwrap_or_else(|| env::current_dir().unwrap_or_else(|_| PathBuf::from("./")))
-            .join("tide-disco/public/media");
+            .join("$HOME/tide-disco/public/media");
         // If the path already exists, move it aside so we can update it.
         let _ = fs::rename(&path, path.with_extension("old"));
         DEFAULT_PUBLIC_DIR.extract(&path).unwrap();
