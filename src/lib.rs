@@ -599,6 +599,7 @@ pub fn compose_config_path(org_dir_name: &str, app_name: &str) -> PathBuf {
 /// - A configuration file from the app
 /// - Command line arguments
 /// - Environment variables
+///
 /// Last one wins.
 ///
 /// Environment variables have a prefix of the given app_name in upper case with hyphens converted

@@ -382,10 +382,6 @@ impl<State, Error> ApiInner<State, Error> {
         }
     }
 
-    pub(crate) fn public(&self) -> Option<&PathBuf> {
-        self.public.as_ref()
-    }
-
     pub(crate) fn set_name(&mut self, name: String) {
         self.name = name;
     }
@@ -552,12 +548,6 @@ where
     /// the API.
     pub fn with_version(&mut self, version: Version) -> &mut Self {
         self.inner.api_version = Some(version);
-        self
-    }
-
-    /// Serve the contents of `dir` at the URL `/public/{{NAME}}`.
-    pub fn with_public(&mut self, dir: PathBuf) -> &mut Self {
-        self.inner.public = Some(dir);
         self
     }
 

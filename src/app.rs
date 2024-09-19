@@ -266,22 +266,6 @@ impl<State: Send + Sync + 'static, Error: 'static> App<State, Error> {
     }
 }
 
-static DEFAULT_PUBLIC_DIR: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/public/media");
-lazy_static! {
-    static ref DEFAULT_PUBLIC_PATH: PathBuf = {
-        // The contents of the default public directory are included in the binary. The first time
-        // the default directory is used, if ever, we extract them to a directory on the host file
-        // system and return the path to that directory.
-        let path = dirs::data_local_dir()
-            .unwrap_or_else(|| env::current_dir().unwrap_or_else(|_| PathBuf::from("./")))
-            .join("tide-disco/public/media");
-        // If the path already exists, move it aside so we can update it.
-        let _ = fs::rename(&path, path.with_extension("old"));
-        DEFAULT_PUBLIC_DIR.extract(&path).unwrap();
-        path
-    };
-}
-
 impl<State, Error> App<State, Error>
 where
     State: Send + Sync + 'static,
@@ -396,11 +380,7 @@ where
         // case) causes a directory to be renamed and another extracted. We only want to execute
         // this if we need to (if `api.public()` is `None`) so we disable the lint.
         #[allow(clippy::unnecessary_lazy_evaluations)]
-        server
-            .at("/public")
-            .at(&format!("v{version}"))
-            .at(&prefix.join("/"))
-            .serve_dir(api.public().unwrap_or_else(|| &DEFAULT_PUBLIC_PATH))?;
+        server.at(&format!("v{version}")).at(&prefix.join("/"));
 
         // Register routes for this API.
         let mut version_endpoint = server.at(&format!("/v{version}"));
