@@ -2505,7 +2505,7 @@
 
                 <span class="kw">let </span>latest_version = <span class="kw-2">*</span>module.versions.last_key_value().unwrap().<span class="number">0</span>;
                 <span class="kw">let </span>path = path.join(<span class="string">"/"</span>);
-                <span class="prelude-val">Ok</span>(tide::Redirect::permanent(<span class="macro">format!</span>(<span class="string">"/v{latest_version}/{path}"</span>)).into())
+                <span class="prelude-val">Ok</span>(tide::Redirect::temporary(<span class="macro">format!</span>(<span class="string">"/v{latest_version}/{path}"</span>)).into())
             }
         }
         .boxed()
