@@ -272,7 +272,7 @@ lazy_static! {
         // The contents of the default public directory are included in the binary. The first time
         // the default directory is used, if ever, we extract them to a directory on the host file
         // system and return the path to that directory.
-        let path = PathBuf::from("$HOME/tide-disco/public/media");
+        let path = PathBuf::from("/tmp/tide-disco/public/media");
         // If the path already exists, move it aside so we can update it.
         let _ = fs::rename(&path, path.with_extension("old"));
         DEFAULT_PUBLIC_DIR.extract(&path).unwrap();
