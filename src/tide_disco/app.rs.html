@@ -2079,7 +2079,7 @@
         <span class="comment">// The contents of the default public directory are included in the binary. The first time
         // the default directory is used, if ever, we extract them to a directory on the host file
         // system and return the path to that directory.
-        </span><span class="kw">let </span>path = PathBuf::from(<span class="string">"$HOME/tide-disco/public/media"</span>);
+        </span><span class="kw">let </span>path = PathBuf::from(<span class="string">"/tmp/tide-disco/public/media"</span>);
         <span class="comment">// If the path already exists, move it aside so we can update it.
         </span><span class="kw">let _ </span>= fs::rename(<span class="kw-2">&amp;</span>path, path.with_extension(<span class="string">"old"</span>));
         DEFAULT_PUBLIC_DIR.extract(<span class="kw-2">&amp;</span>path).unwrap();
