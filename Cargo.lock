@@ -3492,6 +3492,7 @@ dependencies = [
  "pin-project",
  "portpicker",
  "prometheus",
+ "rand 0.8.5",
  "reqwest",
  "routefinder",
  "semver 1.0.22",
