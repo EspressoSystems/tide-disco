@@ -22,6 +22,7 @@ use futures::future::{BoxFuture, FutureExt};
 use include_dir::{include_dir, Dir};
 use lazy_static::lazy_static;
 use maud::{html, PreEscaped};
+use rand::Rng;
 use semver::Version;
 use serde::{Deserialize, Serialize};
 use serde_with::{serde_as, DisplayFromStr};
@@ -35,7 +36,6 @@ use std::{
     ops::{Deref, DerefMut},
     path::PathBuf,
 };
-use tempdir::TempDir;
 use tide::{
     http::headers::HeaderValue,
     security::{CorsMiddleware, Origin},
@@ -270,13 +270,14 @@ impl<State: Send + Sync + 'static, Error: 'static> App<State, Error> {
 static DEFAULT_PUBLIC_DIR: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/public/media");
 lazy_static! {
     static ref DEFAULT_PUBLIC_PATH: PathBuf = {
-        // Create a randomly generated temporary directory to extract the public directory into
-        let temp_dir = TempDir::new("tide-disco").expect("failed to create temporary directory");
+        // Generate a random number to index into `/tmp` with
+        let mut rng = rand::thread_rng();
+        let index: u64 = rng.gen();
 
         // The contents of the default public directory are included in the binary. The first time
         // the default directory is used, if ever, we extract them to a directory on the host file
         // system and return the path to that directory.
-        let path = temp_dir.path().to_path_buf();
+        let path = PathBuf::from(format!("/tmp/tide-disco/{}/public/media", index));
         // If the path already exists, move it aside so we can update it.
         let _ = fs::rename(&path, path.with_extension("old"));
         DEFAULT_PUBLIC_DIR.extract(&path).unwrap();
