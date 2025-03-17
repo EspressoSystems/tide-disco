@@ -182,9 +182,8 @@ impl<ToClient: Serialize + ?Sized, FromClient, E, VER: StaticVersionType> Sink<&
             MessageType::Binary => Message::Binary(Serializer::<VER>::serialize(item)?),
             MessageType::Json => Message::Text(serde_json::to_string(item)?),
         };
-        self.sink
-            .as_mut()
-            .start_send(msg)}
+        self.sink.as_mut().start_send(msg)
+    }
 
     fn poll_flush(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Result<(), Self::Error>> {
         self.sink.as_mut().poll_flush(cx).map_err(SocketError::from)

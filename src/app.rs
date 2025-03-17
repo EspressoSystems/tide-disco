@@ -836,8 +836,7 @@ where
     }
 }
 
-impl<State, Error, ModuleError, ModuleVersion>
-    Module<'_, State, Error, ModuleError, ModuleVersion>
+impl<State, Error, ModuleError, ModuleVersion> Module<'_, State, Error, ModuleError, ModuleVersion>
 where
     State: Send + Sync + 'static,
     Error: crate::Error + From<ModuleError> + 'static,
