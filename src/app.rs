@@ -795,8 +795,8 @@ where
     api: Option<Api<State, ModuleError, ModuleVersion>>,
 }
 
-impl<'a, State, Error, ModuleError, ModuleVersion> Deref
-    for Module<'a, State, Error, ModuleError, ModuleVersion>
+impl<State, Error, ModuleError, ModuleVersion> Deref
+    for Module<'_, State, Error, ModuleError, ModuleVersion>
 where
     State: Send + Sync + 'static,
     Error: crate::Error + From<ModuleError> + 'static,
@@ -810,8 +810,8 @@ where
     }
 }
 
-impl<'a, State, Error, ModuleError, ModuleVersion> DerefMut
-    for Module<'a, State, Error, ModuleError, ModuleVersion>
+impl<State, Error, ModuleError, ModuleVersion> DerefMut
+    for Module<'_, State, Error, ModuleError, ModuleVersion>
 where
     State: Send + Sync + 'static,
     Error: crate::Error + From<ModuleError> + 'static,
@@ -823,8 +823,8 @@ where
     }
 }
 
-impl<'a, State, Error, ModuleError, ModuleVersion> Drop
-    for Module<'a, State, Error, ModuleError, ModuleVersion>
+impl<State, Error, ModuleError, ModuleVersion> Drop
+    for Module<'_, State, Error, ModuleError, ModuleVersion>
 where
     State: Send + Sync + 'static,
     Error: crate::Error + From<ModuleError> + 'static,
@@ -836,8 +836,8 @@ where
     }
 }
 
-impl<'a, State, Error, ModuleError, ModuleVersion>
-    Module<'a, State, Error, ModuleError, ModuleVersion>
+impl<State, Error, ModuleError, ModuleVersion>
+    Module<'_, State, Error, ModuleError, ModuleVersion>
 where
     State: Send + Sync + 'static,
     Error: crate::Error + From<ModuleError> + 'static,
