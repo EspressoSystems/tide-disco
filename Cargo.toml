@@ -43,7 +43,7 @@ markdown = "0.3"
 maud = { version = "0.26", features = ["tide"] }
 parking_lot = "0.12"
 pin-project = "1.0"
-prometheus = "0.13"
+prometheus = { version = "0.13", default-features = false }
 reqwest = { version = "0.12", features = ["json"] }
 routefinder = "0.5"
 semver = "1.0"
