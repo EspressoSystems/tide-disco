@@ -39,9 +39,6 @@
   outputs = { self, nixpkgs, flake-utils, rust-overlay, fenix, ... }:
     flake-utils.lib.eachDefaultSystem (system:
       let
-        info = builtins.split "\([a-zA-Z0-9_]+\)" system;
-        arch = (builtins.elemAt (builtins.elemAt info 1) 0);
-        os = (builtins.elemAt (builtins.elemAt info 3) 0);
         overlays = [ (import rust-overlay) ];
         pkgs = import nixpkgs { inherit system overlays; };
         rustToolchain = pkgs.rust-bin.stable.latest.minimal.override {
@@ -54,6 +51,7 @@
 
             curl
 
+            cargo-audit
             cargo-edit
             cargo-udeps
             cargo-sort
@@ -67,11 +65,6 @@
           ] ++ lib.optionals (!stdenv.isDarwin) [
             cargo-watch # broken: https://github.com/NixOS/nixpkgs/issues/146349
           ];
-        # nixWithFlakes allows pre v2.4 nix installations to use
-        # flake commands (like `nix flake update`)
-        nixWithFlakes = pkgs.writeShellScriptBin "nix" ''
-          exec ${pkgs.nixFlakes}/bin/nix --experimental-features "nix-command flakes" "$@"
-        '';
       in {
         devShell = pkgs.mkShell {
           shellHook = ''
@@ -83,7 +76,6 @@
           buildInputs = with pkgs;
             [
               fenix.packages.${system}.rust-analyzer
-              nixWithFlakes
               nixpkgs-fmt
               rustToolchain
             ] ++ rustDeps;

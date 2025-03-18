@@ -182,10 +182,7 @@ impl<ToClient: Serialize + ?Sized, FromClient, E, VER: StaticVersionType> Sink<&
             MessageType::Binary => Message::Binary(Serializer::<VER>::serialize(item)?),
             MessageType::Json => Message::Text(serde_json::to_string(item)?),
         };
-        self.sink
-            .as_mut()
-            .start_send(msg)
-            .map_err(SocketError::from)
+        self.sink.as_mut().start_send(msg)
     }
 
     fn poll_flush(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Result<(), Self::Error>> {
@@ -222,6 +219,7 @@ impl<ToClient: Serialize, FromClient, E, VER: StaticVersionType> Sink<ToClient>
 impl<ToClient: ?Sized, FromClient, E, VER: StaticVersionType>
     Connection<ToClient, FromClient, E, VER>
 {
+    #[allow(clippy::result_large_err)]
     fn new(accept: &Accept, conn: WebSocketConnection) -> Result<Self, SocketError<E>> {
         let ty = best_response_type(accept, &[mime::JSON, mime::BYTE_STREAM])?;
         let ty = if ty == mime::JSON {
