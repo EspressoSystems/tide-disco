@@ -70,7 +70,7 @@ rand = "0.8"
 
 # Dependencies enabled by feature `testing`
 async-compatibility-layer = { version = "1.1", features = ["logging-utils"], optional = true }
-async-tungstenite = { version = "0.25", features = ["async-std-runtime"], optional = true }
+async-tungstenite = { version = "0.26", features = ["async-std-runtime"], optional = true }
 
 [target.'cfg(not(windows))'.dependencies]
 signal-hook-async-std = "0.2.2"
@@ -79,5 +79,5 @@ signal-hook-async-std = "0.2.2"
 ark-serialize = { version = "0.4", features = ["derive"] }
 ark-std = "0.4.0"
 async-compatibility-layer = { version = "1.1", features = ["logging-utils"] }
-async-tungstenite = { version = "0.25", features = ["async-std-runtime"] }
+async-tungstenite = { version = "0.26", features = ["async-std-runtime"] }
 portpicker = "0.1"
