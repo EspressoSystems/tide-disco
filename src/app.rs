@@ -307,7 +307,7 @@ where
         server.with(AddErrorBody::<Error>::with_version::<VER>());
         server.with(
             CorsMiddleware::new()
-                .allow_methods("GET, POST".parse::<HeaderValue>().unwrap())
+                .allow_methods("GET, POST, PUT, DELETE, OPTIONS".parse::<HeaderValue>().unwrap())
                 .allow_headers("*".parse::<HeaderValue>().unwrap())
                 .allow_origin(Origin::from("*"))
                 .allow_credentials(true),
