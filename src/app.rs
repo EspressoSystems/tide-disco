@@ -310,7 +310,7 @@ where
                 .allow_methods("GET, POST, PUT, DELETE, OPTIONS".parse::<HeaderValue>().unwrap())
                 .allow_headers("*".parse::<HeaderValue>().unwrap())
                 .allow_origin(Origin::from("*"))
-                .allow_credentials(true),
+                .allow_credentials(false),
         );
 
         for module in &state.modules {
