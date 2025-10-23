@@ -19,6 +19,7 @@ use crate::{
 use async_std::sync::Arc;
 use derive_more::From;
 use futures::future::{BoxFuture, FutureExt};
+use http_client::{Config, HttpClient};
 use include_dir::{include_dir, Dir};
 use lazy_static::lazy_static;
 use maud::{html, PreEscaped};
@@ -35,6 +36,7 @@ use std::{
     fs, io,
     ops::{Deref, DerefMut},
     path::PathBuf,
+    time::Duration,
 };
 use tide::{
     http::headers::HeaderValue,
@@ -303,6 +305,15 @@ where
     {
         let state = Arc::new(self);
         let mut server = tide::Server::with_state(state.clone());
+        let config = server.config().clone();
+        let config = config
+            .set_http_keep_alive(true)
+            .set_tcp_no_delay(true)
+            // 5 hour timeout
+            .set_timeout(Some(Duration::from_secs(3600 * 5)));
+        server
+            .set_config(config)
+            .map_err(|e| io::Error::new(io::ErrorKind::Other, e))?;
         server.with(Self::version_middleware);
         server.with(AddErrorBody::<Error>::with_version::<VER>());
         server.with(
