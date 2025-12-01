@@ -27,21 +27,16 @@ pub trait HealthCheck: Serialize {
 }
 
 /// Common health statuses of an application.
-#[derive(Clone, Copy, Debug, Deserialize, Serialize, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub enum HealthStatus {
-    Initializing,
+    #[default]
     Available,
+    Initializing,
     Unavailabale,
     TemporarilyUnavailable,
     Unhealthy,
     ShuttingDown,
-}
-
-impl Default for HealthStatus {
-    fn default() -> Self {
-        Self::Available
-    }
 }
 
 impl HealthCheck for HealthStatus {
