@@ -30,14 +30,12 @@ use snafu::{ResultExt, Snafu};
 use std::{
     collections::btree_map::BTreeMap,
     convert::Infallible,
-    env,
-    fmt::Display,
-    fs, io,
+    env, fs, io,
     ops::{Deref, DerefMut},
     path::PathBuf,
 };
 use tide::{
-    http::headers::HeaderValue,
+    http::{headers::HeaderValue, mime::HTML},
     security::{CorsMiddleware, Origin},
 };
 use tide_websockets::WebSocket;
@@ -667,7 +665,12 @@ where
                 // we still check if this is a valid version for the request API. If not, we will
                 // serve documentation listing the available versions.
                 let Some(module) = req.state().modules.search(&path[1..]) else {
-                    let message = format!("No API matches /{}", path[1..].join("/"));
+                    let message = html! {
+                        ("No API matches ")
+                        span style = "font-family: monospace" {
+                            (format!("/{}", path[1..].join("/")))
+                        }
+                    };
                     return Ok(Self::top_level_error(req, StatusCode::NOT_FOUND, message));
                 };
                 if !module.versions.contains_key(&version) {
@@ -697,7 +700,12 @@ where
                     return Ok(next.run(req).await);
                 }
                 let Some(module) = req.state().modules.search(&path) else {
-                    let message = format!("No API matches /{}", path.join("/"));
+                    let message = html! {
+                        ("No API matches ")
+                        span style = "font-family: monospace" {
+                            (format!("/{}", path.join("/")))
+                        }
+                    };
                     return Ok(Self::top_level_error(req, StatusCode::NOT_FOUND, message));
                 };
 
@@ -712,7 +720,6 @@ where
     /// Top-level documentation about the app.
     fn top_level_docs(req: tide::Request<Arc<Self>>) -> PreEscaped<String> {
         html! {
-            br {}
             "This is a Tide Disco app composed of the following modules:"
             (req.state().list_apis())
         }
@@ -722,14 +729,17 @@ where
     fn top_level_error(
         req: tide::Request<Arc<Self>>,
         status: StatusCode,
-        message: impl Display,
+        message: PreEscaped<String>,
     ) -> tide::Response {
         let docs = html! {
-            (message.to_string())
+            p style = "color:red" {
+                (message)
+            }
             (Self::top_level_docs(req))
         };
         tide::Response::builder(status)
             .body(docs.into_string())
+            .content_type(HTML)
             .build()
     }
 }
