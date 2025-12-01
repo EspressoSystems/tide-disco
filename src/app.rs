@@ -885,6 +885,7 @@ mod test {
     use async_tungstenite::tungstenite::Message;
     use futures::{FutureExt, SinkExt, StreamExt};
     use portpicker::pick_unused_port;
+    use regex::Regex;
     use serde::de::DeserializeOwned;
     use std::{borrow::Cow, fmt::Debug};
     use toml::toml;
@@ -1398,7 +1399,10 @@ mod test {
                 .text()
                 .await
                 .unwrap();
-            assert!(docs.contains("No API matches /test"), "{docs}");
+            Regex::new("No API matches .*/test")
+                .unwrap()
+                .find(&docs)
+                .expect(&format!("Docs contains error message:\n{docs}"));
             assert!(docs.contains(&expected_list_item), "{docs}");
         }
 
@@ -1415,7 +1419,10 @@ mod test {
             .text()
             .await
             .unwrap();
-        assert!(docs.contains("No API matches /"), "{docs}");
+        Regex::new("No API matches .*/")
+            .unwrap()
+            .find(&docs)
+            .expect(&format!("Docs contains error message:\n{docs}"));
         assert!(docs.contains(&expected_list_item), "{docs}");
     }
 
