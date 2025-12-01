@@ -187,7 +187,7 @@ impl<Api> Trie<Api> {
     }
 
     /// Iterate over registered modules and their supported versions.
-    pub(crate) fn iter(&self) -> Iter<Api> {
+    pub(crate) fn iter(&self) -> Iter<'_, Api> {
         Iter { stack: vec![self] }
     }
 

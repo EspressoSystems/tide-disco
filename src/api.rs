@@ -1411,7 +1411,7 @@ where
         self.inner
     }
 
-    fn default_health_check(req: RequestParams, _state: &State) -> BoxFuture<tide::Response> {
+    fn default_health_check(req: RequestParams, _state: &State) -> BoxFuture<'_, tide::Response> {
         async move {
             // If there is no healthcheck handler registered, just return [HealthStatus::Available]
             // by default; after all, if this handler is getting hit at all, the service must be up.
