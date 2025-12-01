@@ -1,6 +1,6 @@
 [package]
 name = "tide-disco"
-version = "0.9.4"
+version = "0.9.5"
 edition = "2021"
 authors = ["Espresso Systems <hello@espressosys.com>"]
 description = "Discoverability for Tide"
@@ -69,8 +69,12 @@ vbs = "0.1"
 rand = "0.8"
 
 # Dependencies enabled by feature `testing`
-async-compatibility-layer = { version = "1.1", features = ["logging-utils"], optional = true }
-async-tungstenite = { version = "0.25", features = ["async-std-runtime"], optional = true }
+async-compatibility-layer = { version = "1.1", features = [
+    "logging-utils",
+], optional = true }
+async-tungstenite = { version = "0.25", features = [
+    "async-std-runtime",
+], optional = true }
 
 [target.'cfg(not(windows))'.dependencies]
 signal-hook-async-std = "0.2.2"
