@@ -1390,6 +1390,7 @@ mod test {
         }
         .into_string();
 
+        let expected_err = Regex::new("No API matches .*/test").unwrap();
         for version_prefix in ["", "/v1"] {
             let docs = client
                 .get(&format!("{version_prefix}/test"))
@@ -1399,10 +1400,9 @@ mod test {
                 .text()
                 .await
                 .unwrap();
-            Regex::new("No API matches .*/test")
-                .unwrap()
+            expected_err
                 .find(&docs)
-                .expect(&format!("Docs contains error message:\n{docs}"));
+                .unwrap_or_else(|| panic!("Docs contains error message:\n{docs}"));
             assert!(docs.contains(&expected_list_item), "{docs}");
         }
 
@@ -1422,7 +1422,7 @@ mod test {
         Regex::new("No API matches .*/")
             .unwrap()
             .find(&docs)
-            .expect(&format!("Docs contains error message:\n{docs}"));
+            .unwrap_or_else(|| panic!("Docs contains error message:\n{docs}"));
         assert!(docs.contains(&expected_list_item), "{docs}");
     }
 
