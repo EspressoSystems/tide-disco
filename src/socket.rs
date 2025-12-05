@@ -15,7 +15,7 @@ use crate::{
 use async_std::sync::Arc;
 use futures::{
     future::BoxFuture,
-    sink,
+    select, sink,
     stream::BoxStream,
     task::{Context, Poll},
     FutureExt, Sink, SinkExt, Stream, StreamExt, TryFutureExt,
@@ -298,7 +298,7 @@ impl<F, VER: StaticVersionType> StreamHandler<F, VER> {
     fn handle<'a, State, Error, Msg>(
         &self,
         req: RequestParams,
-        mut conn: Connection<Msg, (), Error, VER>,
+        conn: Connection<Msg, (), Error, VER>,
         state: &'a State,
     ) -> BoxFuture<'a, Result<(), SocketError<Error>>>
     where
@@ -308,10 +308,39 @@ impl<F, VER: StaticVersionType> StreamHandler<F, VER> {
         Error: 'static + Send,
         VER: 'static + Send + Sync,
     {
-        let mut stream = (self.0)(req, state);
+        let mut stream = (self.0)(req, state).fuse();
         async move {
-            while let Some(msg) = stream.next().await {
-                conn.send(&msg.map_err(SocketError::AppSpecific)?).await?;
+            // Appease the borrow checker, this is a cheap clone
+            let (mut send, mut recv) = (conn.clone(), conn);
+
+            // Neither stream is documented to be cancel-safe, so we store the futures outside select
+            let mut item_fut = stream.next();
+            let mut client_fut = recv.next().fuse();
+
+            loop {
+                select! {
+                    item = item_fut => {
+                        match item {
+                            Some(msg) => {
+                                send.send(&msg.map_err(SocketError::AppSpecific)?).await?;
+                                item_fut = stream.next();
+                            }
+                            None => {
+                                break;
+                            }
+                        }
+                    }
+                    // We don't actually expect to receive anything from the client,
+                    // it is being polled only to handle connection closure by the client
+                    client_msg = client_fut => {
+                        client_fut = recv.next().fuse();
+                        match client_msg {
+                            None => return Ok(()),
+                            Some(Err(e)) => return Err(e),
+                            _ => {}
+                        }
+                    }
+                };
             }
             Ok(())
         }
@@ -408,4 +437,118 @@ where
         map: Arc::new(f),
     };
     Box::new(move |req, conn, state| handler.handle(req, conn, state))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{error::ServerError, testing::test_ws_client, Api, App, Url};
+    use async_std::task::{sleep, spawn};
+    use async_tungstenite::tungstenite::Message as TungsteniteMessage;
+    use futures::{stream, StreamExt};
+    use pin_project::pinned_drop;
+    use portpicker::pick_unused_port;
+    use std::{
+        sync::{
+            atomic::{AtomicBool, Ordering},
+            Arc,
+        },
+        time::Duration,
+    };
+    use vbs::version::StaticVersion;
+
+    type StaticVer01 = StaticVersion<0, 1>;
+
+    #[pin_project(PinnedDrop)]
+    struct DropStream<S: Stream> {
+        #[pin]
+        stream: S,
+        dropped: Arc<AtomicBool>,
+    }
+
+    impl<S: Stream> Stream for DropStream<S> {
+        type Item = S::Item;
+
+        fn poll_next(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Option<Self::Item>> {
+            let stream = self.project().stream;
+            stream.poll_next(cx)
+        }
+    }
+
+    #[pinned_drop]
+    impl<S: Stream> PinnedDrop for DropStream<S> {
+        fn drop(self: Pin<&mut Self>) {
+            self.dropped.store(true, Ordering::SeqCst);
+        }
+    }
+
+    #[async_std::test]
+    async fn test_stream_handler_client_closure() {
+        // Setup: Create a simple API with a stream endpoint
+        let port = pick_unused_port().expect("No ports available");
+
+        let mut app = App::<(), ServerError>::with_state(());
+        let toml_content = r#"
+            [meta]
+            FORMAT_VERSION = "0.1.0"
+
+            [route.stream_test]
+            PATH = ["/stream"]
+            METHOD = "SOCKET"
+            "#;
+
+        let mut api =
+            Api::<(), ServerError, StaticVer01>::new(toml_content.parse::<toml::Value>().unwrap())
+                .unwrap();
+
+        // Register a stream handler that sends multiple messages and indicates
+        // whether it was dropped
+        let dropped = Arc::new(AtomicBool::new(false));
+        let _dropped = dropped.clone();
+        api.stream("stream_test", move |_req, _state| {
+            Box::pin(DropStream {
+                stream: stream::iter(0..).map(Result::Ok),
+                dropped: _dropped.clone(),
+            })
+        })
+        .unwrap();
+
+        app.register_module("test", api).unwrap();
+
+        // Start the server
+        spawn(async move {
+            app.serve(format!("127.0.0.1:{}", port), StaticVer01::instance())
+                .await
+                .unwrap();
+        });
+
+        // Give the server time to start
+        sleep(Duration::from_millis(500)).await;
+
+        // Connect as a client
+        let url = Url::parse(&format!("http://127.0.0.1:{}/test/stream", port)).unwrap();
+        let mut ws_stream = test_ws_client(url).await;
+
+        // Receive a few messages
+        let mut received_count = 0;
+        for _ in 0..5 {
+            if let Some(Ok(TungsteniteMessage::Text(msg))) = ws_stream.next().await {
+                let parsed: usize = serde_json::from_str(&msg).unwrap();
+                assert_eq!(parsed, received_count);
+                received_count += 1;
+            }
+        }
+
+        // Close the client connection
+        ws_stream
+            .close(None)
+            .await
+            .expect("Failed to close connection");
+
+        // Wait a bit to ensure the server processes the closure
+        sleep(Duration::from_millis(300)).await;
+
+        // The underlying stream should've been dropped
+        assert!(dropped.load(Ordering::SeqCst));
+    }
 }
