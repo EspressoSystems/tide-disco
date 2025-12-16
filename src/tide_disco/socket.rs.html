@@ -15,7 +15,7 @@
 <a href=#15 id=15 data-nosnippet>15</a><span class="kw">use </span>async_std::sync::Arc;
 <a href=#16 id=16 data-nosnippet>16</a><span class="kw">use </span>futures::{
 <a href=#17 id=17 data-nosnippet>17</a>    future::BoxFuture,
-<a href=#18 id=18 data-nosnippet>18</a>    sink,
+<a href=#18 id=18 data-nosnippet>18</a>    select, sink,
 <a href=#19 id=19 data-nosnippet>19</a>    stream::BoxStream,
 <a href=#20 id=20 data-nosnippet>20</a>    task::{Context, Poll},
 <a href=#21 id=21 data-nosnippet>21</a>    FutureExt, Sink, SinkExt, Stream, StreamExt, TryFutureExt,
@@ -298,7 +298,7 @@
 <a href=#298 id=298 data-nosnippet>298</a>    <span class="kw">fn </span>handle&lt;<span class="lifetime">'a</span>, State, Error, Msg&gt;(
 <a href=#299 id=299 data-nosnippet>299</a>        <span class="kw-2">&amp;</span><span class="self">self</span>,
 <a href=#300 id=300 data-nosnippet>300</a>        req: RequestParams,
-<a href=#301 id=301 data-nosnippet>301</a>        <span class="kw-2">mut </span>conn: Connection&lt;Msg, (), Error, VER&gt;,
+<a href=#301 id=301 data-nosnippet>301</a>        conn: Connection&lt;Msg, (), Error, VER&gt;,
 <a href=#302 id=302 data-nosnippet>302</a>        state: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>State,
 <a href=#303 id=303 data-nosnippet>303</a>    ) -&gt; BoxFuture&lt;<span class="lifetime">'a</span>, <span class="prelude-ty">Result</span>&lt;(), SocketError&lt;Error&gt;&gt;&gt;
 <a href=#304 id=304 data-nosnippet>304</a>    <span class="kw">where
@@ -308,104 +308,247 @@
 <a href=#308 id=308 data-nosnippet>308</a>        Error: <span class="lifetime">'static </span>+ Send,
 <a href=#309 id=309 data-nosnippet>309</a>        VER: <span class="lifetime">'static </span>+ Send + Sync,
 <a href=#310 id=310 data-nosnippet>310</a>    {
-<a href=#311 id=311 data-nosnippet>311</a>        <span class="kw">let </span><span class="kw-2">mut </span>stream = (<span class="self">self</span>.<span class="number">0</span>)(req, state);
+<a href=#311 id=311 data-nosnippet>311</a>        <span class="kw">let </span><span class="kw-2">mut </span>stream = (<span class="self">self</span>.<span class="number">0</span>)(req, state).fuse();
 <a href=#312 id=312 data-nosnippet>312</a>        <span class="kw">async move </span>{
-<a href=#313 id=313 data-nosnippet>313</a>            <span class="kw">while let </span><span class="prelude-val">Some</span>(msg) = stream.next().<span class="kw">await </span>{
-<a href=#314 id=314 data-nosnippet>314</a>                conn.send(<span class="kw-2">&amp;</span>msg.map_err(SocketError::AppSpecific)<span class="question-mark">?</span>).<span class="kw">await</span><span class="question-mark">?</span>;
-<a href=#315 id=315 data-nosnippet>315</a>            }
-<a href=#316 id=316 data-nosnippet>316</a>            <span class="prelude-val">Ok</span>(())
-<a href=#317 id=317 data-nosnippet>317</a>        }
-<a href=#318 id=318 data-nosnippet>318</a>        .boxed()
-<a href=#319 id=319 data-nosnippet>319</a>    }
-<a href=#320 id=320 data-nosnippet>320</a>}
-<a href=#321 id=321 data-nosnippet>321</a>
-<a href=#322 id=322 data-nosnippet>322</a><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>stream_handler&lt;State, Error, Msg, F, VER&gt;(f: F) -&gt; Handler&lt;State, Error&gt;
-<a href=#323 id=323 data-nosnippet>323</a><span class="kw">where
-<a href=#324 id=324 data-nosnippet>324</a>    </span>F: <span class="lifetime">'static </span>+ Send + Sync + Fn(RequestParams, <span class="kw-2">&amp;</span>State) -&gt; BoxStream&lt;<span class="prelude-ty">Result</span>&lt;Msg, Error&gt;&gt;,
-<a href=#325 id=325 data-nosnippet>325</a>    State: <span class="lifetime">'static </span>+ Send + Sync,
-<a href=#326 id=326 data-nosnippet>326</a>    Msg: <span class="lifetime">'static </span>+ Serialize + Send + Sync,
-<a href=#327 id=327 data-nosnippet>327</a>    Error: <span class="lifetime">'static </span>+ Send + Display,
-<a href=#328 id=328 data-nosnippet>328</a>    VER: <span class="lifetime">'static </span>+ Send + Sync + StaticVersionType,
-<a href=#329 id=329 data-nosnippet>329</a>{
-<a href=#330 id=330 data-nosnippet>330</a>    <span class="kw">let </span>handler: StreamHandler&lt;F, VER&gt; = StreamHandler(f, Default::default());
-<a href=#331 id=331 data-nosnippet>331</a>    raw_handler(<span class="kw">move </span>|req, conn, state| handler.handle(req, conn, state))
-<a href=#332 id=332 data-nosnippet>332</a>}
-<a href=#333 id=333 data-nosnippet>333</a>
-<a href=#334 id=334 data-nosnippet>334</a><span class="kw">fn </span>raw_handler&lt;State, Error, ToClient, FromClient, F, VER&gt;(f: F) -&gt; Handler&lt;State, Error&gt;
-<a href=#335 id=335 data-nosnippet>335</a><span class="kw">where
-<a href=#336 id=336 data-nosnippet>336</a>    </span>F: <span class="lifetime">'static
-<a href=#337 id=337 data-nosnippet>337</a>        </span>+ Send
-<a href=#338 id=338 data-nosnippet>338</a>        + Sync
-<a href=#339 id=339 data-nosnippet>339</a>        + Fn(
-<a href=#340 id=340 data-nosnippet>340</a>            RequestParams,
-<a href=#341 id=341 data-nosnippet>341</a>            Connection&lt;ToClient, FromClient, Error, VER&gt;,
-<a href=#342 id=342 data-nosnippet>342</a>            <span class="kw-2">&amp;</span>State,
-<a href=#343 id=343 data-nosnippet>343</a>        ) -&gt; BoxFuture&lt;<span class="prelude-ty">Result</span>&lt;(), SocketError&lt;Error&gt;&gt;&gt;,
-<a href=#344 id=344 data-nosnippet>344</a>    State: <span class="lifetime">'static </span>+ Send + Sync,
-<a href=#345 id=345 data-nosnippet>345</a>    ToClient: <span class="lifetime">'static </span>+ Serialize + <span class="question-mark">?</span>Sized,
-<a href=#346 id=346 data-nosnippet>346</a>    FromClient: <span class="lifetime">'static </span>+ DeserializeOwned,
-<a href=#347 id=347 data-nosnippet>347</a>    Error: <span class="lifetime">'static </span>+ Send + Display,
-<a href=#348 id=348 data-nosnippet>348</a>    VER: StaticVersionType,
-<a href=#349 id=349 data-nosnippet>349</a>{
-<a href=#350 id=350 data-nosnippet>350</a>    <span class="kw">let </span>close = |conn: WebSocketConnection, res: <span class="prelude-ty">Result</span>&lt;(), SocketError&lt;Error&gt;&gt;| <span class="kw">async move </span>{
-<a href=#351 id=351 data-nosnippet>351</a>        <span class="comment">// When the handler finishes, send a close message. If there was an error, include the error
-<a href=#352 id=352 data-nosnippet>352</a>        // message.
-<a href=#353 id=353 data-nosnippet>353</a>        </span><span class="kw">let </span>msg = res.as_ref().err().map(|err| CloseFrame {
-<a href=#354 id=354 data-nosnippet>354</a>            code: err.code(),
-<a href=#355 id=355 data-nosnippet>355</a>            reason: Cow::Owned(err.to_string()),
-<a href=#356 id=356 data-nosnippet>356</a>        });
-<a href=#357 id=357 data-nosnippet>357</a>        conn.send(Message::Close(msg)).<span class="kw">await</span><span class="question-mark">?</span>;
-<a href=#358 id=358 data-nosnippet>358</a>        res
-<a href=#359 id=359 data-nosnippet>359</a>    };
-<a href=#360 id=360 data-nosnippet>360</a>    Box::new(<span class="kw">move </span>|req, raw_conn, state| {
-<a href=#361 id=361 data-nosnippet>361</a>        <span class="kw">let </span>accept = <span class="kw">match </span>req.accept() {
-<a href=#362 id=362 data-nosnippet>362</a>            <span class="prelude-val">Ok</span>(accept) =&gt; accept,
-<a href=#363 id=363 data-nosnippet>363</a>            <span class="prelude-val">Err</span>(err) =&gt; <span class="kw">return </span>close(raw_conn, <span class="prelude-val">Err</span>(err.into())).boxed(),
-<a href=#364 id=364 data-nosnippet>364</a>        };
-<a href=#365 id=365 data-nosnippet>365</a>        <span class="kw">let </span>conn = <span class="kw">match </span>Connection::new(<span class="kw-2">&amp;</span>accept, raw_conn.clone()) {
-<a href=#366 id=366 data-nosnippet>366</a>            <span class="prelude-val">Ok</span>(conn) =&gt; conn,
-<a href=#367 id=367 data-nosnippet>367</a>            <span class="prelude-val">Err</span>(err) =&gt; <span class="kw">return </span>close(raw_conn, <span class="prelude-val">Err</span>(err)).boxed(),
-<a href=#368 id=368 data-nosnippet>368</a>        };
-<a href=#369 id=369 data-nosnippet>369</a>        f(req, conn, state)
-<a href=#370 id=370 data-nosnippet>370</a>            .then(<span class="kw">move </span>|res| close(raw_conn, res))
-<a href=#371 id=371 data-nosnippet>371</a>            .boxed()
-<a href=#372 id=372 data-nosnippet>372</a>    })
-<a href=#373 id=373 data-nosnippet>373</a>}
-<a href=#374 id=374 data-nosnippet>374</a>
-<a href=#375 id=375 data-nosnippet>375</a><span class="kw">struct </span>MapErr&lt;State, Error, F&gt; {
-<a href=#376 id=376 data-nosnippet>376</a>    handler: Handler&lt;State, Error&gt;,
-<a href=#377 id=377 data-nosnippet>377</a>    map: Arc&lt;F&gt;,
-<a href=#378 id=378 data-nosnippet>378</a>}
-<a href=#379 id=379 data-nosnippet>379</a>
-<a href=#380 id=380 data-nosnippet>380</a><span class="kw">impl</span>&lt;State, Error, F&gt; MapErr&lt;State, Error, F&gt; {
-<a href=#381 id=381 data-nosnippet>381</a>    <span class="kw">fn </span>handle&lt;<span class="lifetime">'a</span>, Error2&gt;(
-<a href=#382 id=382 data-nosnippet>382</a>        <span class="kw-2">&amp;</span><span class="self">self</span>,
-<a href=#383 id=383 data-nosnippet>383</a>        req: RequestParams,
-<a href=#384 id=384 data-nosnippet>384</a>        conn: WebSocketConnection,
-<a href=#385 id=385 data-nosnippet>385</a>        state: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>State,
-<a href=#386 id=386 data-nosnippet>386</a>    ) -&gt; BoxFuture&lt;<span class="lifetime">'a</span>, <span class="prelude-ty">Result</span>&lt;(), SocketError&lt;Error2&gt;&gt;&gt;
-<a href=#387 id=387 data-nosnippet>387</a>    <span class="kw">where
-<a href=#388 id=388 data-nosnippet>388</a>        </span>F: <span class="lifetime">'static </span>+ Send + Sync + Fn(Error) -&gt; Error2,
-<a href=#389 id=389 data-nosnippet>389</a>        State: <span class="lifetime">'static </span>+ Send + Sync,
-<a href=#390 id=390 data-nosnippet>390</a>        Error: <span class="lifetime">'static</span>,
-<a href=#391 id=391 data-nosnippet>391</a>    {
-<a href=#392 id=392 data-nosnippet>392</a>        <span class="kw">let </span>map = <span class="self">self</span>.map.clone();
-<a href=#393 id=393 data-nosnippet>393</a>        <span class="kw">let </span>fut = (<span class="self">self</span>.handler)(req, conn, state);
-<a href=#394 id=394 data-nosnippet>394</a>        <span class="kw">async move </span>{ fut.<span class="kw">await</span>.map_err(|err| err.map_app_specific(<span class="kw-2">&amp;*</span>map)) }.boxed()
-<a href=#395 id=395 data-nosnippet>395</a>    }
-<a href=#396 id=396 data-nosnippet>396</a>}
-<a href=#397 id=397 data-nosnippet>397</a>
-<a href=#398 id=398 data-nosnippet>398</a><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>map_err&lt;State, Error, Error2&gt;(
-<a href=#399 id=399 data-nosnippet>399</a>    h: Handler&lt;State, Error&gt;,
-<a href=#400 id=400 data-nosnippet>400</a>    f: <span class="kw">impl </span><span class="lifetime">'static </span>+ Send + Sync + Fn(Error) -&gt; Error2,
-<a href=#401 id=401 data-nosnippet>401</a>) -&gt; Handler&lt;State, Error2&gt;
-<a href=#402 id=402 data-nosnippet>402</a><span class="kw">where
-<a href=#403 id=403 data-nosnippet>403</a>    </span>State: <span class="lifetime">'static </span>+ Send + Sync,
-<a href=#404 id=404 data-nosnippet>404</a>    Error: <span class="lifetime">'static</span>,
-<a href=#405 id=405 data-nosnippet>405</a>{
-<a href=#406 id=406 data-nosnippet>406</a>    <span class="kw">let </span>handler = MapErr {
-<a href=#407 id=407 data-nosnippet>407</a>        handler: h,
-<a href=#408 id=408 data-nosnippet>408</a>        map: Arc::new(f),
-<a href=#409 id=409 data-nosnippet>409</a>    };
-<a href=#410 id=410 data-nosnippet>410</a>    Box::new(<span class="kw">move </span>|req, conn, state| handler.handle(req, conn, state))
-<a href=#411 id=411 data-nosnippet>411</a>}</code></pre></div></section></main></body></html>
+<a href=#313 id=313 data-nosnippet>313</a>            <span class="comment">// Appease the borrow checker, this is a cheap clone
+<a href=#314 id=314 data-nosnippet>314</a>            </span><span class="kw">let </span>(<span class="kw-2">mut </span>send, <span class="kw-2">mut </span>recv) = (conn.clone(), conn);
+<a href=#315 id=315 data-nosnippet>315</a>
+<a href=#316 id=316 data-nosnippet>316</a>            <span class="comment">// Neither stream is documented to be cancel-safe, so we store the futures outside select
+<a href=#317 id=317 data-nosnippet>317</a>            </span><span class="kw">let </span><span class="kw-2">mut </span>item_fut = stream.next();
+<a href=#318 id=318 data-nosnippet>318</a>            <span class="kw">let </span><span class="kw-2">mut </span>client_fut = recv.next().fuse();
+<a href=#319 id=319 data-nosnippet>319</a>
+<a href=#320 id=320 data-nosnippet>320</a>            <span class="kw">loop </span>{
+<a href=#321 id=321 data-nosnippet>321</a>                <span class="macro">select!</span> {
+<a href=#322 id=322 data-nosnippet>322</a>                    item = item_fut =&gt; {
+<a href=#323 id=323 data-nosnippet>323</a>                        <span class="kw">match </span>item {
+<a href=#324 id=324 data-nosnippet>324</a>                            <span class="prelude-val">Some</span>(msg) =&gt; {
+<a href=#325 id=325 data-nosnippet>325</a>                                send.send(<span class="kw-2">&amp;</span>msg.map_err(SocketError::AppSpecific)<span class="question-mark">?</span>).<span class="kw">await</span><span class="question-mark">?</span>;
+<a href=#326 id=326 data-nosnippet>326</a>                                item_fut = stream.next();
+<a href=#327 id=327 data-nosnippet>327</a>                            }
+<a href=#328 id=328 data-nosnippet>328</a>                            <span class="prelude-val">None </span>=&gt; {
+<a href=#329 id=329 data-nosnippet>329</a>                                <span class="kw">break</span>;
+<a href=#330 id=330 data-nosnippet>330</a>                            }
+<a href=#331 id=331 data-nosnippet>331</a>                        }
+<a href=#332 id=332 data-nosnippet>332</a>                    }
+<a href=#333 id=333 data-nosnippet>333</a>                    <span class="comment">// We don't actually expect to receive anything from the client,
+<a href=#334 id=334 data-nosnippet>334</a>                    // it is being polled only to handle connection closure by the client
+<a href=#335 id=335 data-nosnippet>335</a>                    </span>client_msg = client_fut =&gt; {
+<a href=#336 id=336 data-nosnippet>336</a>                        client_fut = recv.next().fuse();
+<a href=#337 id=337 data-nosnippet>337</a>                        <span class="kw">match </span>client_msg {
+<a href=#338 id=338 data-nosnippet>338</a>                            <span class="prelude-val">None </span>=&gt; <span class="kw">return </span><span class="prelude-val">Ok</span>(()),
+<a href=#339 id=339 data-nosnippet>339</a>                            <span class="prelude-val">Some</span>(<span class="prelude-val">Err</span>(e)) =&gt; <span class="kw">return </span><span class="prelude-val">Err</span>(e),
+<a href=#340 id=340 data-nosnippet>340</a>                            <span class="kw">_ </span>=&gt; {}
+<a href=#341 id=341 data-nosnippet>341</a>                        }
+<a href=#342 id=342 data-nosnippet>342</a>                    }
+<a href=#343 id=343 data-nosnippet>343</a>                };
+<a href=#344 id=344 data-nosnippet>344</a>            }
+<a href=#345 id=345 data-nosnippet>345</a>            <span class="prelude-val">Ok</span>(())
+<a href=#346 id=346 data-nosnippet>346</a>        }
+<a href=#347 id=347 data-nosnippet>347</a>        .boxed()
+<a href=#348 id=348 data-nosnippet>348</a>    }
+<a href=#349 id=349 data-nosnippet>349</a>}
+<a href=#350 id=350 data-nosnippet>350</a>
+<a href=#351 id=351 data-nosnippet>351</a><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>stream_handler&lt;State, Error, Msg, F, VER&gt;(f: F) -&gt; Handler&lt;State, Error&gt;
+<a href=#352 id=352 data-nosnippet>352</a><span class="kw">where
+<a href=#353 id=353 data-nosnippet>353</a>    </span>F: <span class="lifetime">'static </span>+ Send + Sync + Fn(RequestParams, <span class="kw-2">&amp;</span>State) -&gt; BoxStream&lt;<span class="prelude-ty">Result</span>&lt;Msg, Error&gt;&gt;,
+<a href=#354 id=354 data-nosnippet>354</a>    State: <span class="lifetime">'static </span>+ Send + Sync,
+<a href=#355 id=355 data-nosnippet>355</a>    Msg: <span class="lifetime">'static </span>+ Serialize + Send + Sync,
+<a href=#356 id=356 data-nosnippet>356</a>    Error: <span class="lifetime">'static </span>+ Send + Display,
+<a href=#357 id=357 data-nosnippet>357</a>    VER: <span class="lifetime">'static </span>+ Send + Sync + StaticVersionType,
+<a href=#358 id=358 data-nosnippet>358</a>{
+<a href=#359 id=359 data-nosnippet>359</a>    <span class="kw">let </span>handler: StreamHandler&lt;F, VER&gt; = StreamHandler(f, Default::default());
+<a href=#360 id=360 data-nosnippet>360</a>    raw_handler(<span class="kw">move </span>|req, conn, state| handler.handle(req, conn, state))
+<a href=#361 id=361 data-nosnippet>361</a>}
+<a href=#362 id=362 data-nosnippet>362</a>
+<a href=#363 id=363 data-nosnippet>363</a><span class="kw">fn </span>raw_handler&lt;State, Error, ToClient, FromClient, F, VER&gt;(f: F) -&gt; Handler&lt;State, Error&gt;
+<a href=#364 id=364 data-nosnippet>364</a><span class="kw">where
+<a href=#365 id=365 data-nosnippet>365</a>    </span>F: <span class="lifetime">'static
+<a href=#366 id=366 data-nosnippet>366</a>        </span>+ Send
+<a href=#367 id=367 data-nosnippet>367</a>        + Sync
+<a href=#368 id=368 data-nosnippet>368</a>        + Fn(
+<a href=#369 id=369 data-nosnippet>369</a>            RequestParams,
+<a href=#370 id=370 data-nosnippet>370</a>            Connection&lt;ToClient, FromClient, Error, VER&gt;,
+<a href=#371 id=371 data-nosnippet>371</a>            <span class="kw-2">&amp;</span>State,
+<a href=#372 id=372 data-nosnippet>372</a>        ) -&gt; BoxFuture&lt;<span class="prelude-ty">Result</span>&lt;(), SocketError&lt;Error&gt;&gt;&gt;,
+<a href=#373 id=373 data-nosnippet>373</a>    State: <span class="lifetime">'static </span>+ Send + Sync,
+<a href=#374 id=374 data-nosnippet>374</a>    ToClient: <span class="lifetime">'static </span>+ Serialize + <span class="question-mark">?</span>Sized,
+<a href=#375 id=375 data-nosnippet>375</a>    FromClient: <span class="lifetime">'static </span>+ DeserializeOwned,
+<a href=#376 id=376 data-nosnippet>376</a>    Error: <span class="lifetime">'static </span>+ Send + Display,
+<a href=#377 id=377 data-nosnippet>377</a>    VER: StaticVersionType,
+<a href=#378 id=378 data-nosnippet>378</a>{
+<a href=#379 id=379 data-nosnippet>379</a>    <span class="kw">let </span>close = |conn: WebSocketConnection, res: <span class="prelude-ty">Result</span>&lt;(), SocketError&lt;Error&gt;&gt;| <span class="kw">async move </span>{
+<a href=#380 id=380 data-nosnippet>380</a>        <span class="comment">// When the handler finishes, send a close message. If there was an error, include the error
+<a href=#381 id=381 data-nosnippet>381</a>        // message.
+<a href=#382 id=382 data-nosnippet>382</a>        </span><span class="kw">let </span>msg = res.as_ref().err().map(|err| CloseFrame {
+<a href=#383 id=383 data-nosnippet>383</a>            code: err.code(),
+<a href=#384 id=384 data-nosnippet>384</a>            reason: Cow::Owned(err.to_string()),
+<a href=#385 id=385 data-nosnippet>385</a>        });
+<a href=#386 id=386 data-nosnippet>386</a>        conn.send(Message::Close(msg)).<span class="kw">await</span><span class="question-mark">?</span>;
+<a href=#387 id=387 data-nosnippet>387</a>        res
+<a href=#388 id=388 data-nosnippet>388</a>    };
+<a href=#389 id=389 data-nosnippet>389</a>    Box::new(<span class="kw">move </span>|req, raw_conn, state| {
+<a href=#390 id=390 data-nosnippet>390</a>        <span class="kw">let </span>accept = <span class="kw">match </span>req.accept() {
+<a href=#391 id=391 data-nosnippet>391</a>            <span class="prelude-val">Ok</span>(accept) =&gt; accept,
+<a href=#392 id=392 data-nosnippet>392</a>            <span class="prelude-val">Err</span>(err) =&gt; <span class="kw">return </span>close(raw_conn, <span class="prelude-val">Err</span>(err.into())).boxed(),
+<a href=#393 id=393 data-nosnippet>393</a>        };
+<a href=#394 id=394 data-nosnippet>394</a>        <span class="kw">let </span>conn = <span class="kw">match </span>Connection::new(<span class="kw-2">&amp;</span>accept, raw_conn.clone()) {
+<a href=#395 id=395 data-nosnippet>395</a>            <span class="prelude-val">Ok</span>(conn) =&gt; conn,
+<a href=#396 id=396 data-nosnippet>396</a>            <span class="prelude-val">Err</span>(err) =&gt; <span class="kw">return </span>close(raw_conn, <span class="prelude-val">Err</span>(err)).boxed(),
+<a href=#397 id=397 data-nosnippet>397</a>        };
+<a href=#398 id=398 data-nosnippet>398</a>        f(req, conn, state)
+<a href=#399 id=399 data-nosnippet>399</a>            .then(<span class="kw">move </span>|res| close(raw_conn, res))
+<a href=#400 id=400 data-nosnippet>400</a>            .boxed()
+<a href=#401 id=401 data-nosnippet>401</a>    })
+<a href=#402 id=402 data-nosnippet>402</a>}
+<a href=#403 id=403 data-nosnippet>403</a>
+<a href=#404 id=404 data-nosnippet>404</a><span class="kw">struct </span>MapErr&lt;State, Error, F&gt; {
+<a href=#405 id=405 data-nosnippet>405</a>    handler: Handler&lt;State, Error&gt;,
+<a href=#406 id=406 data-nosnippet>406</a>    map: Arc&lt;F&gt;,
+<a href=#407 id=407 data-nosnippet>407</a>}
+<a href=#408 id=408 data-nosnippet>408</a>
+<a href=#409 id=409 data-nosnippet>409</a><span class="kw">impl</span>&lt;State, Error, F&gt; MapErr&lt;State, Error, F&gt; {
+<a href=#410 id=410 data-nosnippet>410</a>    <span class="kw">fn </span>handle&lt;<span class="lifetime">'a</span>, Error2&gt;(
+<a href=#411 id=411 data-nosnippet>411</a>        <span class="kw-2">&amp;</span><span class="self">self</span>,
+<a href=#412 id=412 data-nosnippet>412</a>        req: RequestParams,
+<a href=#413 id=413 data-nosnippet>413</a>        conn: WebSocketConnection,
+<a href=#414 id=414 data-nosnippet>414</a>        state: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>State,
+<a href=#415 id=415 data-nosnippet>415</a>    ) -&gt; BoxFuture&lt;<span class="lifetime">'a</span>, <span class="prelude-ty">Result</span>&lt;(), SocketError&lt;Error2&gt;&gt;&gt;
+<a href=#416 id=416 data-nosnippet>416</a>    <span class="kw">where
+<a href=#417 id=417 data-nosnippet>417</a>        </span>F: <span class="lifetime">'static </span>+ Send + Sync + Fn(Error) -&gt; Error2,
+<a href=#418 id=418 data-nosnippet>418</a>        State: <span class="lifetime">'static </span>+ Send + Sync,
+<a href=#419 id=419 data-nosnippet>419</a>        Error: <span class="lifetime">'static</span>,
+<a href=#420 id=420 data-nosnippet>420</a>    {
+<a href=#421 id=421 data-nosnippet>421</a>        <span class="kw">let </span>map = <span class="self">self</span>.map.clone();
+<a href=#422 id=422 data-nosnippet>422</a>        <span class="kw">let </span>fut = (<span class="self">self</span>.handler)(req, conn, state);
+<a href=#423 id=423 data-nosnippet>423</a>        <span class="kw">async move </span>{ fut.<span class="kw">await</span>.map_err(|err| err.map_app_specific(<span class="kw-2">&amp;*</span>map)) }.boxed()
+<a href=#424 id=424 data-nosnippet>424</a>    }
+<a href=#425 id=425 data-nosnippet>425</a>}
+<a href=#426 id=426 data-nosnippet>426</a>
+<a href=#427 id=427 data-nosnippet>427</a><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>map_err&lt;State, Error, Error2&gt;(
+<a href=#428 id=428 data-nosnippet>428</a>    h: Handler&lt;State, Error&gt;,
+<a href=#429 id=429 data-nosnippet>429</a>    f: <span class="kw">impl </span><span class="lifetime">'static </span>+ Send + Sync + Fn(Error) -&gt; Error2,
+<a href=#430 id=430 data-nosnippet>430</a>) -&gt; Handler&lt;State, Error2&gt;
+<a href=#431 id=431 data-nosnippet>431</a><span class="kw">where
+<a href=#432 id=432 data-nosnippet>432</a>    </span>State: <span class="lifetime">'static </span>+ Send + Sync,
+<a href=#433 id=433 data-nosnippet>433</a>    Error: <span class="lifetime">'static</span>,
+<a href=#434 id=434 data-nosnippet>434</a>{
+<a href=#435 id=435 data-nosnippet>435</a>    <span class="kw">let </span>handler = MapErr {
+<a href=#436 id=436 data-nosnippet>436</a>        handler: h,
+<a href=#437 id=437 data-nosnippet>437</a>        map: Arc::new(f),
+<a href=#438 id=438 data-nosnippet>438</a>    };
+<a href=#439 id=439 data-nosnippet>439</a>    Box::new(<span class="kw">move </span>|req, conn, state| handler.handle(req, conn, state))
+<a href=#440 id=440 data-nosnippet>440</a>}
+<a href=#441 id=441 data-nosnippet>441</a>
+<a href=#442 id=442 data-nosnippet>442</a><span class="attr">#[cfg(test)]
+<a href=#443 id=443 data-nosnippet>443</a></span><span class="kw">mod </span>tests {
+<a href=#444 id=444 data-nosnippet>444</a>    <span class="kw">use super</span>::<span class="kw-2">*</span>;
+<a href=#445 id=445 data-nosnippet>445</a>    <span class="kw">use crate</span>::{error::ServerError, testing::test_ws_client, Api, App, Url};
+<a href=#446 id=446 data-nosnippet>446</a>    <span class="kw">use </span>async_std::task::{sleep, spawn};
+<a href=#447 id=447 data-nosnippet>447</a>    <span class="kw">use </span>async_tungstenite::tungstenite::Message <span class="kw">as </span>TungsteniteMessage;
+<a href=#448 id=448 data-nosnippet>448</a>    <span class="kw">use </span>futures::{stream, StreamExt};
+<a href=#449 id=449 data-nosnippet>449</a>    <span class="kw">use </span>pin_project::pinned_drop;
+<a href=#450 id=450 data-nosnippet>450</a>    <span class="kw">use </span>portpicker::pick_unused_port;
+<a href=#451 id=451 data-nosnippet>451</a>    <span class="kw">use </span>std::{
+<a href=#452 id=452 data-nosnippet>452</a>        sync::{
+<a href=#453 id=453 data-nosnippet>453</a>            atomic::{AtomicBool, Ordering},
+<a href=#454 id=454 data-nosnippet>454</a>            Arc,
+<a href=#455 id=455 data-nosnippet>455</a>        },
+<a href=#456 id=456 data-nosnippet>456</a>        time::Duration,
+<a href=#457 id=457 data-nosnippet>457</a>    };
+<a href=#458 id=458 data-nosnippet>458</a>    <span class="kw">use </span>vbs::version::StaticVersion;
+<a href=#459 id=459 data-nosnippet>459</a>
+<a href=#460 id=460 data-nosnippet>460</a>    <span class="kw">type </span>StaticVer01 = StaticVersion&lt;<span class="number">0</span>, <span class="number">1</span>&gt;;
+<a href=#461 id=461 data-nosnippet>461</a>
+<a href=#462 id=462 data-nosnippet>462</a>    <span class="attr">#[pin_project(PinnedDrop)]
+<a href=#463 id=463 data-nosnippet>463</a>    </span><span class="kw">struct </span>DropStream&lt;S: Stream&gt; {
+<a href=#464 id=464 data-nosnippet>464</a>        <span class="attr">#[pin]
+<a href=#465 id=465 data-nosnippet>465</a>        </span>stream: S,
+<a href=#466 id=466 data-nosnippet>466</a>        dropped: Arc&lt;AtomicBool&gt;,
+<a href=#467 id=467 data-nosnippet>467</a>    }
+<a href=#468 id=468 data-nosnippet>468</a>
+<a href=#469 id=469 data-nosnippet>469</a>    <span class="kw">impl</span>&lt;S: Stream&gt; Stream <span class="kw">for </span>DropStream&lt;S&gt; {
+<a href=#470 id=470 data-nosnippet>470</a>        <span class="kw">type </span>Item = S::Item;
+<a href=#471 id=471 data-nosnippet>471</a>
+<a href=#472 id=472 data-nosnippet>472</a>        <span class="kw">fn </span>poll_next(<span class="self">self</span>: Pin&lt;<span class="kw-2">&amp;mut </span><span class="self">Self</span>&gt;, cx: <span class="kw-2">&amp;mut </span>Context&lt;<span class="lifetime">'_</span>&gt;) -&gt; Poll&lt;<span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>::Item&gt;&gt; {
+<a href=#473 id=473 data-nosnippet>473</a>            <span class="kw">let </span>stream = <span class="self">self</span>.project().stream;
+<a href=#474 id=474 data-nosnippet>474</a>            stream.poll_next(cx)
+<a href=#475 id=475 data-nosnippet>475</a>        }
+<a href=#476 id=476 data-nosnippet>476</a>    }
+<a href=#477 id=477 data-nosnippet>477</a>
+<a href=#478 id=478 data-nosnippet>478</a>    <span class="attr">#[pinned_drop]
+<a href=#479 id=479 data-nosnippet>479</a>    </span><span class="kw">impl</span>&lt;S: Stream&gt; PinnedDrop <span class="kw">for </span>DropStream&lt;S&gt; {
+<a href=#480 id=480 data-nosnippet>480</a>        <span class="kw">fn </span>drop(<span class="self">self</span>: Pin&lt;<span class="kw-2">&amp;mut </span><span class="self">Self</span>&gt;) {
+<a href=#481 id=481 data-nosnippet>481</a>            <span class="self">self</span>.dropped.store(<span class="bool-val">true</span>, Ordering::SeqCst);
+<a href=#482 id=482 data-nosnippet>482</a>        }
+<a href=#483 id=483 data-nosnippet>483</a>    }
+<a href=#484 id=484 data-nosnippet>484</a>
+<a href=#485 id=485 data-nosnippet>485</a>    <span class="attr">#[async_std::test]
+<a href=#486 id=486 data-nosnippet>486</a>    </span><span class="kw">async fn </span>test_stream_handler_client_closure() {
+<a href=#487 id=487 data-nosnippet>487</a>        <span class="comment">// Setup: Create a simple API with a stream endpoint
+<a href=#488 id=488 data-nosnippet>488</a>        </span><span class="kw">let </span>port = pick_unused_port().expect(<span class="string">"No ports available"</span>);
+<a href=#489 id=489 data-nosnippet>489</a>
+<a href=#490 id=490 data-nosnippet>490</a>        <span class="kw">let </span><span class="kw-2">mut </span>app = App::&lt;(), ServerError&gt;::with_state(());
+<a href=#491 id=491 data-nosnippet>491</a>        <span class="kw">let </span>toml_content = <span class="string">r#"
+<a href=#492 id=492 data-nosnippet>492</a>            [meta]
+<a href=#493 id=493 data-nosnippet>493</a>            FORMAT_VERSION = "0.1.0"
+<a href=#494 id=494 data-nosnippet>494</a>
+<a href=#495 id=495 data-nosnippet>495</a>            [route.stream_test]
+<a href=#496 id=496 data-nosnippet>496</a>            PATH = ["/stream"]
+<a href=#497 id=497 data-nosnippet>497</a>            METHOD = "SOCKET"
+<a href=#498 id=498 data-nosnippet>498</a>            "#</span>;
+<a href=#499 id=499 data-nosnippet>499</a>
+<a href=#500 id=500 data-nosnippet>500</a>        <span class="kw">let </span><span class="kw-2">mut </span>api =
+<a href=#501 id=501 data-nosnippet>501</a>            Api::&lt;(), ServerError, StaticVer01&gt;::new(toml_content.parse::&lt;toml::Value&gt;().unwrap())
+<a href=#502 id=502 data-nosnippet>502</a>                .unwrap();
+<a href=#503 id=503 data-nosnippet>503</a>
+<a href=#504 id=504 data-nosnippet>504</a>        <span class="comment">// Register a stream handler that sends multiple messages and indicates
+<a href=#505 id=505 data-nosnippet>505</a>        // whether it was dropped
+<a href=#506 id=506 data-nosnippet>506</a>        </span><span class="kw">let </span>dropped = Arc::new(AtomicBool::new(<span class="bool-val">false</span>));
+<a href=#507 id=507 data-nosnippet>507</a>        <span class="kw">let </span>_dropped = dropped.clone();
+<a href=#508 id=508 data-nosnippet>508</a>        api.stream(<span class="string">"stream_test"</span>, <span class="kw">move </span>|_req, _state| {
+<a href=#509 id=509 data-nosnippet>509</a>            Box::pin(DropStream {
+<a href=#510 id=510 data-nosnippet>510</a>                stream: stream::iter(<span class="number">0</span>..).map(Result::Ok),
+<a href=#511 id=511 data-nosnippet>511</a>                dropped: _dropped.clone(),
+<a href=#512 id=512 data-nosnippet>512</a>            })
+<a href=#513 id=513 data-nosnippet>513</a>        })
+<a href=#514 id=514 data-nosnippet>514</a>        .unwrap();
+<a href=#515 id=515 data-nosnippet>515</a>
+<a href=#516 id=516 data-nosnippet>516</a>        app.register_module(<span class="string">"test"</span>, api).unwrap();
+<a href=#517 id=517 data-nosnippet>517</a>
+<a href=#518 id=518 data-nosnippet>518</a>        <span class="comment">// Start the server
+<a href=#519 id=519 data-nosnippet>519</a>        </span>spawn(<span class="kw">async move </span>{
+<a href=#520 id=520 data-nosnippet>520</a>            app.serve(<span class="macro">format!</span>(<span class="string">"127.0.0.1:{}"</span>, port), StaticVer01::instance())
+<a href=#521 id=521 data-nosnippet>521</a>                .<span class="kw">await
+<a href=#522 id=522 data-nosnippet>522</a>                </span>.unwrap();
+<a href=#523 id=523 data-nosnippet>523</a>        });
+<a href=#524 id=524 data-nosnippet>524</a>
+<a href=#525 id=525 data-nosnippet>525</a>        <span class="comment">// Give the server time to start
+<a href=#526 id=526 data-nosnippet>526</a>        </span>sleep(Duration::from_millis(<span class="number">500</span>)).<span class="kw">await</span>;
+<a href=#527 id=527 data-nosnippet>527</a>
+<a href=#528 id=528 data-nosnippet>528</a>        <span class="comment">// Connect as a client
+<a href=#529 id=529 data-nosnippet>529</a>        </span><span class="kw">let </span>url = Url::parse(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"http://127.0.0.1:{}/test/stream"</span>, port)).unwrap();
+<a href=#530 id=530 data-nosnippet>530</a>        <span class="kw">let </span><span class="kw-2">mut </span>ws_stream = test_ws_client(url).<span class="kw">await</span>;
+<a href=#531 id=531 data-nosnippet>531</a>
+<a href=#532 id=532 data-nosnippet>532</a>        <span class="comment">// Receive a few messages
+<a href=#533 id=533 data-nosnippet>533</a>        </span><span class="kw">let </span><span class="kw-2">mut </span>received_count = <span class="number">0</span>;
+<a href=#534 id=534 data-nosnippet>534</a>        <span class="kw">for _ in </span><span class="number">0</span>..<span class="number">5 </span>{
+<a href=#535 id=535 data-nosnippet>535</a>            <span class="kw">if let </span><span class="prelude-val">Some</span>(<span class="prelude-val">Ok</span>(TungsteniteMessage::Text(msg))) = ws_stream.next().<span class="kw">await </span>{
+<a href=#536 id=536 data-nosnippet>536</a>                <span class="kw">let </span>parsed: usize = serde_json::from_str(<span class="kw-2">&amp;</span>msg).unwrap();
+<a href=#537 id=537 data-nosnippet>537</a>                <span class="macro">assert_eq!</span>(parsed, received_count);
+<a href=#538 id=538 data-nosnippet>538</a>                received_count += <span class="number">1</span>;
+<a href=#539 id=539 data-nosnippet>539</a>            }
+<a href=#540 id=540 data-nosnippet>540</a>        }
+<a href=#541 id=541 data-nosnippet>541</a>
+<a href=#542 id=542 data-nosnippet>542</a>        <span class="comment">// Close the client connection
+<a href=#543 id=543 data-nosnippet>543</a>        </span>ws_stream
+<a href=#544 id=544 data-nosnippet>544</a>            .close(<span class="prelude-val">None</span>)
+<a href=#545 id=545 data-nosnippet>545</a>            .<span class="kw">await
+<a href=#546 id=546 data-nosnippet>546</a>            </span>.expect(<span class="string">"Failed to close connection"</span>);
+<a href=#547 id=547 data-nosnippet>547</a>
+<a href=#548 id=548 data-nosnippet>548</a>        <span class="comment">// Wait a bit to ensure the server processes the closure
+<a href=#549 id=549 data-nosnippet>549</a>        </span>sleep(Duration::from_millis(<span class="number">300</span>)).<span class="kw">await</span>;
+<a href=#550 id=550 data-nosnippet>550</a>
+<a href=#551 id=551 data-nosnippet>551</a>        <span class="comment">// The underlying stream should've been dropped
+<a href=#552 id=552 data-nosnippet>552</a>        </span><span class="macro">assert!</span>(dropped.load(Ordering::SeqCst));
+<a href=#553 id=553 data-nosnippet>553</a>    }
+<a href=#554 id=554 data-nosnippet>554</a>}</code></pre></div></section></main></body></html>
