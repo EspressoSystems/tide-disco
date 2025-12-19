@@ -301,15 +301,15 @@ where
     {
         let state = Arc::new(self);
         let mut server = tide::Server::with_state(state.clone());
-        server.with(Self::version_middleware);
-        server.with(AddErrorBody::<Error>::with_version::<VER>());
         server.with(
             CorsMiddleware::new()
-                .allow_methods("GET, POST".parse::<HeaderValue>().unwrap())
+                .allow_methods("GET, POST, OPTIONS".parse::<HeaderValue>().unwrap())
                 .allow_headers("*".parse::<HeaderValue>().unwrap())
                 .allow_origin(Origin::from("*"))
-                .allow_credentials(true),
+                .allow_credentials(false),
         );
+        server.with(Self::version_middleware);
+        server.with(AddErrorBody::<Error>::with_version::<VER>());
 
         for module in &state.modules {
             Self::register_api(&mut server, module.prefix.clone(), &module.versions)?;
