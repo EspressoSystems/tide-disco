@@ -25,7 +25,7 @@ anyhow = "1.0"
 async-h1 = "2.3"
 async-lock = "3.3"
 async-std = { version = "1.12", features = ["attributes", "tokio1"] }
-async-trait = "0.1.79"
+async-trait = "0.1.80"
 clap = { version = "4.5", features = ["derive"] }
 config = "0.14"
 derivative = "2.2"
