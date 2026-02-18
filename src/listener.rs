@@ -100,7 +100,7 @@ where
                     tracing::warn!(%err, "TCP error");
                     sleep(Duration::from_millis(500)).await;
                     continue;
-                },
+                }
                 Ok(stream) => {
                     let app = server.clone();
                     let permit = self.permit.clone();
@@ -134,7 +134,7 @@ where
                             tracing::error!(%error, "HTTP error");
                         }
                     });
-                },
+                }
             };
         }
         Ok(())
@@ -156,11 +156,11 @@ async fn wait_for_disconnect(stream: TcpStream) {
             Ok(0) => {
                 tracing::debug!("client disconnected (EOF on peek)");
                 return;
-            },
+            }
             Err(e) => {
                 tracing::debug!(%e, "client disconnected (error on peek)");
                 return;
-            },
+            }
             Ok(_) => sleep(Duration::from_millis(100)).await,
         }
     }
@@ -183,7 +183,7 @@ impl<State> Display for RateLimitListener<State> {
             Some(listener) => {
                 let addr = listener.local_addr().expect("Could not get local addr");
                 write!(f, "http://{}", addr)
-            },
+            }
             None => write!(f, "http://{}", self.addr),
         }
     }
