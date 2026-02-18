@@ -26,8 +26,6 @@ use tide::{
     Server,
 };
 
-
-
 /// TCP listener which accepts only a limited number of connections at a time.
 ///
 /// This listener is based on `tide::listener::TcpListener` and should match the semantics of that
@@ -102,7 +100,7 @@ where
                     tracing::warn!(%err, "TCP error");
                     sleep(Duration::from_millis(500)).await;
                     continue;
-                }
+                },
                 Ok(stream) => {
                     let app = server.clone();
                     let permit = self.permit.clone();
@@ -136,7 +134,7 @@ where
                             tracing::error!(%error, "HTTP error");
                         }
                     });
-                }
+                },
             };
         }
         Ok(())
@@ -158,11 +156,11 @@ async fn wait_for_disconnect(stream: TcpStream) {
             Ok(0) => {
                 tracing::debug!("client disconnected (EOF on peek)");
                 return;
-            }
+            },
             Err(e) => {
                 tracing::debug!(%e, "client disconnected (error on peek)");
                 return;
-            }
+            },
             Ok(_) => sleep(Duration::from_millis(100)).await,
         }
     }
@@ -185,7 +183,7 @@ impl<State> Display for RateLimitListener<State> {
             Some(listener) => {
                 let addr = listener.local_addr().expect("Could not get local addr");
                 write!(f, "http://{}", addr)
-            }
+            },
             None => write!(f, "http://{}", self.addr),
         }
     }
@@ -272,7 +270,6 @@ mod test {
     /// rather than running to completion.
     #[async_std::test]
     async fn test_handler_dropped_on_client_disconnect() {
-
         let handler_completed = Arc::new(AtomicBool::new(false));
 
         let mut app = App::<_, ServerError>::with_state(());
@@ -304,10 +301,8 @@ mod test {
             StaticVer01::instance(),
         ));
 
-       
         sleep(Duration::from_secs(1)).await;
 
-         
         let req_task = spawn(async move {
             reqwest::Client::new()
                 .get(format!("http://localhost:{port}/mod/slow"))
@@ -315,16 +310,12 @@ mod test {
                 .await
         });
 
-       
         sleep(Duration::from_millis(200)).await;
 
-       
         req_task.cancel().await;
 
-         sleep(Duration::from_secs(6)).await;
+        sleep(Duration::from_secs(6)).await;
 
-        assert!(
-            !handler_completed.load(Ordering::SeqCst),
-         );
+        assert!(!handler_completed.load(Ordering::SeqCst),);
     }
 }
