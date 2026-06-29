@@ -12,8 +12,8 @@ use std::collections::HashMap;
 use std::fmt::Display;
 use strum_macros::EnumString;
 use tagged_base64::TaggedBase64;
-use tide::http::{self, content::Accept, mime::Mime, Headers};
-use vbs::{version::StaticVersionType, BinarySerializer, Serializer};
+use tide::http::{self, Headers, content::Accept, mime::Mime};
+use vbs::{BinarySerializer, Serializer, version::StaticVersionType};
 
 #[derive(Clone, Debug, Snafu, Deserialize, Serialize)]
 pub enum RequestError {

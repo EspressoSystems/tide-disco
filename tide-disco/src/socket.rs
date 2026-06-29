@@ -7,30 +7,30 @@
 //! An interface for asynchronous communication with clients, using WebSockets.
 
 use crate::{
+    StatusCode,
     http::{content::Accept, mime},
     method::Method,
-    request::{best_response_type, RequestError, RequestParams},
-    StatusCode,
+    request::{RequestError, RequestParams, best_response_type},
 };
 use async_std::sync::Arc;
 use futures::{
+    FutureExt, Sink, SinkExt, Stream, StreamExt, TryFutureExt,
     future::BoxFuture,
     select, sink,
     stream::BoxStream,
     task::{Context, Poll},
-    FutureExt, Sink, SinkExt, Stream, StreamExt, TryFutureExt,
 };
 use pin_project::pin_project;
-use serde::{de::DeserializeOwned, Serialize};
+use serde::{Serialize, de::DeserializeOwned};
 use std::borrow::Cow;
 use std::fmt::{self, Display, Formatter};
 use std::marker::PhantomData;
 use std::pin::Pin;
 use tide_websockets::{
-    tungstenite::protocol::frame::{coding::CloseCode, CloseFrame},
     Message, WebSocketConnection,
+    tungstenite::protocol::frame::{CloseFrame, coding::CloseCode},
 };
-use vbs::{version::StaticVersionType, BinarySerializer, Serializer};
+use vbs::{BinarySerializer, Serializer, version::StaticVersionType};
 
 /// An error returned by a socket handler.
 ///
@@ -442,16 +442,16 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{error::ServerError, testing::test_ws_client, Api, App, Url};
+    use crate::{Api, App, Url, error::ServerError, testing::test_ws_client};
     use async_std::task::{sleep, spawn};
     use async_tungstenite::tungstenite::Message as TungsteniteMessage;
-    use futures::{stream, StreamExt};
+    use futures::{StreamExt, stream};
     use pin_project::pinned_drop;
     use portpicker::pick_unused_port;
     use std::{
         sync::{
-            atomic::{AtomicBool, Ordering},
             Arc,
+            atomic::{AtomicBool, Ordering},
         },
         time::Duration,
     };

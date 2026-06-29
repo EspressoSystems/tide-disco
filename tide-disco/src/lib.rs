@@ -263,7 +263,7 @@ use clap::CommandFactory;
 use config::{Config, ConfigError};
 use routefinder::Router;
 use serde::Deserialize;
-use std::fs::{read_to_string, OpenOptions};
+use std::fs::{OpenOptions, read_to_string};
 use std::io::Write;
 use std::str::FromStr;
 use std::time::Duration;

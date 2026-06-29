@@ -99,11 +99,11 @@ mod test {
     use async_std::task::spawn;
     use portpicker::pick_unused_port;
     use tide_disco::{
+        Url,
         api::ApiVersion,
         app::{AppHealth, AppVersion},
         healthcheck::HealthStatus,
-        testing::{setup_test, Client},
-        Url,
+        testing::{Client, setup_test},
     };
 
     #[async_std::test]

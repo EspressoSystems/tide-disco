@@ -6,7 +6,7 @@
 
 use futures::FutureExt;
 use std::io;
-use tide_disco::{error::ServerError, Api, App};
+use tide_disco::{Api, App, error::ServerError};
 use vbs::version::{StaticVersion, StaticVersionType};
 
 type StaticVer01 = StaticVersion<0, 1>;
@@ -51,8 +51,8 @@ mod test {
     use async_std::task::spawn;
     use portpicker::pick_unused_port;
     use tide_disco::{
-        testing::{setup_test, Client},
         StatusCode, Url,
+        testing::{Client, setup_test},
     };
 
     #[async_std::test]

@@ -5,24 +5,24 @@
 // along with the surf-disco library. If not, see <https://mit-license.org/>.
 
 use crate::{
-    http::headers::{HeaderName, ToHeaderValues},
     ContentType, Error, StatusCode, Url,
+    http::headers::{HeaderName, ToHeaderValues},
 };
 use async_tungstenite::{
-    async_std::{connect_async_with_config, ConnectStream},
-    tungstenite::{
-        http::request::Builder as RequestBuilder, protocol::WebSocketConfig, Error as WsError,
-        Message,
-    },
     WebSocketStream,
+    async_std::{ConnectStream, connect_async_with_config},
+    tungstenite::{
+        Error as WsError, Message, http::request::Builder as RequestBuilder,
+        protocol::WebSocketConfig,
+    },
 };
 use futures::{
-    task::{Context, Poll},
     Sink, Stream,
+    task::{Context, Poll},
 };
-use serde::{de::DeserializeOwned, Deserialize, Serialize};
+use serde::{Deserialize, Serialize, de::DeserializeOwned};
 use std::{collections::HashMap, pin::Pin};
-use vbs::{version::StaticVersionType, BinarySerializer, Serializer};
+use vbs::{BinarySerializer, Serializer, version::StaticVersionType};
 
 #[must_use]
 #[derive(Debug)]
@@ -307,9 +307,9 @@ mod test {
     use crate::{Client, ContentType};
     use async_compatibility_layer::logging::{setup_backtrace, setup_logging};
     use async_std::task::spawn;
-    use futures::stream::{repeat, StreamExt};
+    use futures::stream::{StreamExt, repeat};
     use portpicker::pick_unused_port;
-    use tide_disco::{error::ServerError, App};
+    use tide_disco::{App, error::ServerError};
     use toml::toml;
     use vbs::version::StaticVersion;
 

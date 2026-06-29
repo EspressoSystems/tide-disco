@@ -4,9 +4,9 @@
 // You should have received a copy of the MIT License
 // along with the tide-disco library. If not, see <https://mit-license.org/>.
 
-use crate::{request::RequestError, route::RouteError, socket::SocketError, StatusCode};
+use crate::{StatusCode, request::RequestError, route::RouteError, socket::SocketError};
 use config::ConfigError;
-use serde::{de::DeserializeOwned, Deserialize, Serialize};
+use serde::{Deserialize, Serialize, de::DeserializeOwned};
 use snafu::Snafu;
 use std::fmt::Display;
 use std::io::Error as IoError;

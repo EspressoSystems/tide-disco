@@ -33,8 +33,8 @@ pub use error::Error;
 pub use request::Request;
 pub use socket::SocketRequest;
 pub use tide_disco::{
-    http::{self, Method},
     StatusCode, Url,
+    http::{self, Method},
 };
 
 /// Build an HTTP `GET` request.

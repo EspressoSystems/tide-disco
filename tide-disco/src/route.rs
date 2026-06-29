@@ -5,19 +5,19 @@
 // along with the tide-disco library. If not, see <https://mit-license.org/>.
 
 use crate::{
+    Html, StatusCode,
     api::ApiMetadata,
     healthcheck::HealthCheck,
     method::{Method, ReadState},
     metrics,
-    request::{best_response_type, RequestError, RequestParam, RequestParamType, RequestParams},
+    request::{RequestError, RequestParam, RequestParamType, RequestParams, best_response_type},
     socket::{self, SocketError},
-    Html, StatusCode,
 };
 use async_std::sync::Arc;
 use async_trait::async_trait;
 use derivative::Derivative;
 use futures::future::{BoxFuture, FutureExt};
-use maud::{html, PreEscaped};
+use maud::{PreEscaped, html};
 use serde::Serialize;
 use snafu::{OptionExt, Snafu};
 use std::{
@@ -29,15 +29,15 @@ use std::{
     str::FromStr,
 };
 use tide::{
+    Body,
     http::{
         self,
         content::Accept,
         mime::{self, Mime},
     },
-    Body,
 };
 use tide_websockets::WebSocketConnection;
-use vbs::{version::StaticVersionType, BinarySerializer, Serializer};
+use vbs::{BinarySerializer, Serializer, version::StaticVersionType};
 
 /// An error returned by a route handler.
 ///

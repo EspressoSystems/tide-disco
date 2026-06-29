@@ -1,9 +1,9 @@
 use crate::{
+    App, RequestParam, RequestParams,
     http::{self, content::Accept},
     mime,
     request::best_response_type,
     route::{self, Handler, RouteError},
-    App, RequestParam, RequestParams,
 };
 use async_std::sync::Arc;
 use futures::future::{BoxFuture, FutureExt};

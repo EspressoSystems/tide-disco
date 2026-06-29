@@ -5,13 +5,14 @@
 // along with the tide-disco library. If not, see <https://mit-license.org/>.
 
 use crate::{
+    Html,
     healthcheck::{HealthCheck, HealthStatus},
     method::{Method, ReadState, WriteState},
     metrics::Metrics,
-    middleware::{error_handler, ErrorHandler},
+    middleware::{ErrorHandler, error_handler},
     request::RequestParams,
     route::{self, *},
-    socket, Html,
+    socket,
 };
 use async_std::sync::Arc;
 use async_trait::async_trait;
@@ -20,10 +21,10 @@ use futures::{
     future::{BoxFuture, FutureExt},
     stream::BoxStream,
 };
-use maud::{html, PreEscaped};
+use maud::{PreEscaped, html};
 use semver::Version;
-use serde::{de::DeserializeOwned, Deserialize, Serialize};
-use serde_with::{serde_as, DisplayFromStr};
+use serde::{Deserialize, Serialize, de::DeserializeOwned};
+use serde_with::{DisplayFromStr, serde_as};
 use snafu::{OptionExt, ResultExt, Snafu};
 use std::{
     borrow::Cow,
@@ -1520,28 +1521,28 @@ where
 #[cfg(test)]
 mod test {
     use crate::{
+        App, StatusCode, Url,
         error::{Error, ServerError},
         healthcheck::HealthStatus,
         socket::Connection,
-        testing::{setup_test, test_ws_client, test_ws_client_with_headers, Client},
-        App, StatusCode, Url,
+        testing::{Client, setup_test, test_ws_client, test_ws_client_with_headers},
     };
     use async_std::{sync::RwLock, task::spawn};
     use async_tungstenite::{
-        tungstenite::{http::header::*, protocol::frame::coding::CloseCode, protocol::Message},
         WebSocketStream,
+        tungstenite::{http::header::*, protocol::Message, protocol::frame::coding::CloseCode},
     };
     use futures::{
-        stream::{iter, once, repeat},
         AsyncRead, AsyncWrite, FutureExt, SinkExt, StreamExt,
+        stream::{iter, once, repeat},
     };
     use portpicker::pick_unused_port;
     use prometheus::{Counter, Registry};
     use std::borrow::Cow;
     use toml::toml;
     use vbs::{
-        version::{StaticVersion, StaticVersionType},
         BinarySerializer, Serializer,
+        version::{StaticVersion, StaticVersionType},
     };
 
     #[cfg(windows)]
@@ -1873,7 +1874,9 @@ mod test {
 
         for i in 1..5 {
             tracing::info!("making metrics request {i}");
-            let expected = format!("# HELP counter count of how many times metrics have been exported\n# TYPE counter counter\ncounter {i}\n");
+            let expected = format!(
+                "# HELP counter count of how many times metrics have been exported\n# TYPE counter counter\ncounter {i}\n"
+            );
             let res = client.get("mod/metrics").send().await.unwrap();
             assert_eq!(res.status(), StatusCode::OK);
             assert_eq!(res.text().await.unwrap(), expected);

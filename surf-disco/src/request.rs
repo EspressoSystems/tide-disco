@@ -5,12 +5,12 @@
 // along with the surf-disco library. If not, see <https://mit-license.org/>.
 
 use crate::{
-    http::headers::{HeaderName, ToHeaderValues},
     Error, StatusCode,
+    http::headers::{HeaderName, ToHeaderValues},
 };
-use serde::{de::DeserializeOwned, Serialize};
+use serde::{Serialize, de::DeserializeOwned};
 use std::{error::Error as _, fmt::Display};
-use vbs::{version::StaticVersionType, BinarySerializer, Serializer};
+use vbs::{BinarySerializer, Serializer, version::StaticVersionType};
 
 #[must_use]
 #[derive(Debug)]
@@ -247,7 +247,7 @@ mod test {
     use async_std::task::spawn;
     use futures::FutureExt;
     use portpicker::pick_unused_port;
-    use tide_disco::{error::ServerError, App};
+    use tide_disco::{App, error::ServerError};
     use toml::toml;
     use vbs::version::StaticVersion;
 

@@ -4,5 +4,5 @@
 // You should have received a copy of the MIT License
 // along with the surf-disco library. If not, see <https://mit-license.org/>.
 
-pub use tide_disco::error::ServerError as ClientError;
 pub use tide_disco::Error;
+pub use tide_disco::error::ServerError as ClientError;

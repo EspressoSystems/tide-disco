@@ -1,7 +1,7 @@
 use itertools::Itertools;
 use snafu::Snafu;
 use std::{
-    collections::{btree_map::Entry, BTreeMap},
+    collections::{BTreeMap, btree_map::Entry},
     ops::Index,
 };
 

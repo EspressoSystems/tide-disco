@@ -5,7 +5,7 @@
 // along with the surf-disco library. If not, see <https://mit-license.org/>.
 
 use crate::{
-    http, request::reqwest_error_msg, Error, Method, Request, SocketRequest, StatusCode, Url,
+    Error, Method, Request, SocketRequest, StatusCode, Url, http, request::reqwest_error_msg,
 };
 use async_std::task::sleep;
 use async_tungstenite::tungstenite::protocol::WebSocketConfig;
@@ -260,10 +260,10 @@ mod test {
     use super::*;
     use async_compatibility_layer::logging::{setup_backtrace, setup_logging};
     use async_std::{sync::RwLock, task::spawn};
-    use futures::{stream::iter, FutureExt, SinkExt, StreamExt};
+    use futures::{FutureExt, SinkExt, StreamExt, stream::iter};
     use portpicker::pick_unused_port;
     use serde::{Deserialize, Serialize};
-    use tide_disco::{error::ServerError, App};
+    use tide_disco::{App, error::ServerError};
     use toml::toml;
     use vbs::version::StaticVersion;
     type Ver01 = StaticVersion<0, 1>;
