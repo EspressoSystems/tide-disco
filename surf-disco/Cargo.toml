@@ -9,7 +9,11 @@ edition.workspace = true
 tide-disco = { path = "../tide-disco" }
 
 async-std.workspace = true
-async-tungstenite.workspace = true
+async-tungstenite = { version = "0.13.1", features = [
+    "async-std-runtime",
+    "async-tls",
+    "async-native-tls",
+] }
 derivative.workspace = true
 futures.workspace = true
 hex.workspace = true
