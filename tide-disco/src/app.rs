@@ -5,27 +5,27 @@
 // along with the tide-disco library. If not, see <https://mit-license.org/>.
 
 use crate::{
+    Html, StatusCode,
     api::{Api, ApiError, ApiInner, ApiVersion},
     dispatch::{self, DispatchError, Trie},
     healthcheck::{HealthCheck, HealthStatus},
     http,
     method::Method,
-    middleware::{request_params, AddErrorBody, MetricsMiddleware},
+    middleware::{AddErrorBody, MetricsMiddleware, request_params},
     request::RequestParams,
-    route::{health_check_response, respond_with, Handler, Route, RouteError},
+    route::{Handler, Route, RouteError, health_check_response, respond_with},
     socket::SocketError,
-    Html, StatusCode,
 };
 use async_std::sync::Arc;
 use derive_more::From;
 use futures::future::{BoxFuture, FutureExt};
-use include_dir::{include_dir, Dir};
+use include_dir::{Dir, include_dir};
 use lazy_static::lazy_static;
-use maud::{html, PreEscaped};
+use maud::{PreEscaped, html};
 use rand::Rng;
 use semver::Version;
 use serde::{Deserialize, Serialize};
-use serde_with::{serde_as, DisplayFromStr};
+use serde_with::{DisplayFromStr, serde_as};
 use snafu::{ResultExt, Snafu};
 use std::{
     collections::btree_map::BTreeMap,
@@ -270,7 +270,7 @@ lazy_static! {
     static ref DEFAULT_PUBLIC_PATH: PathBuf = {
         // Generate a random number to index into `/tmp` with
         let mut rng = rand::thread_rng();
-        let index: u64 = rng.gen();
+        let index: u64 = rng.r#gen();
 
         // The contents of the default public directory are included in the binary. The first time
         // the default directory is used, if ever, we extract them to a directory on the host file
@@ -875,11 +875,11 @@ where
 mod test {
     use super::*;
     use crate::{
+        Url,
         error::{Error, ServerError},
         metrics::Metrics,
         socket::Connection,
-        testing::{setup_test, test_ws_client, Client},
-        Url,
+        testing::{Client, setup_test, test_ws_client},
     };
     use async_std::{sync::RwLock, task::spawn};
     use async_tungstenite::tungstenite::Message;
@@ -889,7 +889,7 @@ mod test {
     use serde::de::DeserializeOwned;
     use std::{borrow::Cow, fmt::Debug};
     use toml::toml;
-    use vbs::{version::StaticVersion, BinarySerializer, Serializer};
+    use vbs::{BinarySerializer, Serializer, version::StaticVersion};
 
     type StaticVer01 = StaticVersion<0, 1>;
     type SerializerV01 = Serializer<StaticVer01>;

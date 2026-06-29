@@ -1,0 +1,25 @@
+[package]
+name = "surf-disco"
+description = "HTTP client for use with tide-disco applications"
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
+
+[dependencies]
+tide-disco = { path = "../tide-disco" }
+
+async-std.workspace = true
+async-tungstenite.workspace = true
+derivative.workspace = true
+futures.workspace = true
+hex.workspace = true
+reqwest.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+tracing.workspace = true
+vbs.workspace = true
+
+[dev-dependencies]
+async-compatibility-layer.workspace = true
+portpicker.workspace = true
+toml.workspace = true

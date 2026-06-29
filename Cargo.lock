@@ -3400,6 +3400,26 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6bdef32e8150c2a081110b42772ffe7d7c9032b606bc226c8260fd97e0976601"
 
 [[package]]
+name = "surf-disco"
+version = "0.9.7"
+dependencies = [
+ "async-compatibility-layer",
+ "async-std",
+ "async-tungstenite 0.25.0",
+ "derivative",
+ "futures",
+ "hex",
+ "portpicker",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "tide-disco",
+ "toml",
+ "tracing",
+ "vbs",
+]
+
+[[package]]
 name = "sval"
 version = "2.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3618,7 +3638,7 @@ dependencies = [
 
 [[package]]
 name = "tide-disco"
-version = "0.9.6"
+version = "0.9.7"
 dependencies = [
  "anyhow",
  "ark-serialize",
@@ -3664,6 +3684,7 @@ dependencies = [
  "strum_macros",
  "tagged-base64",
  "tide",
+ "tide-disco",
  "tide-websockets",
  "toml",
  "tracing",
