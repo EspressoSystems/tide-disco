@@ -82,19 +82,18 @@ impl<E: Error, VER: StaticVersionType> SocketRequest<E, VER> {
                 Ok((conn, _)) => return Ok(Connection::new(conn, self.content_type)),
                 Err(err) => err,
             };
-            if let WsError::Http(res) = &err {
-                if (301..=308).contains(&u16::from(res.status())) {
-                    if let Some(location) = res
-                        .headers()
-                        .get("location")
-                        .and_then(|header| header.to_str().ok())
-                    {
-                        tracing::info!(from = %self.url, to = %location, "WS handshake following redirect");
-                        self.url.set_path(location);
-                        continue;
-                    }
-                }
+            if let WsError::Http(res) = &err
+                && (301..=308).contains(&u16::from(res.status()))
+                && let Some(location) = res
+                    .headers()
+                    .get("location")
+                    .and_then(|header| header.to_str().ok())
+            {
+                tracing::info!(from = %self.url, to = %location, "WS handshake following redirect");
+                self.url.set_path(location);
+                continue;
             }
+
             return Err(E::catch_all(StatusCode::BAD_REQUEST, err.to_string()));
         }
     }
