@@ -7,3 +7,4 @@ This repo contains a Cargo workspace for the `tide-disco` crate and its friends.
 
 - [tide-disco](./tide-disco/README.md): Discoverability support for Tide
 - [surf-disco](./surf-disco/README.md): Client library for `tide-disco`
+- [disco-types](./types/README.md): Shared type definitions

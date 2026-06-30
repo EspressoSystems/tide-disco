@@ -1,6 +1,6 @@
 [workspace]
 resolver = "3"
-members = ["surf-disco", "tide-disco"]
+members = ["surf-disco", "tide-disco", "types"]
 
 [workspace.package]
 version = "0.9.7"
@@ -25,6 +25,7 @@ futures = "0.3.30"
 futures-util = "0.3.30"
 hex = "0.4"
 http = "1.1.0"
+http-types = { version = "2", default-features = false }
 include_dir = "0.7"
 itertools = "0.12"
 lazy_static = "1.4"

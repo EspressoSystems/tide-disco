@@ -7,10 +7,8 @@
 //! An interface for asynchronous communication with clients, using WebSockets.
 
 use crate::{
-    StatusCode,
     http::{content::Accept, mime},
-    method::Method,
-    request::{RequestError, RequestParams, best_response_type},
+    request::{RequestParams, best_response_type},
 };
 use async_std::sync::Arc;
 use futures::{
@@ -23,7 +21,7 @@ use futures::{
 use pin_project::pin_project;
 use serde::{Serialize, de::DeserializeOwned};
 use std::borrow::Cow;
-use std::fmt::{self, Display, Formatter};
+use std::fmt::Display;
 use std::marker::PhantomData;
 use std::pin::Pin;
 use tide_websockets::{
@@ -32,97 +30,7 @@ use tide_websockets::{
 };
 use vbs::{BinarySerializer, Serializer, version::StaticVersionType};
 
-/// An error returned by a socket handler.
-///
-/// [SocketError] encapsulates application specific errors `E` returned by the user-installed
-/// handler itself. It also includes errors in the socket protocol, such as failures to turn
-/// messages sent by the user-installed handler into WebSockets messages.
-#[derive(Debug)]
-pub enum SocketError<E> {
-    AppSpecific(E),
-    Request(RequestError),
-    Binary(anyhow::Error),
-    Json(serde_json::Error),
-    WebSockets(tide_websockets::Error),
-    UnsupportedMessageType,
-    Closed,
-    IncorrectMethod { expected: Method, actual: Method },
-}
-
-impl<E> SocketError<E> {
-    pub fn status(&self) -> StatusCode {
-        match self {
-            Self::Request(_) | Self::UnsupportedMessageType | Self::IncorrectMethod { .. } => {
-                StatusCode::BAD_REQUEST
-            }
-            _ => StatusCode::INTERNAL_SERVER_ERROR,
-        }
-    }
-
-    pub fn code(&self) -> CloseCode {
-        CloseCode::Error
-    }
-
-    pub fn map_app_specific<E2>(self, f: &impl Fn(E) -> E2) -> SocketError<E2> {
-        match self {
-            Self::AppSpecific(e) => SocketError::AppSpecific(f(e)),
-            Self::Request(e) => SocketError::Request(e),
-            Self::Binary(e) => SocketError::Binary(e),
-            Self::Json(e) => SocketError::Json(e),
-            Self::WebSockets(e) => SocketError::WebSockets(e),
-            Self::UnsupportedMessageType => SocketError::UnsupportedMessageType,
-            Self::Closed => SocketError::Closed,
-            Self::IncorrectMethod { expected, actual } => {
-                SocketError::IncorrectMethod { expected, actual }
-            }
-        }
-    }
-}
-
-impl<E: Display> Display for SocketError<E> {
-    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-        match self {
-            Self::AppSpecific(e) => write!(f, "{}", e),
-            Self::Request(e) => write!(f, "{}", e),
-            Self::Binary(e) => write!(f, "error creating byte stream: {}", e),
-            Self::Json(e) => write!(f, "error creating JSON message: {}", e),
-            Self::WebSockets(e) => write!(f, "WebSockets protocol error: {}", e),
-            Self::UnsupportedMessageType => {
-                write!(f, "unsupported content type for WebSockets message")
-            }
-            Self::Closed => write!(f, "connection closed"),
-            Self::IncorrectMethod { expected, actual } => write!(
-                f,
-                "endpoint must be called as {}, but was called as {}",
-                expected, actual
-            ),
-        }
-    }
-}
-
-impl<E> From<RequestError> for SocketError<E> {
-    fn from(err: RequestError) -> Self {
-        Self::Request(err)
-    }
-}
-
-impl<E> From<anyhow::Error> for SocketError<E> {
-    fn from(err: anyhow::Error) -> Self {
-        Self::Binary(err)
-    }
-}
-
-impl<E> From<serde_json::Error> for SocketError<E> {
-    fn from(err: serde_json::Error) -> Self {
-        Self::Json(err)
-    }
-}
-
-impl<E> From<tide_websockets::Error> for SocketError<E> {
-    fn from(err: tide_websockets::Error) -> Self {
-        Self::WebSockets(err)
-    }
-}
+pub use disco_types::error::SocketError;
 
 #[derive(Clone, Copy, Debug)]
 enum MessageType {
@@ -155,7 +63,9 @@ impl<ToClient: ?Sized, FromClient: DeserializeOwned, E, VER: StaticVersionType> 
         // `Stream` implementation of that field.
         match self.project().conn.poll_next(cx) {
             Poll::Ready(None) => Poll::Ready(None),
-            Poll::Ready(Some(Err(err))) => Poll::Ready(Some(Err(err.into()))),
+            Poll::Ready(Some(Err(err))) => {
+                Poll::Ready(Some(Err(SocketError::WebSockets(err.to_string()))))
+            }
             Poll::Ready(Some(Ok(msg))) => Poll::Ready(Some(match msg {
                 Message::Binary(bytes) => {
                     Serializer::<VER>::deserialize(&bytes).map_err(SocketError::from)
@@ -242,7 +152,9 @@ impl<ToClient: ?Sized, FromClient, E, VER: StaticVersionType>
         conn: WebSocketConnection,
     ) -> Pin<Box<dyn Send + Sink<Message, Error = SocketError<E>>>> {
         Box::pin(sink::unfold(conn, |conn, msg| async move {
-            conn.send(msg).await?;
+            conn.send(msg)
+                .await
+                .map_err(|err| SocketError::WebSockets(err.to_string()))?;
             Ok(conn)
         }))
     }
@@ -380,10 +292,12 @@ where
         // When the handler finishes, send a close message. If there was an error, include the error
         // message.
         let msg = res.as_ref().err().map(|err| CloseFrame {
-            code: err.code(),
+            code: CloseCode::Error,
             reason: Cow::Owned(err.to_string()),
         });
-        conn.send(Message::Close(msg)).await?;
+        conn.send(Message::Close(msg))
+            .await
+            .map_err(|err| SocketError::WebSockets(err.to_string()))?;
         res
     };
     Box::new(move |req, raw_conn, state| {

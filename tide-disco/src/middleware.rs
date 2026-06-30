@@ -1,5 +1,6 @@
 use crate::{
     App, RequestParam, RequestParams,
+    error::ErrorExt,
     http::{self, content::Accept},
     mime,
     request::best_response_type,

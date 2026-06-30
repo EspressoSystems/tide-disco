@@ -8,6 +8,7 @@ use crate::{
     Html, StatusCode,
     api::{Api, ApiError, ApiInner, ApiVersion},
     dispatch::{self, DispatchError, Trie},
+    error::ErrorExt,
     healthcheck::{HealthCheck, HealthStatus},
     http,
     method::Method,

@@ -1099,6 +1099,24 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "212d0f5754cb6769937f4501cc0e67f4f4483c8d2c3e1e922ee9edbe4ab4c7c0"
 
 [[package]]
+name = "disco-types"
+version = "0.9.7"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "config",
+ "futures",
+ "http 1.1.0",
+ "http-types",
+ "serde",
+ "serde_json",
+ "snafu",
+ "strum",
+ "strum_macros",
+ "vbs",
+]
+
+[[package]]
 name = "displaydoc"
 version = "0.2.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3726,6 +3744,7 @@ dependencies = [
  "derivative",
  "derive_more",
  "dirs",
+ "disco-types",
  "edit-distance",
  "futures",
  "futures-util",
