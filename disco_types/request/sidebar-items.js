@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["RequestError","RequestParamType"],"struct":["BinarySnafu","HttpSnafu","IncorrectParamTypeSnafu","IntegerOverflowSnafu","InvalidParamSnafu","JsonSnafu","MissingParamSnafu","TagMismatchSnafu","TaggedBase64Snafu","UnsupportedContentTypeSnafu"]};

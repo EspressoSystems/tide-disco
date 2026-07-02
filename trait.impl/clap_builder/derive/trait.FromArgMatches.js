@@ -1,9 +1,9 @@
 (function() {
-    var implementors = Object.fromEntries([["tide_disco",[["impl FromArgMatches for <a class=\"struct\" href=\"tide_disco/struct.DiscoArgs.html\" title=\"struct tide_disco::DiscoArgs\">DiscoArgs</a>"]]]]);
+    const implementors = Object.fromEntries([["tide_disco",[["impl FromArgMatches for <a class=\"struct\" href=\"tide_disco/struct.DiscoArgs.html\" title=\"struct tide_disco::DiscoArgs\">DiscoArgs</a>",0]]]]);
     if (window.register_implementors) {
         window.register_implementors(implementors);
     } else {
         window.pending_implementors = implementors;
     }
 })()
-//{"start":57,"fragment_lengths":[159]}
+//{"start":59,"fragment_lengths":[161]}

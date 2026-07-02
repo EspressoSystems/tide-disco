@@ -1,2 +1,2 @@
-createSrcSidebar('[["tide_disco",["",[],["api.rs","app.rs","dispatch.rs","error.rs","healthcheck.rs","lib.rs","listener.rs","method.rs","metrics.rs","middleware.rs","request.rs","route.rs","socket.rs","status.rs","testing.rs"]]]]');
-//{"start":19,"fragment_lengths":[209]}
+createSrcSidebar('[["disco_types",["",[],["error.rs","lib.rs","request.rs","status.rs"]]],["surf_disco",["",[],["client.rs","error.rs","lib.rs","reexports.rs","request.rs","socket.rs"]]],["tide_disco",["",[],["api.rs","app.rs","dispatch.rs","error.rs","healthcheck.rs","lib.rs","listener.rs","method.rs","metrics.rs","middleware.rs","request.rs","route.rs","socket.rs","status.rs","testing.rs"]]]]');
+//{"start":19,"fragment_lengths":[70,97,210]}

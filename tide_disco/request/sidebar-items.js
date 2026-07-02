@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["RequestError","RequestParamType","RequestParamValue"],"struct":["RequestParam","RequestParams"]};
+window.SIDEBAR_ITEMS = {"enum":["RequestError","RequestParamType","RequestParamValue"],"struct":["BinarySnafu","HttpSnafu","IncorrectParamTypeSnafu","IntegerOverflowSnafu","InvalidParamSnafu","JsonSnafu","MissingParamSnafu","RequestParam","RequestParams","TagMismatchSnafu","TaggedBase64Snafu","UnsupportedContentTypeSnafu"]};

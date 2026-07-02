@@ -1,9 +1,9 @@
 (function() {
-    var implementors = Object.fromEntries([["tide_disco",[["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/1.91.1/core/str/traits/trait.FromStr.html\" title=\"trait core::str::traits::FromStr\">FromStr</a> for <a class=\"enum\" href=\"tide_disco/enum.UrlSegment.html\" title=\"enum tide_disco::UrlSegment\">UrlSegment</a>"],["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/1.91.1/core/str/traits/trait.FromStr.html\" title=\"trait core::str::traits::FromStr\">FromStr</a> for <a class=\"enum\" href=\"tide_disco/method/enum.Method.html\" title=\"enum tide_disco::method::Method\">Method</a>"],["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/1.91.1/core/str/traits/trait.FromStr.html\" title=\"trait core::str::traits::FromStr\">FromStr</a> for <a class=\"enum\" href=\"tide_disco/request/enum.RequestParamType.html\" title=\"enum tide_disco::request::RequestParamType\">RequestParamType</a>"]]]]);
+    const implementors = Object.fromEntries([["disco_types",[["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/1.96.0/core/str/traits/trait.FromStr.html\" title=\"trait core::str::traits::FromStr\">FromStr</a> for <a class=\"enum\" href=\"disco_types/request/enum.RequestParamType.html\" title=\"enum disco_types::request::RequestParamType\">RequestParamType</a>",0]]],["tide_disco",[["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/1.96.0/core/str/traits/trait.FromStr.html\" title=\"trait core::str::traits::FromStr\">FromStr</a> for <a class=\"enum\" href=\"tide_disco/enum.UrlSegment.html\" title=\"enum tide_disco::UrlSegment\">UrlSegment</a>",0],["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/1.96.0/core/str/traits/trait.FromStr.html\" title=\"trait core::str::traits::FromStr\">FromStr</a> for <a class=\"enum\" href=\"tide_disco/method/enum.Method.html\" title=\"enum tide_disco::method::Method\">Method</a>",0]]]]);
     if (window.register_implementors) {
         window.register_implementors(implementors);
     } else {
         window.pending_implementors = implementors;
     }
 })()
-//{"start":57,"fragment_lengths":[882]}
+//{"start":59,"fragment_lengths":[332,576]}

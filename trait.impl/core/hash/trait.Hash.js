@@ -1,9 +1,9 @@
 (function() {
-    var implementors = Object.fromEntries([["tide_disco",[["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/1.91.1/core/hash/trait.Hash.html\" title=\"trait core::hash::Hash\">Hash</a> for <a class=\"struct\" href=\"tide_disco/status/struct.StatusCode.html\" title=\"struct tide_disco::status::StatusCode\">StatusCode</a>"]]]]);
+    const implementors = Object.fromEntries([["disco_types",[["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/1.96.0/core/hash/trait.Hash.html\" title=\"trait core::hash::Hash\">Hash</a> for <a class=\"struct\" href=\"disco_types/status/struct.StatusCode.html\" title=\"struct disco_types::status::StatusCode\">StatusCode</a>",0]]]]);
     if (window.register_implementors) {
         window.register_implementors(implementors);
     } else {
         window.pending_implementors = implementors;
     }
 })()
-//{"start":57,"fragment_lengths":[291]}
+//{"start":59,"fragment_lengths":[296]}

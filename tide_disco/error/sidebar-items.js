@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":["ServerError"],"trait":["Error"]};
+window.SIDEBAR_ITEMS = {"enum":["RouteError","SocketError"],"struct":["ServerError"],"trait":["Error","ErrorExt"]};
