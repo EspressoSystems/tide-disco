@@ -5,103 +5,36 @@
 // along with the tide-disco library. If not, see <https://mit-license.org/>.
 
 use crate::{
+    Html, StatusCode,
     api::ApiMetadata,
     healthcheck::HealthCheck,
     method::{Method, ReadState},
     metrics,
-    request::{best_response_type, RequestError, RequestParam, RequestParamType, RequestParams},
+    request::{RequestParam, RequestParamType, RequestParams, best_response_type},
     socket::{self, SocketError},
-    Html, StatusCode,
 };
 use async_std::sync::Arc;
 use async_trait::async_trait;
 use derivative::Derivative;
 use futures::future::{BoxFuture, FutureExt};
-use maud::{html, PreEscaped};
+use maud::{PreEscaped, html};
 use serde::Serialize;
 use snafu::{OptionExt, Snafu};
 use std::{
-    borrow::Cow,
-    collections::HashMap,
-    convert::Infallible,
-    fmt::{self, Display, Formatter},
-    marker::PhantomData,
-    str::FromStr,
+    borrow::Cow, collections::HashMap, convert::Infallible, marker::PhantomData, str::FromStr,
 };
 use tide::{
+    Body,
     http::{
         self,
         content::Accept,
         mime::{self, Mime},
     },
-    Body,
 };
 use tide_websockets::WebSocketConnection;
-use vbs::{version::StaticVersionType, BinarySerializer, Serializer};
+use vbs::{BinarySerializer, Serializer, version::StaticVersionType};
 
-/// An error returned by a route handler.
-///
-/// [RouteError] encapsulates application specific errors `E` returned by the user-installed handler
-/// itself. It also includes errors in the route dispatching logic, such as failures to turn the
-/// result of the user-installed handler into an HTTP response.
-#[derive(Debug)]
-pub enum RouteError<E> {
-    AppSpecific(E),
-    Request(RequestError),
-    UnsupportedContentType,
-    Binary(anyhow::Error),
-    Json(serde_json::Error),
-    Tide(tide::Error),
-    ExportMetrics(String),
-    IncorrectMethod { expected: Method },
-}
-
-impl<E: Display> Display for RouteError<E> {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::AppSpecific(err) => write!(f, "{}", err),
-            Self::Request(err) => write!(f, "{}", err),
-            Self::UnsupportedContentType => write!(f, "requested content type is not supported"),
-            Self::Binary(err) => write!(f, "error creating byte stream: {}", err),
-            Self::Json(err) => write!(f, "error creating JSON response: {}", err),
-            Self::Tide(err) => write!(f, "{}", err),
-            Self::ExportMetrics(msg) => write!(f, "error exporting metrics: {msg}"),
-            Self::IncorrectMethod { expected } => {
-                write!(f, "route may only be called as {}", expected)
-            }
-        }
-    }
-}
-
-impl<E> RouteError<E> {
-    pub fn status(&self) -> StatusCode {
-        match self {
-            Self::Request(_) | Self::UnsupportedContentType | Self::IncorrectMethod { .. } => {
-                StatusCode::BAD_REQUEST
-            }
-            _ => StatusCode::INTERNAL_SERVER_ERROR,
-        }
-    }
-
-    pub fn map_app_specific<E2>(self, f: impl Fn(E) -> E2) -> RouteError<E2> {
-        match self {
-            RouteError::AppSpecific(e) => RouteError::AppSpecific(f(e)),
-            RouteError::Request(e) => RouteError::Request(e),
-            RouteError::UnsupportedContentType => RouteError::UnsupportedContentType,
-            RouteError::Binary(err) => RouteError::Binary(err),
-            RouteError::Json(err) => RouteError::Json(err),
-            RouteError::Tide(err) => RouteError::Tide(err),
-            RouteError::ExportMetrics(msg) => RouteError::ExportMetrics(msg),
-            Self::IncorrectMethod { expected } => RouteError::IncorrectMethod { expected },
-        }
-    }
-}
-
-impl<E> From<RequestError> for RouteError<E> {
-    fn from(err: RequestError) -> Self {
-        Self::Request(err)
-    }
-}
+pub use disco_types::error::RouteError;
 
 /// A route handler.
 ///
@@ -445,7 +378,7 @@ impl<State, Error> Route<State, Error> {
                 Ok(())
             }
             _ => Err(RouteError::IncorrectMethod {
-                expected: self.method(),
+                expected: self.method().to_string(),
             }),
         }
     }
@@ -474,7 +407,7 @@ impl<State, Error> Route<State, Error> {
                 Ok(())
             }
             _ => Err(RouteError::IncorrectMethod {
-                expected: self.method(),
+                expected: self.method().to_string(),
             }),
         }
     }
@@ -495,7 +428,7 @@ impl<State, Error> Route<State, Error> {
                 Ok(())
             }
             _ => Err(RouteError::IncorrectMethod {
-                expected: self.method(),
+                expected: self.method().to_string(),
             }),
         }
     }
@@ -524,8 +457,8 @@ impl<State, Error> Route<State, Error> {
                 None => unreachable!(),
             },
             _ => Err(SocketError::IncorrectMethod {
-                expected: self.method(),
-                actual: req.method(),
+                expected: self.method().to_string(),
+                actual: req.method().to_string(),
             }),
         }
     }
@@ -549,7 +482,7 @@ where
                 None => self.default_handler(),
             },
             RouteImplementation::Socket { .. } => Err(RouteError::IncorrectMethod {
-                expected: self.method(),
+                expected: self.method().to_string(),
             }),
         }
     }

@@ -1,11 +1,11 @@
 #![cfg(any(test, feature = "testing"))]
 
-use crate::{http::Method, wait_for_server, Url, SERVER_STARTUP_RETRIES, SERVER_STARTUP_SLEEP_MS};
+use crate::{SERVER_STARTUP_RETRIES, SERVER_STARTUP_SLEEP_MS, Url, http::Method, wait_for_server};
 use async_compatibility_layer::logging::{setup_backtrace, setup_logging};
 use async_tungstenite::{
-    async_std::{connect_async, ConnectStream},
-    tungstenite::{client::IntoClientRequest, http::header::*, Error as WsError},
     WebSocketStream,
+    async_std::{ConnectStream, connect_async},
+    tungstenite::{Error as WsError, client::IntoClientRequest, http::header::*},
 };
 use reqwest::RequestBuilder;
 use std::time::Duration;

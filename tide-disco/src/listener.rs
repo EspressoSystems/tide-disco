@@ -21,9 +21,8 @@ use std::{
     time::Duration,
 };
 use tide::{
-    http,
+    Server, http,
     listener::{ListenInfo, Listener, ToListener},
-    Server,
 };
 
 /// TCP listener which accepts only a limited number of connections at a time.
@@ -173,11 +172,11 @@ fn is_transient_error(e: &io::Error) -> bool {
 mod test {
     use super::*;
     use crate::{
-        error::ServerError,
-        testing::{setup_test, Client},
         App,
+        error::ServerError,
+        testing::{Client, setup_test},
     };
-    use futures::future::{try_join_all, FutureExt};
+    use futures::future::{FutureExt, try_join_all};
     use portpicker::pick_unused_port;
     use toml::toml;
     use vbs::version::{StaticVersion, StaticVersionType};
