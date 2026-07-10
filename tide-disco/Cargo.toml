@@ -19,7 +19,7 @@ test = true
 required-features = ["testing"]
 
 [dependencies]
-disco-types = { path = "../types" }
+disco-types = { path = "../types", version = "0.9.7" }
 
 anyhow.workspace = true
 async-h1.workspace = true
