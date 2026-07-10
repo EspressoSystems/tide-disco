@@ -4,6 +4,8 @@ description = "Discoverability for Tide"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
+repository.workspace = true
+license-file.workspace = true
 
 [features]
 testing = ["async-compatibility-layer", "async-tungstenite"]
