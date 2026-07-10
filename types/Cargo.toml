@@ -1,5 +1,6 @@
 [package]
 name = "disco-types"
+description = "Types used by tide-disco and surf-disco"
 version.workspace = true
 authors.workspace = true
 edition.workspace = true

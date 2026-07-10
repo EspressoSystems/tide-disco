@@ -4,9 +4,11 @@ description = "HTTP client for use with tide-disco applications"
 version.workspace = true
 authors.workspace = true
 edition.workspace = true
+repository.workspace = true
+license-file.workspace = true
 
 [dependencies]
-tide-disco = { path = "../tide-disco" }
+tide-disco = { path = "../tide-disco", version = "0.9.7" }
 
 async-std.workspace = true
 async-tungstenite = { version = "0.13.1", features = [
