@@ -437,9 +437,9 @@ pub fn check_api(api: toml::Value) -> bool {
 
 /// Load the web API or panic
 pub fn load_api(path: &Path) -> toml::Value {
-    let messages = read_to_string(path).unwrap_or_else(|_| panic!("Unable to read {:?}.", &path));
+    let messages = read_to_string(path).unwrap_or_else(|_| panic!("Unable to read {:?}.", path));
     let api: toml::Value =
-        toml::from_str(&messages).unwrap_or_else(|_| panic!("Unable to parse {:?}.", &path));
+        toml::from_str(&messages).unwrap_or_else(|_| panic!("Unable to parse {:?}.", path));
     if !check_api(api.clone()) {
         panic!("API specification has errors.",);
     }
