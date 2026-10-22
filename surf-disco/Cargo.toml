@@ -13,7 +13,6 @@ tide-disco = { path = "../tide-disco", version = "0.9.7" }
 async-std.workspace = true
 async-tungstenite = { version = "0.13.1", features = [
     "async-std-runtime",
-    "async-tls",
     "async-native-tls",
 ] }
 derivative.workspace = true
